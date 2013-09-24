@@ -1,5 +1,15 @@
 source 'https://rubygems.org'
 
+# -------------------------------------------------------
+# BEGIN mush-central specific gems
+
+# authentication
+gem 'authlogic'
+# authorization
+gem 'cancan'
+
+# -------------------------------------------------------
+
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.0.0'
 
