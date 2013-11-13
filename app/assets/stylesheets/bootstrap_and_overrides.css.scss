@@ -1,0 +1,11 @@
+
+// Use bootstrap form error styling
+// http://gorails.com/blog/trying-out-bootstrap-3-0
+
+@import "bootstrap";
+
+.field_with_errors {
+  @extend .has-error;
+  /*@extend .control-group;*/
+  @extend .error;
+}

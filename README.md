@@ -1,4 +1,4 @@
-mush-central
-============
+dogTag
+======
 
-Chiditarod.org registration and racer management system
+[chiditarod.org](http://chiditarod.org) registration and racer management system

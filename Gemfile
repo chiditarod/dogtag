@@ -3,6 +3,11 @@ source 'https://rubygems.org'
 # -------------------------------------------------------
 # BEGIN mush-central specific gems
 
+# bootstrap 3.0
+gem 'bootstrap-sass'
+
+gem 'corgi'
+
 # authentication
 gem 'authlogic'
 # authorization

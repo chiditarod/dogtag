@@ -1,0 +1,9 @@
+
+- if @races.blank?
+  = t('.no_races')
+  = link_to t('.create_race'), new_race_path
+- else
+  %ul
+    - @races.each do |race|
+      %li= race.name
+

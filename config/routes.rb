@@ -1,4 +1,13 @@
 RailsSkeleton::Application.routes.draw do
+
+  get "teams/mush"
+  match "/" => 'teams#index', :via => [:get], :as => :home
+
+  resources :races, :only => [:index, :new, :create, :show, :edit] do
+    resources :teams, :only => [:index, :new, :create, :show, :edit]
+  end
+
+
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
 

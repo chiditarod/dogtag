@@ -20,4 +20,28 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
+  website_title: DogTag
+  mush: mush!
+
+  races:
+    index:
+      no_races: No races present in the system.
+      create_race: Create one now!
+
+    new_race_form:
+      name: Race Name
+      race_datetime: Date & Time
+      max_teams: Maximum Teams
+      racers_per_team: Racers per Team
+      create: Create Race
+
+    new:
+      new_race: Create a new race
+
+    create:
+      new_race: Create a new race
+
+
+
+
+
