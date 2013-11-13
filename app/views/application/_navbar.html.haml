@@ -1,0 +1,46 @@
+/ Static navbar
+/ view-source:http://getbootstrap.com/examples/navbar-static-top/
+.navbar.navbar-default.navbar-static-top{role: "navigation"}
+  .container
+    .navbar-header
+
+      %button.navbar-toggle{"data-target" => ".navbar-collapse", "data-toggle" => "collapse", type: "button"}
+        %span.sr-only Toggle navigation
+        %span.icon-bar
+        %span.icon-bar
+        %span.icon-bar
+        = link_to(I18n.t('website_title'), home_path, :class => 'navbar-brand')
+
+      .navbar-collapse.collapse
+        %ul.nav.navbar-nav
+          %li.active
+            %a{href: "#"} Home
+          %li
+            %a{href: "#about"} About
+          %li
+            %a{href: "#contact"} Contact
+          %li.dropdown
+            %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+              Dropdown
+              %b.caret
+            %ul.dropdown-menu
+              %li
+                %a{href: "#"} Action
+              %li
+                %a{href: "#"} Another action
+              %li
+                %a{href: "#"} Something else here
+              %li.divider
+              %li.dropdown-header Nav header
+              %li
+                %a{href: "#"} Separated link
+              %li
+                %a{href: "#"} One more separated link
+        %ul.nav.navbar-nav.navbar-right
+          %li
+            %a{href: "../navbar/"} Default
+          %li.active
+            %a{href: "./"} Static top
+          %li
+            %a{href: "../navbar-fixed-top/"} Fixed top
+
