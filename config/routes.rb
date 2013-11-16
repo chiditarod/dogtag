@@ -3,7 +3,7 @@ RailsSkeleton::Application.routes.draw do
   get "teams/mush"
   match "/" => 'teams#index', :via => [:get], :as => :home
 
-  resources :races, :only => [:index, :new, :create, :show, :edit] do
+  resources :races, :only => [:index, :new, :create, :show, :edit, :update] do
     resources :teams, :only => [:index, :new, :create, :show, :edit]
   end
 

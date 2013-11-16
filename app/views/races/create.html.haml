@@ -3,7 +3,8 @@
     = t('.new_race')
     %small= t('mush')
   %h5 == create ==
+  = render 'flash'
 
 .row
   .col-sm-6
-    = render 'new_race_form'
+    = render 'race_form'

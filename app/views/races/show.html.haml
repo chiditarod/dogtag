@@ -1,0 +1,25 @@
+
+.page-header
+  %h1
+    = @race.name
+    %small
+      = link_to edit_race_path @race do
+        %span.glyphicon.glyphicon-edit
+
+.row
+  .col-xs-3
+    = t('.race_datetime')
+  .col-xs-9
+    = @race.race_datetime
+.row
+  .col-xs-3
+    = t('.max_teams')
+  .col-xs-9
+    = @race.max_teams
+.row
+  .col-xs-3
+    = t('.racers_per_team')
+  .col-xs-9
+    = @race.racers_per_team
+
+

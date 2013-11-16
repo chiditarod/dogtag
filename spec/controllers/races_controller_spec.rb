@@ -4,6 +4,36 @@ describe RacesController do
 
   let (:valid_race)  { JSON.parse(File.read 'spec/fixtures/valid_race.json').symbolize_keys }
 
+  describe '#show' do
+    it 'redirects to the race index and sets flash error if a race is not found' do
+      get :show, :id => 100
+      response.should be_redirect
+      flash[:error].should == I18n.translate('race_not_found')
+    end
+
+    it 'sets the race object and returns 200' do
+      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
+      get :show, :id => race1.id
+      response.status.should == 200
+      assigns(:race).should == race1
+    end
+  end
+
+  describe '#update' do
+    it 'returns 400 if the race parameter is not valid' do
+      put :update, :id => 100
+      response.status.should == 400
+    end
+
+    it 'updates the race and redirects to the race edit page' do
+      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
+      patch :update, :id => race1.id, :race => {:max_teams => 200}
+      response.status.should == 302
+      race1.reload.max_teams.should == 200
+    end
+
+  end
+
   describe '#create' do
     it 'returns 400 if the race parameter is not passed' do
       post :create
@@ -16,7 +46,7 @@ describe RacesController do
         bad_payload = valid_race.dup
         bad_payload.delete param
         post :create, :race => bad_payload
-        #flash[:errors].should == { param => ["can't be blank"] }
+        #flash[:error].should == { param => ["can't be blank"] }
         response.status.should == 200
       end
     end
