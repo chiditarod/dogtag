@@ -5,5 +5,5 @@ class Team < ActiveRecord::Base
   validates_with TeamValidator
 
   belongs_to :race
-  has_many :racers
+  has_many :people
 end

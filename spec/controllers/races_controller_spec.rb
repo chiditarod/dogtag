@@ -12,7 +12,7 @@ describe RacesController do
     end
 
     it 'sets the race object and returns 200' do
-      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
+      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :people_per_team => 5)
       get :show, :id => race1.id
       response.status.should == 200
       assigns(:race).should == race1
@@ -26,7 +26,7 @@ describe RacesController do
     end
 
     it 'updates the race and redirects to the race edit page' do
-      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
+      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :people_per_team => 5)
       patch :update, :id => race1.id, :race => {:max_teams => 200}
       response.status.should == 302
       race1.reload.max_teams.should == 200
@@ -41,7 +41,7 @@ describe RacesController do
     end
 
     it 'returns 200 and sets flash[:error] when required params are missing' do
-      required = [:name, :race_datetime, :max_teams, :racers_per_team]
+      required = [:name, :race_datetime, :max_teams, :people_per_team]
       required.each do |param|
         bad_payload = valid_race.dup
         bad_payload.delete param
@@ -62,9 +62,9 @@ describe RacesController do
 
   describe '#index' do
     it 'returns http success and an array of all races' do
-      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
-      race2 = Race.create(:name => 'race2', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
-      race3 = Race.create(:name => 'race3', :race_datetime => Time.now, :max_teams => 150, :racers_per_team => 5)
+      race1 = Race.create(:name => 'race1', :race_datetime => Time.now, :max_teams => 150, :people_per_team => 5)
+      race2 = Race.create(:name => 'race2', :race_datetime => Time.now, :max_teams => 150, :people_per_team => 5)
+      race3 = Race.create(:name => 'race3', :race_datetime => Time.now, :max_teams => 150, :people_per_team => 5)
       get :index
       response.should be_success
       expect(assigns(:races)).to eq [race1, race2, race3]

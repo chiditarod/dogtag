@@ -13,7 +13,7 @@
 
 ActiveRecord::Schema.define(version: 20131113085527) do
 
-  create_table "racers", force: true do |t|
+  create_table "people", force: true do |t|
     t.string  "first_name"
     t.string  "last_name"
     t.string  "email"
@@ -26,7 +26,7 @@ ActiveRecord::Schema.define(version: 20131113085527) do
     t.string   "name"
     t.datetime "race_datetime"
     t.integer  "max_teams"
-    t.integer  "racers_per_team"
+    t.integer  "people_per_team"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

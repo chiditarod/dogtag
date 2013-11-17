@@ -1,15 +1,15 @@
 class TeamValidator < ActiveModel::Validator
 
   def validate(record)
-    validate_racer_count record
+    validate_person_count record
   end
 
   private
 
-  def validate_racer_count(record)
+  def validate_person_count(record)
     if record.race.present?
-      if record.racers.count > record.race.racers_per_team
-        record.errors[:racers_per_team] << 'Racers must be less than or equal to max_racers_per_team'
+      if record.people.count > record.race.people_per_team
+        record.errors[:people_per_team] << 'People must be less than or equal to max_people_per_team'
       end
     end
   end

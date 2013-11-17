@@ -40,7 +40,7 @@ en:
       name: Race Name
       race_datetime: Date & Time
       max_teams: Maximum Teams
-      racers_per_team: Racers per team
+      people_per_team: People per team
       save: Save
 
     new:
@@ -52,7 +52,7 @@ en:
     show:
       race_datetime: Date & Time
       max_teams: Maximum Teams
-      racers_per_team: Racers per Team
+      people_per_team: People per Team
 
     edit:
       edit_race: Edit Race
