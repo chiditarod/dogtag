@@ -11,9 +11,9 @@ describe Race do
 
     it 'not more than max_teams per race' do
       race = Race.create(valid_race)
-      150.times { |x| race.teams.create(:name => "team#{x}") }
+      150.times { |x| race.team_instances.create(:name => "team#{x}") }
       race.valid?.should be_true
-      race.teams.create(:name => 'fail')
+      race.team_instances.create(:name => 'fail')
       race.valid?.should be_false
     end
   end

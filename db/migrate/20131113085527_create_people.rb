@@ -7,7 +7,7 @@ class CreatePeople < ActiveRecord::Migration
       t.string :phone
       t.string :twitter
 
-      t.belongs_to :team
+      t.belongs_to :team_instance
     end
   end
 end

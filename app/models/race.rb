@@ -7,5 +7,6 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
-  has_many :teams
+  has_many :team_instances
+  has_many :teams, :through => :team_instances
 end

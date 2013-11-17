@@ -7,8 +7,8 @@ class RaceValidator < ActiveModel::Validator
   private
 
   def validate_team_count(record)
-    if record.teams.present?
-      if record.teams.count > record.max_teams
+    if record.team_instances.present?
+      if record.team_instances.count > record.max_teams
         record.errors[:max_teams] << 'Teams must be less than or equal to max_teams'
       end
     end

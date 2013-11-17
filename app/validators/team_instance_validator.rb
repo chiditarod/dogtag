@@ -1,4 +1,4 @@
-class TeamValidator < ActiveModel::Validator
+class TeamInstanceValidator < ActiveModel::Validator
 
   def validate(record)
     validate_person_count record
