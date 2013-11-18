@@ -25,6 +25,8 @@ ActiveRecord::Schema.define(version: 20131118015551) do
   create_table "races", force: true do |t|
     t.string   "name"
     t.datetime "race_datetime"
+    t.datetime "registration_open"
+    t.datetime "registration_close"
     t.integer  "max_teams"
     t.integer  "people_per_team"
     t.datetime "created_at"

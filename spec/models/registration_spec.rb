@@ -8,12 +8,12 @@ describe Registration do
   describe 'validates' do
     it 'that a team name, team and race are present' do
       race = Race.create(valid_race)
-      Registration.new(team: Team.new).should_not be_valid
+      Registration.new(team: Team.create).should_not be_valid
       Registration.new(race: race).should_not be_valid
-      Registration.new(race: race, team: Team.new).should_not be_valid
+      Registration.new(race: race, team: Team.create).should_not be_valid
       Registration.new(name: 'foo').should_not be_valid
-      Registration.new(name: 'foo', team: Team.new).should_not be_valid
-      Registration.new(name: 'foo', team: Team.new, race: race).should be_valid
+      Registration.new(name: 'foo', team: Team.create).should_not be_valid
+      Registration.new(name: 'foo', team: Team.create, race: race).should be_valid
     end
 
     it 'the same team cannot be added to a single race more than once' do
@@ -25,12 +25,12 @@ describe Registration do
 
     it 'no two teams can have the same name in a single race' do
       race = Race.create(valid_race)
-      Registration.create(:name => 'team1', :team => Team.new, :race => race).should be_valid
-      Registration.create(:name => 'team1', :team => Team.new, :race => race).should be_invalid
+      Registration.create(:name => 'team1', :team => Team.create, :race => race).should be_valid
+      Registration.create(:name => 'team1', :team => Team.create, :race => race).should be_invalid
     end
 
-    it 'a team can can have the same name for different races' do
-      team = Team.new
+    it 'a team can have the same name for different races' do
+      team = Team.create
       race1 = Race.create(valid_race)
       race2 = Race.create(valid_race)
       Registration.create(:name => 'team', :team => team, :race => race1).should be_valid
@@ -38,26 +38,25 @@ describe Registration do
     end
 
     it "a team's twitter account is unique per race if it is set" do
-      team = Team.new
+      team = Team.create
       race = Race.create(valid_race)
-      Registration.create(:name => 'team1', :team => team, :race => race, :twitter => 'a')
+      Registration.create(:name => 'team1', :team => team, :race => race, :twitter => 'a').should be_valid
       Registration.create(:name => 'team2', :team => team, :race => race, :twitter => 'a').should be_invalid
     end
 
-    it 'twitter account can be the same for different races' do
-      team = Team.new
+    it "a team's twitter account can be the same for different races" do
+      team = Team.create
       race1 = Race.create(valid_race)
       race2 = Race.create(valid_race)
-      Registration.create(:name => 'team', :team => team, :race => race1, :twitter => 'a')
+      Registration.create(:name => 'team', :team => team, :race => race1, :twitter => 'a').should be_valid
       Registration.create(:name => 'team', :team => team, :race => race2, :twitter => 'a').should be_valid
     end
 
     it 'not more than race.people_per team is in a registration' do
-      team = Team.create
       race = Race.create(valid_race)
-      reg = Registration.create(:name => 'reg1', :race => race, :team => team)
+      reg = Registration.create(:name => 'reg1', :race => race, :team => Team.create)
       reg.should be_valid
-      5.times { |x| reg.people.create(valid_person) }
+      race.people_per_team.times { |x| reg.people.create(valid_person) }
       reg.should be_valid
       reg.people.create(valid_person)
       reg.should be_invalid
@@ -66,7 +65,7 @@ describe Registration do
 
     it 'not more than race.max_teams registrations per race' do
       race = Race.create(valid_race)
-      150.times do |i|
+      race.max_teams.times do |i|
         Registration.create(:name => "reg#{i}", :race => race, :team => Team.create).should be_valid
       end
       race.reload
@@ -74,7 +73,6 @@ describe Registration do
       reg = Registration.new :name => "fail", :race => race, :team => Team.create
       reg.should be_invalid
     end
-
   end
 
 end
