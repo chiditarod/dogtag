@@ -7,6 +7,11 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
-  has_many :team_instances
-  has_many :teams, :through => :team_instances
+  has_many :registrations
+  has_many :teams, -> {distinct}, :through => :registrations
+
+  def full?
+    registrations.count == max_teams ? true : false
+  end
+
 end

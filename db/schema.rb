@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20131117225742) do
+ActiveRecord::Schema.define(version: 20131118015551) do
 
   create_table "people", force: true do |t|
     t.string  "first_name"
@@ -19,7 +19,7 @@ ActiveRecord::Schema.define(version: 20131117225742) do
     t.string  "email"
     t.string  "phone"
     t.string  "twitter"
-    t.integer "team_instance_id"
+    t.integer "registration_id"
   end
 
   create_table "races", force: true do |t|
@@ -31,17 +31,24 @@ ActiveRecord::Schema.define(version: 20131117225742) do
     t.datetime "updated_at"
   end
 
-  create_table "team_instances", force: true do |t|
+  create_table "registrations", force: true do |t|
     t.string  "name"
     t.string  "description"
     t.string  "twitter"
-    t.integer "race_id"
     t.integer "team_id"
+    t.integer "race_id"
   end
+
+  add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true
 
   create_table "teams", force: true do |t|
     t.datetime "created_at"
     t.datetime "updated_at"
+  end
+
+  create_table "teams_users", id: false, force: true do |t|
+    t.integer "team_id"
+    t.integer "user_id"
   end
 
 end
