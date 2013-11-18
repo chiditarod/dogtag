@@ -15,4 +15,11 @@ class Race < ActiveRecord::Base
     registrations.count == max_teams
   end
 
+  def open?
+    now = Time.now
+    return false if now < registration_open
+    return false if registration_close < now
+    true
+  end
+
 end

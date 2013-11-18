@@ -4,10 +4,17 @@
     .col-sm-8
       = f.text_field :name, :class => 'form-control'
   .form-group
-    = label_tag :race_datetime, t('.datetime'), :class => ['col-sm-4', 'control-label']
+    = label_tag :race_datetime, t('.race_datetime'), :class => ['col-sm-3', 'control-label']
     .col-sm-8
-      -#= f.datetime_field :race_datetime, :class => 'form-control'
       = f.datetime_select :race_datetime, :class => 'form-control'
+  .form-group
+    = label_tag :registration_open, t('.registration_open'), :class => ['col-sm-4', 'control-label']
+    .col-sm-8
+      = f.datetime_select :registration_open, :class => 'form-control'
+  .form-group
+    = label_tag :registration_close, t('.registration_close'), :class => ['col-sm-4', 'control-label']
+    .col-sm-8
+      = f.datetime_select :registration_close, :class => 'form-control'
   .form-group
     = label_tag :max_teams, t('.max_teams'), :class => ['col-xs-4', 'control-label']
     .col-xs-2

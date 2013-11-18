@@ -6,8 +6,6 @@ source 'https://rubygems.org'
 # bootstrap 3.0
 gem 'bootstrap-sass'
 
-gem 'corgi'
-
 # authentication
 gem 'authlogic'
 # authorization

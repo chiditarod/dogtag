@@ -38,7 +38,9 @@ en:
 
     race_form:
       name: Race Name
-      race_datetime: Date & Time
+      race_datetime: Race Date & Time
+      registration_open: Registration Open
+      registration_close: Registration Close
       max_teams: Maximum Teams
       people_per_team: People per team
       save: Save
