@@ -5,7 +5,7 @@ describe Race do
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
-      Race.create(valid_race).should be_valid
+      FactoryGirl.create(:race).should be_valid
     end
 
     it 'fails without valid datetimes' do
@@ -78,6 +78,12 @@ describe Race do
     end
   end
 
-
+  describe '#self.find_registerable_races' do
+    it 'returns races that are open and registerable' do
+      today = DateTime.parse "2014-02-01 00:00:00"
+      open_race1 = FactoryGirl.create :race
+      closed_race1 = FactoryGirl.create :race, :registration_close => (today - 1.week)
+    end
+  end
 
 end

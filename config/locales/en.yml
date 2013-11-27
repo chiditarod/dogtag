@@ -37,8 +37,8 @@ en:
       races: Races
 
     race_form:
-      name: Race Name
-      race_datetime: Race Date & Time
+      name: Name
+      race_datetime: Date & Time
       registration_open: Registration Open
       registration_close: Registration Close
       max_teams: Maximum Teams
