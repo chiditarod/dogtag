@@ -1,9 +1,8 @@
 require 'spec_helper'
 
 describe Registration do
-
-  let (:valid_person) { JSON.parse File.read 'spec/fixtures/valid_person.json' }
-  let (:valid_race)  { JSON.parse File.read 'spec/fixtures/valid_race.json' }
+  let (:valid_person) { FactoryGirl.attributes_for :person }
+  let (:valid_race)   { FactoryGirl.attributes_for :race }
 
   describe 'validates' do
     it 'that a team name, team and race are present' do

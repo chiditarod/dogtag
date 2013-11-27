@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Race do
-  let (:valid_race)  { JSON.parse File.read 'spec/fixtures/valid_race.json' }
+  let (:valid_race) { FactoryGirl.attributes_for :race }
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
@@ -77,5 +77,7 @@ describe Race do
       @race.full?.should be_false
     end
   end
+
+
 
 end

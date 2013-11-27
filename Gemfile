@@ -48,7 +48,8 @@ group :development do
 end
 
 group :test do
-  gem 'webmock'
+  gem 'webmock', '1.15.2'
+  gem 'factory_girl_rails', '4.3.0'
 end
 
 group :test, :development do

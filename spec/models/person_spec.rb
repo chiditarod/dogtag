@@ -1,8 +1,7 @@
 require 'spec_helper'
 
 describe Person do
-
-  let (:valid_person) { JSON.parse File.read 'spec/fixtures/valid_person.json' }
+  let (:valid_person) { FactoryGirl.attributes_for :person }
 
   describe 'validates' do
     it 'success with all required parameters' do
