@@ -11,7 +11,7 @@ describe RacesController do
     end
 
     it 'sets the race object and returns 200' do
-      race = Race.create valid_race
+      race = FactoryGirl.create :race
       get :show, :id => race.id
       response.status.should == 200
       assigns(:race).should == race
@@ -25,7 +25,8 @@ describe RacesController do
     end
 
     it 'updates the race and redirects to the race edit page' do
-      race = Race.create valid_race
+      race = FactoryGirl.create :race
+      get :show, :id => race.id
       patch :update, :id => race.id, :race => {:max_teams => 200}
       response.status.should == 302
       race.reload.max_teams.should == 200
