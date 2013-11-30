@@ -10,17 +10,17 @@
   .col-xs-3
     = t('.race_datetime')
   .col-xs-9
-    = human_readable @race.race_datetime
+    = human_readable_short @race.race_datetime
 .row
   .col-xs-3
     = t('.registration_open')
   .col-xs-9
-    = human_readable @race.registration_open
+    = human_readable_short @race.registration_open
 .row
   .col-xs-3
     = t('.registration_close')
   .col-xs-9
-    = human_readable @race.registration_close
+    = human_readable_short @race.registration_close
 .row
   .col-xs-3
     = t('.max_teams')

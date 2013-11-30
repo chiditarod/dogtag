@@ -7,7 +7,6 @@ FactoryGirl.define do
     max_teams 10
     people_per_team 5
 
-
     #factory :full_race do
       #after_create do |race|
         #max_teams.times do |x|
@@ -18,5 +17,4 @@ FactoryGirl.define do
     #end
 
   end
-
 end
