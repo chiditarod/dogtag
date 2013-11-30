@@ -15,11 +15,23 @@ class Race < ActiveRecord::Base
     registrations.count == max_teams
   end
 
+  def not_full?
+    !full?
+  end
+
   def open?
     now = Time.now
     return false if now < registration_open
     return false if registration_close < now
     true
+  end
+
+  class << self
+    def find_registerable_races
+      Race.all.select do |race|
+        race if (race.open? && race.not_full?)
+      end
+    end
   end
 
 end

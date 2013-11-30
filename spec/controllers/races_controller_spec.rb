@@ -62,12 +62,12 @@ describe RacesController do
 
   describe '#index' do
     it 'returns http success and an array of all races' do
-      race1 = Race.create valid_race.merge(:name => 'race1')
-      race2 = Race.create valid_race.merge(:name => 'race2')
-      race3 = Race.create valid_race.merge(:name => 'race3')
+      race1 = FactoryGirl.create :race, :name => 'race1'
+      race2 = FactoryGirl.create :race, :name => 'race2'
+      race3 = FactoryGirl.create :race, :name => 'race3'
       get :index
       response.should be_success
-      expect(assigns(:races)).to eq [race1, race2, race3]
+      expect(assigns :races).to eq [race1, race2, race3]
     end
   end
 

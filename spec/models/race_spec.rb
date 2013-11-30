@@ -78,14 +78,25 @@ describe Race do
     end
   end
 
-  #describe '#self.find_registerable_races' do
-    #it 'returns races that are open and registerable' do
-      #today = DateTime.parse "2014-02-01 00:00:00"
-      #open_race1 = FactoryGirl.create :race
-      #closed_race = FactoryGirl.create :race, :registration_close => (today - 1.week)
-      #full_race = FactoryGirl.create :race
-       #open_race2 = FactoryGirl.create :race, :registration_close => (today + 1.week)
-    #end
-  #end
+  describe '#self.find_registerable_races' do
+    it 'returns races that are open and registerable' do
+      double(Time.now) { today }
+      #Time.should_receive(:now).and_return(today)
+      closed_race = FactoryGirl.create :race, :name => 'closed race, its today!'
+      open_race1 = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      open_race2 = FactoryGirl.create :race, :name => 'open race 2', :race_datetime => (today + 6.weeks), :registration_open =>(today - 1.week), :registration_close => (today + 1.day)
+      full_race = FactoryGirl.create :race, :name => 'full race', :race_datetime => (today + 6.weeks), :registration_open => (today - 1.day), :registration_close => (today + 2.weeks)
+      full_race.max_teams.times do |x|
+        full_race.registrations.create name: "team#{x}", team: Team.create
+      end
+      result = Race.find_registerable_races
+      result.should == [open_race1, open_race2]
+      result.should_not include(closed_race, full_race)
+
+      Race.find_registerable_races.should == [open_race1, open_race2]
+      Race.find_registerable_races.should_not include(closed_race, full_race)
+
+    end
+  end
 
 end
