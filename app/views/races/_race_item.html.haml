@@ -8,7 +8,7 @@
 - if race.registerable?
   %h5
     = t '.registration_closes_on'
-    = race.registration_close.strftime "%B %e #{t('.at')} %l:%M %p"
+    = human_readable race.registration_close
 
   %h5
     = distance_of_time_in_words race.closes_in

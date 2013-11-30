@@ -28,6 +28,8 @@ en:
   update_failed: Update failed.
   update_success: Successfully updated.
 
+  at: at
+
   races:
     race_not_found: Race not found.
 
@@ -37,10 +39,10 @@ en:
 
     race_item:
       of: of
-      at: at
       teams_registered: teams registered
       registration_closes_on: Registration closes on
       remaining: remaining
+      at: at
 
     race_form:
       name: Name

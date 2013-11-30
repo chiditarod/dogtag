@@ -12,4 +12,3 @@ describe FlashHelper do
   end
 
 end
-
