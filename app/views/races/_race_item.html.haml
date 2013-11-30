@@ -1,0 +1,23 @@
+%h3= link_to race.name, race_path(race.id)
+%h5
+  = race.registrations.count
+  = t '.of'
+  = race.max_teams
+  = t '.teams_registered'
+
+- if race.registerable?
+  %h5
+    = t '.registration_closes_on'
+    = race.registration_close.strftime "%B %e #{t('.at')} %l:%M %p"
+
+  %h5
+    = distance_of_time_in_words race.closes_in
+    = t('.remaining')
+- else
+  %h5
+    = t('.open?')
+    = race.open?
+  %h5
+    = t('.full?')
+    = race.full?
+

@@ -61,13 +61,16 @@ describe RacesController do
   end
 
   describe '#index' do
-    it 'returns http success and an array of all races' do
-      race1 = FactoryGirl.create :race, :name => 'race1'
-      race2 = FactoryGirl.create :race, :name => 'race2'
-      race3 = FactoryGirl.create :race, :name => 'race3'
+    it 'returns http success and an array of all races open for registration' do
+      #todo dry this up with the stuff in race_spec.rb
+      today = Time.now
+      double(Time.now) { today }
+      closed_race = FactoryGirl.create :race, :name => 'closed race, its today!'
+      open_race1 = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      open_race2 = FactoryGirl.create :race, :name => 'open race 2', :race_datetime => (today + 6.weeks), :registration_open =>(today - 1.week), :registration_close => (today + 1.day)
       get :index
       response.should be_success
-      expect(assigns :races).to eq [race1, race2, race3]
+      expect(assigns :races).to eq [open_race1, open_race2]
     end
   end
 

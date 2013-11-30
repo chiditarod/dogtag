@@ -34,7 +34,13 @@ en:
     index:
       no_races: No races present in the system.
       create_race: Create one now!
-      races: Races
+
+    race_item:
+      of: of
+      at: at
+      teams_registered: teams registered
+      registration_closes_on: Registration closes on
+      remaining: remaining
 
     race_form:
       name: Name

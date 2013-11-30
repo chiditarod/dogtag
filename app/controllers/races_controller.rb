@@ -15,7 +15,8 @@ class RacesController < ApplicationController
   alias edit show
 
   def index
-    @races = Race.all
+    @races = Race.find_registerable_races
+    @all_races = Race.all
   end
 
   def new

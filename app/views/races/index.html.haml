@@ -1,13 +1,19 @@
 
 .page-header
-  %h1= t('.races')
+  %h1= t('.open_races')
 
+  - if @races.blank?
+    = t '.no_races'
+  - else
+    %ul
+      - @races.each do |race|
+        %li= render 'race_item', :race => race
 
-- if @races.blank?
-  = t('.no_races')
-  = link_to t('.create_race'), new_race_path
-- else
-  %ul
-    - @races.each do |race|
-      %li= link_to race.name, race_path(race.id)
-
+  %h1= t('.all_races')
+  - if @all_races.blank?
+    = t '.no_races'
+    = link_to t('.create_race'), new_race_path
+  - else
+    %ul
+      - @all_races.each do |race|
+        %li= render 'race_item', :race => race

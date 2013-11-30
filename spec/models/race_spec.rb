@@ -60,6 +60,19 @@ describe Race do
     end
   end
 
+  describe '#closes_in' do
+    it 'returns false if the race is not registerable' do
+      closed_race = FactoryGirl.create :race, :name => 'closed race, its today!'
+      expect(closed_race.closes_in).to eq(false)
+    end
+
+    it 'returns the time between now and registration_close' do
+      double(Time.now) { today }
+      race = FactoryGirl.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      race.closes_in.should == 2.weeks.round
+    end
+  end
+
   describe '#full?' do
     before do
       @race = FactoryGirl.create :race
@@ -78,24 +91,54 @@ describe Race do
     end
   end
 
+  #todo - dry all of these up
+  describe '#registerable?' do
+    it 'returns true if race is open and not full' do
+      double(Time.now) { today }
+      race = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      race.registerable?.should == true
+    end
+    it 'returns false if race is closed and not full' do
+      closed_race = FactoryGirl.create :race, :name => 'closed race, its today!'
+      closed_race.registerable?.should == false
+    end
+    it 'returns false if race is open and full' do
+      double(Time.now) { today }
+      full_race = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      fill_up full_race
+      full_race.registerable?.should == false
+    end
+    it 'returns false if race is closed and full' do
+      closed_full_race = FactoryGirl.create :race, :name => 'closed race, its today!'
+      fill_up closed_full_race
+      closed_full_race.registerable?.should == false
+    end
+  end
+
   describe '#self.find_registerable_races' do
     it 'returns races that are open and registerable' do
+      #todo dry this up with the stuff in races_controller_spec.rb
       double(Time.now) { today }
-      #Time.should_receive(:now).and_return(today)
       closed_race = FactoryGirl.create :race, :name => 'closed race, its today!'
       open_race1 = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
       open_race2 = FactoryGirl.create :race, :name => 'open race 2', :race_datetime => (today + 6.weeks), :registration_open =>(today - 1.week), :registration_close => (today + 1.day)
       full_race = FactoryGirl.create :race, :name => 'full race', :race_datetime => (today + 6.weeks), :registration_open => (today - 1.day), :registration_close => (today + 2.weeks)
-      full_race.max_teams.times do |x|
-        full_race.registrations.create name: "team#{x}", team: Team.create
-      end
+      fill_up full_race
       result = Race.find_registerable_races
       result.should == [open_race1, open_race2]
       result.should_not include(closed_race, full_race)
 
       Race.find_registerable_races.should == [open_race1, open_race2]
       Race.find_registerable_races.should_not include(closed_race, full_race)
+    end
+  end
 
+  private
+
+  # create enough registrations to max the number available
+  def fill_up(race)
+    race.max_teams.times do |x|
+      race.registrations.create name: "team#{x}", team: Team.create
     end
   end
 

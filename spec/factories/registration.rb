@@ -4,7 +4,7 @@ FactoryGirl.define do
     description 'Team Description'
     twitter '@foo'
 
-    #association :race
+    association :race
     association :team
   end
 end

@@ -26,10 +26,19 @@ class Race < ActiveRecord::Base
     true
   end
 
+  def registerable?
+    not_full? && open?
+  end
+
+  def closes_in
+    return false unless registerable?
+    (registration_close - Time.now).round
+  end
+
   class << self
     def find_registerable_races
       Race.all.select do |race|
-        race if (race.open? && race.not_full?)
+        race if race.registerable?
       end
     end
   end
