@@ -1,10 +1,20 @@
 RailsSkeleton::Application.routes.draw do
 
+  # todo: remove mush
   get "teams/mush"
+
+  # root
   match "/" => 'races#index', :via => [:get], :as => :home
 
   #resources :teams, :only => [:index, :new, :create, :show, :edit]
   resources :races, :only => [:index, :new, :create, :show, :edit, :update]
+
+  # user account system
+  resources :users
+  #get     'login(.:format)'   => 'user_session#new',      :as => :login
+  #post    'login(.:format)'   => 'user_session#create',   :as => :login
+  #delete  'logout(.:format)'  => 'user_session#destroy',  :as => :logout
+
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".
