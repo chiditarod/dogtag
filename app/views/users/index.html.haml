@@ -1,6 +1,6 @@
-%h1 Listing users
+%h1 User list
 
-%table
+%table.table.table-bordered.table-hover
   %tr
     %th Name
     %th
@@ -17,5 +17,4 @@
       %td= link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
 
 %br
-
 = link_to 'New user', new_user_path

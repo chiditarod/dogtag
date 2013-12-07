@@ -1,7 +1,7 @@
 = form_for @user do |f|
   -if @user.errors.any?
-    #errorExplanation
-      %h2= "#{pluralize(@user.errors.count, "error")} prohibited this user from being saved:"
+    .alert-danger
+      %h4= "#{pluralize(@user.errors.count, "issues")} detected:"
       %ul
         - @user.errors.full_messages.each do |msg|
           %li= msg

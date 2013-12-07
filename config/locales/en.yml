@@ -30,6 +30,11 @@ en:
 
   at: at
 
+  admin: Admin
+  users: Users
+  list: List
+  new: New
+
   races:
     race_not_found: Race not found.
 

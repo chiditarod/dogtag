@@ -1,71 +1,56 @@
 class UsersController < ApplicationController
   before_filter :require_user, :except => [:new, :create]
 
-  respond_to :html, :json
+  respond_to :html
 
-  # GET /users
   def index
     @users = User.all
-    respond_with @users
   end
 
-  # GET /users/1
   def show
-    @user = User.find(params[:id])
-    respond_with @user
+    @user = @current_user
   end
 
-  # GET /users/new
   def new
     @user = User.new
-    respond_with @user
   end
 
-  # GET /users/1/edit
   def edit
     @user = User.find(params[:id])
   end
 
-  # POST /users
   def create
     @user = User.new user_params
-
-
-    respond_to do |format|
-      if @user.save
-        format.html { redirect_to(@user, :notice => 'User was successfully created.') }
-        format.json  { render :json => @user, :status => :created, :location => @user }
-      else
-        format.html { render :action => "new" }
-        format.json  { render :json => @user.errors, :status => :unprocessable_entity }
-      end
+    if @user.save
+      flash[:notice] = I18n.t('create_success')
+      redirect_back_or_default account_url
+    else
+      flash.now[:error] = [t('create_failed')]
+      flash.now[:error] << @user.errors.messages
+      render :action => :new
     end
   end
 
-  # PUT /users/1
   def update
-    @user = User.find(params[:id])
-
-    respond_to do |format|
-      if @user.update_attributes(user_params)
-        format.html { redirect_to(@user, :notice => 'User was successfully updated.') }
-        format.json  { head :ok }
-      else
-        format.html { render :action => "edit" }
-        format.json  { render :json => @user.errors, :status => :unprocessable_entity }
-      end
+    @user = @current_user
+    if @user.update_attributes(user_params)
+      flash[:notice] = 'User was successfully updated.'
+      redirect_to account_url
+    else
+      flash.now[:error] = [t('update_failed')]
+      flash.now[:error] << @user.errors.messages
+      render :action => :edit
     end
   end
 
-  # DELETE /users/1
   def destroy
     @user = User.find(params[:id])
-    @user.destroy
-
-    respond_to do |format|
-      format.html { redirect_to users_path }
-      format.json  { head :ok }
+    if @user.destroy
+      flash[:notice] = 'User was successfully deleted.'
+    else
+      flash[:error] = 'User could not be deleted.'
     end
+    redirect_to users_path
   end
 
   private
