@@ -1,20 +1,16 @@
-class UserSessionController < ApplicationController
+class UserSessionsController < ApplicationController
   before_filter :require_no_user, :only => [:new, :create]
   before_filter :require_user, :only => :destroy
 
+  respond_to :html, :json
+
   # GET /login
-  # GET /login.xml
   def new
     @user_session = UserSession.new
-
-    respond_to do |format|
-      format.html # new.html.haml
-      format.xml  { render :xml => @user_session }
-    end
+    respond_with @user_session
   end
 
   # POST /login
-  # POST /login.xml
   def create
     @user_session = UserSession.new(params[:user_session])
     if @user_session.save
@@ -26,7 +22,6 @@ class UserSessionController < ApplicationController
   end
 
   # DELETE /logout
-  # DELETE /logout.xml
   def destroy
     @user_session = UserSession.find
     @user_session.destroy

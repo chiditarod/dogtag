@@ -11,9 +11,14 @@ RailsSkeleton::Application.routes.draw do
 
   # user account system
   resources :users
-  #get     'login(.:format)'   => 'user_session#new',      :as => :login
-  #post    'login(.:format)'   => 'user_session#create',   :as => :login
-  #delete  'logout(.:format)'  => 'user_session#destroy',  :as => :logout
+
+  # user sessions
+  get :login, :to => 'user_sessions#new'
+  post :login, :to => 'user_sessions#create'
+  delete :logout, :to => 'user_session#destroy'
+
+
+
 
 
   # The priority is based upon order of creation: first created -> highest priority.
