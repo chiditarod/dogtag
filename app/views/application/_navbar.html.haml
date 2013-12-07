@@ -14,21 +14,28 @@
       .navbar-collapse.collapse
         %ul.nav.navbar-nav
           %li
-            = link_to t('.races'), races_path
-          %li.dropdown
-            %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-              = I18n.t 'admin'
-              %b.caret
-            %ul.dropdown-menu
-              %li.dropdown-header= t('users')
-              %li= link_to t('list'), users_path
-              %li= link_to t('new'), new_user_path
-              %li.divider
+
+            = link_to races_path do
+              %i.fa.fa-shopping-cart.fa-fw
+              =t '.races'
+
+
+          - if current_user && true
+            %li.dropdown
+              %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+                = I18n.t 'admin'
+                %b.caret
+              %ul.dropdown-menu
+                %li.dropdown-header= t('users')
+                %li= link_to t('list'), users_path
+                %li= link_to t('new'), new_user_path
+                %li.divider
 
         %ul.nav.navbar-nav.navbar-right
           %li.dropdown
             %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
               - if current_user
+                %i.fa.fa-fw.fa-user
                 = current_user.first_name
                 %b.caret
                 %ul.dropdown-menu
@@ -40,6 +47,6 @@
 
           -#%li.active
             -#%a{href: "./"} Active
-          -#%li
-            -#%a{href: "http://github.com/ometa/dogtag/"} GitHub
-
+          %li
+            = link_to "http://github.com/ometa/dogtag/" do
+              %span.fa.fa-lg.fa-github

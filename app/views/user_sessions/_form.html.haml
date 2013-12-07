@@ -5,15 +5,26 @@
       %ul
         - @user_session.errors.full_messages.each do |msg|
           %li= msg
-
-  .field
-    = f.label :email
-    = f.text_field :email
-  .field
-    = f.label :password
-    = f.password_field :password
+  .input-group.margin-bottom-sm
+    %span.input-group-addon
+      %i.fa.fa-fw.fa-envelope
+    = f.text_field :email, :class => 'form-control'
+  .input-group
+    %span.input-group-addon
+      %i.fa.fa-fw.fa-key
+    = f.password_field :password, :class => 'form-control'
   .field
     = f.check_box :remember_me
     = f.label :remember_me
   .action
-    = f.submit "Login"
+    = f.submit "Login", :class => ['btn', 'btn-default']
+
+
+    -#<div class="input-group margin-bottom-sm">
+  -#<span class="input-group-addon"><i class="fa fa-envelope-o fa-fw"></i></span>
+  -#<input class="form-control" type="text" placeholder="Email address">
+-#</div>
+-#<div class="input-group">
+  -#<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
+  -#<input class="form-control" type="password" placeholder="Password">
+-#</div>
