@@ -1,28 +1,35 @@
-= form_for @user do |f|
-  -if @user.errors.any?
-    .alert-danger
-      %h4= "#{pluralize(@user.errors.count, "issues")} detected:"
-      %ul
-        - @user.errors.full_messages.each do |msg|
-          %li= msg
-
-  .field
-    = f.label :first_name
-    = f.text_field :first_name
-  .field
-    = f.label :last_name
-    = f.text_field :last_name
-  .field
-    = f.label :email
-    = f.text_field :email
-  .field
-    = f.label :phone
-    = f.text_field :phone
-  .field
-    = f.label :password
-    = f.password_field :password
-  .field
-    = f.label :password_confirmation
-    = f.password_field :password_confirmation
-  .actions
-    = f.submit 'Save'
+.col-sm-8
+  = form_for @user, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+    -if @user.errors.any?
+      .alert-danger
+        %h4= "#{pluralize(@user.errors.count, "issues")} detected:"
+        %ul
+          - @user.errors.full_messages.each do |msg|
+            %li= msg
+    .form-group
+      = label_tag :name, t('.first_name'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.text_field :first_name, :class => 'form-control'
+    .form-group
+      = label_tag :name, t('.last_name'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.text_field :last_name, :class => 'form-control'
+    .form-group
+      = label_tag :name, t('.email'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.text_field :email, :class => 'form-control'
+    .form-group
+      = label_tag :name, t('.phone'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.text_field :phone, :class => 'form-control'
+    .form-group
+      = label_tag :name, t('.password'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.password_field :password, :class => 'form-control'
+    .form-group
+      = label_tag :name, t('.password_confirmation'), :class => ['col-sm-4', 'control-label']
+      .col-sm-8 
+        = f.password_field :password_confirmation, :class => 'form-control'
+    .form-group
+      .col-sm-offset-4.col-sm-8
+        = f.submit 'Save', :class => ['btn', 'btn-default']
