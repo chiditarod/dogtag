@@ -40,8 +40,14 @@
                 %b.caret
                 %ul.dropdown-menu
                   %li.dropdown-header= t 'your_account'
-                  %li= link_to "Edit Profile", edit_user_path(current_user)
-                  %li= link_to "Logout", user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'}
+                  %li
+                    = link_to edit_user_path(current_user) do
+                      %i.fa.fa-edit.fa-fw
+                      Edit Profile
+                  %li
+                    = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
+                      %i.fa.fa-sign-out.fa-fw
+                      Logout
           - else
             %li
               = link_to new_user_session_path do
