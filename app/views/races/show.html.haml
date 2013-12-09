@@ -4,7 +4,7 @@
     = @race.name
     %small
       = link_to edit_race_path @race do
-        %span.glyphicon.glyphicon-edit
+        %li.fa.fa-edit.fa-fw
 
 .row
   .col-xs-3
@@ -32,4 +32,7 @@
   .col-xs-9
     = @race.people_per_team
 
-
+- if @race.registerable?
+  .row
+    .col-xs-3
+      = link_to t("Register"), teams_url, :class => ['btn', 'btn-primary']

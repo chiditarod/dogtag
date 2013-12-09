@@ -3,13 +3,11 @@ class RacesController < ApplicationController
   respond_to :html
 
   def show
-    begin
-      @race = Race.find params[:id]
-      respond_with @race
-    rescue ActiveRecord::RecordNotFound
-      flash[:error] = t('race_not_found')
-      return redirect_to races_path
-    end
+    @race = Race.find params[:id]
+    respond_with @race
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = t('race_not_found')
+    return redirect_to races_path
   end
 
   alias edit show
@@ -37,20 +35,18 @@ class RacesController < ApplicationController
   end
 
   def update
-    begin
-      race = Race.find params[:id]
-      success = race.update_attributes race_params
-      if success
-        flash[:notice] = t('update_success')
-      else
-        flash.now[:error] = [t('update_failed')]
-        flash.now[:error] << race.errors.messages
-      end
-      redirect_to edit_race_path
-    rescue ActiveRecord::RecordNotFound
-      flash.now[:error] = t('race_not_found')
-      return render :status => 400
+    race = Race.find params[:id]
+    success = race.update_attributes race_params
+    if success
+      flash[:notice] = t('update_success')
+    else
+      flash.now[:error] = [t('update_failed')]
+      flash.now[:error] << race.errors.messages
     end
+    redirect_to edit_race_path
+  rescue ActiveRecord::RecordNotFound
+    flash.now[:error] = t('race_not_found')
+    return render :status => 400
   end
 
   private

@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
 
     def current_user_session
       return @current_user_session if defined? @current_user_session
+      # todo - this is deprecated
       @current_user_session = UserSession.find
     end
 
@@ -36,7 +37,7 @@ class ApplicationController < ActionController::Base
     end
 
     def store_location
-      session[:return_to] = request.request_uri
+      session[:return_to] = request.url
       logger.info "-----------------"
       logger.info session[:return_to]
       logger.info "-----------------"

@@ -7,7 +7,7 @@ source 'https://rubygems.org'
 gem 'bootstrap-sass'
 
 # authentication
-gem 'authlogic'
+gem 'authlogic', '3.3.0'
 # authorization
 gem 'cancan'
 

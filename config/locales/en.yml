@@ -35,20 +35,21 @@ en:
   list: List
   new: New
 
+  users:
+    show:
+      user_not_found: User not found.
+
   races:
     race_not_found: Race not found.
-
     index:
       no_races: No races present in the system.
       create_race: Create one now!
-
     race_item:
       of: of
       teams_registered: teams registered
       registration_closes_on: Registration closes on
       remaining: remaining
       at: at
-
     race_form:
       name: Name
       race_datetime: Date & Time
@@ -57,18 +58,14 @@ en:
       max_teams: Maximum Teams
       people_per_team: People per team
       save: Save
-
     new:
       new_race: Create a new race
-
     create:
       new_race: Create a new race
-
     show:
       race_datetime: Date & Time
       max_teams: Maximum Teams
       people_per_team: People per Team
-
     edit:
       edit_race: Edit Race
 

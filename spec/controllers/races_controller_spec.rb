@@ -83,4 +83,8 @@ describe RacesController do
     end
   end
 
+  describe '#destroy' do
+    it 'destroys a particular race'
+  end
+
 end

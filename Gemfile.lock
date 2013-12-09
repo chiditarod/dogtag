@@ -163,7 +163,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  authlogic
+  authlogic (= 3.3.0)
   bootstrap-sass
   cancan
   capistrano

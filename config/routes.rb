@@ -5,7 +5,7 @@ RailsSkeleton::Application.routes.draw do
 
   root :controller => 'races', :action => "index", :as => :home
 
-  #resources :teams, :only => [:index, :new, :create, :show, :edit]
+  resources :teams, :only => [:index, :new, :create, :show, :edit]
   resources :races, :only => [:index, :new, :create, :show, :edit, :update]
 
   # user accounts
