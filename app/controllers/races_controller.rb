@@ -36,8 +36,7 @@ class RacesController < ApplicationController
 
   def update
     race = Race.find params[:id]
-    success = race.update_attributes race_params
-    if success
+    if race.update_attributes(race_params)
       flash[:notice] = t('update_success')
     else
       flash.now[:error] = [t('update_failed')]
@@ -47,6 +46,20 @@ class RacesController < ApplicationController
   rescue ActiveRecord::RecordNotFound
     flash.now[:error] = t('race_not_found')
     return render :status => 400
+  end
+
+  def destroy
+    @race = Race.where(:id => params[:id]).first
+    return render :status => 400 if @race.nil?
+
+    if @race.destroy
+      flash[:notice] = t '.destroy_success'
+    else
+      flash[:error] = t '.destroy_failed'
+    end
+    redirect_to races_path
+  rescue ActiveRecord::RecordNotFound
+    render :status => 400
   end
 
   private

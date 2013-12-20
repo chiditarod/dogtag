@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe RacesController do
-  let (:valid_race)  { FactoryGirl.attributes_for :race }
+  let (:valid_race)  { FactoryGirl.create :race }
+  let (:valid_race_hash)  { FactoryGirl.attributes_for :race }
 
   describe '#show' do
     it 'redirects to the race index and sets flash error if a race is not found' do
@@ -42,7 +43,7 @@ describe RacesController do
     it 'returns 200 and sets flash[:error] when required params are missing' do
       required = [:name, :race_datetime, :max_teams, :people_per_team, :registration_open, :registration_close]
       required.each do |param|
-        bad_payload = valid_race.dup
+        bad_payload = valid_race_hash.dup
         bad_payload.delete param
         post :create, :race => bad_payload
         response.status.should == 200
@@ -53,7 +54,7 @@ describe RacesController do
 
     it 'creates a new race and returns 200' do
       expect do
-        post :create, :race => valid_race
+        post :create, :race => valid_race_hash
         response.status.should == 200
       end.to change(Race, :count).by 1
     end
@@ -84,7 +85,22 @@ describe RacesController do
   end
 
   describe '#destroy' do
-    it 'destroys a particular race'
+    it 'returns 400 if the race id is not valid' do
+      delete :destroy, :id => 99
+      response.status.should == 400
+    end
+
+    it 'destroys a race, sets flash, and redirects to races index' do
+      dying_race = FactoryGirl.create :race, :name => "Delete Me"
+      expect do
+        delete :destroy, :id => dying_race.id
+        flash[:notice].should == 'Race deleted.'
+        response.should redirect_to races_path
+      end.to change(Race, :count).by(-1)
+    end
+
+    # todo: figure out how to mock the delete failing
+    it 'sets flash error and redirects if delete fails'
   end
 
 end

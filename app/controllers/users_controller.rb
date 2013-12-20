@@ -46,20 +46,21 @@ class UsersController < ApplicationController
     end
     redirect_to edit_user_path
   rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('user_not_found')
+    flash.now[:error] = t('.user_not_found')
     render :status => 400
   end
 
   def destroy
     @user = User.where(:id => params[:id]).first
+    return render :status => 400 if @user.nil?
+
     if @user.destroy
-      flash[:notice] = 'User was successfully deleted.'
+      flash[:notice] = t '.delete_success'
     else
-      flash[:error] = 'User could not be deleted.'
+      flash[:error] = t '.delete_failed'
     end
     redirect_to users_path
   rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('user_not_found')
     render :status => 400
   end
 

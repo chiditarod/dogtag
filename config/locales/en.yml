@@ -35,9 +35,20 @@ en:
   list: List
   new: New
 
+  user_sessions:
+    create:
+      login_success: Login successful.
+      logout_success: Logout successful.
+      login_failed: Login failed.
+
   users:
+    edit:
+      user_not_found: User not found.
     show:
       user_not_found: User not found.
+    destroy:
+      delete_success: User deleted.
+      delete_failed: User deletion failed.
 
   races:
     race_not_found: Race not found.
@@ -68,11 +79,7 @@ en:
       people_per_team: People per Team
     edit:
       edit_race: Edit Race
-
-
-
-
-
-
-
+    destroy:
+      destroy_success: Race deleted.
+      destroy_failed: Race deletion failed.
 
