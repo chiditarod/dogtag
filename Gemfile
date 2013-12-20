@@ -1,20 +1,30 @@
 source 'https://rubygems.org'
 
 # -------------------------------------------------------
-# BEGIN mush-central specific gems
+# rails-skeleton
 
 # bootstrap 3.0
 gem 'bootstrap-sass'
 
-# authentication
-gem 'authlogic', '3.3.0'
-# authorization
-gem 'cancan'
+# -------------------------------------------------------
+# BEGIN dogtag gems
 
+# authentication
+gem 'authlogic',
+  :git => 'git://github.com/binarylogic/authlogic',
+  :ref => 'abc09970ed1fad98c6c12f4ca64d1670d37d11db'
+
+# authorization
+gem 'cancan', '1.6.10'
+
+# Payment stuff
+gem 'activemerchant', '1.42.3'
+
+# END dogtag gems
 # -------------------------------------------------------
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.0.1'
+gem 'rails', '4.0.2'
 
 # Use sqlite3 as the database for Active Record
 gem 'sqlite3'
