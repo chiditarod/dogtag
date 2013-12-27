@@ -1,21 +1,21 @@
 class RacesController < ApplicationController
-
+  before_filter :require_user, :except => [:index, :show]
   respond_to :html
-
-  def show
-    @race = Race.find params[:id]
-    respond_with @race
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('race_not_found')
-    return redirect_to races_path
-  end
-
-  alias edit show
 
   def index
     @races = Race.find_registerable_races
     @all_races = Race.all
   end
+
+  def show
+    @race = Race.find params[:id]
+    respond_with @race
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = t('not_found')
+    redirect_to races_path
+  end
+
+  alias edit show
 
   def new
     @race = Race.new
@@ -44,7 +44,7 @@ class RacesController < ApplicationController
     end
     redirect_to edit_race_path
   rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('race_not_found')
+    flash.now[:error] = t('not_found')
     return render :status => 400
   end
 

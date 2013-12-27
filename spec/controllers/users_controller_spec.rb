@@ -6,35 +6,29 @@ describe UsersController do
   let(:valid_user_hash) { FactoryGirl.attributes_for :user }
 
   context 'when logged out' do
-
     describe '#index' do
       it 'redirects to login' do
-        get :index
-        response.should be_redirect
+        get :index; response.should be_redirect
       end
     end
     describe '#show' do
       it 'redirects to login' do
-        get :show
-        response.should be_redirect
+        get :show; response.should be_redirect
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit
-        response.should be_redirect
+        get :edit, :id => 1; response.should be_redirect
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update
-        response.should be_redirect
+        patch :update, :id => 1; response.should be_redirect
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy
-        response.should be_redirect
+        delete :destroy, :id => 1; response.should be_redirect
       end
     end
 
@@ -74,7 +68,7 @@ describe UsersController do
 
   end
 
-  context 'when logged in' do
+  context '[logged in]' do
     before do
       activate_authlogic
       mock_login! valid_user
@@ -103,7 +97,7 @@ describe UsersController do
       it 'redirects to user index and sets flash error if user id is invalid' do
         get :show, :id => 99
         response.should be_redirect
-        flash[:error].should == "User not found."
+        flash[:error].should == I18n.t('not_found')
       end
 
       it 'sets the user object and returns 200' do
@@ -117,7 +111,7 @@ describe UsersController do
       it 'redirects to user index and sets flash error if user id is invalid' do
         get :edit, :id => 99
         response.should be_redirect
-        flash[:error].should == "User not found."
+        flash[:error].should == I18n.t('not_found')
       end
 
       it 'sets the user object and returns 200' do
@@ -146,7 +140,7 @@ describe UsersController do
       it 'updates the user, sets flash, and redirects' do
         patch :update, :id => @user2.id, :user => {:phone => '123'}
         @user2.reload.phone.should == '123'
-        flash[:notice].should == 'User was successfully updated.'
+        flash[:notice].should == I18n.t('update_success')
         response.status.should == 302
       end
     end
@@ -160,7 +154,7 @@ describe UsersController do
       it 'destroys a user, sets flash, and redirects to users index' do
         expect do
           delete :destroy, :id => @user2.id
-          flash[:notice].should == 'User deleted.'
+          flash[:notice].should == I18n.t('delete_success')
           response.should redirect_to users_path
         end.to change(User, :count).by(-1)
       end

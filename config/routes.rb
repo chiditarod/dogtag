@@ -1,11 +1,8 @@
 RailsSkeleton::Application.routes.draw do
 
-  # todo: remove mush
-  get "teams/mush"
-
   root :controller => 'races', :action => "index", :as => :home
 
-  resources :teams, :only => [:index, :new, :create, :show, :edit]
+  resources :teams
   resources :races
 
   # user accounts

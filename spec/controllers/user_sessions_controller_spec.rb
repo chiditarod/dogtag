@@ -4,14 +4,14 @@ describe UserSessionsController do
 
   let(:user_session) { FactoryGirl.create :user_session }
   let(:user_session_hash) { FactoryGirl.attributes_for :user_session }
-  let(:mock_session) { UserSession.new }
 
   describe '#new' do
-    it 'returns http success and calls UserSession.new'# do
-      #UserSession.should_receive(:new).and_return mock_session
-      #get :new
-      #response.status.should == 200
-    #end
+    it 'returns http success and calls UserSession.new' do
+      session_stub = UserSession.new
+      UserSession.should_receive(:new).at_least(1).times.and_return session_stub
+      get :new
+      response.should be_success
+    end
   end
 
   describe '#create' do

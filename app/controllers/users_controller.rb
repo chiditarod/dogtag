@@ -11,8 +11,8 @@ class UsersController < ApplicationController
     @user = User.find params[:id]
     respond_with @user
   rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('.user_not_found')
-    return redirect_to users_path
+    flash[:error] = t('not_found')
+    redirect_to users_path
   end
 
   alias edit show
@@ -39,14 +39,14 @@ class UsersController < ApplicationController
     user = User.where(:id => params[:id]).first
 
     if user.update_attributes user_params
-      flash[:notice] = 'User was successfully updated.'
+      flash[:notice] = I18n.t('update_success')
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << user.errors.messages
     end
     redirect_to edit_user_path
   rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('.user_not_found')
+    flash.now[:error] = t('not_found')
     render :status => 400
   end
 
@@ -55,9 +55,9 @@ class UsersController < ApplicationController
     return render :status => 400 if @user.nil?
 
     if @user.destroy
-      flash[:notice] = t '.delete_success'
+      flash[:notice] = t('delete_success')
     else
-      flash[:error] = t '.delete_failed'
+      flash[:error] = t('delete_failed')
     end
     redirect_to users_path
   rescue ActiveRecord::RecordNotFound

@@ -55,6 +55,8 @@ gem 'jbuilder', '~> 1.2'
 
 group :development do
   gem 'capistrano'
+  #todo - remove after finished
+  gem 'factory_girl_rails', '4.3.0'
 end
 
 group :test do

@@ -27,6 +27,9 @@ en:
   create_success: Successfully created.
   update_failed: Update failed.
   update_success: Successfully updated.
+  delete_success: Deleted.
+  delete_failed: Deletion failed.
+  not_found: Not found.
 
   at: at
 
@@ -41,17 +44,7 @@ en:
       logout_success: Logout successful.
       login_failed: Login failed.
 
-  users:
-    edit:
-      user_not_found: User not found.
-    show:
-      user_not_found: User not found.
-    destroy:
-      delete_success: User deleted.
-      delete_failed: User deletion failed.
-
   races:
-    race_not_found: Race not found.
     index:
       no_races: No races present in the system.
       create_race: Create one now!
@@ -80,9 +73,9 @@ en:
     edit:
       edit_race: Edit Race
     destroy:
-      destroy_success: Race deleted.
-      destroy_failed: Race deletion failed.
+      #todo figure out why an expect block needs this
+      destroy_success: Deleted.
 
 
-  teams:
-    team_not_found: Team not found.
+
+
