@@ -14,12 +14,14 @@
 ActiveRecord::Schema.define(version: 20131121041232) do
 
   create_table "people", force: true do |t|
-    t.string  "first_name"
-    t.string  "last_name"
-    t.string  "email"
-    t.string  "phone"
-    t.string  "twitter"
-    t.integer "registration_id"
+    t.string   "first_name"
+    t.string   "last_name"
+    t.string   "email"
+    t.string   "phone"
+    t.string   "twitter"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "registration_id"
   end
 
   create_table "races", force: true do |t|
@@ -44,6 +46,7 @@ ActiveRecord::Schema.define(version: 20131121041232) do
   add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true
 
   create_table "teams", force: true do |t|
+    t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

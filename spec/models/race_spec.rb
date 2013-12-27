@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Race do
-  let (:valid_race) { FactoryGirl.attributes_for :race }
+  let (:valid_team) { FactoryGirl.create :team }
   let (:today) { Time.now }
 
   describe 'validation' do
@@ -10,9 +10,10 @@ describe Race do
     end
 
     it 'fails without valid datetimes' do
+      valid_race_hash = FactoryGirl.attributes_for :race
       dates = [:race_datetime, :registration_open, :registration_close]
       dates.each do |d|
-        Race.create(valid_race.merge d => 'abc').should_not be_valid
+        Race.create(valid_race_hash.merge d => 'abc').should_not be_valid
       end
     end
 
@@ -41,7 +42,7 @@ describe Race do
 
   describe '#open?' do
     before do
-      @race = Race.create(valid_race)
+      @race = FactoryGirl.create :race
     end
 
     it "returns false if today < open date" do
@@ -77,12 +78,13 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do |x|
-        @race.registrations.create name: "team#{x}", team: Team.create
+        team = FactoryGirl.create :team, :name => "team#{x}"
+        @race.registrations.create name: "team#{x}", team: team
       end
     end
 
     it 'returns true if the race is full' do
-      @race.registrations.create :name => "team", team: Team.create
+      @race.registrations.create :name => "team", team: valid_team
       @race.full?.should be_true
     end
 
@@ -138,8 +140,8 @@ describe Race do
   # create enough registrations to max the number available
   def fill_up(race)
     race.max_teams.times do |x|
-      race.registrations.create name: "team#{x}", team: Team.create
+      team = FactoryGirl.create :team, :name => "team#{x}"
+      race.registrations.create name: "team#{x}", team: team
     end
   end
-
 end

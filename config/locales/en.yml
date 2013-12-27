@@ -83,3 +83,6 @@ en:
       destroy_success: Race deleted.
       destroy_failed: Race deletion failed.
 
+
+  teams:
+    team_not_found: Team not found.
