@@ -30,20 +30,37 @@ en:
 
   at: at
 
+  admin: Admin
+  users: Users
+  list: List
+  new: New
+
+  user_sessions:
+    create:
+      login_success: Login successful.
+      logout_success: Logout successful.
+      login_failed: Login failed.
+
+  users:
+    edit:
+      user_not_found: User not found.
+    show:
+      user_not_found: User not found.
+    destroy:
+      delete_success: User deleted.
+      delete_failed: User deletion failed.
+
   races:
     race_not_found: Race not found.
-
     index:
       no_races: No races present in the system.
       create_race: Create one now!
-
     race_item:
       of: of
       teams_registered: teams registered
       registration_closes_on: Registration closes on
       remaining: remaining
       at: at
-
     race_form:
       name: Name
       race_datetime: Date & Time
@@ -52,25 +69,17 @@ en:
       max_teams: Maximum Teams
       people_per_team: People per team
       save: Save
-
     new:
       new_race: Create a new race
-
     create:
       new_race: Create a new race
-
     show:
       race_datetime: Date & Time
       max_teams: Maximum Teams
       people_per_team: People per Team
-
     edit:
       edit_race: Edit Race
-
-
-
-
-
-
-
+    destroy:
+      destroy_success: Race deleted.
+      destroy_failed: Race deletion failed.
 

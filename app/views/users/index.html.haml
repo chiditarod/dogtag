@@ -1,0 +1,20 @@
+%h1 User list
+
+%table.table.table-bordered.table-hover
+  %tr
+    %th Name
+    %th
+    %th
+    %th
+
+  - @users.each do |user|
+    %tr
+      %td
+        = user.first_name
+        = user.last_name
+      %td= link_to 'Show', user
+      %td= link_to 'Edit', edit_user_path(user)
+      %td= link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+
+%br
+= link_to 'New user', new_user_path

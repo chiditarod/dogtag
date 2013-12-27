@@ -1,0 +1,2 @@
+figure out why redirect_back_or_default doesn't work correctly 
+figure out a DRY way to spec which controller actions require login

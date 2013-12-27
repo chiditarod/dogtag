@@ -40,3 +40,14 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = "random"
 end
+
+# AuthLogic
+require 'authlogic/test_case'
+include Authlogic::TestCase
+
+def mock_login!(user)
+  user.should_not be_nil
+  session = UserSession.create!(user, false)
+  session.should be_valid
+  session.save
+end

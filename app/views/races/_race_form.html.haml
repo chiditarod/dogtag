@@ -1,26 +1,32 @@
 = form_for @race, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
   .form-group
-    = label_tag :name, t('.name'), :class => ['col-sm-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :name, t('.name')
     .col-sm-8
       = f.text_field :name, :class => 'form-control'
   .form-group
-    = label_tag :race_datetime, t('.race_datetime'), :class => ['col-sm-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :race_datetime, t('.race_datetime')
     .col-sm-8
       = f.datetime_select :race_datetime, :class => 'form-control'
   .form-group
-    = label_tag :registration_open, t('.registration_open'), :class => ['col-sm-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :registration_open, t('.registration_open')
     .col-sm-8
       = f.datetime_select :registration_open, :class => 'form-control'
   .form-group
-    = label_tag :registration_close, t('.registration_close'), :class => ['col-sm-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :registration_close, t('.registration_close')
     .col-sm-8
       = f.datetime_select :registration_close, :class => 'form-control'
   .form-group
-    = label_tag :max_teams, t('.max_teams'), :class => ['col-xs-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :max_teams, t('.max_teams')
     .col-xs-2
       = f.text_field :max_teams, :class => 'form-control'
   .form-group
-    = label_tag :people_per_team, t('.people_per_team'), :class => ['col-xs-4', 'control-label']
+    .col-sm-4.control-label
+      = label_tag :people_per_team, t('.people_per_team')
     .col-xs-2
       = f.text_field :people_per_team, :class => 'form-control'
   .form-group

@@ -13,32 +13,49 @@
 
       .navbar-collapse.collapse
         %ul.nav.navbar-nav
-          %li.active
-            %a{href: "/"} Home
           %li
-            = link_to t('.races'), races_path
-          %li.dropdown
-            %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-              Dropdown
-              %b.caret
-            %ul.dropdown-menu
-              %li
-                %a{href: "#"} Action
-              %li
-                %a{href: "#"} Another action
-              %li
-                %a{href: "#"} Something else here
-              %li.divider
-              %li.dropdown-header Nav header
-              %li
-                %a{href: "#"} Separated link
-              %li
-                %a{href: "#"} One more separated link
-        %ul.nav.navbar-nav.navbar-right
-          %li
-            %a{href: "../navbar/"} Default
-          %li.active
-            %a{href: "./"} Active
-          %li
-            %a{href: "http://github.com/ometa/dogtag/"} GitHub
+            = link_to races_path do
+              %i.fa.fa-shopping-cart.fa-fw
+              =t '.races'
 
+          - if current_user && true
+            %li.dropdown
+              %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+                %i.fa.fa-fw.fa-star-o
+                = t 'admin'
+                %b.caret
+              %ul.dropdown-menu
+                %li.dropdown-header= t 'users'
+                %li= link_to t('list'), users_path
+                %li= link_to t('new'), new_user_path
+                %li.divider
+
+        %ul.nav.navbar-nav.navbar-right
+
+          - if current_user
+            %li.dropdown
+              %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+                %i.fa.fa-fw.fa-user
+                = current_user.first_name
+                %b.caret
+                %ul.dropdown-menu
+                  %li.dropdown-header= t 'your_account'
+                  %li
+                    = link_to edit_user_path(current_user) do
+                      %i.fa.fa-edit.fa-fw
+                      Edit Profile
+                  %li
+                    = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
+                      %i.fa.fa-sign-out.fa-fw
+                      Logout
+          - else
+            %li
+              = link_to new_user_session_path do
+                %i.fa.fa-fw.fa-sign-in
+                =t '.login'
+            %li
+              = link_to "Register", new_user_path
+
+          %li
+            = link_to "http://github.com/ometa/dogtag/" do
+              %span.fa.fa-lg.fa-github
