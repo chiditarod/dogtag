@@ -76,19 +76,26 @@ en:
     form:
       manage_team: Manage Team
       name: Team Name
+      name_instructions: This team name will be ignored if you override this field during race registration.
       instructions: This is the basic info for your team. You will specify additional detail later in the process.
+    team_item:
+      already_registered_for: Already registered for
 
   registrations:
     new:
       register_for_race: "Register for %{race_name}"
-      spots_remaining: XX spots remaining
+      spots_remaining: "There are %{remaining} spots remaining"
     create:
       register_for_race: "Register for %{race_name}"
-      spots_remaining: XX spots remaining
+      spots_remaining: "There are %{remaining} spots remaining"
     form:
       name: Team name to use for this race
       description: Tell us about your team
       twitter: What's your team's twitter account?
+    edit:
+      edit_registration: "Edit registration for %{race_name}"
+    update:
+      edit_registration: "Edit registration for %{race_name}"
 
   races:
     index:
@@ -96,9 +103,9 @@ en:
       create_race: Create one now!
     race_item:
       of: of
-      teams_registered: teams registered
+      teams_registered: teams registered.
       registration_closes_on: Registration closes on
-      remaining: remaining
+      remaining: remaining to register.
       at: at
     form:
       name: Race Name

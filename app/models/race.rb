@@ -19,6 +19,10 @@ class Race < ActiveRecord::Base
     !full?
   end
 
+  def spots_remaining
+    max_teams - registrations.count
+  end
+
   def open?
     now = Time.now
     return false if now < registration_open

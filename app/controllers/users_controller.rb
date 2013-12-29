@@ -53,7 +53,7 @@ class UsersController < ApplicationController
   end
 
   def destroy
-    @user = User.where(:id => params[:id]).first
+    @user = User.find params[:id]
     return render :status => 400 if @user.nil?
 
     if @user.destroy

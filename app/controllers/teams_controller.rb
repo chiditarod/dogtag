@@ -47,7 +47,7 @@ class TeamsController < ApplicationController
 
   def update
     return render :status => 400 unless params[:team]
-    team = Team.where(:id => params[:id]).first
+    team = Team.find params[:id]
 
     if team.update_attributes team_params
       flash[:notice] = I18n.t('update_success')
@@ -62,7 +62,7 @@ class TeamsController < ApplicationController
   end
 
   def destroy
-    @team = Team.where(:id => params[:id]).first
+    @team = Team.find params[:id]
     return render :status => 400 if @team.nil?
 
     if @team.destroy

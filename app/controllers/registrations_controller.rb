@@ -36,6 +36,36 @@ class RegistrationsController < ApplicationController
     respond_with @registration
   end
 
+  def show
+    @registration = Registration.find params[:id]
+    @race = @registration.race
+  rescue ActiveRecord::RecordNotFound
+    flash[:error] = t('not_found')
+    redirect_to teams_path
+  end
+
+  alias edit show
+
+  def update
+    return render :status => 400 unless params[:registration]
+    @registration = Registration.find params[:id]
+
+    if @registration.update_attributes registration_params
+      flash[:notice] = I18n.t('update_success')
+    else
+      flash.now[:error] = [t('update_failed')]
+      flash.now[:error] << @registration.errors.messages
+    end
+    @race = @registration.race
+  rescue ActiveRecord::RecordNotFound
+    flash.now[:error] = t('not_found')
+    render :status => 400
+  end
+
+
+
+
+
   def index
     race_id = params[:race_id] || session[:race_id]
     unless race_id
@@ -49,38 +79,16 @@ class RegistrationsController < ApplicationController
     respond_with @teams
   end
 
-  def show
-    @team = Team.find params[:id]
-    respond_with @team
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    redirect_to teams_path
-  end
-
-  alias edit show
 
 
 
 
 
-  def update
-    return render :status => 400 unless params[:team]
-    team = Team.where(:id => params[:id]).first
 
-    if team.update_attributes team_params
-      flash[:notice] = I18n.t('update_success')
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << team.errors.messages
-    end
-    redirect_to teams_path
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
-  end
+
 
   def destroy
-    @team = Team.where(:id => params[:id]).first
+    @team = Team.find params[:id]
     return render :status => 400 if @team.nil?
 
     if @team.destroy

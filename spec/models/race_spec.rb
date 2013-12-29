@@ -93,6 +93,25 @@ describe Race do
     end
   end
 
+  describe '#spots_remaining' do
+    before do
+      @race = FactoryGirl.create :race
+      (@race.max_teams - 1).times do |x|
+        team = FactoryGirl.create :team, :name => "team#{x}"
+        @race.registrations.create name: "team#{x}", team: team
+      end
+    end
+
+    it 'returns the correct number of spots remaining' do
+      expect(@race.spots_remaining).to eq 1
+    end
+
+    it 'returns 0 if there are no spots remaining' do
+      @race.registrations.create :name => "team", team: valid_team
+      expect(@race.spots_remaining).to eq 0
+    end
+  end
+
   #todo - dry all of these up
   describe '#registerable?' do
     it 'returns true if race is open and not full' do

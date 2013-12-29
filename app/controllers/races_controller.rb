@@ -26,12 +26,13 @@ class RacesController < ApplicationController
 
     @race = Race.new race_params
     if @race.save
-      flash.now[:notice] = I18n.t('create_success')
+      flash[:notice] = I18n.t('create_success')
+      return redirect_to races_path
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @race.errors.messages
+      respond_with @race
     end
-    respond_with @race
   end
 
   def update
@@ -50,7 +51,7 @@ class RacesController < ApplicationController
   end
 
   def destroy
-    @race = Race.where(:id => params[:id]).first
+    @race = Race.find params[:id]
     return render :status => 400 if @race.nil?
 
     if @race.destroy

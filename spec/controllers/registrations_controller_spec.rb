@@ -122,7 +122,7 @@ describe RegistrationsController do
         end.to change(Registration, :count).by 1
       end
 
-      context 'adds a record' do
+      context 'upon success' do
         before do
           Race.should_receive(:find).and_return @race
           Team.should_receive(:find).and_return @team
@@ -159,70 +159,78 @@ describe RegistrationsController do
           expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
         end
       end
-
     end
 
+    describe '#show' do
+      context 'invalid id' do
+        before { get :show, :race_id => @race.id, :id => 100 }
 
-    #describe '#show' do
-      #context 'invalid id' do
-        #before { get :show, :id => 100 }
+        it 'redirects to teams index' do
+          expect(response).to redirect_to(teams_path)
+        end
 
-        #it 'redirects to race index' do
-          #expect(response).to redirect_to(race_registrations_path)
-        #end
+        it 'sets flash error' do
+          expect(flash[:error]).to eq(I18n.t 'not_found')
+        end
+      end
 
-        #it 'sets flash error' do
-          #expect(flash[:error]).to eq(I18n.t 'not_found')
-        #end
-      #end
+      context 'with valid id' do
+        before do
+          @registration = FactoryGirl.create :registration
+          get :show, :race_id => @registration.race.id, :id => @registration.id
+        end
 
-      #context 'with valid id' do
-        #before do
-          #@race = FactoryGirl.create :registration
-          #get :show, :id => @race.id
-        #end
+        it 'sets the @registration object' do
+          expect(assigns(:registration)).to eq(@registration)
+        end
 
-        #it 'sets the @race object' do
-          #expect(assigns(:race)).to eq(@race)
-        #end
-        #it 'returns 200' do
-          #expect(response).to be_success
-        #end
-      #end
-    #end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
+
+        it 'assigns @race' do
+          expect(assigns(:race)).to eq(@registration.race)
+        end
+
+      end
+    end
 
     describe '#edit' do
       # edit is aliased to show, so no need to spec.
     end
 
-    #describe '#update' do
-      #context 'on invalid id' do
-        #before { put :update, :id => 99 }
-        #it 'returns 400' do
-          #expect(response.status).to eq(400)
-        #end
-      #end
+    describe '#update' do
+      context 'on invalid id' do
+        before { put :update, :race_id => @race.id, :id => 100 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
+      end
 
-      #context 'with valid patch data' do
-        #before do
-          #@race = FactoryGirl.create :race
-          #patch :update, :id => @race.id, :race => {:max_teams => 200}
-        #end
+      context 'with valid patch data' do
+        before do
+          @registration = FactoryGirl.create :registration
+          patch :update, :race_id => @registration.race.id, :id => @registration.id,
+            :registration => {:description => 'New Description'}
+        end
 
-        #it 'updates the race' do
-          #expect(@race.reload.max_teams).to eq(200)
-        #end
+        it 'updates the registration' do
+          expect(@registration.reload.description).to eq('New Description')
+        end
 
-        #it 'sets flash notice' do
-          #expect(flash[:notice]).to eq(I18n.t 'update_success')
-        #end
+        it 'sets flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'update_success')
+        end
 
-        #it 'redirects to race index' do
-          #expect(response).to redirect_to(races_path)
-        #end
-      #end
-    #end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
 
+        it 'assigns @race' do
+          expect(assigns(:race)).to eq(@registration.race)
+        end
+      end
+    end
 
     #describe '#index' do
       #it 'returns http success and an array of all races open for registration' do

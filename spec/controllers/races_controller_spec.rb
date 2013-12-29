@@ -39,7 +39,7 @@ describe RacesController do
     end
 
     describe '#show' do
-      context 'invalid race id' do
+      context 'with invalid id' do
         before { get :show, :id => 100 }
 
         it 'redirects to race index' do
@@ -51,7 +51,7 @@ describe RacesController do
         end
       end
 
-      context 'with valid race id' do
+      context 'with valid id' do
         before do
           @race = FactoryGirl.create :race
           get :show, :id => @race.id
@@ -71,7 +71,7 @@ describe RacesController do
     end
 
     describe '#update' do
-      context 'on invalid id' do
+      context 'with invalid id' do
         before { put :update, :id => 99 }
         it 'returns 400' do
           expect(response.status).to eq(400)
@@ -116,11 +116,24 @@ describe RacesController do
         end
       end
 
-      it 'creates a new race and returns 200' do
+      it 'adds a record' do
         expect do
           post :create, :race => valid_race_hash
-          response.status.should == 200
         end.to change(Race, :count).by 1
+      end
+
+      context 'upon success' do
+        before do
+          post :create, :race => valid_race_hash
+        end
+
+        it 'sets a flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'create_success')
+        end
+
+        it 'redirects to races index' do
+          expect(response).to redirect_to races_path
+        end
       end
     end
 

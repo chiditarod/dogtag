@@ -3,6 +3,13 @@
     .panel-heading
       = team.name
     .panel-body
-      %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)
+      - if team.races.include? @race
+        %p
+          = t '.already_registered_for'
+          = @race.name
+        %p= link_to t('edit_registration'), edit_race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
+
+      - else
+        %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)
       %p= link_to t('.edit_team'), edit_team_path(team), :class => ['btn', 'btn-xs']
 
