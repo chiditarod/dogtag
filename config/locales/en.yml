@@ -37,10 +37,13 @@ en:
   register: Register
   register_for: "Register for %{race_name}"
 
+  login: Login
+  signup: Signup
   admin: Admin
   users: Users
   list: List
   at: at
+  or: or
 
   navbar:
     users: Users
@@ -70,6 +73,7 @@ en:
   teams:
     index:
       your_teams: Your Teams
+      registering_for_race: "Registering for race: %{race_name}"
       no_teams: You are not associated with any teams
       instructions: Here are the teams you've created. You can (and probably should) re-use a team for multiple races year after year.
       edit_team: Edit Team

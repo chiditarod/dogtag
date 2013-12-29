@@ -1,5 +1,6 @@
 .page-header
   %h1= t('.your_teams')
+  %h3= t('.registering_for_race', :race_name => @race.name)
 
   - if @teams.blank?
     %p= t('.no_teams')

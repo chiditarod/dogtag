@@ -1,3 +1,7 @@
 .col-sm-6
-  %h1 Login
+  %h1
+    = t('login')
+    %small
+      = t('or')
+      = link_to t('signup'), new_user_path
   = render 'form'
