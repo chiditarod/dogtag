@@ -47,6 +47,7 @@ en:
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
+  must_select_team: You must select a team to register.
 
   user_sessions:
     create:
@@ -76,6 +77,18 @@ en:
       manage_team: Manage Team
       name: Team Name
       instructions: This is the basic info for your team. You will specify additional detail later in the process.
+
+  registrations:
+    new:
+      register_for_race: "Register for %{race_name}"
+      spots_remaining: XX spots remaining
+    create:
+      register_for_race: "Register for %{race_name}"
+      spots_remaining: XX spots remaining
+    form:
+      name: Team name to use for this race
+      description: Tell us about your team
+      twitter: What's your team's twitter account?
 
   races:
     index:

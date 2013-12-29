@@ -1,0 +1,8 @@
+.page-header
+  %h1
+    = t('.register_for_race', :race_name => @race.name)
+    %small= t('.spots_remaining')
+
+.row
+  .col-sm-12
+    = render 'form'

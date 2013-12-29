@@ -33,14 +33,19 @@ describe Registration do
     end
 
     it "a team's twitter account is unique per race if it is set" do
-      Registration.create(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => 'a').should be_valid
-      Registration.create(:name => 'team2', :team => valid_team, :race => valid_race, :twitter => 'a').should be_invalid
+      Registration.create(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
+      Registration.create(:name => 'team2', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_invalid
     end
 
     it "a team's twitter account can be the same for different races" do
       race2 = FactoryGirl.create :race, :name => 'some other race'
-      Registration.create(:name => 'team', :team => valid_team, :twitter => 'a', :race => valid_race).should be_valid
-      Registration.create(:name => 'team', :team => valid_team, :twitter => 'a', :race => race2).should be_valid
+      Registration.create(:name => 'team', :team => valid_team, :twitter => '@foo', :race => valid_race).should be_valid
+      Registration.create(:name => 'team', :team => valid_team, :twitter => '@foo', :race => race2).should be_valid
+    end
+
+    it "a team's twitter account starts with a @" do
+      Registration.new(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => 'foo').should be_invalid
+      Registration.new(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
     end
 
     it 'not more than race.people_per team is in a registration' do

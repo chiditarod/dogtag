@@ -1,7 +1,8 @@
 class Registration < ActiveRecord::Base
   validates_presence_of :name
-  validates_uniqueness_of :name, :scope => [:race], :message => "should be unique per race"
-  validates_uniqueness_of :twitter, :scope => [:race], :allow_nil => true, :message => "should be unique per race"
+  validates_uniqueness_of :name, :scope => [:race], :message => 'should be unique per race'
+  validates_uniqueness_of :twitter, :scope => [:race], :allow_nil => true, :allow_blank => true, :message => 'should be unique per race'
+  validates_format_of :twitter, :with => /\A^@\w+\z/i, :allow_nil => true, :allow_blank => true, :message => 'should begin with @'
   validates_with RegistrationValidator
 
   # A registration is the intermediary model between a team and race.

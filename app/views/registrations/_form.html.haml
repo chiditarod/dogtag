@@ -1,0 +1,19 @@
+= form_for [@race, @registration], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :name, t('.name')
+    .col-sm-8
+      = f.text_field :name, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :description, t('.description')
+    .col-sm-8
+      = f.text_field :description, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :twitter, t('.twitter')
+    .col-sm-8
+      = f.text_field :twitter, :class => 'form-control'
+  .form-group
+    .col-sm-offset-4.col-sm-8
+      = f.submit t('save'), :class => ['btn', 'btn-default']
