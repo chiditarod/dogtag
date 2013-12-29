@@ -33,11 +33,18 @@ describe UsersController do
     end
 
     describe '#new' do
-      it 'returns http success and calls User.new' do
-        user_stub = User.new
-        User.should_receive(:new).and_return user_stub
+      before do
+        @user_stub = User.new
+        User.should_receive(:new).and_return @user_stub
         get :new
-        response.should be_success
+      end
+
+      it 'returns http success' do
+        expect(response).to be_success
+      end
+
+      it 'assigns @user to User.new' do
+        expect(assigns(:user)).to eq(@user_stub)
       end
     end
 
@@ -77,54 +84,84 @@ describe UsersController do
     end
 
     describe '#new' do
-      it 'returns http success and calls User.new' do
-        user_stub = User.new
-        User.should_receive(:new).and_return user_stub
+      before do
+        @user_stub = User.new
+        User.should_receive(:new).and_return @user_stub
         get :new
-        response.should be_success
+      end
+
+      it 'returns http success' do
+        expect(response).to be_success
+      end
+
+      it 'assigns @user to User.new' do
+        expect(assigns(:user)).to eq(@user_stub)
       end
     end
 
     describe '#index' do
+      before { get :index }
+
       it 'sets @users to all users' do
-        get :index
-        response.should be_success
         expect(assigns(:users)).to eq([valid_user, @user2])
+      end
+
+      it 'returns http success' do
+        expect(response).to be_success
       end
     end
 
     describe '#show' do
-      it 'redirects to user index and sets flash error if user id is invalid' do
-        get :show, :id => 99
-        response.should be_redirect
-        flash[:error].should == I18n.t('not_found')
+      context 'with invalid user id' do
+        before { get :show, :id => 99 }
+
+        it 'redirects to user index' do
+          expect(response).to redirect_to(users_path)
+        end
+
+        it 'sets flash error' do
+          expect(flash[:error]).to eq(I18n.t 'not_found')
+        end
       end
 
-      it 'sets the user object and returns 200' do
-        get :show, :id => @user2.id
-        response.should be_success
-        assigns(:user).should == @user2
+      context 'with valid user id' do
+        before { get :show, :id => @user2.id }
+
+        it 'sets the @user object' do
+          expect(assigns(:user)).to eq(@user2)
+        end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
       end
     end
 
     describe '#edit' do
-      it 'redirects to user index and sets flash error if user id is invalid' do
-        get :edit, :id => 99
-        response.should be_redirect
-        flash[:error].should == I18n.t('not_found')
-      end
-
-      it 'sets the user object and returns 200' do
-        get :edit, :id => @user2.id
-        response.should be_success
-        assigns(:user).should == @user2
-      end
+      # edit is aliased to show, so no need to spec.
     end
 
     describe '#update' do
-      it 'returns 400 if the user id is not valid' do
-        put :update, :id => 99
-        response.status.should == 400
+      context 'on invalid id' do
+        before { put :update, :id => 99 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
+      end
+
+      context 'with valid patch data' do
+        before { patch :update, :id => @user2.id, :user => {:phone => '123'} }
+
+        it 'updates the user' do
+          expect(@user2.reload.phone).to eq('123')
+        end
+
+        it 'sets flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'update_success')
+        end
+
+        it 'redirects to race index' do
+          expect(response).to redirect_to(users_path)
+        end
       end
 
       # todo - fix this spec
@@ -136,27 +173,32 @@ describe UsersController do
         #flash[:error].should include('Update failed.')
         #response.status.should == 302
       #end
-
-      it 'updates the user, sets flash, and redirects' do
-        patch :update, :id => @user2.id, :user => {:phone => '123'}
-        @user2.reload.phone.should == '123'
-        flash[:notice].should == I18n.t('update_success')
-        response.status.should == 302
-      end
     end
 
     describe '#destroy' do
-      it 'returns 400 if the user id is not valid' do
-        delete :destroy, :id => 99
-        response.status.should == 400
+      context 'on invalid id' do
+        before { delete :destroy, :id => 99 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
       end
 
-      it 'destroys a user, sets flash, and redirects to users index' do
-        expect do
+      #todo - there's probably a way to DRY this up.
+      context 'with valid id' do
+        it 'destroys the user' do
+          expect { delete :destroy, :id => @user2.id }.to change(User, :count).by(-1)
+        end
+
+        it 'sets the flash notice' do
           delete :destroy, :id => @user2.id
-          flash[:notice].should == I18n.t('delete_success')
-          response.should redirect_to users_path
-        end.to change(User, :count).by(-1)
+          expect(flash[:notice]).to eq(I18n.t 'delete_success')
+        end
+
+        it 'redirects to the user index' do
+          delete :destroy, :id => @user2.id
+          expect(response).to redirect_to users_path
+        end
+
       end
 
       # todo: figure out how to mock the delete failing

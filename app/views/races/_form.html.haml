@@ -1,3 +1,8 @@
+.page-header
+  %h1
+    = t('.manage_race')
+    %small= t('mush')
+
 = form_for @race, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
   .form-group
     .col-sm-4.control-label
@@ -31,4 +36,4 @@
       = f.text_field :people_per_team, :class => 'form-control'
   .form-group
     .col-sm-offset-4.col-sm-8
-      = f.submit t('.save'), :class => ['btn', 'btn-default']
+      = f.submit t('save'), :class => ['btn', 'btn-default']

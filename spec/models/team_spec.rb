@@ -15,16 +15,12 @@ describe Team do
       team = Team.new
       team.valid?.should == false
     end
-  end
 
-  describe '#find_by_user' do
-    it 'returns teams associated with a user' do
-      valid_team.users << valid_user
-      Team.find_by_user(valid_user).should == [valid_team]
-    end
-
-    it 'returns an empty array when no teams are associated with a user' do
-      Team.find_by_user(valid_user).should == []
+    it 'fails when team name is already taken' do
+      expect do
+        FactoryGirl.create :team, :name => valid_team.name
+      end.to raise_error
     end
   end
+
 end

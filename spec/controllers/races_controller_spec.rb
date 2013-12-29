@@ -2,7 +2,6 @@ require 'spec_helper'
 
 describe RacesController do
   let (:valid_user) { FactoryGirl.create :user }
-  let (:valid_race)  { FactoryGirl.create :race }
   let (:valid_race_hash) { FactoryGirl.attributes_for :race }
 
   context '[logged out]' do
@@ -40,32 +39,62 @@ describe RacesController do
     end
 
     describe '#show' do
-      it 'redirects to the race index and sets flash error if a race is not found' do
-        get :show, :id => 100
-        response.should be_redirect
-        flash[:error].should == I18n.t('not_found')
+      context 'invalid race id' do
+        before { get :show, :id => 100 }
+
+        it 'redirects to race index' do
+          expect(response).to redirect_to(races_path)
+        end
+
+        it 'sets flash error' do
+          expect(flash[:error]).to eq(I18n.t 'not_found')
+        end
       end
 
-      it 'sets the race object and returns 200' do
-        race = FactoryGirl.create :race
-        get :show, :id => race.id
-        response.status.should == 200
-        assigns(:race).should == race
+      context 'with valid race id' do
+        before do
+          @race = FactoryGirl.create :race
+          get :show, :id => @race.id
+        end
+
+        it 'sets the @race object' do
+          expect(assigns(:race)).to eq(@race)
+        end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
       end
     end
 
+    describe '#edit' do
+      # edit is aliased to show, so no need to spec.
+    end
+
     describe '#update' do
-      it 'returns 400 if the race parameter is not valid' do
-        put :update, :id => 100
-        response.status.should == 400
+      context 'on invalid id' do
+        before { put :update, :id => 99 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
       end
 
-      it 'updates the race and redirects to the race edit page' do
-        race = FactoryGirl.create :race
-        get :show, :id => race.id
-        patch :update, :id => race.id, :race => {:max_teams => 200}
-        response.status.should == 302
-        race.reload.max_teams.should == 200
+      context 'with valid patch data' do
+        before do
+          @race = FactoryGirl.create :race
+          patch :update, :id => @race.id, :race => {:max_teams => 200}
+        end
+
+        it 'updates the race' do
+          expect(@race.reload.max_teams).to eq(200)
+        end
+
+        it 'sets flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'update_success')
+        end
+
+        it 'redirects to race index' do
+          expect(response).to redirect_to(races_path)
+        end
       end
     end
 
@@ -110,32 +139,65 @@ describe RacesController do
     end
 
     describe '#new' do
-      it 'returns http success and calls Race.new' do
-        race_stub = Race.new
-        Race.should_receive(:new).and_return race_stub
+      before do
+        @race_stub = Race.new
+        Race.should_receive(:new).and_return @race_stub
         get :new
-        response.should be_success
+      end
+
+      it 'returns http success' do
+        expect(response).to be_success
+      end
+
+      it 'assigns @race to Race.new' do
+        expect(assigns(:race)).to eq(@race_stub)
       end
     end
 
+      #it 'destroys a race, sets flash, and redirects to races index' do
+        #dying_race = FactoryGirl.create :race, :name => "Delete Me"
+        #expect do
+          #delete :destroy, :id => dying_race.id
+          #flash[:notice].should == I18n.t('delete_success')
+          #response.should redirect_to races_path
+        #end.to change(Race, :count).by(-1)
+      #end
+
+      ## todo: figure out how to mock the delete failing
+      #it 'sets flash error and redirects if delete fails'
+    #end
+
     describe '#destroy' do
-      it 'returns 400 if the race id is not valid' do
-        delete :destroy, :id => 99
-        response.status.should == 400
+      context 'on invalid id' do
+        before { delete :destroy, :id => 99 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
       end
 
-      it 'destroys a race, sets flash, and redirects to races index' do
-        dying_race = FactoryGirl.create :race, :name => "Delete Me"
-        expect do
-          delete :destroy, :id => dying_race.id
-          flash[:notice].should == I18n.t('delete_success')
-          response.should redirect_to races_path
-        end.to change(Race, :count).by(-1)
+      #todo - there's probably a way to DRY this up.
+      context 'with valid id' do
+        before { @race = FactoryGirl.create :race }
+
+        it 'destroys the race' do
+          expect { delete :destroy, :id => @race.id }.to change(Race, :count).by(-1)
+        end
+
+        it 'sets the flash notice' do
+          delete :destroy, :id => @race.id
+          expect(flash[:notice]).to eq(I18n.t 'delete_success')
+        end
+
+        it 'redirects to the user index' do
+          delete :destroy, :id => @race.id
+          expect(response).to redirect_to races_path
+        end
       end
 
       # todo: figure out how to mock the delete failing
       it 'sets flash error and redirects if delete fails'
     end
+
 
   end
 end

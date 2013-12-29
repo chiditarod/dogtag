@@ -36,15 +36,17 @@ class UsersController < ApplicationController
 
   def update
     return render :status => 400 unless params[:user]
-    user = User.where(:id => params[:id]).first
 
-    if user.update_attributes user_params
+    @user = User.find(params[:id])
+
+    if @user.update_attributes user_params
       flash[:notice] = I18n.t('update_success')
+      redirect_to users_path
     else
       flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << user.errors.messages
+      flash.now[:error] << @user.errors.messages
+      respond_with @user
     end
-    redirect_to edit_user_path
   rescue ActiveRecord::RecordNotFound
     flash.now[:error] = t('not_found')
     render :status => 400

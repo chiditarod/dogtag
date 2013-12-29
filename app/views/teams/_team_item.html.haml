@@ -1,0 +1,8 @@
+.col-xs-3
+  .panel.panel-default.pull-left
+    .panel-heading
+      = team.name
+    .panel-body
+      %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team => team), :class => %w(btn btn-xs btn-primary)
+      %p= link_to t('.edit_team'), edit_team_path(team), :class => ['btn', 'btn-xs']
+

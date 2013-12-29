@@ -1,0 +1,14 @@
+.page-header
+  %h1= t('.your_teams')
+
+  - if @teams.blank?
+    %p= t('.no_teams')
+    %p= t('please_create_to_continue')
+
+  - else
+    %p= t('.instructions')
+    - @teams.each do |team|
+      = render 'team_item', :team => team
+    .clearfix
+
+  = link_to t('create'), new_team_path, :class => ['btn', 'btn-primary']

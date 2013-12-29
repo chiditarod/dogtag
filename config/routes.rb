@@ -3,7 +3,9 @@ RailsSkeleton::Application.routes.draw do
   root :controller => 'races', :action => "index", :as => :home
 
   resources :teams
-  resources :races
+  resources :races do
+    resources :registrations, :only => [:index, :new, :create, :show, :edit, :update]
+  end
 
   # user accounts
   resources :users
@@ -11,7 +13,7 @@ RailsSkeleton::Application.routes.draw do
   resource :user_session
 
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
-  
+
   #get :login, :to => 'user_sessions#new'
   #post :login, :to => 'user_sessions#create'
   #delete :logout, :to => 'user_session#destroy'

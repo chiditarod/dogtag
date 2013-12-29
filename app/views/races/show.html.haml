@@ -35,4 +35,4 @@
 - if @race.registerable?
   .row
     .col-xs-3
-      = link_to t("Register"), teams_url, :class => ['btn', 'btn-primary']
+      = link_to t('Register'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
