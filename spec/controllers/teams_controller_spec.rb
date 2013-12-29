@@ -5,37 +5,37 @@ describe TeamsController do
   context '[logged out]' do
     describe '#index' do
       it 'redirects to login' do
-        get :index; response.should be_redirect
+        get :index; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#new' do
       it 'redirects to login' do
-        get :new; response.should be_redirect
+        get :new; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create; response.should be_redirect
+        post :create; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#show' do
       it 'redirects to login' do
-        get :show, :id => 1; response.should be_redirect
+        get :show, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1; response.should be_redirect
+        get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1; response.should be_redirect
+        patch :update, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :id => 1; response.should be_redirect
+        delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
   end
@@ -118,7 +118,7 @@ describe TeamsController do
         before { get :show, :id => 99 }
 
         it 'redirects to team index' do
-          expect(response).to be_redirect
+          expect(response).to redirect_to(teams_path)
         end
         it 'sets flash error' do
           expect(flash[:error]).to eq I18n.t('not_found')

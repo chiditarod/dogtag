@@ -8,27 +8,27 @@ describe UsersController do
   context 'when logged out' do
     describe '#index' do
       it 'redirects to login' do
-        get :index; response.should be_redirect
+        get :index; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#show' do
       it 'redirects to login' do
-        get :show; response.should be_redirect
+        get :show; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1; response.should be_redirect
+        get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1; response.should be_redirect
+        patch :update, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :id => 1; response.should be_redirect
+        delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
 
