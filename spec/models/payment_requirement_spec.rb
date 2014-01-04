@@ -25,6 +25,14 @@ describe PaymentRequirement do
       expect(req.active_tier).to eq(tier2)
     end
 
+    it 'returns false if no tiers are defined' do
+      expect(req.active_tier).to eq(false)
+    end
+
+    it 'returns false if all tiers are in the future' do
+      req.tiers << tier3
+      expect(req.active_tier).to eq(false)
+    end
   end
 
   describe '#fulfilled?' do

@@ -7,12 +7,8 @@ class PaymentRequirement < Requirement
   end
 
   def active_tier
-    return false if tiers.blank?
-    return tiers.first if tiers.count == 1
-
-    if tiers.present?
-       #todo: implement
-    end
+    selected_tier = sorted_tiers.select { |tier| tier.begin_at < Time.now }.last
+    selected_tier ||= false
   end
 
   private
