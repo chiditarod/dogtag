@@ -56,6 +56,7 @@ ActiveRecord::Schema.define(version: 20140104131444) do
   add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true
 
   create_table "requirements", force: true do |t|
+    t.integer  "race_id"
     t.string   "type"
     t.string   "name"
     t.datetime "created_at"

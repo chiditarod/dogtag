@@ -7,14 +7,9 @@ FactoryGirl.define do
     max_teams 10
     people_per_team 5
 
-    #factory :full_race do
-      #after_create do |race|
-        #max_teams.times do |x|
-          #puts x
-          #FactoryGirl.create(:registration, name: "Team#{x}", twitter: "@x", race: race)
-        #end
-      #end
-    #end
+    factory :race2 do
+      name 'Chiditarod 2'
+    end
 
   end
 end
