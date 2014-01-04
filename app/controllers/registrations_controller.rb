@@ -94,6 +94,8 @@ class RegistrationsController < ApplicationController
     render :status => 400
   end
 
+  # end not yet customized
+
   private
 
   def registration_params

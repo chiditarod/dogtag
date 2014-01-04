@@ -1,0 +1,20 @@
+%h1
+  = t('.people')
+
+%table.table.table-bordered.table-hover
+  %tr
+    %th Name
+    %th
+    %th
+    %th
+
+  - @people.each do |person|
+    %tr
+      %td
+        = person.first_name
+        = person.last_name
+      %td= link_to 'Show', race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id)
+      %td= link_to 'Edit', edit_race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id)
+      -#%td= link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+
+%br

@@ -15,24 +15,24 @@ describe Registration do
       Registration.new(name: 'foo', team: valid_team, race: valid_race).should be_valid
     end
 
-    it 'the same team cannot be added to a single race more than once' do
+    it 'the same team cannot be registered to the same race more than once' do
       Registration.create(:name => 'team1', :team => valid_team, :race => valid_race).should be_valid
       Registration.create(:name => 'team2', :team => valid_team, :race => valid_race).should be_invalid
     end
 
-    it 'no two teams can have the same name in a single race' do
+    it 'no two teams can register the same name in a single race' do
       team2 = FactoryGirl.create :team, :name => 'some other name'
       Registration.create(:name => 'team1', :race => valid_race, :team => valid_team).should be_valid
       Registration.create(:name => 'team1', :race => valid_race, :team => team2).should be_invalid
     end
 
-    it 'a team can have the same name for different races' do
+    it 'a team can register the same name for different races' do
       race2 = FactoryGirl.create :race, :name => 'some other race'
       Registration.create(:name => 'team', :team => valid_team, :race => valid_race).should be_valid
       Registration.create(:name => 'team', :team => valid_team, :race => race2).should be_valid
     end
 
-    it "a team's twitter account is unique per race if it is set" do
+    it "a team's twitter account (if present) is unique per race" do
       Registration.create(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
       Registration.create(:name => 'team2', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_invalid
     end
@@ -48,7 +48,7 @@ describe Registration do
       Registration.new(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
     end
 
-    it 'not more than race.people_per team is in a registration' do
+    it 'a registeration can only have race.people_per_team people' do
       reg = Registration.create(:name => 'reg1', :race => valid_race, :team => Team.create)
       reg.should be_valid
       valid_race.people_per_team.times { |x| reg.people.create(valid_person_hash) }

@@ -4,7 +4,9 @@ RailsSkeleton::Application.routes.draw do
 
   resources :teams
   resources :races do
-    resources :registrations
+    resources :registrations do
+      resources :people
+    end
   end
 
   # user accounts

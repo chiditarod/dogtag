@@ -1,0 +1,29 @@
+= form_for [@race, @registration, @person], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :first_name, t('.first_name')
+    .col-sm-8
+      = f.text_field :first_name, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :last_name, t('.last_name')
+    .col-sm-8
+      = f.text_field :last_name, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :email, t('.email')
+    .col-sm-8
+      = f.text_field :email, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :phone, t('.phone')
+    .col-sm-8
+      = f.text_field :phone, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :twitter, t('.twitter')
+    .col-sm-8
+      = f.text_field :twitter, :class => 'form-control'
+  .form-group
+    .col-sm-offset-4.col-sm-8
+      = f.submit t('save'), :class => ['btn', 'btn-default']

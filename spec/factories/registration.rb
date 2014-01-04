@@ -7,4 +7,8 @@ FactoryGirl.define do
     association :race, :name => 'awesome race'
     association :team, :name => 'awesome team'
   end
+
+  trait :with_race do
+    race
+  end
 end

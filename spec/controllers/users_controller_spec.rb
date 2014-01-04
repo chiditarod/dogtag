@@ -79,8 +79,7 @@ describe UsersController do
     before do
       activate_authlogic
       mock_login! valid_user
-      @user2 = FactoryGirl.create :user, :first_name => 'Mr',
-        :last_name => 'Anderson', :email => 'mr@anderson.com'
+      @user2 = FactoryGirl.create :user2
     end
 
     describe '#new' do
