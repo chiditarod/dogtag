@@ -7,13 +7,13 @@ class PaymentRequirement < Requirement
   #end
 
   def active_tier
-    selected_tier = sorted_tiers.select { |tier| tier.begin_at < Time.now }.last
+    selected_tier = chronological_tiers.select { |tier| tier.begin_at < Time.now }.last
     selected_tier ||= false
   end
 
   private
 
-  def sorted_tiers
+  def chronological_tiers
     tiers.sort_by(&:begin_at)
   end
 end

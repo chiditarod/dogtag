@@ -13,6 +13,16 @@
 
 ActiveRecord::Schema.define(version: 20140104131444) do
 
+  create_table "completed_requirements", force: true do |t|
+    t.integer  "registration_id"
+    t.integer  "requirement_id"
+    t.integer  "user_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "completed_requirements", ["registration_id", "requirement_id"], name: "completed_requirements_index", unique: true
+
   create_table "people", force: true do |t|
     t.string   "first_name"
     t.string   "last_name"
@@ -34,16 +44,6 @@ ActiveRecord::Schema.define(version: 20140104131444) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
-
-  create_table "registration_requirements", force: true do |t|
-    t.integer  "registration_id"
-    t.integer  "requirement_id"
-    t.integer  "user_id"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  add_index "registration_requirements", ["registration_id", "requirement_id"], name: "req_req_unique", unique: true
 
   create_table "registrations", force: true do |t|
     t.string  "name"

@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe Requirement do
   describe '#fulfilled?' do
     let (:requirement) { FactoryGirl.create :requirement }
@@ -9,7 +11,7 @@ describe Requirement do
     end
 
     it 'returns true if a requirement has an association with a particular registration' do
-      RegistrationRequirement.create :registration => registration,
+      CompletedRequirement.create :registration => registration,
         :requirement => requirement, :user => user
       expect(requirement.fulfilled? registration).to eq(true)
     end

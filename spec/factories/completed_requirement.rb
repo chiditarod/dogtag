@@ -1,5 +1,5 @@
 FactoryGirl.define do
-  factory :registration_requirement do
+  factory :completed_requirement do
 
     association :registration
     association :requirement
