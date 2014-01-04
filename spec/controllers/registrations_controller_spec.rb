@@ -161,6 +161,9 @@ describe RegistrationsController do
       end
     end
 
+
+  # todo: not yet customized for this class
+
     describe '#show' do
       context 'invalid id' do
         before { get :show, :race_id => @race.id, :id => 100 }

@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Registration do
   let (:valid_person_hash) { FactoryGirl.attributes_for :person }
-  let (:valid_race)   { FactoryGirl.create :race }
-  let (:valid_team)   { FactoryGirl.create :team }
+  let (:valid_race) { FactoryGirl.create :race }
+  let (:valid_team) { FactoryGirl.create :team }
 
   describe 'validates' do
     it 'that a team name, team and race are present' do

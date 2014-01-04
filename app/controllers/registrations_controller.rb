@@ -64,7 +64,7 @@ class RegistrationsController < ApplicationController
 
 
 
-
+  # todo: not yet customized for this class
 
   def index
     race_id = params[:race_id] || session[:race_id]
@@ -78,13 +78,6 @@ class RegistrationsController < ApplicationController
     @teams = current_user.teams
     respond_with @teams
   end
-
-
-
-
-
-
-
 
 
   def destroy

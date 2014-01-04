@@ -8,8 +8,13 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
+  # Registrations are the intermediary model between a team registering for a race.
   has_many :registrations
   has_many :teams, -> {distinct}, :through => :registrations
+
+  # Each race has different registration requirements that needs
+  # to be fulfilled before a team is fully registered.
+  has_many :requirements
 
   def full?
     registrations.count == max_teams
