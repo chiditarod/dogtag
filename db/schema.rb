@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140103234707) do
+ActiveRecord::Schema.define(version: 20140104131444) do
 
   create_table "people", force: true do |t|
     t.string   "first_name"
@@ -34,6 +34,16 @@ ActiveRecord::Schema.define(version: 20140103234707) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "registration_requirements", force: true do |t|
+    t.integer  "registration_id"
+    t.integer  "requirement_id"
+    t.integer  "user_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "registration_requirements", ["registration_id", "requirement_id"], name: "req_req_unique", unique: true
 
   create_table "registrations", force: true do |t|
     t.string  "name"

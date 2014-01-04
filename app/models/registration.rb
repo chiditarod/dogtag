@@ -15,4 +15,9 @@ class Registration < ActiveRecord::Base
 
   # A registration has a certain number of people, per the settings for the race.
   has_many :people
+
+  # A registration needs to keep track of which requirements have been fulfilled.
+  has_many :requirements, :as => :fulfilled_requirements,
+    :through => :registration_requirements
+
 end

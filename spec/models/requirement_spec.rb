@@ -1,8 +1,17 @@
 describe Requirement do
   describe '#fulfilled?' do
-    it "raises an error since it's an abstract base class" do
-      req = FactoryGirl.create :requirement
-      expect { req.fulfilled?() }.to raise_error 'Implement me!'
+    let (:requirement) { FactoryGirl.create :requirement }
+    let (:registration) { FactoryGirl.create :registration }
+    let (:user) { FactoryGirl.create :user }
+
+    it 'returns false if a requirement is not associated with a particular registration' do
+      expect(requirement.fulfilled? registration).to eq(false)
+    end
+
+    it 'returns true if a requirement has an association with a particular registration' do
+      RegistrationRequirement.create :registration => registration,
+        :requirement => requirement, :user => user
+      expect(requirement.fulfilled? registration).to eq(true)
     end
   end
 end
