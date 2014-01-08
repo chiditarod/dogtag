@@ -7,7 +7,7 @@
     %p= t('please_create_to_continue')
 
   - else
-    %p= t('.instructions')
+    %p= t('.instructions', :race_name => @race.name)
     - @teams.each do |team|
       = render 'team_item', :team => team
     .clearfix

@@ -17,3 +17,6 @@
   .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
+      = link_to race_registration_path(@registration.race.id, @registration.id) do
+        .btn.btn-default
+          = t('back')

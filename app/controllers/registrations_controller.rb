@@ -52,6 +52,7 @@ class RegistrationsController < ApplicationController
 
     if @registration.update_attributes registration_params
       flash[:notice] = I18n.t('update_success')
+      return redirect_to race_registration_url(@registration.race.id, @registration.id)
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @registration.errors.messages

@@ -34,15 +34,9 @@ describe PeopleController do
         expect(response).to redirect_to(new_user_session_path)
       end
     end
-    #describe '#destroy' do
-      #it 'redirects to login' do
-        #delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => 1
-        #expect(response).to redirect_to(new_user_session_path)
-      #end
-    #end
-    describe '#show' do
+    describe '#destroy' do
       it 'redirects to login' do
-        get :show, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id
+        delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => 1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
@@ -53,6 +47,35 @@ describe PeopleController do
       @valid_user = FactoryGirl.create :user
       activate_authlogic
       mock_login! @valid_user
+    end
+
+    describe '#destroy' do
+      context 'on invalid id' do
+        before { delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => 99 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
+      end
+
+      it 'removes a record' do
+        expect do
+          delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id
+        end.to change(Person, :count).by(-1)
+      end
+
+      context 'with valid id' do
+        before do
+          delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id
+        end
+
+        it 'sets flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'delete_success')
+        end
+
+        it 'redirects to registration#show' do
+          expect(response).to redirect_to(race_registration_url :race_id => @race.id, :id => @registration.id)
+        end
+      end
     end
 
     describe '#update' do
@@ -77,8 +100,13 @@ describe PeopleController do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
 
-        it 'redirects to race index' do
-          expect(response).to redirect_to(race_registration_url :race_id => @race.id, :registration_id => @registration.id)
+        it 'sets @race and @registration (needed by _form.html.haml)' do
+          expect(assigns(:race)).to eq(@race)
+          expect(assigns(:registration)).to eq(@registration)
+        end
+
+        it 'redirects to registration#show' do
+          expect(response).to redirect_to(race_registration_url :race_id => @race.id, :id => @registration.id)
         end
       end
 
@@ -93,10 +121,10 @@ describe PeopleController do
       #end
     end
 
-    describe '#show' do
+    describe '#edit' do
       context 'with invalid user id' do
         before do
-          get :show, :race_id => @race.id, :registration_id => @registration.id, :id => 99
+          get :edit, :race_id => @race.id, :registration_id => @registration.id, :id => 99
         end
         it 'responds with 400' do
           expect(response.status).to eq(400)
@@ -109,7 +137,7 @@ describe PeopleController do
 
       context 'with valid user id' do
         before do
-          get :show, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id
+          get :edit, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id
         end
         it 'sets the @person object' do
           expect(assigns(:person)).to eq(@person)
@@ -118,10 +146,6 @@ describe PeopleController do
           expect(response).to be_success
         end
       end
-    end
-
-    describe '#edit' do
-      # edit is aliased to show, so no need to spec.
     end
 
     describe '#index' do

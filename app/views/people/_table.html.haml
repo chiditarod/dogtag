@@ -1,0 +1,23 @@
+%table.table.table-hover.table-responsive
+  %thead
+    %tr
+      %th Edit
+      %th= t('name')
+      %th= t('email')
+      %th= t('phone')
+      %th= t('twitter')
+      %th
+  - people.each do |person|
+    %tr
+      %td
+        = link_to(edit_race_registration_person_url :race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id) do
+          .fa.fa-edit.fa-fw
+      %td
+        .fa.fa-user.fa-fw
+        = person.first_name
+        = person.last_name
+      %td= person.email
+      %td= person.phone
+      %td= person.twitter
+      %td
+        = button_to t('delete'), race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }

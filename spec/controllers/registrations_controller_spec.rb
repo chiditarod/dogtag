@@ -161,6 +161,39 @@ describe RegistrationsController do
       end
     end
 
+    describe '#edit' do
+      # edit is aliased to show, so no need to spec.
+    end
+
+    describe '#update' do
+      context 'on invalid id' do
+        before { put :update, :race_id => @race.id, :id => 100 }
+        it 'returns 400' do
+          expect(response.status).to eq(400)
+        end
+      end
+
+      context 'with valid patch data' do
+        before do
+          @registration = FactoryGirl.create :registration
+          patch :update, :race_id => @registration.race.id, :id => @registration.id,
+            :registration => {:description => 'New Description'}
+        end
+
+        it 'updates the registration' do
+          expect(@registration.reload.description).to eq('New Description')
+        end
+
+        it 'sets flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'update_success')
+        end
+
+        it 'redirects to registration#show' do
+          expect(response).to redirect_to(race_registration_url(@registration.race.id, @registration.id))
+        end
+      end
+    end
+
 
   # todo: not yet customized for this class
 
@@ -197,44 +230,6 @@ describe RegistrationsController do
 
       end
     end
-
-    describe '#edit' do
-      # edit is aliased to show, so no need to spec.
-    end
-
-    describe '#update' do
-      context 'on invalid id' do
-        before { put :update, :race_id => @race.id, :id => 100 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
-        end
-      end
-
-      context 'with valid patch data' do
-        before do
-          @registration = FactoryGirl.create :registration
-          patch :update, :race_id => @registration.race.id, :id => @registration.id,
-            :registration => {:description => 'New Description'}
-        end
-
-        it 'updates the registration' do
-          expect(@registration.reload.description).to eq('New Description')
-        end
-
-        it 'sets flash notice' do
-          expect(flash[:notice]).to eq(I18n.t 'update_success')
-        end
-
-        it 'returns 200' do
-          expect(response).to be_success
-        end
-
-        it 'assigns @race' do
-          expect(assigns(:race)).to eq(@registration.race)
-        end
-      end
-    end
-
     #describe '#index' do
       #it 'returns http success and an array of all races open for registration' do
         #today = Time.now

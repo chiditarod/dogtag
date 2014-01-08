@@ -5,7 +5,7 @@ RailsSkeleton::Application.routes.draw do
   resources :teams
   resources :races do
     resources :registrations do
-      resources :people
+      resources :people, :only =>  [:index, :new, :create, :edit, :update, :destroy]
     end
   end
 

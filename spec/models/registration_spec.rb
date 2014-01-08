@@ -43,30 +43,39 @@ describe Registration do
       Registration.create(:name => 'team', :team => valid_team, :twitter => '@foo', :race => race2).should be_valid
     end
 
-    it "a team's twitter account starts with a @" do
-      Registration.new(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => 'foo').should be_invalid
-      Registration.new(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
+    it "a team's twitter account fails without a leading @" do
+      expect(FactoryGirl.build :registration, :twitter => 'foo').to be_invalid
     end
 
-    it 'a registeration can only have race.people_per_team people' do
-      reg = Registration.create(:name => 'reg1', :race => valid_race, :team => Team.create)
-      reg.should be_valid
-      valid_race.people_per_team.times { |x| reg.people.create(valid_person_hash) }
-      reg.should be_valid
-      reg.people.create valid_person_hash
-      reg.should be_invalid
-      reg.errors.messages[:people_per_team].should == ["People must be less than or equal to max_people_per_team"]
+    it "a team's twitter account starts with a leading @" do
+      expect(FactoryGirl.build :registration, :twitter => '@foo').to be_valid
+    end
+
+    describe '#has_slots?' do
+      before do
+        @reg = FactoryGirl.create :registration, :with_race
+        (@reg.race[:people_per_team] - 1).times { |x| @reg.people.create(valid_person_hash) }
+      end
+
+      it 'returns true if there are less than race.people_per_team people' do
+        expect(@reg.has_slots?).to be_true
+      end
+
+      it 'returns false if there are race.people_per_team people' do
+        @reg.people.create valid_person_hash
+        expect(@reg.has_slots?).to be_false
+      end
     end
 
     it 'not more than race.max_teams registrations per race' do
       valid_race.max_teams.times do |i|
         team = FactoryGirl.create :team, :name => "team#{i}"
-        Registration.create(:name => "reg#{i}", :race => valid_race, :team => team).should be_valid
+        expect(Registration.create :name => "reg#{i}", :race => valid_race, :team => team).to be_valid
       end
       valid_race.reload
 
       reg = Registration.new :name => "fail", :race => valid_race, :team => Team.create
-      reg.should be_invalid
+      expect(reg).to be_invalid
     end
   end
 

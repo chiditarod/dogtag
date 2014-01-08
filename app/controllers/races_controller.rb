@@ -55,7 +55,7 @@ class RacesController < ApplicationController
     return render :status => 400 if @race.nil?
 
     if @race.destroy
-      flash[:notice] = t '.destroy_success'
+      flash[:notice] = t '.delete_success'
     else
       flash[:error] = t '.destroy_failed'
     end

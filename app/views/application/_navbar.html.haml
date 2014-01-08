@@ -19,6 +19,12 @@
               =t '.races'
 
           - if current_user && true
+
+            %li
+              = link_to teams_path do
+                %i.fa.fa-users.fa-fw
+                =t '.teams'
+
             %li.dropdown
               %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
                 %i.fa.fa-fw.fa-star-o

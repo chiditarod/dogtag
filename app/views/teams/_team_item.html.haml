@@ -2,14 +2,18 @@
   .panel.panel-default.pull-left
     .panel-heading
       = team.name
+      %small
+        = link_to(edit_team_url :id => team.id) do
+          .fa.fa-edit.fa-fw
+
     .panel-body
       - if team.races.include? @race
         %p
-          = t '.already_registered_for'
-          = @race.name
-        %p= link_to t('edit_registration'), edit_race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
+          = t '.already_registered_for', :race_name => @race.name
+        .pull-left
+          = link_to t('show'), race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
+        .pull-left
+          = link_to t('edit'), edit_race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
 
       - else
         %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)
-      %p= link_to t('.edit_team'), edit_team_path(team), :class => ['btn', 'btn-xs']
-

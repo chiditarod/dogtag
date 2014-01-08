@@ -27,6 +27,7 @@ en:
   create_success: Successfully created.
   update_failed: Update failed.
   update_success: Successfully updated.
+  delete: Delete
   delete_success: Deleted.
   delete_failed: Deletion failed.
   not_found: Not found.
@@ -42,11 +43,14 @@ en:
   admin: Admin
   users: Users
   list: List
+  back: Back
   at: at
   or: or
+  of: of
 
   navbar:
     users: Users
+    teams: Teams
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
@@ -70,20 +74,26 @@ en:
     edit:
       update_user: Update your account
 
+
+  people:
+    index:
+      title: People
+      no_people_added: omg none!  go add some now
+
   teams:
     index:
-      your_teams: Your Teams
-      registering_for_race: "Registering for race: %{race_name}"
+      your_teams: Teams
+      registering_for_race: "You are registering for %{race_name}"
       no_teams: You are not associated with any teams
-      instructions: Here are the teams you've created. You can (and probably should) re-use a team for multiple races year after year.
+      instructions: "Your teams are below.  Each team can register for %{race_name} only once. You can create and register additional teams, and manage them all, here.  Next year, you can register these same teams again for some other race."
       edit_team: Edit Team
     form:
-      manage_team: Manage Team
-      name: Team Name
-      name_instructions: This team name will be ignored if you override this field during race registration.
-      instructions: This is the basic info for your team. You will specify additional detail later in the process.
+      manage_team: Team Setup
+      name: First, name your team.
+      name_instructions: After naming your team, you can register it in a race.
+      instructions: First, give your team a name.
     team_item:
-      already_registered_for: Already registered for
+      already_registered_for: "Registered for %{race_name}"
 
   registrations:
     new:
@@ -93,13 +103,21 @@ en:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
     form:
-      name: Team name to use for this race
-      description: Tell us about your team
-      twitter: What's your team's twitter account?
+      name: What name shall your team register as?
+      description: Sum up your team in a montage of prose
+      twitter: Please provide a @twitter handle for fun
+    show:
+      title: "%{race_name} Registration details"
+      registered_as: Registered as
+      description: Your mission
+      people: Racers
+      no_people_added: omg none!  go add some now
     edit:
       edit_registration: "Edit registration for %{race_name}"
     update:
       edit_registration: "Edit registration for %{race_name}"
+
+
 
   races:
     index:
@@ -125,7 +143,7 @@ en:
       people_per_team: People per Team
     destroy:
       #todo figure out why an expect block needs this
-      destroy_success: Deleted.
+      delete_success: Deleted.
 
 
 
