@@ -1,5 +1,4 @@
 class PaymentRequirement < Requirement
-
   has_many :tiers, :foreign_key => :requirement_id
 
   def meets_criteria?

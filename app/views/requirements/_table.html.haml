@@ -4,6 +4,7 @@
       %th= t('edit')
       %th= t('name')
       %th= t('type')
+      %th= t('details')
       %th
   - requirements.each do |requirement|
     %tr
@@ -12,4 +13,8 @@
           .fa.fa-edit.fa-fw
       %td= requirement.name
       %td= requirement.type
+      %td
+        - if requirement.type == 'PaymentRequirement'
+          = requirement.tiers.count
+          = t 'tiers'
       %td= button_to t('delete'), race_requirement_url(:race_id => requirement.race.id, :id => requirement.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }

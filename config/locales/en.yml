@@ -48,6 +48,10 @@ en:
   or: or
   of: of
   configured: configured
+  status: 'Status:'
+  complete: Complete
+  completed: Completed
+  incomplete: Incomplete
 
   navbar:
     users: Users
@@ -113,6 +117,8 @@ en:
       description: Your mission
       people: Racers
       no_people_added: omg none!  go add some now
+      requirement_instructions: You must complete the following requirements to complete registration.
+      people_instructions: You must add the proper number of racers to complete registration.
     edit:
       edit_registration: "Edit registration for %{race_name}"
     update:

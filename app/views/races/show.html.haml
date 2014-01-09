@@ -34,7 +34,8 @@
   .col-xs-9
     %h2= @race.people_per_team
 
-- if @race.registerable? && current_user.has_teams_for(@race)
+-#- if @race.registerable? && current_user.has_teams_for(@race)
+- if @race.registerable?
   .row
     .col-xs-12
       = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']

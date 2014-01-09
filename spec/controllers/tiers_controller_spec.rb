@@ -125,6 +125,9 @@ describe TiersController do
         it 'returns 200' do
           expect(response).to be_success
         end
+        it 'sets @requirement' do
+          expect(assigns(:requirement)).to eq(@tier.requirement)
+        end
       end
     end
 
@@ -183,6 +186,10 @@ describe TiersController do
 
         it 'assigns the tier to the requirement' do
           expect(assigns(:tier).requirement).to eq(@req)
+        end
+
+        it 'sets @requirement' do
+          expect(assigns(:requirement)).to eq(@tier.requirement)
         end
       end
     end

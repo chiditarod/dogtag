@@ -9,6 +9,14 @@ describe Tier do
       @req.tiers << FactoryGirl.create(:tier)
     end
 
+    it 'fails when price is not above 0' do
+      expect(FactoryGirl.build :tier, :price => -1).to be_invalid
+    end
+
+    it 'fails when price is not a number' do
+      expect(FactoryGirl.build :tier, :price => 'a').to be_invalid
+    end
+
     it 'fails when another tier has the same "begin_at" value' do
       tier2 = FactoryGirl.build :tier, :price => 60.00
       @req.tiers << tier2

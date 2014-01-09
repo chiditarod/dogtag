@@ -35,6 +35,7 @@ class TiersController < ApplicationController
 
   def edit
     @tier = Tier.find params[:id]
+    @requirement = @tier.requirement
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     return render :status => 400

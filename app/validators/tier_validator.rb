@@ -28,7 +28,6 @@ class TierValidator < ActiveModel::Validator
   def non_self_tiers(record)
     if record.requirement.present? && record.requirement.tiers.present?
       tiers = record.requirement.tiers
-      return nil if tiers.count == 1
       tiers.reject { |t| t == record }
     end
   end
