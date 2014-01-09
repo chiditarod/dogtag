@@ -8,31 +8,34 @@
 
 .row
   .col-xs-3
-    = t('.race_datetime')
+    %h2
+      %small= t('.race_datetime')
   .col-xs-9
-    = human_readable_short @race.race_datetime
+    %h2
+      = human_readable_short @race.race_datetime
 .row
   .col-xs-3
-    = t('.registration_open')
+    %h2
+      %small= t('.registration_window')
   .col-xs-9
-    = human_readable_short @race.registration_open
+    %h2
+      = human_readable_short @race.registration_open
+      to
+      = human_readable_short @race.registration_close
 .row
   .col-xs-3
-    = t('.registration_close')
+    %h2
+      %small= t('.max_teams')
   .col-xs-9
-    = human_readable_short @race.registration_close
+    %h2= @race.max_teams
 .row
   .col-xs-3
-    = t('.max_teams')
+    %h2
+      %small= t('.people_per_team')
   .col-xs-9
-    = @race.max_teams
-.row
-  .col-xs-3
-    = t('.people_per_team')
-  .col-xs-9
-    = @race.people_per_team
+    %h2= @race.people_per_team
 
 - if @race.registerable?
   .row
-    .col-xs-3
-      = link_to t('Register'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+    .col-xs-12
+      = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']

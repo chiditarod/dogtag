@@ -138,9 +138,10 @@ en:
       people_per_team: People per team
       manage_race: Manage Race
     show:
-      race_datetime: Date & Time
+      race_datetime: Race begins on
       max_teams: Maximum Teams
       people_per_team: People per Team
+      register_now: Register Now
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.
