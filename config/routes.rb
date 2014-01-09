@@ -4,10 +4,13 @@ RailsSkeleton::Application.routes.draw do
 
   resources :teams
   resources :races do
+    resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
     resources :registrations do
-      resources :people, :only =>  [:index, :new, :create, :edit, :update, :destroy]
+      resources :people, :only => [:index, :new, :create, :edit, :update, :destroy]
     end
   end
+
+
 
   # user accounts
   resources :users

@@ -3,7 +3,7 @@ class Requirement < ActiveRecord::Base
   validates_presence_of :name
 
   belongs_to :race
-  validates_uniqueness_of :race, :message => 'Cannot be used more than once', :allow_nil => true
+  #validates_uniqueness_of :race, :message => 'Cannot be used more than once', :allow_nil => true
 
   has_many :completed_requirements
   has_many :registrations, :through => :completed_requirements

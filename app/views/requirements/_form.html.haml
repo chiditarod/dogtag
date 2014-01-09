@@ -1,0 +1,16 @@
+.page-header
+  %h1
+    = t('.manage_requirement')
+
+.row
+  .col-sm-12
+    = form_for @race, @requirement, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+      .form-group
+        .col-sm-4.control-label
+          = label_tag :name, t('.name')
+        .col-sm-8
+          = f.text_field :name, :class => 'form-control'
+          %small= t('.name_instructions')
+      .form-group
+        .col-sm-offset-4.col-sm-8
+          = f.submit t('save'), :class => ['btn', 'btn-default']
