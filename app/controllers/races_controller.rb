@@ -39,7 +39,7 @@ class RacesController < ApplicationController
     @race = Race.find params[:id]
     if @race.update_attributes(race_params)
       flash[:notice] = t('update_success')
-      return redirect_to races_path
+      return redirect_to race_url(@race)
     else
       flash[:error] = [t('update_failed')]
       flash[:error] << @race.errors.messages

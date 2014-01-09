@@ -92,8 +92,8 @@ describe RacesController do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
 
-        it 'redirects to race index' do
-          expect(response).to redirect_to(races_path)
+        it 'redirects to race#show' do
+          expect(response).to redirect_to(race_url @race.id)
         end
       end
     end

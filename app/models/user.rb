@@ -9,4 +9,15 @@ class User < ActiveRecord::Base
     c.login_field = :email
     c.validate_login_field = false
   end
+
+  def has_teams_for(race)
+    return false unless teams.present?
+    teams.reduce(false) do |open_team, team|
+      val = open_team || team.registrations.empty?
+      val || team.registrations.reduce(false) do |open_reg, reg|
+        open_reg || (reg.race != race)
+      end
+    end
+  end
+
 end
