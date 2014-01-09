@@ -175,7 +175,7 @@ describe RegistrationsController do
 
       context 'with valid patch data' do
         before do
-          @registration = FactoryGirl.create :registration
+          @registration = FactoryGirl.create :registration, :complete
           patch :update, :race_id => @registration.race.id, :id => @registration.id,
             :registration => {:description => 'New Description'}
         end
@@ -212,7 +212,7 @@ describe RegistrationsController do
 
       context 'with valid id' do
         before do
-          @registration = FactoryGirl.create :registration
+          @registration = FactoryGirl.create :registration, :complete
           get :show, :race_id => @registration.race.id, :id => @registration.id
         end
 

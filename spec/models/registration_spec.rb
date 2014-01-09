@@ -44,16 +44,16 @@ describe Registration do
     end
 
     it "a team's twitter account fails without a leading @" do
-      expect(FactoryGirl.build :registration, :twitter => 'foo').to be_invalid
+      expect(FactoryGirl.build :registration, :complete, :twitter => 'foo').to be_invalid
     end
 
     it "a team's twitter account starts with a leading @" do
-      expect(FactoryGirl.build :registration, :twitter => '@foo').to be_valid
+      expect(FactoryGirl.build :registration, :complete, :twitter => '@foo').to be_valid
     end
 
     describe '#has_slots?' do
       before do
-        @reg = FactoryGirl.create :registration, :with_race
+        @reg = FactoryGirl.create :registration, :complete
         (@reg.race[:people_per_team] - 1).times { |x| @reg.people.create(valid_person_hash) }
       end
 

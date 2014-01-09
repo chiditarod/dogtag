@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Requirement do
 
   let (:requirement) { FactoryGirl.create :requirement }
-  let (:registration) { FactoryGirl.create :registration }
+  let (:registration) { FactoryGirl.create :registration, :complete }
   let (:user) { FactoryGirl.create :user }
 
   describe 'validations' do
@@ -26,11 +26,11 @@ describe Requirement do
       requirement.should_receive(:meets_criteria?).and_return(true)
     end
 
-    it 'returns true if completed requirement was created' do
+    it 'returns true if completed requirement record was created' do
       expect(requirement.complete registration, user).to eq(true)
     end
 
-    it 'returns false if the completed requirement is already present' do
+    it 'returns false if the completed requirement record is already present' do
       CompletedRequirement.create :registration => registration,
         :requirement => requirement, :user => user
       expect(requirement.complete registration, user).to eq(false)

@@ -1,14 +1,20 @@
 FactoryGirl.define do
   factory :registration do
-    name 'Team Registration'
-    description 'Team Description'
-    twitter '@foo'
+    name 'Sample Team'
+    description 'Sample Team Description'
+    twitter '@sample'
+  end
 
-    association :race, :name => 'awesome race'
-    association :team, :name => 'awesome team'
+  trait :complete do
+    with_team
+    with_race
+  end
+
+  trait :with_team do
+    association :team, :name => 'sample team (from registration factory)'
   end
 
   trait :with_race do
-    race
+    association :race, :name => 'sample race (from registration factory)'
   end
 end

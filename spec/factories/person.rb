@@ -13,7 +13,7 @@ FactoryGirl.define do
     end
 
     trait :with_registration do
-      registration
+      association :registration, :complete
     end
 
   end
