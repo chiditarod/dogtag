@@ -29,11 +29,12 @@ class RegistrationsController < ApplicationController
 
     if @registration.save
       flash.now[:notice] = I18n.t('create_success')
+      return redirect_to race_registration_url(@registration.race.id, @registration.id)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @registration.errors.messages
+      respond_with @registration
     end
-    respond_with @registration
   end
 
   def show

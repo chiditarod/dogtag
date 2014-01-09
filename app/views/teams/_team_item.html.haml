@@ -7,13 +7,12 @@
           .fa.fa-edit.fa-fw
 
     .panel-body
+      %p.lead= @race.name
       - if team.races.include? @race
-        %p
-          = t '.already_registered_for', :race_name => @race.name
         .pull-left
-          = link_to t('show'), race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
-        .pull-left
-          = link_to t('edit'), edit_race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs)
+          = link_to race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs) do
+            .fa.fa-flag-checkered.fa-fw
+            =t 'manage_registration'
 
       - else
         %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)

@@ -134,8 +134,9 @@ describe RegistrationsController do
           expect(flash[:notice]).to eq(I18n.t 'create_success')
         end
 
-        it 'returns 200' do
-          expect(response).to be_success
+        it 'redirects to registration#show' do
+          reg = assigns(:registration)
+          expect(response).to redirect_to(race_registration_url(reg.race.id, reg.id))
         end
 
         it 'assigns the team to the registration' do
@@ -194,9 +195,6 @@ describe RegistrationsController do
       end
     end
 
-
-  # todo: not yet customized for this class
-
     describe '#show' do
       context 'invalid id' do
         before { get :show, :race_id => @race.id, :id => 100 }
@@ -230,6 +228,8 @@ describe RegistrationsController do
 
       end
     end
+
+  # todo: not yet customized for this class
     #describe '#index' do
       #it 'returns http success and an array of all races open for registration' do
         #today = Time.now
