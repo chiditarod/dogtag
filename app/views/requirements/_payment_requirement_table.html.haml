@@ -1,0 +1,13 @@
+.page-header
+  %h1
+    = t('.payment_tiers')
+    %small
+      = @requirement.tiers.count
+      = t('configured')
+      = link_to new_tier_url(:requirement_id => @requirement.id) do
+        .fa.fa-plus.fa-fw
+
+- if @requirement.tiers.blank?
+  = t ('.no_tiers_added')
+- else
+  = render 'tiers/table', :tiers => @requirement.tiers

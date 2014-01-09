@@ -3,10 +3,16 @@ class Requirement < ActiveRecord::Base
   validates_presence_of :name
 
   belongs_to :race
-  #validates_uniqueness_of :race, :message => 'Cannot be used more than once', :allow_nil => true
-
   has_many :completed_requirements
   has_many :registrations, :through => :completed_requirements
+
+  ALLOWED_TYPES = [['Payment', 'PaymentRequirement']]
+
+  class << self
+    def allowed_types
+      ALLOWED_TYPES
+    end
+  end
 
   def completed?(registration)
     CompletedRequirement.where(:registration_id => registration.id,
@@ -21,11 +27,8 @@ class Requirement < ActiveRecord::Base
   # todo: figure out how to alllow only child classes to call this method.
   def complete(registration, user)
     return false unless self.meets_criteria?
-
     cr = CompletedRequirement.new :requirement_id => id,
       :registration_id => registration.id, :user => user
-    #return true if cr.save
-    #false
     cr.save
   end
 end

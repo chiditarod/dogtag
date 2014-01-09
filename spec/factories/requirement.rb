@@ -9,11 +9,7 @@ FactoryGirl.define do
 
   factory :payment_requirement do
     name 'Sample Payment Requirement'
+    type 'PaymentRequirement'
   end
 
-  #trait :with_tiers
-    #factory :payment_requirenent_with_tiers do
-      #after(:create) do |payment_requirement, evaluator|
-      #end
-    #end
 end

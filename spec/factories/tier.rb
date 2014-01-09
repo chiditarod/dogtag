@@ -13,6 +13,6 @@ FactoryGirl.define do
       price 70.00
       begin_at (Time.now + 2.weeks)
     end
-
   end
+
 end

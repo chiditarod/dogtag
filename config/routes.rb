@@ -10,7 +10,7 @@ RailsSkeleton::Application.routes.draw do
     end
   end
 
-
+  resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
 
   # user accounts
   resources :users

@@ -47,6 +47,7 @@ en:
   at: at
   or: or
   of: of
+  configured: configured
 
   navbar:
     users: Users
@@ -117,6 +118,8 @@ en:
     update:
       edit_registration: "Edit registration for %{race_name}"
 
+  requirements:
+
 
 
   races:
@@ -142,6 +145,8 @@ en:
       max_teams: Maximum Teams
       people_per_team: People per Team
       register_now: Register Now
+      race_requirements: Race Requirements
+      no_requirements_added: No requirements added yet
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.

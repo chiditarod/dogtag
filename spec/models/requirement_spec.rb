@@ -6,15 +6,6 @@ describe Requirement do
   let (:registration) { FactoryGirl.create :registration, :complete }
   let (:user) { FactoryGirl.create :user }
 
-  #describe 'validations' do
-    #let (:race) { FactoryGirl.create :race }
-    #it 'cannot be associated more than once with a race' do
-      #requirement.race = race
-      #requirement.save
-      #Requirement.create(:name => 'foo', :race => race).should be_invalid
-    #end
-  #end
-
   describe '#meets_criteria?' do
     it "raises an error since it's an abstract method" do
       expect { requirement.meets_criteria? }.to raise_error

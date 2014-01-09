@@ -1,0 +1,15 @@
+%table.table.table-hover.table-responsive
+  %thead
+    %tr
+      %th= t('edit')
+      %th= t('price')
+      %th= t('begin_at')
+      %th
+  - tiers.each do |tier|
+    %tr
+      %td
+        = link_to(edit_tier_url tier) do
+          .fa.fa-edit.fa-fw
+      %td= tier.price
+      %td= tier.begin_at
+      %td= button_to t('delete'), tier_url(tier), :method=>:delete,  :data => { :confirm => 'Are you sure?' }

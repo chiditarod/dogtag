@@ -45,6 +45,7 @@ class RequirementsController < ApplicationController
   def new
     @race = Race.find params[:race_id]
     @requirement = Requirement.new
+    @requirement.race = @race
   end
 
   def create
@@ -69,6 +70,6 @@ class RequirementsController < ApplicationController
   private
 
   def requirement_params
-    params.require(:requirement).permit(:name)
+    params.require(:requirement).permit(:name, :type)
   end
 end

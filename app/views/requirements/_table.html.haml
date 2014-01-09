@@ -1,0 +1,15 @@
+%table.table.table-hover.table-responsive
+  %thead
+    %tr
+      %th= t('edit')
+      %th= t('name')
+      %th= t('type')
+      %th
+  - requirements.each do |requirement|
+    %tr
+      %td
+        = link_to(edit_race_requirement_url :race_id => requirement.race.id, :id => requirement.id) do
+          .fa.fa-edit.fa-fw
+      %td= requirement.name
+      %td= requirement.type
+      %td= button_to t('delete'), race_requirement_url(:race_id => requirement.race.id, :id => requirement.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
