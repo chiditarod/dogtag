@@ -18,7 +18,9 @@ gem 'authlogic',
 gem 'cancan', '1.6.10'
 
 # Payment stuff
-gem 'activemerchant', '1.42.3'
+#gem 'activemerchant', '1.42.3'
+
+gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
 
 # END dogtag gems
 # -------------------------------------------------------
@@ -62,6 +64,7 @@ end
 group :test do
   gem 'webmock', '1.15.2'
   gem 'factory_girl_rails', '4.3.0'
+  gem 'simplecov', '0.8.2'
 end
 
 group :test, :development do
