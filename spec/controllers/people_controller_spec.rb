@@ -63,6 +63,12 @@ describe PeopleController do
         end.to change(Person, :count).by(-1)
       end
 
+      # we don't want to remove a person record once we reach the correct number, as
+      # it would cause the registration to no longer be complete
+      context 'when registration requirements are all met' do
+        it 'does not destroy the record'
+      end
+
       context 'with valid id' do
         before do
           delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => @person.id

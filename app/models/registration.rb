@@ -24,4 +24,15 @@ class Registration < ActiveRecord::Base
     (race.people_per_team - people.count) > 0
   end
 
+  def is_full?
+    ! has_slots?
+  end
+
+  def completed_all_requirements?
+    race.requirements.select(&:enabled?) == requirements
+  end
+
+  def finalized?
+    completed_all_requirements? && is_full?
+  end
 end

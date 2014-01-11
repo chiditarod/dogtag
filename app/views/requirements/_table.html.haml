@@ -1,20 +1,24 @@
 %table.table.table-hover.table-responsive
   %thead
     %tr
-      %th= t('edit')
+      %th{:colspan => 2}= t('edit')
       %th= t('name')
-      %th= t('type')
+      %th= t('enabled')
       %th= t('details')
       %th
   - requirements.each do |requirement|
     %tr
       %td
         = link_to(edit_race_requirement_url :race_id => requirement.race.id, :id => requirement.id) do
-          .fa.fa-edit.fa-fw
+          %i.fa.fa-edit.fa-2x
+      %td= button_to t('delete'), race_requirement_url(:race_id => requirement.race.id, :id => requirement.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
       %td= requirement.name
-      %td= requirement.type
+      %td
+        - if requirement.enabled?
+          %i.fa.fa-check.fa-2x
+        - else
+          = link_to t('action_required'), (edit_race_requirement_url :race_id => requirement.race.id, :id => requirement.id)
       %td
         - if requirement.type == 'PaymentRequirement'
           = requirement.tiers.count
-          = t 'tiers'
-      %td= button_to t('delete'), race_requirement_url(:race_id => requirement.race.id, :id => requirement.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
+          = t '.tiers'

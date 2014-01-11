@@ -5,7 +5,7 @@
       = @requirement.tiers.count
       = t('configured')
       = link_to new_tier_url(:requirement_id => @requirement.id) do
-        .fa.fa-plus.fa-fw
+        %i.fa.fa-plus
 
 - if @requirement.tiers.blank?
   = t ('.no_tiers_added')

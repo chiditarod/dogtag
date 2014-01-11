@@ -6,30 +6,29 @@ describe Requirement do
   let (:registration) { FactoryGirl.create :registration, :complete }
   let (:user) { FactoryGirl.create :user }
 
-  describe '#meets_criteria?' do
+  describe '#enabled?' do
     it "raises an error since it's an abstract method" do
-      expect { requirement.meets_criteria? }.to raise_error
+      expect { requirement.enabled? }.to raise_error
     end
   end
 
   describe '#complete' do
-    before do
-      requirement.should_receive(:meets_criteria?).and_return(true)
-    end
-
-    it 'returns true if completed requirement record was created' do
-      expect(requirement.complete registration, user).to eq(true)
+    it 'returns the completed requirement record after creating it' do
+      cr_stub = CompletedRequirement.new(:requirement => requirement, :registration => registration, :user => user)
+      CompletedRequirement.should_receive(:new).at_least(:once).and_return cr_stub
+      CompletedRequirement.create :registration => registration, :requirement => requirement, :user => user
+      expect(requirement.complete registration.id, user).to eq(cr_stub)
     end
 
     it 'returns false if the completed requirement record is already present' do
       CompletedRequirement.create :registration => registration,
         :requirement => requirement, :user => user
-      expect(requirement.complete registration, user).to eq(false)
+      expect(requirement.complete registration.id, user).to eq(false)
     end
 
     it 'increments the CompletedRequirement table when creating' do
       expect do
-        requirement.complete registration, user
+        requirement.complete registration.id, user
       end.to change(CompletedRequirement, :count).by 1
     end
   end

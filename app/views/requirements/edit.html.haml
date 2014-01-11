@@ -5,3 +5,6 @@
 .row
   .col-sm-12
     = render 'form'
+
+- if @requirement.id && @requirement.type == 'PaymentRequirement'
+  = render 'payment_requirement_table'

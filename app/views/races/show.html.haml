@@ -5,49 +5,40 @@
       = link_to edit_race_path @race do
         %li.fa.fa-edit.fa-fw
 
+
+%h3 Crucial details
+
 .row
-  .col-xs-3
-    %h2
-      %small= t('.race_datetime')
+  .col-xs-3= t('.race_datetime')
   .col-xs-9
-    %h2
+    %h4
       = human_readable_short @race.race_datetime
 .row
-  .col-xs-3
-    %h2
-      %small= t('.registration_window')
+  .col-xs-3= t('.registration_window')
   .col-xs-9
-    %h2
+    %h4
       = human_readable_short @race.registration_open
       to
       = human_readable_short @race.registration_close
 .row
-  .col-xs-3
-    %h2
-      %small= t('.max_teams')
+  .col-xs-3= t('.max_teams')
   .col-xs-9
-    %h2= @race.max_teams
+    %h4= @race.max_teams
 .row
-  .col-xs-3
-    %h2
-      %small= t('.people_per_team')
+  .col-xs-3= t('.people_per_team')
   .col-xs-9
-    %h2= @race.people_per_team
+    %h4= @race.people_per_team
 
--#- if @race.registerable? && current_user.has_teams_for(@race)
 - if @race.registerable?
   .row
     .col-xs-12
       = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
 
 .page-header
-  %h1
+  %h3
     = t('.race_requirements')
-    %small
-      = @race.requirements.count
-      = t('configured')
-      = link_to new_race_requirement_url(@race) do
-        .fa.fa-plus.fa-fw
+    = link_to new_race_requirement_url(@race) do
+      %i.fa.fa-plus
 
 - if @race.requirements.blank?
   = t ('.no_requirements_added')

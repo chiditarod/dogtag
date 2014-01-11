@@ -12,6 +12,9 @@ RailsSkeleton::Application.routes.draw do
 
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
 
+  # stripe
+  resources :charges, :only => [:new, :create]
+
   # user accounts
   resources :users
   resource :account, :controller => :users

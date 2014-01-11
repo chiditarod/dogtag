@@ -14,11 +14,13 @@
       = label_tag :begin_at, t('.begin_at')
     .col-sm-8
       = f.datetime_select :begin_at, :class => 'form-control'
+      %br
+      %small= t('.begin_at_instructions')
 
   .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
       - if @tier.id
-        = link_to tier_url(@tier) do
+        = link_to(edit_race_requirement_url :race_id => @requirement.race.id, :id => @requirement.id) do
           .btn.btn-default
             = t('back')

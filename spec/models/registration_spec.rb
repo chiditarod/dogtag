@@ -67,6 +67,23 @@ describe Registration do
       end
     end
 
+    describe '#is_finalized?' do
+      it "returns true if it's full, and all requirements are met"
+      it "returns false if there aren't enough people"
+      it "returns false if some of the requirements aren't met"
+      it "ignores requirements if there aren't any"
+    end
+
+    describe '#is_full?' do
+      it 'should be the opposite of #has_slots?'
+    end
+
+    describe '#completed_all_requirements?' do
+      it 'returns true when all enabled requirements are completed'
+      it 'return false if any enabled requirements are not completed'
+      it 'ignores disabled requirements'
+    end
+
     it 'not more than race.max_teams registrations per race' do
       valid_race.max_teams.times do |i|
         team = FactoryGirl.create :team, :name => "team#{i}"

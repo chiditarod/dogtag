@@ -1,0 +1,12 @@
+= form_tag charges_path do
+  = hidden_field_tag 'amount', params[:amount]
+  = hidden_field_tag 'metadata', params[:metadata]
+  = hidden_field_tag 'description', params[:description]
+  %script{:type => "text/javascript",
+          :class => 'stripe-button',
+          :src => 'https://checkout.stripe.com/checkout.js',
+          'data-key' => Rails.configuration.stripe[:publishable_key],
+          'data-description' => params[:description],
+          'data-amount' => params[:amount],
+          'data-image' => params[:image],
+          'data-name' => params[:name]}

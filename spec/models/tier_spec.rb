@@ -2,13 +2,20 @@ require 'spec_helper'
 
 describe Tier do
 
-  describe 'validation' do
+  before do
+    @req = FactoryGirl.create :payment_requirement
+    @tier = FactoryGirl.create(:tier)
+    @req.tiers << @tier
+  end
 
-    before do
-      @req = FactoryGirl.create :payment_requirement
-      @req.tiers << FactoryGirl.create(:tier)
+  describe '#price_in_dollars_and_cents' do
+    it 'returns an integer of cents as a string of dollars and cents' do
+      expect(@tier.price_in_dollars_and_cents).to eq('50.00')
     end
+  end
 
+
+  describe 'validation' do
     it 'fails when price is not above 0' do
       expect(FactoryGirl.build :tier, :price => -1).to be_invalid
     end
@@ -18,7 +25,7 @@ describe Tier do
     end
 
     it 'fails when another tier has the same "begin_at" value' do
-      tier2 = FactoryGirl.build :tier, :price => 60.00
+      tier2 = FactoryGirl.build :tier, :price => 6000
       @req.tiers << tier2
       expect(tier2).to be_invalid
     end

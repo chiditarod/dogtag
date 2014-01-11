@@ -40,6 +40,10 @@ describe Race do
     end
   end
 
+  describe '#enabled_requirements' do
+    it 'returns requirements that are enabled'
+  end
+
   describe '#open?' do
     before do
       @race = FactoryGirl.create :race

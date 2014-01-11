@@ -84,11 +84,11 @@ describe TiersController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => @tier.id, :tier => {:price => '99.99'}
+          patch :update, :id => @tier.id, :tier => {:price => '88800'}
         end
 
         it 'updates the requirement' do
-          expect(@tier.reload.price.round(2).to_f).to eq(99.99)
+          expect(@tier.reload.price).to eq(88800)
         end
 
         it 'sets flash notice' do

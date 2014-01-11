@@ -1,0 +1,15 @@
+%article
+  %label.amount
+    %span
+      Amount: $5.00
+= form_tag charges_path do
+  %script{:type => "text/javascript",
+          :class => 'stripe-button',
+          :src => 'https://checkout.stripe.com/checkout.js',
+          'data-key' => Rails.configuration.stripe[:publishable_key],
+          'data-description' => params[:desc],
+
+          'data-panel-label' => " <:  Mush  :> ",
+          'data-image' ='/square-imasge.png',
+          'data-name' => 'Chiditarod',
+          'data-amount' => "500"}

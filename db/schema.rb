@@ -76,8 +76,8 @@ ActiveRecord::Schema.define(version: 20140104131444) do
 
   create_table "tiers", force: true do |t|
     t.integer  "requirement_id"
-    t.decimal  "price",          precision: 8, scale: 2
     t.datetime "begin_at"
+    t.integer  "price"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

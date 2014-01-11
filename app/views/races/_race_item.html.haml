@@ -1,4 +1,7 @@
+%i.fa.fa-shopping-cart.fa-5x.pull-left
 %h3= link_to race.name, race_path(race.id)
+.clearfix
+
 %h5
   = race.registrations.count
   = t '.of'
@@ -9,7 +12,6 @@
   %h5
     = t '.registration_closes_on'
     = human_readable_short race.registration_close
-
   %h5
     = distance_of_time_in_words race.closes_in
     = t('.remaining')

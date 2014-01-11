@@ -10,6 +10,10 @@ class User < ActiveRecord::Base
     c.validate_login_field = false
   end
 
+  def fullname
+    "#{first_name} #{last_name}"
+  end
+
   def has_teams_for(race)
     return false unless teams.present?
     teams.reduce(false) do |open_team, team|

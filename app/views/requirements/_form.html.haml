@@ -19,6 +19,3 @@
           = link_to race_url(@requirement.race) do
             .btn.btn-default
               = t('back')
-
-  - if @requirement.id && @requirement.type == 'PaymentRequirement'
-    = render 'payment_requirement_table'

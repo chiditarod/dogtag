@@ -8,11 +8,18 @@
 
     .panel-body
       %p.lead= @race.name
-      - if team.races.include? @race
-        .pull-left
-          = link_to race_registration_path(:race_id => @race.id, :id => team.registrations(@race).first.id), :class => %w(btn btn-xs) do
-            .fa.fa-flag-checkered.fa-fw
-            =t 'manage_registration'
 
+      - if team.races.include? @race
+        - reg = team.registrations(@race).first
+        %p
+          =t 'registered_as'
+          = reg.name
+        = link_to race_registration_path(:race_id => @race.id, :id => reg.id), :class => %w(btn btn-xs) do
+          - if reg.finalized?
+            .pull-left.fa.fa-smile-o.fa-4x
+            =t 'fully_registered'
+          - else
+            .pull-left.fa.fa-frown-o.fa-4x
+            =t 'registration_needs_attention'
       - else
         %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)

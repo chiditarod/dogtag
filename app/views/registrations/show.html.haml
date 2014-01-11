@@ -1,52 +1,82 @@
 .page-header
   %h1
+    %small
+      = link_to edit_race_registration_path(@race.id, @registration.id) do
+        .fa.fa-edit.fa-2x
     = t('.title', :race_name => @race.name)
 
 .row
-  .col-xs-3
-    %h1
-      %small= t('.registered_as')
-  .col-xs-9
-    %h1
-      = @registration.name
-      %small
-        = link_to edit_race_registration_path(@race.id, @registration.id) do
-          .fa.fa-edit.fa-fw
-- if @registration.twitter.present?
-  .row
-    .col-xs-3
-    .col-xs-9
-      = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}/"
-.row
-  .col-xs-3
-    %h1
-      %small= t('.description')
-  .col-xs-9
-    %h1= @registration.description
+  .col-md-4
+    .row
+      %h1
+        %small= t('.registered_as')
+    .row
+      %h2
+        = @registration.name
+        - if @registration.twitter.present?
+          %small
+            = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}/"
+  .col-md-6
+    .row
+      %h1
+        %small= t('.description')
+    .row
+      %h3= @registration.description
+  .col-md-2
+    .row
+      %h1
+        %small= t('.status')
+    .row
+      - if @registration.finalized?
+        %i.fa.fa-smile-o.fa-4x
+        =t ('complete')
+      - else
+        %i.fa.fa-frown-o.fa-4x
+        =t ('incomplete')
+
+-#-----------------------------------------------------------
+-# requirements  (consider partial
 
 - if @registration.race.requirements.present?
   .page-header
-    %h1= t('.requirements')
+    %h1
+      %i.fa.fa-rocket
+      = t('.requirements')
+      %small
+        = @registration.requirements.count
+        = t('of')
+        = @registration.race.enabled_requirements.count
+        - if @registration.completed_all_requirements?
+          %i.fa.fa-smile-o
     = t('.requirement_instructions')
   .row
-    - @registration.race.requirements.each do |req|
-      .col-xs-4.pull-left
+    - @registration.race.enabled_requirements.each do |req|
+      .col-xs-3.pull-left
         .panel.panel-default
           .panel-heading
-            = req.name
+            .pull-right
+              - if req.completed?(@registration)
+                %i.fa.fa-2x.fa-smile-o
+              - else
+                %i.fa.fa-2x.fa-frown-o
+            %span.lead= req.name
+            .clearfix
           .panel-body
-            - if req.completed?(@registration)
-              %p.lead
-                = t('status')
+            - if req.type == 'PaymentRequirement'
+              - if req.completed?(@registration)
                 = t('completed')
-            - else
-              %p.lead
-                = t('status')
-                = t('incomplete')
-              = link_to t('.complete'), race_requirement_url(:race_id => req.race.id, :id => req.id), :class => ['btn', 'btn-primary']
+              - else
+                .lead
+                  $
+                  = req.active_tier.price_in_dollars_and_cents
+                = render 'charges/embed', :params => req.stripe_params(@registration)
+
+-#-----------------------------------------------------------
+-# people stuff      (consider partial
 
 .page-header
   %h1
+    %i.fa.fa-user
     = t('.people')
     %small
       = @registration.people.count
@@ -54,7 +84,10 @@
       = @registration.race.people_per_team
       - if @registration.has_slots?
         = link_to new_race_registration_person_url(@registration.race.id, @registration.id) do
-          .fa.fa-plus.fa-fw
+          %i.fa.fa-plus
+      - else
+        %i.fa.fa-smile-o
+
   = t('.people_instructions')
 
 - if @registration.people.blank?

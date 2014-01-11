@@ -79,6 +79,10 @@ en:
     edit:
       update_user: Update your account
 
+  tiers:
+    form:
+      price_instructions: "Enter the number in USD Cents.  e.g. For $50.00, enter 5000"
+      begin_at_instructions: "This is when this tier will become active over any prior tiers"
 
   people:
     index:
@@ -118,15 +122,15 @@ en:
       people: Racers
       no_people_added: omg none!  go add some now
       requirement_instructions: You must complete the following requirements to complete registration.
-      people_instructions: You must add the proper number of racers to complete registration.
+      people_instructions: "You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them."
     edit:
       edit_registration: "Edit registration for %{race_name}"
     update:
       edit_registration: "Edit registration for %{race_name}"
 
   requirements:
-
-
+    table:
+      tiers: tiers
 
   races:
     index:

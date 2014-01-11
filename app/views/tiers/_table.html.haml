@@ -9,7 +9,7 @@
     %tr
       %td
         = link_to(edit_tier_url tier) do
-          .fa.fa-edit.fa-fw
-      %td= tier.price
+          .fa.fa-edit.fa-2x
+      %td= tier.price_in_dollars_and_cents
       %td= tier.begin_at
       %td= button_to t('delete'), tier_url(tier), :method=>:delete,  :data => { :confirm => 'Are you sure?' }

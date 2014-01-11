@@ -16,6 +16,10 @@ class Race < ActiveRecord::Base
   # to be fulfilled before a team is fully registered.
   has_many :requirements
 
+  def enabled_requirements
+    requirements.select(&:enabled?)
+  end
+
   def full?
     registrations.count == max_teams
   end

@@ -40,6 +40,7 @@ class RegistrationsController < ApplicationController
   def show
     @registration = Registration.find params[:id]
     @race = @registration.race
+    session[:prior_url] = request.original_url
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     redirect_to teams_path
