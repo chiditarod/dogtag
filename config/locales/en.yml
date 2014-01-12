@@ -61,11 +61,9 @@ en:
   must_select_race: You must select a race to register for.
   must_select_team: You must select a team to register.
 
-  user_sessions:
-    create:
-      login_success: Login successful.
-      logout_success: Logout successful.
-      login_failed: Login failed.
+  login_success: Login successful.
+  logout_success: Logout successful.
+  login_failed: Login failed.
 
   users:
     create:

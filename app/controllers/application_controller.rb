@@ -35,7 +35,7 @@ class ApplicationController < ActionController::Base
   end
 
   def store_location
-    session[:return_to] = request.url
+    session[:return_to] = request.original_url
     #todo: remove this logging once it works
     logger.info "-----------------"
     logger.info session[:return_to]
@@ -43,6 +43,8 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_back_or_default(default)
+    # todo: get this working (see user_session specs)
+    #puts "session return_to: #{session[:return_to]}"
     redirect_to(session[:return_to] || default)
     session[:return_to] = nil
   end
