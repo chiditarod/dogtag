@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Requirement do
 
   let (:requirement) { FactoryGirl.create :requirement }
-  let (:registration) { FactoryGirl.create :registration, :complete }
+  let (:registration) { FactoryGirl.create :registration }
   let (:user) { FactoryGirl.create :user }
 
   describe '#enabled?' do

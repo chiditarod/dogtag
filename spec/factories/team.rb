@@ -1,10 +1,9 @@
 FactoryGirl.define do
+  sequence :team_name do |n|
+    "Team #{n}"
+  end
+
   factory :team do
-    name 'Action Squad'
-
-    factory :team2 do
-      name 'Derailers'
-    end
-
+    name { generate(:team_name) }
   end
 end

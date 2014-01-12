@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe RacesController do
-  let (:valid_user) { FactoryGirl.create :user }
+
   let (:valid_race_hash) { FactoryGirl.attributes_for :race }
 
   context '[logged out]' do
@@ -35,7 +35,8 @@ describe RacesController do
   context '[logged in]' do
     before do
       activate_authlogic
-      mock_login! valid_user
+      user = FactoryGirl.create :user
+      mock_login! user
     end
 
     describe '#show' do
@@ -138,16 +139,19 @@ describe RacesController do
     end
 
     describe '#index' do
-      it 'returns http success and an array of all races open for registration' do
-        #todo dry this up with the stuff in race_spec.rb
-        today = Time.now
-        double(Time.now) { today }
-        FactoryGirl.create :race, :name => 'closed race, its today!'
-        open_race1 = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
-        open_race2 = FactoryGirl.create :race, :name => 'open race 2', :race_datetime => (today + 6.weeks), :registration_open =>(today - 1.week), :registration_close => (today + 1.day)
+      before do
+        @closed = FactoryGirl.create :closed_race
+        @open1 = FactoryGirl.create :race
+        @open2 = FactoryGirl.create :race
         get :index
-        response.should be_success
-        expect(assigns :races).to eq [open_race1, open_race2]
+      end
+
+      it 'returns http success' do
+        expect(response).to be_success
+      end
+
+      it 'sets @races to all races open for registration' do
+        expect(assigns :races).to eq [@open1, @open2]
       end
     end
 

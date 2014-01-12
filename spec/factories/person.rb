@@ -11,10 +11,5 @@ FactoryGirl.define do
       email "dan@ghostbusters.com"
       phone "312-867-5209"
     end
-
-    trait :with_registration do
-      association :registration, :complete
-    end
-
   end
 end

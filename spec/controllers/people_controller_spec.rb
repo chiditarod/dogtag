@@ -1,11 +1,11 @@
 require 'spec_helper'
 
 describe PeopleController do
-  let (:valid_person_hash) { FactoryGirl.attributes_for :person }
+
 
   before do
-    @person = FactoryGirl.create :person, :with_registration
-    @registration = @person.registration
+    @registration = FactoryGirl.create :registration_with_people
+    @person = @registration.people.first
     @race = @registration.race
   end
 
@@ -156,14 +156,12 @@ describe PeopleController do
 
     describe '#index' do
       before do
-        @person2 = FactoryGirl.create :person2
-        @person2.registration = @registration
-        @person2.save
         get :index, :race_id => @race.id, :registration_id => @registration.id
       end
 
       it 'sets @people to all persons' do
-        expect(assigns(:people)).to eq([@person, @person2])
+        # todo: probably a better way
+        expect(assigns(:people).to_a).to eq(@registration.people.to_a)
       end
 
       it 'returns http success' do
@@ -193,22 +191,26 @@ describe PeopleController do
     end
 
     describe '#create' do
+
+      let (:reg_no_people) { FactoryGirl.create :registration }
+      let (:new_person_hash) { FactoryGirl.attributes_for :person2 }
+
       context 'without person param' do
         it 'returns 400' do
-          post :create, :race_id => @race.id, :registration_id => @registration.id
+          post :create, :race_id => @race.id, :registration_id => reg_no_people.id
           expect(response.status).to eq(400)
         end
       end
 
       it 'adds a record' do
         expect do
-          post :create, :race_id => @race.id, :registration_id => @registration.id, :person => valid_person_hash
+          post :create, :race_id => @race.id, :registration_id => reg_no_people.id, :person => new_person_hash
         end.to change(Person, :count).by 1
       end
 
       context 'upon success' do
         before do
-          post :create, :race_id => @race.id, :registration_id => @registration.id, :person => valid_person_hash
+          post :create, :race_id => @race.id, :registration_id => reg_no_people.id, :person => new_person_hash
         end
 
         it 'sets a flash notice' do
@@ -216,11 +218,11 @@ describe PeopleController do
         end
 
         it 'redirects to registration#show' do
-          expect(response).to redirect_to race_registration_url(@race.id, @registration)
+          expect(response).to redirect_to race_registration_url(@race.id, reg_no_people.id)
         end
 
         it 'assigns the person to their registration' do
-          expect(assigns(:person).registration).to eq(@registration)
+          expect(assigns(:person).registration).to eq(reg_no_people)
         end
 
       end
@@ -228,7 +230,7 @@ describe PeopleController do
       it 'returns 200 and sets flash[:error] when required params are missing' do
         required = [:first_name, :last_name, :email, :phone]
         required.each do |param|
-          payload = valid_person_hash.dup
+          payload = new_person_hash.dup
           payload.delete param
           post :create, :race_id => @race.id, :registration_id => @registration.id, :person => payload
           expect(response).to be_success

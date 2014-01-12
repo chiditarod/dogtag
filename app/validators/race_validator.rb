@@ -1,9 +1,7 @@
 class RaceValidator < ActiveModel::Validator
 
   def validate(record)
-    if validate_datetimes_parse record
-      validate_open_and_close_dates record
-    end
+    validate_open_and_close_dates(record) if datetimes_parse?(record)
   end
 
   private
@@ -20,7 +18,7 @@ class RaceValidator < ActiveModel::Validator
     end
   end
 
-  def validate_datetimes_parse(record)
+  def datetimes_parse?(record)
     dates = [:race_datetime, :registration_open, :registration_close]
     dates.each do |d|
       begin

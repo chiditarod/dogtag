@@ -20,19 +20,23 @@ class Race < ActiveRecord::Base
     requirements.select(&:enabled?)
   end
 
+  def finalized_registrations
+    registrations.select(&:finalized?)
+  end
+
+  def spots_remaining
+    max_teams - finalized_registrations.count
+  end
+
   def full?
-    registrations.count == max_teams
+    finalized_registrations.count == max_teams
   end
 
   def not_full?
     !full?
   end
 
-  def spots_remaining
-    max_teams - registrations.count
-  end
-
-  def open?
+  def open_for_registration?
     now = Time.now
     return false if now < registration_open
     return false if registration_close < now
@@ -40,7 +44,7 @@ class Race < ActiveRecord::Base
   end
 
   def registerable?
-    not_full? && open?
+    not_full? && open_for_registration?
   end
 
   def closes_in
@@ -50,9 +54,7 @@ class Race < ActiveRecord::Base
 
   class << self
     def find_registerable_races
-      Race.all.select do |race|
-        race if race.registerable?
-      end
+      Race.all.select(&:registerable?)
     end
   end
 

@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :completed_requirement do
-    association :registration, :complete
-    association :requirement
-    association :user
+    requirement
+    registration
+    user
   end
 end

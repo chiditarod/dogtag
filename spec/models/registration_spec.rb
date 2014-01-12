@@ -1,99 +1,136 @@
 require 'spec_helper'
 
 describe Registration do
-  let (:valid_person_hash) { FactoryGirl.attributes_for :person }
-  let (:valid_race) { FactoryGirl.create :race }
-  let (:valid_team) { FactoryGirl.create :team }
+  let (:race) { FactoryGirl.create :race }
+  let (:team) { FactoryGirl.create :team }
 
-  describe 'validates' do
-    it 'that a team name, team and race are present' do
-      Registration.new(team: valid_team).should_not be_valid
-      Registration.new(race: valid_race).should_not be_valid
-      Registration.new(race: valid_race, team: valid_team).should_not be_valid
-      Registration.new(name: 'foo').should_not be_valid
-      Registration.new(name: 'foo', team: valid_team).should_not be_valid
-      Registration.new(name: 'foo', team: valid_team, race: valid_race).should be_valid
+  describe 'validation' do
+    it 'succeeds when a race is open' do
+      expect(FactoryGirl.build :registration, race: race, team: team).to be_valid
     end
 
-    it 'the same team cannot be registered to the same race more than once' do
-      Registration.create(:name => 'team1', :team => valid_team, :race => valid_race).should be_valid
-      Registration.create(:name => 'team2', :team => valid_team, :race => valid_race).should be_invalid
+    it 'fails when a race is not open' do
+      race.stub(:open_for_registration?).and_return false
+      expect(FactoryGirl.build :registration, race: race, team: team).to be_invalid
+    end
+
+    it 'fails when the same team registers for a single race more than once' do
+      expect(FactoryGirl.create :registration, race: race, team: team).to be_valid
+      expect(FactoryGirl.build :registration, race: race, team: team).to be_invalid
     end
 
     it 'no two teams can register the same name in a single race' do
-      team2 = FactoryGirl.create :team, :name => 'some other name'
-      Registration.create(:name => 'team1', :race => valid_race, :team => valid_team).should be_valid
-      Registration.create(:name => 'team1', :race => valid_race, :team => team2).should be_invalid
+      team2 = FactoryGirl.create :team
+      expect(FactoryGirl.create :registration, name: 'mushfaces', race: race, team: team).to be_valid
+      expect(FactoryGirl.build :registration, name: 'mushfaces', race: race, team: team2).to be_invalid
     end
 
     it 'a team can register the same name for different races' do
-      race2 = FactoryGirl.create :race, :name => 'some other race'
-      Registration.create(:name => 'team', :team => valid_team, :race => valid_race).should be_valid
-      Registration.create(:name => 'team', :team => valid_team, :race => race2).should be_valid
+      race2 = FactoryGirl.create :race
+      expect(FactoryGirl.create :registration, name: 'mushfaces', race: race, team: team).to be_valid
+      expect(FactoryGirl.build :registration, name: 'mushfaces', race: race2, team: team).to be_valid
     end
 
     it "a team's twitter account (if present) is unique per race" do
-      Registration.create(:name => 'team1', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_valid
-      Registration.create(:name => 'team2', :team => valid_team, :race => valid_race, :twitter => '@foo').should be_invalid
+      expect(FactoryGirl.create :registration, race: race, twitter: '@foo').to be_valid
+      expect(FactoryGirl.build :registration, race: race, twitter: '@foo').to be_invalid
     end
 
     it "a team's twitter account can be the same for different races" do
-      race2 = FactoryGirl.create :race, :name => 'some other race'
-      Registration.create(:name => 'team', :team => valid_team, :twitter => '@foo', :race => valid_race).should be_valid
-      Registration.create(:name => 'team', :team => valid_team, :twitter => '@foo', :race => race2).should be_valid
+      race2 = FactoryGirl.create :race
+      expect(FactoryGirl.create :registration, name: 'mushfaces', twitter: '@foo', race: race, team: team).to be_valid
+      expect(FactoryGirl.create :registration, name: 'mushfaces', twitter: '@foo', race: race2, team: team).to be_valid
     end
 
     it "a team's twitter account fails without a leading @" do
-      expect(FactoryGirl.build :registration, :complete, :twitter => 'foo').to be_invalid
+      expect(FactoryGirl.build :registration, :twitter => 'foo').to be_invalid
     end
 
     it "a team's twitter account starts with a leading @" do
-      expect(FactoryGirl.build :registration, :complete, :twitter => '@foo').to be_valid
+      expect(FactoryGirl.build :registration, :twitter => '@foo').to be_valid
     end
 
-    describe '#has_slots?' do
+    describe '#needs_people?' do
       before do
-        @reg = FactoryGirl.create :registration, :complete
-        (@reg.race[:people_per_team] - 1).times { |x| @reg.people.create(valid_person_hash) }
+        race = FactoryGirl.create :race
+        @reg = FactoryGirl.create :registration_with_people, :race => race, :people_count => (race.people_per_team - 1)
       end
 
       it 'returns true if there are less than race.people_per_team people' do
-        expect(@reg.has_slots?).to be_true
+        expect(@reg.needs_people?).to be_true
       end
 
       it 'returns false if there are race.people_per_team people' do
-        @reg.people.create valid_person_hash
-        expect(@reg.has_slots?).to be_false
+        @reg.people << FactoryGirl.create(:person)
+        expect(@reg.needs_people?).to be_false
       end
-    end
-
-    describe '#is_finalized?' do
-      it "returns true if it's full, and all requirements are met"
-      it "returns false if there aren't enough people"
-      it "returns false if some of the requirements aren't met"
-      it "ignores requirements if there aren't any"
     end
 
     describe '#is_full?' do
-      it 'should be the opposite of #has_slots?'
+      it 'should be the opposite of #needs_people?' do
+        reg = FactoryGirl.create :registration
+        reg.stub(:needs_people?).and_return false
+        expect(reg.is_full?).to eq(true)
+      end
+    end
+
+    describe '#finalized?' do
+      before do
+        @reg = FactoryGirl.create :registration
+      end
+
+      it "returns true if it doesn't need people, and all requirements are met" do
+        @reg.stub(:completed_all_requirements?).and_return true
+        @reg.stub(:is_full?).and_return true
+        expect(@reg.finalized?).to eq(true)
+      end
+
+      it "returns false if it needs people, and all requirements are met" do
+        @reg.stub(:completed_all_requirements?).and_return true
+        @reg.stub(:is_full?).and_return false
+        expect(@reg.finalized?).to eq(false)
+      end
+
+      it "returns false if it doesn't need people, and all requirements are NOT met" do
+        @reg.stub(:completed_all_requirements?).and_return false
+        @reg.stub(:is_full?).and_return true
+        expect(@reg.finalized?).to eq(false)
+      end
+
+      it "returns false if it needs people, and all requirements are NOT met" do
+        @reg.stub(:completed_all_requirements?).and_return false
+        @reg.stub(:is_full?).and_return false
+        expect(@reg.finalized?).to eq(false)
+      end
     end
 
     describe '#completed_all_requirements?' do
-      it 'returns true when all enabled requirements are completed'
-      it 'return false if any enabled requirements are not completed'
-      it 'ignores disabled requirements'
-    end
-
-    it 'not more than race.max_teams registrations per race' do
-      valid_race.max_teams.times do |i|
-        team = FactoryGirl.create :team, :name => "team#{i}"
-        expect(Registration.create :name => "reg#{i}", :race => valid_race, :team => team).to be_valid
+      before do
+        @reg = FactoryGirl.create :registration
+        @race = @reg.race
+        req = FactoryGirl.create :enabled_payment_requirement, :race => @race
+        FactoryGirl.create :completed_requirement, :requirement => req, :registration => @reg
       end
-      valid_race.reload
 
-      reg = Registration.new :name => "fail", :race => valid_race, :team => Team.create
-      expect(reg).to be_invalid
+      it 'returns true when a race has no requirements' do
+        reg = FactoryGirl.create :registration
+        expect(reg.completed_all_requirements?).to eq(true)
+      end
+
+      it 'returns true when all enabled requirements are completed' do
+        expect(@reg.completed_all_requirements?).to eq(true)
+      end
+
+      it 'return false if any enabled requirements are not completed' do
+        FactoryGirl.create :enabled_payment_requirement, :race => @race
+        expect(@reg.completed_all_requirements?).to eq(false)
+      end
+
+      it "ignores a race's requirement when requirement.enabled? == false" do
+        FactoryGirl.create :payment_requirement, :race => @race
+        expect(@reg.completed_all_requirements?).to eq(true)
+      end
     end
-  end
 
+  end
 end

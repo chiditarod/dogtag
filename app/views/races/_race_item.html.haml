@@ -3,7 +3,7 @@
 .clearfix
 
 %h5
-  = race.registrations.count
+  = race.finalized_registrations.count
   = t '.of'
   = race.max_teams
   = t '.teams_registered'
@@ -17,8 +17,8 @@
     = t('.remaining')
 - else
   %h5
-    = t('.open?')
-    = race.open?
+    = t('.open')
+    = race.open_for_registration?
   %h5
     = t('.full?')
     = race.full?

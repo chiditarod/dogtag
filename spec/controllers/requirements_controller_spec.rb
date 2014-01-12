@@ -3,7 +3,7 @@ require 'spec_helper'
 describe RequirementsController do
 
   before do
-    @req = FactoryGirl.create :requirement, :with_race
+    @req = FactoryGirl.create :requirement
   end
 
   context '[logged out]' do

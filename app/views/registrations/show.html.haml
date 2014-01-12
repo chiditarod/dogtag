@@ -82,7 +82,7 @@
       = @registration.people.count
       = t('of')
       = @registration.race.people_per_team
-      - if @registration.has_slots?
+      - if @registration.needs_people?
         = link_to new_race_registration_person_url(@registration.race.id, @registration.id) do
           %i.fa.fa-plus
       - else

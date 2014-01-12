@@ -140,6 +140,7 @@ en:
       registration_closes_on: Registration closes on
       remaining: remaining to register.
       at: at
+      open: Open for registration?
     form:
       name: Race Name
       race_datetime: Date & Time

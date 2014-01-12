@@ -1,6 +1,5 @@
 FactoryGirl.define do
   factory :tier do
-
     begin_at (Time.now - 2.weeks)
     price 5000
 
@@ -14,5 +13,4 @@ FactoryGirl.define do
       begin_at (Time.now + 2.weeks)
     end
   end
-
 end

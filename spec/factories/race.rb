@@ -1,15 +1,18 @@
 FactoryGirl.define do
+  sequence :race_name do |n|
+    "Race #{n}"
+  end
+
   factory :race do
-    name 'Chiditarod'
-    race_datetime Time.now
-    registration_close { race_datetime - 2.weeks }
-    registration_open { registration_close - 4.weeks }
+    name { generate(:race_name) }
+    registration_open (Time.now - 2.weeks)
+    registration_close (Time.now + 2.weeks)
+    race_datetime (Time.now + 4.weeks)
     max_teams 10
     people_per_team 5
 
-    factory :race2 do
-      name 'Chiditarod 2'
+    factory :closed_race do
+      registration_close (Time.now - 1.week)
     end
-
   end
 end

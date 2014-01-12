@@ -3,7 +3,7 @@ require 'spec_helper'
 describe TiersController do
 
   before do
-    @req = FactoryGirl.create :payment_requirement, :with_race
+    @req = FactoryGirl.create :payment_requirement
     @tier = FactoryGirl.create :tier
     @req.tiers << @tier
   end

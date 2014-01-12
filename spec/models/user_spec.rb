@@ -12,7 +12,7 @@ describe User do
   describe '#has_teams_for' do
     before do
       @user = FactoryGirl.create :user
-      @reg = FactoryGirl.create :registration, :complete
+      @reg = FactoryGirl.create :registration
       @reg.team.users << @user
     end
 

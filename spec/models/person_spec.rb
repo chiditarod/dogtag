@@ -22,7 +22,7 @@ describe Person do
 
     it 'fails if associated with a registration with race.people_per_team people already assigned' do
       person_hash = FactoryGirl.attributes_for :person
-      reg = FactoryGirl.create :registration, :complete
+      reg = FactoryGirl.create :registration
       reg.race.people_per_team.times { |x| reg.people.create person_hash }
       person = reg.people.new person_hash
       expect(person).to be_invalid
