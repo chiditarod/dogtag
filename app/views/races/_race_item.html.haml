@@ -1,24 +1,39 @@
-%i.fa.fa-shopping-cart.fa-5x.pull-left
-%h3= link_to race.name, race_path(race.id)
+
+.col-xs-4
+  = link_to race_path(race.id) do
+    %i.fa.fa-shopping-cart.fa-5x
+.col-xs-6
+  .pull-right
+    %h4= link_to race.name, race_path(race.id)
+    %small
+      = race.finalized_registrations.count
+      of
+      = race.max_teams
+      = t('.teams')
+
 .clearfix
 
-%h5
-  = race.finalized_registrations.count
-  = t '.of'
-  = race.max_teams
-  = t '.teams_registered'
-
 - if race.registerable?
-  %h5
+  %br
+  = race.spots_remaining
+  = t '.spots_remaining'
+  - if race.open_for_registration?
+    %br
+    = distance_of_time_in_words race.days_before_close
+    = t('.left_to_register')
+    %br
     = t '.registration_closes_on'
     = human_readable_short race.registration_close
-  %h5
-    = distance_of_time_in_words race.closes_in
-    = t('.remaining')
+  - else
+    %h3= t('.registration_closed')
 - else
-  %h5
-    = t('.open')
-    = race.open_for_registration?
-  %h5
-    = t('.full?')
-    = race.full?
+  - if race.full?
+    %h5
+      = t('.race_is_full')
+    = race.waitlist_count
+    = t('.team')
+    = t('.on_waitlist')
+  - else
+    = t('.registration_opens_on')
+    = human_readable_short race.registration_open
+

@@ -7,13 +7,9 @@
   .form-group
     .col-sm-4.control-label
       = label_tag :name, t('.name')
-    .col-sm-8
+    .col-sm-4
       = f.text_field :name, :class => 'form-control'
-  .form-group
-    .col-sm-4.control-label
-      = label_tag :race_datetime, t('.race_datetime')
-    .col-sm-8
-      = f.datetime_select :race_datetime, :class => 'form-control'
+
   .form-group
     .col-sm-4.control-label
       = label_tag :registration_open, t('.registration_open')
@@ -24,6 +20,12 @@
       = label_tag :registration_close, t('.registration_close')
     .col-sm-8
       = f.datetime_select :registration_close, :class => 'form-control'
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :race_datetime, t('.race_datetime')
+    .col-sm-8
+      = f.datetime_select :race_datetime, :class => 'form-control'
+
   .form-group
     .col-sm-4.control-label
       = label_tag :max_teams, t('.max_teams')

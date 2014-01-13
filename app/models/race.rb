@@ -28,6 +28,11 @@ class Race < ActiveRecord::Base
     max_teams - finalized_registrations.count
   end
 
+  def waitlist_count
+    return 0 if not_full?
+    registrations.count - max_teams
+  end
+
   def full?
     finalized_registrations.count == max_teams
   end
@@ -47,14 +52,21 @@ class Race < ActiveRecord::Base
     not_full? && open_for_registration?
   end
 
-  def closes_in
-    return false unless registerable?
-    (registration_close - Time.now).round
+  def days_before_close
+    t = Time.now
+    return false if registration_close < t
+    (registration_close - t).ceil
   end
 
   class << self
     def find_registerable_races
       Race.all.select(&:registerable?)
+    end
+  end
+
+  class << self
+    def find_open_races
+      Race.all.select(&:open_for_registration?)
     end
   end
 

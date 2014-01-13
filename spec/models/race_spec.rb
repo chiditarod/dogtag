@@ -97,17 +97,16 @@ describe Race do
     end
   end
 
-  describe '#closes_in' do
-    it 'returns false if the race is not registerable' do
-      closed_race = FactoryGirl.create :race
-      closed_race.stub(:registerable?).and_return(false)
-      expect(closed_race.closes_in).to eq(false)
+  describe '#days_before_close' do
+    it 'returns false if registration_close is in the past' do
+      closed_race = FactoryGirl.create :closed_race
+      expect(closed_race.days_before_close).to eq(false)
     end
 
     it 'returns the time between now and registration_close' do
       double(Time.now) { today }
       race = FactoryGirl.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
-      expect(race.closes_in).to eq(2.weeks.round)
+      expect(race.days_before_close).to eq(2.weeks)
     end
   end
 
@@ -200,6 +199,51 @@ describe Race do
       open_race.stub(:registerable?).and_return(true)
       Race.should_receive(:all).and_return [closed_race, open_race]
       expect(Race.find_registerable_races).to eq([open_race])
+    end
+  end
+
+  describe '#self.find_open_races' do
+    it "returns races who's registration window is open" do
+      closed_race = FactoryGirl.create :race
+      closed_race.stub(:open_for_registration?).and_return(false)
+      open_race = FactoryGirl.create :race
+      open_race.stub(:open_for_registration?).and_return(true)
+      Race.should_receive(:all).and_return [closed_race, open_race]
+      expect(Race.find_registerable_races).to eq([open_race])
+    end
+  end
+
+  describe '#waitlist_count' do
+    before do
+      @race = FactoryGirl.create :race
+      (@race.max_teams - 1).times do
+        reg = FactoryGirl.create :registration, race: @race
+        reg.stub(:finalized?).and_return true
+        #todo: figure out why the next line is necessary (reverse key lookup?)
+        @race.registrations << reg
+      end
+    end
+
+    it 'returns 0 if the race is not full' do
+      expect(@race.waitlist_count).to eq(0)
+    end
+
+    describe 'when full? == true' do
+      before do
+        reg = FactoryGirl.create :registration, race: @race
+        reg.stub(:finalized?).and_return true
+        @race.registrations << reg
+      end
+
+      it 'returns 0 if total registrations = finalized_registrations' do
+        expect(@race.waitlist_count).to eq(0)
+      end
+
+      it 'returns the delta between total registrations and finalized_registrations' do
+        reg = FactoryGirl.create :registration, race: @race
+        @race.registrations << reg
+        expect(@race.waitlist_count).to eq(1)
+      end
     end
   end
 

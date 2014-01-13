@@ -1,21 +1,18 @@
 .page-header
-  %h1= t('.open_races')
+  %h1
+    = t('.title')
+    %small
+      = link_to new_race_path do
+        %i.fa.fa-plus
+  %p= t('.instructions')
+
 - if @races.blank?
   = t '.no_races'
 - else
-  .row
+  .row.well
     - @races.each do |race|
-      .col-s4.pull-left
-        = render 'race_item', :race => race
-
--#todo: this needs to be admin only
-
-.page-header
-  %h1= t('.admin_all_races')
-- if @all_races.blank?
-  = t '.no_races'
-  = link_to t('.create_race'), new_race_path
-- else
-  - @all_races.each do |race|
-    .col-s4.pull-left
-      = render 'race_item', :race => race
+      .col-xs-3.pull-left
+        .panel.panel-default
+          .panel-body
+            = render 'race_item', :race => race
+.clearfix

@@ -37,7 +37,7 @@
 -#-----------------------------------------------------------
 -# requirements  (consider partial
 
-- if @registration.race.requirements.present?
+- if @registration.race.enabled_requirements.present?
   .page-header
     %h1
       %i.fa.fa-rocket
@@ -62,6 +62,7 @@
             %span.lead= req.name
             .clearfix
           .panel-body
+            -#todo: render this more generically
             - if req.type == 'PaymentRequirement'
               - if req.completed?(@registration)
                 = t('completed')
@@ -69,7 +70,11 @@
                 .lead
                   $
                   = req.active_tier.price_in_dollars_and_cents
-                = render 'charges/embed', :params => req.stripe_params(@registration)
+                - if @race.full?
+                  %h4
+                    %span.label.label-warning= t('.no_pay_waitlist')
+                - else
+                  = render 'charges/embed', :params => req.stripe_params(@registration)
 
 -#-----------------------------------------------------------
 -# people stuff      (consider partial

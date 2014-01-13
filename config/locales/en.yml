@@ -121,6 +121,7 @@ en:
       no_people_added: omg none!  go add some now
       requirement_instructions: You must complete the following requirements to complete registration.
       people_instructions: "You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them."
+      no_pay_waitlist: Cannot pay while on waitlist.
     edit:
       edit_registration: "Edit registration for %{race_name}"
     update:
@@ -132,21 +133,27 @@ en:
 
   races:
     index:
+      title: Races
+      instructions: Get started by choosing a race.
       no_races: No races present in the system.
       create_race: Create one now!
     race_item:
-      of: of
-      teams_registered: teams registered.
+      race_is_full: Race is full.
+      spots_remaining: spots remaining.
       registration_closes_on: Registration closes on
-      remaining: remaining to register.
-      at: at
-      open: Open for registration?
+      registration_opens_on: Registration opens on
+      left_to_register: left to register.
+      registration_closed: Registration is closed
+      #todo - pluralize this 
+      team: team
+      teams: teams
+      on_waitlist: on the waitlist.
     form:
-      name: Race Name
-      race_datetime: Date & Time
-      registration_open: Registration Open
-      registration_close: Registration Close
-      max_teams: Maximum Teams
+      name: This race is called
+      race_datetime: Race start time
+      registration_open: Registration opens on
+      registration_close: Registration closes on
+      max_teams: Maximum teams
       people_per_team: People per team
       manage_race: Manage Race
     show:
@@ -154,12 +161,10 @@ en:
       max_teams: Maximum Teams
       people_per_team: People per Team
       register_now: Register Now
+      register_waitlist: Register for Waitlist
       race_requirements: Race Requirements
       no_requirements_added: No requirements added yet
+      registration_closed: Registration is closed
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.
-
-
-
-

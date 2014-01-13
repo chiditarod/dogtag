@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe RacesController do
 
-  let (:valid_race_hash) { FactoryGirl.attributes_for :race }
-
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
@@ -100,6 +98,8 @@ describe RacesController do
     end
 
     describe '#create' do
+      let (:valid_race_hash) { FactoryGirl.attributes_for :race }
+
       it 'returns 400 if the race parameter is not passed' do
         post :create
         response.status.should == 400
@@ -150,8 +150,12 @@ describe RacesController do
         expect(response).to be_success
       end
 
-      it 'sets @races to all races open for registration' do
-        expect(assigns :races).to eq [@open1, @open2]
+      # todo: change this to show races that have visible? checked
+      #it 'sets @races to all races open for registration' do
+        #expect(assigns :races).to eq [@open1, @open2]
+      #end
+      it 'sets @races to all races' do
+        expect(assigns :races).to eq [@closed, @open1, @open2]
       end
     end
 

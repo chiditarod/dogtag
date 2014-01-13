@@ -3,7 +3,7 @@ class RacesController < ApplicationController
   respond_to :html
 
   def index
-    @races = Race.find_registerable_races
+    @races = Race.all
     @all_races = Race.all
   end
 

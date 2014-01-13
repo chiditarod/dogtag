@@ -5,7 +5,6 @@
       = link_to edit_race_path @race do
         %li.fa.fa-edit.fa-fw
 
-
 %h3 Crucial details
 
 .row
@@ -29,10 +28,16 @@
   .col-xs-9
     %h4= @race.people_per_team
 
-- if @race.registerable?
+- if @race.open_for_registration?
   .row
     .col-xs-12
-      = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+      - if @race.full?
+        = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+      - else
+        = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+
+- else
+  %h3= t('.registration_closed')
 
 .page-header
   %h3
