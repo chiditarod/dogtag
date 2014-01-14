@@ -62,9 +62,7 @@ class Race < ActiveRecord::Base
     def find_registerable_races
       Race.all.select(&:registerable?)
     end
-  end
 
-  class << self
     def find_open_races
       Race.all.select(&:open_for_registration?)
     end

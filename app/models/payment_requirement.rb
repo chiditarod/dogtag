@@ -13,6 +13,13 @@ class PaymentRequirement < Requirement
     }
   end
 
+  def charge_data(reg)
+    metadata = metadata_for reg
+    return false if metadata.blank?
+    return metadata['charge'] if metadata['charge'].present?
+    false
+  end
+
   def enabled?
     active_tier.present?
   end

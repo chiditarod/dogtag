@@ -1,0 +1,22 @@
+%p
+  %br
+  - if race.registerable?
+    = race.spots_remaining
+    = t '.spots_remaining'
+    %br
+
+    - if race.open_for_registration?
+      = distance_of_time_in_words race.days_before_close
+      = t('.left_to_register')
+    - else
+      %h3= t('.registration_closed')
+  - else
+    - if race.full?
+      %h5
+        = t('.race_is_full')
+      = race.waitlist_count
+      = t('.team')
+      = t('.on_waitlist')
+    - else
+      = t('.registration_opens_on')
+      = human_readable_short race.registration_open

@@ -180,8 +180,9 @@ describe RequirementsController do
           expect(flash[:notice]).to eq(I18n.t 'create_success')
         end
 
-        it 'redirects to race#show' do
-          expect(response).to redirect_to race_url(@req.race.id)
+        it 'redirects to race_registration#edit' do
+          req = assigns(:requirement)
+          expect(response).to redirect_to edit_race_requirement_url(req.race.id, req.id)
         end
 
         it 'assigns the requirement to their race' do

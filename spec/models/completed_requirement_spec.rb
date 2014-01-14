@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe CompletedRequirement do
 
+  describe '#metadata_hash' do
+    it 'returns the JSON contents as a hash'
+    it 'returns hash contents as a hash'
+  end
+
   describe 'validation' do
     describe 'fails' do
       let (:rr) { FactoryGirl.create :completed_requirement }

@@ -17,6 +17,7 @@ ActiveRecord::Schema.define(version: 20140104131444) do
     t.integer  "registration_id"
     t.integer  "requirement_id"
     t.integer  "user_id"
+    t.text     "metadata"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

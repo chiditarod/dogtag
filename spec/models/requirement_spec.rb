@@ -44,4 +44,17 @@ describe Requirement do
       expect(requirement.completed? registration).to eq(true)
     end
   end
+
+  describe '#cr_for' do
+    it 'returns nil if a requirement is not associated with a particular registration' do
+      expect(requirement.cr_for registration).to be_nil
+    end
+
+    it 'returns metadata for a completed_requirement' do
+      cr = CompletedRequirement.create :registration => registration,
+        :requirement => requirement, :user => user
+      expect(requirement.cr_for registration).to eq(cr)
+    end
+  end
+
 end

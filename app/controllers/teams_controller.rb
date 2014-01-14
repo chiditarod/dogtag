@@ -3,16 +3,11 @@ class TeamsController < ApplicationController
   respond_to :html
 
   def index
-    race_id = params[:race_id] || session[:race_id]
-    unless race_id
-      flash[:error] = I18n.t('must_select_race')
-      return redirect_to races_path
+    if race_id = (params[:race_id] || session[:last_race_id])
+      @race = Race.find race_id
+      session[:last_race_id] = @race.id
     end
-
-    session[:race_id] = race_id
-    @race = Race.find race_id
     @teams = current_user.teams
-    respond_with @teams
   end
 
   def show

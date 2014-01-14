@@ -13,7 +13,9 @@ RailsSkeleton::Application.routes.draw do
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
 
   # stripe
-  resources :charges, :only => [:new, :create]
+  resources :charges, :only => [:new, :create] do
+    post :refund
+  end
 
   # user accounts
   resources :users

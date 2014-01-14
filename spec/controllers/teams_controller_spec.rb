@@ -74,41 +74,29 @@ describe TeamsController do
           Race.should_receive(:find).and_return race_stub
           get :index, :race_id => '69'
         end
-
-        it 'sets session[:race_id]' do
-          expect(session[:race_id]).to eq('69')
-        end
-      end
-
-      context 'with session[:race_id]' do
-        before do
-          Race.should_receive(:find).and_return race_stub
-          session[:race_id] = '69'
-          get :index
-        end
-
         it 'sets @race' do
           expect(assigns(:race)).to eq(race_stub)
         end
-
-        it 'sets @teams to all teams associated with the current user' do
-          # need to create a new team since we already create one above
-          some_other_team = FactoryGirl.create :team, :name => 'other team'
-          valid_team.users << valid_user
-          expect(assigns(:teams)).to eq([valid_team])
-          expect(assigns(:teams)).to_not include some_other_team
+        it 'sets session[:last_race_id]' do
+          expect(session[:last_race_id]).to eq(race_stub.id)
         end
       end
 
-      context 'without race_id param' do
+      context 'normal query' do
         before { get :index }
 
-        it 'sets flash error' do
-          expect(flash[:error]).to eq I18n.t('must_select_race')
+        it 'does not set @race object' do
+          expect(assigns(:race)).to be_nil
         end
-
-        it 'redirects to races index' do
-          expect(response).to redirect_to(races_path)
+        it 'does not set session[:race_id]' do
+          expect(session[:last_race_id]).to be_nil
+        end
+        it 'sets @teams to all teams associated with the current user' do
+          # need to create a new team since we already create one above
+          some_other_team = FactoryGirl.create :team
+          valid_team.users << valid_user
+          expect(assigns(:teams)).to eq([valid_team])
+          expect(assigns(:teams)).to_not include some_other_team
         end
       end
     end

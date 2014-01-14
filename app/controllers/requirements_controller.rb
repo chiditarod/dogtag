@@ -59,7 +59,7 @@ class RequirementsController < ApplicationController
 
     if @requirement.save
       flash[:notice] = I18n.t('create_success')
-      redirect_to race_url(:id => @race.id)
+      redirect_to edit_race_requirement_url(:race_id => @requirement.race.id, :id => @requirement.id)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @requirement.errors.messages

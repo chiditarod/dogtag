@@ -4,6 +4,7 @@ class CreateCompletedRequirementsJoinTable < ActiveRecord::Migration
       t.belongs_to :registration
       t.belongs_to :requirement
       t.belongs_to :user
+      t.text :metadata
       t.timestamps
     end
 

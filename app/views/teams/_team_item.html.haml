@@ -1,25 +1,35 @@
-.col-xs-3
-  .panel.panel-default.pull-left
+.col-xs-3.pull-left
+  .panel.panel-default
     .panel-heading
-      = team.name
-      %small
-        = link_to(edit_team_url :id => team.id) do
-          .fa.fa-edit.fa-fw
+      .pull-right
+        = link_to(edit_team_url team.id) do
+          %i.fa.fa-edit.fa-2x
+      %span.lead
+        = team.name
 
     .panel-body
-      %p.lead= @race.name
 
-      - if team.races.include? @race
-        - reg = team.registrations(@race).first
-        %p
-          =t 'registered_as'
-          = reg.name
-        = link_to race_registration_path(:race_id => @race.id, :id => reg.id), :class => %w(btn btn-xs) do
-          - if reg.finalized?
-            .pull-left.fa.fa-smile-o.fa-4x
-            =t 'fully_registered'
-          - else
-            .pull-left.fa.fa-frown-o.fa-4x
-            =t 'registration_needs_attention'
-      - else
-        %p= link_to t('register_for', :race_name => @race.name), new_race_registration_url(session[:race_id], :team_id => team.id), :class => %w(btn btn-xs btn-primary)
+      - if race.present?
+        - unless (team.races && team.races.include?(race))
+          = link_to(new_race_registration_url(race.id, :team_id => team.id)) do
+            .btn.btn-warning
+              = t('register_for', :race_name => race.name)
+
+      - if(team.registrations.blank? && race.blank?)
+        %p= t('.no_registrations')
+
+      - team.registrations.each do |reg|
+        %hr
+        %h4= link_to reg.race.name, race_registration_path(:race_id => reg.race.id, :id => reg.id)
+
+        %p=t '.registered_as', :name => reg.name
+
+        - if reg.finalized?
+          .pull-left.fa.fa-smile-o.fa-3x.text-success
+          = link_to t('fully_registered'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-success'
+          %p.small=t '.youre_in'
+        - else
+          .pull-left.fa.fa-frown-o.fa-3x.text-danger
+          = link_to t('registration_needs_attention'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-danger'
+          %p.small
+            =t '.fix_it'

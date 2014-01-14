@@ -1,16 +1,16 @@
 .page-header
-  %h1
-    = t('.manage_team')
+  %h1= t('.manage_team')
+  %p= t('.instructions')
 
 .row
   .col-sm-12
     = form_for @team, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
       .form-group
-        .col-sm-4.control-label
+        .col-sm-3.control-label
           = label_tag :name, t('.name')
-        .col-sm-8
+        .col-sm-9
           = f.text_field :name, :class => 'form-control'
           %small= t('.name_instructions')
       .form-group
-        .col-sm-offset-4.col-sm-8
+        .col-sm-offset-3.col-sm-9
           = f.submit t('save'), :class => ['btn', 'btn-default']

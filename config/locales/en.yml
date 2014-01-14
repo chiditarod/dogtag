@@ -44,10 +44,12 @@ en:
   users: Users
   list: List
   back: Back
+  refund: Refund
   at: at
   or: or
   of: of
   configured: configured
+  closed: Closed
   status: 'Status:'
   complete: Complete
   completed: Completed
@@ -89,18 +91,22 @@ en:
 
   teams:
     index:
-      your_teams: Teams
+      your_teams: Your teams
       registering_for_race: "You are registering for %{race_name}"
-      no_teams: You are not associated with any teams
-      instructions: "Your teams are below.  Each team can register for %{race_name} only once. You can create and register additional teams, and manage them all, here.  Next year, you can register these same teams again for some other race."
-      edit_team: Edit Team
+      registration_instructions: "Each of your teams can register for %{race_name} only once."
+      instructions: Here's where you manage your teams. You can create and register multiple teams, and manage them all from this page. Next year, you can register these same teams again for a new race.
+      no_teams: You haven't made any teams yet.
     form:
       manage_team: Team Setup
-      name: First, name your team.
+      instructions: Teams are very basic. You'll provide many more details when you register this team for a Race.
+      name: Name your team
       name_instructions: After naming your team, you can register it in a race.
-      instructions: First, give your team a name.
     team_item:
       already_registered_for: "Registered for %{race_name}"
+      youre_in: "You're in, buddy."
+      fix_it: "Fix it before we sellout."
+      no_registrations: You have not yet registered for any races. Visit the Races page to get started.
+      registered_as: "Registered as %{name}"
 
   registrations:
     new:
@@ -148,6 +154,8 @@ en:
       team: team
       teams: teams
       on_waitlist: on the waitlist.
+      register_now: Register Now
+      register_waitlist: Register for Waitlist
     form:
       name: This race is called
       race_datetime: Race start time

@@ -65,7 +65,15 @@
             -#todo: render this more generically
             - if req.type == 'PaymentRequirement'
               - if req.completed?(@registration)
-                = t('completed')
+                - cr = req.cr_for(@registration)
+                - charge = Stripe::Charge.retrieve(cr.metadata_hash['charge_id'])
+                - if charge.refunded
+                  %span.label.label-primary
+                    = t('refunded')
+                - else
+                  = t('completed')
+                  = button_to t('refund'), charge_refund_url(charge.id), :method=>:post,  :data => { :confirm => 'Are you sure?' }, :class=> %w(btn btn-error)
+
               - else
                 .lead
                   $
