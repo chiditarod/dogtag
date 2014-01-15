@@ -66,7 +66,7 @@
             - if req.type == 'PaymentRequirement'
               - if req.completed?(@registration)
                 - cr = req.cr_for(@registration)
-                - charge = Stripe::Charge.retrieve(cr.metadata_hash['charge_id'])
+                - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
                 - if charge.refunded
                   %span.label.label-primary
                     = t('refunded')

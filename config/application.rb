@@ -23,5 +23,7 @@ module RailsSkeleton
     I18n.enforce_available_locales = true
 
     config.filter_parameters << :password
+
+    config.autoload_paths += %W(#{config.root}/lib)
   end
 end

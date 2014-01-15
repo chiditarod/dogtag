@@ -5,62 +5,86 @@ class ChargesController < ApplicationController
   end
 
   def create
-    # todo - validations
+    @customer = nil
+    # lookup existing customer
+    if current_user.stripe_customer_id
+      StripeHelper.safely_call_stripe do
+        @customer = Stripe::Customer.retrieve current_user.stripe_customer_id
+      end
+    end
+
+    # create new customer
+    unless @customer
+      StripeHelper.safely_call_stripe do
+        @customer = Stripe::Customer.create(
+          :card  => params[:stripeToken],
+          :email => params[:stripeEmail],
+          :metadata => {
+            :user_id => current_user.id
+          }
+        )
+      end
+    end
+
+    unless @customer
+      Rails.logger.error 'Unable to create customer object from Stripe'
+      flash[:error] = 'Unable to connect to Stripe at this time. Contact chiditarod@gmail.com ASAP'
+      return render :status => 500
+    end
 
     metadata = JSON.parse params[:metadata]
 
-    # create customer
-    # todo: use exiting customer if they exist already instead of always creating
-    customer = Stripe::Customer.create(
-      :card  => params[:stripeToken],
-      :email => params[:stripeEmail],
-      :metadata => {
-        :user_id => current_user.id, :fullname => current_user.fullname
-      }
-    )
+    # save stripe customer_id if needed
+    current_user.stripe_customer_id ||= @customer.id
+    current_user.save
 
     # create and perform the charge
-    charge = Stripe::Charge.create(
-      :customer    => customer.id,
-      :amount      => params[:amount],
-      :description => params[:description],
-      :metadata    => metadata,
-      :currency    => 'usd'
-    )
+    charge = nil
+    StripeHelper.safely_call_stripe do
+      charge = Stripe::Charge.create(
+        :customer    => @customer.id,
+        :amount      => params[:amount],
+        :description => params[:description],
+        :metadata    => metadata,
+        :currency    => 'usd'
+      )
+    end
 
     # create the completed_requirement object
-    data_to_save = {'customer_id' => customer.id, 'charge_id' => charge.id}
+    cr_metadata = {'customer_id' => @customer.id, 'charge_id' => charge.id}
     req = Requirement.find metadata['requirement_id']
-    req.complete metadata['registration_id'], current_user, data_to_save
+    req.complete metadata['registration_id'], current_user, cr_metadata
 
-    redirect_to session[:prior_url]
-    session.delete :prior_url
-
-  # todo more rescue and logic
-  rescue Stripe::InvalidRequestError => e
-  rescue Stripe::CardError => e
-    flash[:error] = e.message
     redirect_to session[:prior_url]
     session.delete :prior_url
   end
 
-  def refund
-    Rails.logger.info "refund requested for #{params[:charge_id]}"
-    @charge = Stripe::Charge.retrieve(params[:charge_id])
 
+  def refund
+    Rails.logger.info "Refund requested for charge: #{params[:charge_id]}"
+
+    StripeHelper.safely_call_stripe do
+      @charge = Stripe::Charge.retrieve(params[:charge_id])
+    end
+
+    return render :status => 404, :error => 'Charge not found' unless @charge
     return render :status => 400, :error => 'Already Refunded' if @charge.refunded
+
+    StripeHelper.safely_call_stripe do
+      @charge = @charge.refund
+    end
+
+    unless @charge.refunded
+      Rails.logger.info "Refund completed for charge: #{@charge.id}"
+      return render :status => 500, :error => "Charge was not refunded. No action taken."
+    end
 
     req_id = @charge['metadata']['requirement_id']
     reg_id = @charge['metadata']['registration_id']
-    Rails.logger.error req_id
-    Rails.logger.error reg_id
 
-    @charge = @charge.refund
-    if @charge.refunded
-      cr = CompletedRequirement.where(:requirement_id => req_id, :registration_id => reg_id).first
-      reg = cr.registration
-      CompletedRequirement.delete(cr)
-    end
+    cr = CompletedRequirement.where(:requirement_id => req_id, :registration_id => reg_id).first
+    reg = cr.registration
+    CompletedRequirement.delete(cr)
 
     redirect_to race_registration_url(reg.race.id, reg.id)
 
