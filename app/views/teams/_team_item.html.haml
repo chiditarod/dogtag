@@ -12,8 +12,12 @@
       - if race.present?
         - unless (team.races && team.races.include?(race))
           = link_to(new_race_registration_url(race.id, :team_id => team.id)) do
-            .btn.btn-warning
-              = t('register_for', :race_name => race.name)
+            - if race.full?
+              .btn.btn-warning
+                = t('.register_waitlist')
+            - else
+              .btn.btn-primary
+                = t('register_for', :race_name => race.name)
 
       - if(team.registrations.blank? && race.blank?)
         %p= t('.no_registrations')

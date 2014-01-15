@@ -107,6 +107,7 @@ en:
       fix_it: "Fix it before we sellout."
       no_registrations: You have not yet registered for any races. Visit the Races page to get started.
       registered_as: "Registered as %{name}"
+      register_waitlist: Register for Waitlist
 
   registrations:
     new:
@@ -120,7 +121,7 @@ en:
       description: Sum up your team in a montage of prose
       twitter: Please provide a @twitter handle for fun
     show:
-      title: "%{race_name} Registration details"
+      title: registration details
       registered_as: Registered as
       description: Your mission
       people: Racers

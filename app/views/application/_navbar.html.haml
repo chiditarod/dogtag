@@ -15,19 +15,19 @@
         %ul.nav.navbar-nav
           %li
             = link_to races_path do
-              %i.fa.fa-shopping-cart.fa-fw
+              %i.fa.fa-shopping-cart.fa-2x
               =t '.races'
 
           - if current_user && true
 
             %li
               = link_to teams_path do
-                %i.fa.fa-users.fa-fw
+                %i.fa.fa-users.fa-2x
                 =t '.teams'
 
             %li.dropdown
               %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-                %i.fa.fa-fw.fa-star-o
+                %i.fa.fa-star-o.fa-2x
                 = t 'admin'
                 %b.caret
               %ul.dropdown-menu
@@ -41,7 +41,7 @@
           - if current_user
             %li.dropdown
               %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-                %i.fa.fa-fw.fa-user
+                %i.fa.fa-user.fa-2x
                 = current_user.first_name
                 %b.caret
                 %ul.dropdown-menu
@@ -64,4 +64,4 @@
 
           %li
             = link_to "http://github.com/ometa/dogtag/" do
-              %span.fa.fa-lg.fa-github
+              %span.fa.fa-2x.fa-github
