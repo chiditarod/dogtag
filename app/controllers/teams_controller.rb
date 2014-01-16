@@ -10,15 +10,13 @@ class TeamsController < ApplicationController
     @teams = current_user.teams
   end
 
-  def show
+  def edit
     @team = Team.find params[:id]
     respond_with @team
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     redirect_to teams_path
   end
-
-  alias edit show
 
   def new
     @team = Team.new
@@ -29,14 +27,13 @@ class TeamsController < ApplicationController
 
     @team = Team.new team_params
     if @team.valid?
-      @team.users << current_user
+      @team.user = current_user
       @team.save
       flash[:notice] = I18n.t('create_success')
       redirect_to teams_path
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @team.errors.messages
-      respond_with @team
     end
   end
 

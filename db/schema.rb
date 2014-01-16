@@ -66,13 +66,9 @@ ActiveRecord::Schema.define(version: 20140116044606) do
 
   create_table "teams", force: true do |t|
     t.string   "name"
+    t.integer  "user_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-  end
-
-  create_table "teams_users", id: false, force: true do |t|
-    t.integer "team_id"
-    t.integer "user_id"
   end
 
   create_table "tiers", force: true do |t|

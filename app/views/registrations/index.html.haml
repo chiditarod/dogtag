@@ -1,0 +1,32 @@
+- if @race
+
+  .page-header
+    %h1
+      =t('.registrations_for', :name => @race.name)
+
+  - if @registrations.any?
+    %table.table.table-bordered.table-hover
+      %tr
+        %th Status
+        %th Name
+        %th Mission
+        %th Twitter
+
+      - @registrations.each do |reg|
+        %tr
+          %td
+            - if reg.finalized?
+              %i.fa.fa-smile-o.fa-2x
+            - else
+              %i.fa.fa-frown-o.fa-2x
+          %td
+            = link_to reg.name, race_registration_url(@race, reg)
+          %td= reg.description
+          %td= reg.twitter
+
+          -#%td
+            = link_to 'Show', user
+            = link_to 'Edit', edit_user_path(user)
+            = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+  - else
+    =t('.no_registrations')

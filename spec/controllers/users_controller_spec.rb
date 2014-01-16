@@ -65,11 +65,22 @@ describe UsersController do
         end
       end
 
-      it 'creates a new user and returns 200' do
+      it 'adds a record' do
         expect do
           post :create, :user => valid_user_hash
-          response.status.should == 200
         end.to change(User, :count).by 1
+      end
+
+      context 'upon success' do
+        before do
+          post :create, :user => valid_user_hash
+        end
+        it 'sets a flash notice' do
+          expect(flash[:notice]).to eq(I18n.t 'create_success')
+        end
+        it 'redirects to race#show' do
+          expect(response).to redirect_to assigns(:user)
+        end
       end
     end
 
@@ -153,25 +164,13 @@ describe UsersController do
         it 'updates the user' do
           expect(@user2.reload.phone).to eq('123')
         end
-
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-
-        it 'redirects to race index' do
-          expect(response).to redirect_to(users_path)
+        it 'redirects to user#show' do
+          expect(response).to redirect_to(@user2)
         end
       end
-
-      # todo - fix this spec
-      #it 'sets a flash error and redirects if the user cannot update' do
-        #mock_user = double 'User'
-        #User.should_receive(:where).and_return mock_user
-        #mock_user.should_receive(:update_attributes).and_return(false)
-        #patch :update, :id => @user2.id, :user => {:phone => '123'}
-        #flash[:error].should include('Update failed.')
-        #response.status.should == 302
-      #end
     end
 
     describe '#destroy' do

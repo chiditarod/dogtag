@@ -1,8 +1,24 @@
-%p
-  %b Name:
+
+= link_to edit_user_path(@user) do
+  %i.fa.fa-edit.fa-2x
+  = t('edit')
+
+%h3
+  %small= t('.name')
   = @user.first_name
   = @user.last_name
 
-= link_to 'Edit', edit_user_path(@user)
-\|
-= link_to 'Back', users_path
+%h3
+  %small= t('.email')
+  = @user.email
+
+%h3
+  %small= t('.phone')
+  = @user.phone
+
+- if @user.roles.present?
+  %h3
+    %small= t('.roles')
+    = @user.roles.to_a.map(&:capitalize).join(', ')
+
+

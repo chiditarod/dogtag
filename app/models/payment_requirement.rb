@@ -1,5 +1,5 @@
 class PaymentRequirement < Requirement
-  has_many :tiers, :foreign_key => :requirement_id
+  has_many :tiers, :foreign_key => :requirement_id, :dependent => :delete_all
 
   def stripe_params(registration)
     {:description => "#{name} for #{registration.name} | #{registration.race.name}",

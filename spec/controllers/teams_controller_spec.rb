@@ -18,11 +18,6 @@ describe TeamsController do
         post :create; expect(response).to redirect_to(new_user_session_path)
       end
     end
-    describe '#show' do
-      it 'redirects to login' do
-        get :show, :id => 1; expect(response).to redirect_to(new_user_session_path)
-      end
-    end
     describe '#edit' do
       it 'redirects to login' do
         get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
@@ -82,6 +77,15 @@ describe TeamsController do
         end
       end
 
+      it 'sets @teams to all teams associated with the current user' do
+        valid_team.user = valid_user
+        valid_team.save
+        not_our_team = FactoryGirl.create :team
+        get :index
+        expect(assigns(:teams)).to eq([valid_team])
+        expect(assigns(:teams)).to_not include not_our_team
+      end
+
       context 'normal query' do
         before { get :index }
 
@@ -91,19 +95,12 @@ describe TeamsController do
         it 'does not set session[:race_id]' do
           expect(session[:last_race_id]).to be_nil
         end
-        it 'sets @teams to all teams associated with the current user' do
-          # need to create a new team since we already create one above
-          some_other_team = FactoryGirl.create :team
-          valid_team.users << valid_user
-          expect(assigns(:teams)).to eq([valid_team])
-          expect(assigns(:teams)).to_not include some_other_team
-        end
       end
     end
 
-    describe '#show' do
+    describe '#edit' do
       context 'on invalid id' do
-        before { get :show, :id => 99 }
+        before { get :edit, :id => 99 }
 
         it 'redirects to team index' do
           expect(response).to redirect_to(teams_path)
@@ -114,7 +111,7 @@ describe TeamsController do
       end
 
       context 'on success' do
-        before { get :show, :id => valid_team.id }
+        before { get :edit, :id => valid_team.id }
 
         it 'assigns the @team object' do
           expect(assigns(:team)).to eq(valid_team)
@@ -124,10 +121,6 @@ describe TeamsController do
           expect(response.status).to eq(200)
         end
       end
-    end
-
-    describe '#edit' do
-      # edit is aliased to show, so no need to spec.
     end
 
     describe '#create' do
@@ -144,18 +137,16 @@ describe TeamsController do
             post :create, :team => valid_team_hash
           end.to change(Team, :count).by 1
         end
-
         it 'redirects to team index' do
           post :create, :team => valid_team_hash
           expect(response).to redirect_to(teams_path)
         end
-
         it 'associates the current user with the new team' do
-          team = FactoryGirl.build :team, :name => 'some team'
-          team.users << valid_user
-          team_hash = FactoryGirl.attributes_for :team, :name => 'some team'
+          team = FactoryGirl.build :team
+          team.user = valid_user
+          team_hash = FactoryGirl.attributes_for :team
           post :create, :team => team_hash
-          expect(assigns(:team).users).to eq([valid_user])
+          expect(assigns(:team).user).to eq(valid_user)
         end
       end
     end
@@ -170,15 +161,12 @@ describe TeamsController do
 
       context 'with valid patch data' do
         before { patch :update, :id => valid_team.id, :team => {:name => 'foo'} }
-
         it 'updates the team' do
           expect(valid_team.reload.name).to eq('foo')
         end
-
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-
         it 'redirects to team index' do
           expect(response).to redirect_to(teams_path)
         end
@@ -193,27 +181,23 @@ describe TeamsController do
         end
       end
 
-      #todo - there's probably a way to DRY this up.
+      it 'destroys the team' do
+        @team = FactoryGirl.create :team
+        expect { delete :destroy, :id => @team.id }.to change(Team, :count).by(-1)
+      end
+
       context 'with valid id' do
-        before { @team = FactoryGirl.create :team, :name => 'some team' }
-
-        it 'destroys the team' do
-          expect { delete :destroy, :id => @team.id }.to change(Team, :count).by(-1)
-        end
-
-        it 'sets the flash notice' do
+        before do
+          @team = FactoryGirl.create :team
           delete :destroy, :id => @team.id
+        end
+        it 'sets the flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
         end
-
         it 'redirects to the team index' do
-          delete :destroy, :id => @team.id
           expect(response).to redirect_to teams_path
         end
       end
-
-      # todo: figure out how to mock the delete failing
-      it 'sets flash error and redirects if delete fails'
     end
 
   end

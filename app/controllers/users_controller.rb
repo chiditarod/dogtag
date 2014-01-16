@@ -1,6 +1,8 @@
 class UsersController < ApplicationController
   before_filter :require_user, :except => [:new, :create]
 
+  #load_and_authorize_resource
+
   respond_to :html
 
   def index
@@ -9,10 +11,9 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find params[:id]
-    respond_with @user
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
-    redirect_to users_path
+    redirect_to users_url
   end
 
   alias edit show
@@ -27,11 +28,11 @@ class UsersController < ApplicationController
     @user = User.new user_params
     if @user.save
       flash[:notice] = I18n.t('create_success')
+      redirect_to user_url(@user)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @user.errors.messages
     end
-    respond_with @user
   end
 
   def update
@@ -41,11 +42,10 @@ class UsersController < ApplicationController
 
     if @user.update_attributes user_params
       flash[:notice] = I18n.t('update_success')
-      redirect_to users_path
+      redirect_to user_url(@user)
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @user.errors.messages
-      respond_with @user
     end
   rescue ActiveRecord::RecordNotFound
     flash.now[:error] = t('not_found')

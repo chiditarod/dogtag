@@ -1,15 +1,16 @@
 %p
-  %br
   - if race.registerable?
-    = race.spots_remaining
-    = t '.spots_remaining'
-    %br
 
     - if race.open_for_registration?
       = distance_of_time_in_words race.days_before_close
       = t('.left_to_register')
     - else
       %h3= t('.registration_closed')
+    %br
+
+    = race.spots_remaining
+    = t '.spots_remaining'
+
   - else
     - if race.full?
       %h5

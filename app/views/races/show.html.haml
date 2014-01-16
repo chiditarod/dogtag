@@ -1,55 +1,45 @@
-.page-header
-  %h1
-    = @race.name
-    %small
-      = link_to edit_race_path @race do
-        %li.fa.fa-edit.fa-fw
+.row
+  .col-sm-8
+    .page-header
+      %h1
+        = link_to edit_race_path @race do
+          %li.fa.fa-edit.fa-fw
+        = @race.name
+        %small
+          = human_readable @race.race_datetime
 
-%h3 Crucial details
-
-.row
-  .col-xs-3= t('.race_datetime')
-  .col-xs-9
-    %h4
-      = human_readable_short @race.race_datetime
-.row
-  .col-xs-3= t('.registration_window')
-  .col-xs-9
-    %h4
-      = human_readable_short @race.registration_open
-      to
-      = human_readable_short @race.registration_close
-.row
-  .col-xs-3= t('.max_teams')
-  .col-xs-9
-    %h4= @race.max_teams
-.row
-  .col-xs-3= t('.people_per_team')
-  .col-xs-9
-    %h4= @race.people_per_team
-
-- if @race.open_for_registration?
-  .row
-    .col-xs-12
-      - if @race.full?
-        = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+    %h3
+      - if @race.open_for_registration?
+        = @race.finalized_registrations.count
+        of
+        = @race.max_teams
+        = t('.teams_registered')
       - else
-        = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+        = t('closed')
+    = render 'races/race_metadata', :race => @race
 
-- else
-  %h3= t('.registration_closed')
+    - if @race.open_for_registration?
+      .row
+        .col-xs-12
+          - if @race.full?
+            = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+          - else
+            = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+
+    - else
+      %h3= t('.registration_closed')
 
 
 
--#todo: admin stuff is below
+    -#todo: admin stuff is below
 
-.page-header
-  %h3
-    = t('.race_requirements')
-    = link_to new_race_requirement_url(@race) do
-      %i.fa.fa-plus
+    .page-header
+      %h3
+        = t('.race_requirements')
+        = link_to new_race_requirement_url(@race) do
+          %i.fa.fa-plus
 
-- if @race.requirements.blank?
-  = t ('.no_requirements_added')
-- else
-  = render 'requirements/table', :requirements => @race.requirements
+    - if @race.requirements.blank?
+      = t ('.no_requirements_added')
+    - else
+      = render 'requirements/table', :requirements => @race.requirements

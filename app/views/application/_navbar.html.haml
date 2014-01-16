@@ -48,20 +48,23 @@
                   %li.dropdown-header= t 'your_account'
                   %li
                     = link_to edit_user_path(current_user) do
-                      %i.fa.fa-edit.fa-fw
+                      %i.fa.fa-edit.fa-2x
                       Edit Profile
                   %li
                     = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
-                      %i.fa.fa-sign-out.fa-fw
+                      %i.fa.fa-sign-out.fa-2x
                       Logout
           - else
             %li
               = link_to new_user_session_path do
-                %i.fa.fa-fw.fa-sign-in
+                %i.fa.fa-sign-in.fa-2x
                 =t '.login'
             %li
-              = link_to "Register", new_user_path
+              = link_to new_user_path do
+                %i.fa.fa-check-square-o.fa-2x
+                =t '.register'
+
 
           %li
             = link_to "http://github.com/ometa/dogtag/" do
-              %span.fa.fa-2x.fa-github
+              %i.fa.fa-2x.fa-github

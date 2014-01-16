@@ -2,11 +2,11 @@ RailsSkeleton::Application.routes.draw do
 
   root :controller => 'races', :action => "index", :as => :home
 
-  resources :teams
-  resources :races do
+  resources :teams, :only => [:new, :create, :edit, :update, :index, :destroy]
+  resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
     resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
-    resources :registrations do
-      resources :people, :only => [:index, :new, :create, :edit, :update, :destroy]
+    resources :registrations, :only => [:new, :create, :edit, :update, :index, :show] do
+      resources :people, :only => [:new, :create, :edit, :update, :destroy]
     end
   end
 
@@ -18,15 +18,11 @@ RailsSkeleton::Application.routes.draw do
   end
 
   # user accounts
-  resources :users
+  resources :users, :only => [:new, :create, :edit, :update, :index, :show]
+  resource :user_session, :only => [:new, :create, :destroy]
   resource :account, :controller => :users
-  resource :user_session
 
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
-
-  #get :login, :to => 'user_sessions#new'
-  #post :login, :to => 'user_sessions#create'
-  #delete :logout, :to => 'user_session#destroy'
 
   # The priority is based upon order of creation: first created -> highest priority.
   # See how all your routes lay out with "rake routes".

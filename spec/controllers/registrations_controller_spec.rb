@@ -33,12 +33,6 @@ describe RegistrationsController do
         expect(response).to redirect_to(new_user_session_path)
       end
     end
-    describe '#destroy' do
-      it 'redirects to login' do
-        delete :destroy, :race_id => @race.id, :id => 1
-        expect(response).to redirect_to(new_user_session_path)
-      end
-    end
     describe '#show' do
       it 'redirects to login' do
         get :show, :race_id => @race.id, :id => 1
@@ -69,7 +63,6 @@ describe RegistrationsController do
         it 'sets flash error' do
           expect(flash[:error]).to eq(I18n.t 'must_select_team')
         end
-
         it 'redirects to teams index' do
           expect(response).to redirect_to(teams_path)
         end
@@ -87,19 +80,15 @@ describe RegistrationsController do
         it 'sets session[:team_id]' do
           expect(session[:team_id].to_i).to eq(@team.id)
         end
-
         it 'returns http success' do
           expect(response).to be_success
         end
-
         it 'assigns @race' do
           expect(assigns(:race)).to eq(@race)
         end
-
         it 'assigns @registration to Registration.new' do
           expect(assigns(:registration)).to eq(@registration_stub)
         end
-
         it 'sets a default team name' do
           expect(assigns(:registration).name).to eq(@team.name)
         end
@@ -184,11 +173,9 @@ describe RegistrationsController do
         it 'updates the registration' do
           expect(@registration.reload.description).to eq('New Description')
         end
-
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-
         it 'redirects to registration#show' do
           expect(response).to redirect_to(race_registration_url(@registration.race.id, @registration.id))
         end
@@ -202,7 +189,6 @@ describe RegistrationsController do
         it 'redirects to teams index' do
           expect(response).to redirect_to(teams_path)
         end
-
         it 'sets flash error' do
           expect(flash[:error]).to eq(I18n.t 'not_found')
         end
@@ -217,11 +203,9 @@ describe RegistrationsController do
         it 'sets the @registration object' do
           expect(assigns(:registration)).to eq(@registration)
         end
-
         it 'returns 200' do
           expect(response).to be_success
         end
-
         it 'assigns @race' do
           expect(assigns(:race)).to eq(@registration.race)
         end
@@ -229,51 +213,42 @@ describe RegistrationsController do
       end
     end
 
-  # todo: not yet customized for this class
-    #describe '#index' do
-      #it 'returns http success and an array of all races open for registration' do
-        #today = Time.now
-        #double(Time.now) { today }
-        #FactoryGirl.create :race, :name => 'closed race, its today!'
-        #open_race1 = FactoryGirl.create :race, :name => 'open race 1', :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
-        #open_race2 = FactoryGirl.create :race, :name => 'open race 2', :race_datetime => (today + 6.weeks), :registration_open =>(today - 1.week), :registration_close => (today + 1.day)
-        #get :index
-        #response.should be_success
-        #expect(assigns :races).to eq [open_race1, open_race2]
-      #end
-    #end
+    describe '#index' do
+      describe 'without a valid race' do
+        before do
+          get :index, :race_id => 99
+        end
+        it 'sets flash error' do
+          expect(flash[:error]).to eq(I18n.t 'not_found')
+        end
+        it 'returns http success' do
+          expect(response).to be_success
+        end
+        it 'does not set @registrations' do
+          expect(assigns(:registrations)).to be_nil
+        end
+      end
 
-    #describe '#destroy' do
-      #context 'on invalid id' do
-        #before { delete :destroy, :id => 99 }
-        #it 'returns 400' do
-          #expect(response.status).to eq(400)
-        #end
-      #end
+      describe 'with valid race' do
+        before do
+          @reg1 = FactoryGirl.create :registration
+          @reg2 = FactoryGirl.create :registration, :race => @reg1.race
+          @reg3 = FactoryGirl.create :registration
+          get :index, :race_id => @reg1.race.id
+        end
 
-      #todo - there's probably a way to DRY this up.
-      #context 'with valid id' do
-        #before { @race = FactoryGirl.create :race }
-
-        #it 'destroys the race' do
-          #expect { delete :destroy, :id => @race.id }.to change(Race, :count).by(-1)
-        #end
-
-        #it 'sets the flash notice' do
-          #delete :destroy, :id => @race.id
-          #expect(flash[:notice]).to eq(I18n.t 'delete_success')
-        #end
-
-        #it 'redirects to the user index' do
-          #delete :destroy, :id => @race.id
-          #expect(response).to redirect_to races_path
-        #end
-      #end
-
-      # todo: figure out how to mock the delete failing
-      #it 'sets flash error and redirects if delete fails'
-    #end
-
+        it 'sets @registrations to ones associated with the race_id' do
+          expect(assigns(:registrations)).to eq([@reg1, @reg2])
+          expect(assigns(:registrations)).to_not include @reg3
+        end
+        it 'sets @race per race_id' do
+          expect(assigns(:race)).to eq @reg1.race
+        end
+        it 'returns http success' do
+          expect(response).to be_success
+        end
+      end
+    end
 
   end
 end

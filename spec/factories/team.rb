@@ -4,6 +4,7 @@ FactoryGirl.define do
   end
 
   factory :team do
-    name { generate(:team_name) }
+    name { generate :team_name }
   end
+
 end

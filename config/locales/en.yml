@@ -112,6 +112,10 @@ en:
       register_waitlist: Register for Waitlist
 
   registrations:
+    index:
+      race_not_found: Race not found.
+      registrations_for: "Registrations for %{name}"
+      no_registrations: No registrations yet.
     new:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"

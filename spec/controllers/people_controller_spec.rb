@@ -154,21 +154,6 @@ describe PeopleController do
       end
     end
 
-    describe '#index' do
-      before do
-        get :index, :race_id => @race.id, :registration_id => @registration.id
-      end
-
-      it 'sets @people to all persons' do
-        # todo: probably a better way
-        expect(assigns(:people).to_a).to eq(@registration.people.to_a)
-      end
-
-      it 'returns http success' do
-        expect(response).to be_success
-      end
-    end
-
     describe '#new' do
       before do
         @person_stub = Person.new

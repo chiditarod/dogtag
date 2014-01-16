@@ -9,14 +9,15 @@
     %th Name
     %th Email
     %th Roles
-    %th Actions
+    - if current_user.is? :admin
+      %th Actions
 
   - @users.each do |user|
     %tr
-      %td= user.fullname
+      %td= link_to user.fullname, user
       %td= user.email
       %td= user.roles.to_a.map(&:capitalize).join(', ')
-      %td
-        = link_to 'Show', user
-        = link_to 'Edit', edit_user_path(user)
-        = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+      - if current_user.is? :admin
+        %td
+          = link_to 'Edit', edit_user_path(user)
+          = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete

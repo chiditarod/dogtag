@@ -43,10 +43,6 @@ class PeopleController < ApplicationController
     return render :status => 400
   end
 
-  def index
-    @people = Person.where(:registration_id => params[:registration_id])
-  end
-
   def new
     # we need these b/c they are referenced in _form.html.haml
     @race = Race.find params[:race_id]

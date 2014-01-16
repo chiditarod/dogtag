@@ -1,5 +1,9 @@
 class RegistrationsController < ApplicationController
   before_filter :require_user
+
+  # load_and_authorize_resource :team
+  # load_and_authorize_resource :through => :team
+
   respond_to :html
 
   def new
@@ -65,39 +69,13 @@ class RegistrationsController < ApplicationController
     render :status => 400
   end
 
-
-
-  # todo: not yet customized for this class
-
   def index
-    race_id = params[:race_id] || session[:race_id]
-    unless race_id
-      flash[:error] = I18n.t('must_select_race')
-      return redirect_to races_path
-    end
-
-    session[:race_id] = race_id
-    @race = Race.find race_id
-    @teams = current_user.teams
-    respond_with @teams
-  end
-
-
-  def destroy
-    @team = Team.find params[:id]
-    return render :status => 400 if @team.nil?
-
-    if @team.destroy
-      flash[:notice] = t 'delete_success'
-    else
-      flash[:error] = t '.delete_failed'
-    end
-    redirect_to teams_path
+    @race = Race.find params[:race_id]
+    @registrations = Registration.where :race_id => params[:race_id]
   rescue ActiveRecord::RecordNotFound
-    render :status => 400
+    flash.now[:error] = t('not_found')
+    render :status => 200
   end
-
-  # end not yet customized
 
   private
 
