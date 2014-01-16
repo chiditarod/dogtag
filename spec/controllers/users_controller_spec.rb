@@ -2,10 +2,8 @@ require 'spec_helper'
 
 describe UsersController do
 
-  let(:valid_user)      { FactoryGirl.create :user }
-  let(:valid_user_hash) { FactoryGirl.attributes_for :user }
+  context '[logged out]' do
 
-  context 'when logged out' do
     describe '#index' do
       it 'redirects to login' do
         get :index; expect(response).to redirect_to(new_user_session_path)
@@ -35,20 +33,21 @@ describe UsersController do
     describe '#new' do
       before do
         @user_stub = User.new
-        User.should_receive(:new).and_return @user_stub
+        User.stub(:new).and_return @user_stub
         get :new
       end
 
       it 'returns http success' do
         expect(response).to be_success
       end
-
       it 'assigns @user to User.new' do
         expect(assigns(:user)).to eq(@user_stub)
       end
     end
 
     describe '#create' do
+      let(:valid_user_hash) { FactoryGirl.attributes_for :user }
+
       it 'returns 400 if the user parameter is not passed' do
         post :create
         response.status.should == 400
@@ -87,16 +86,16 @@ describe UsersController do
   end
 
   context '[logged in]' do
+    let(:valid_user)      { FactoryGirl.create :admin_user }
     before do
       activate_authlogic
       mock_login! valid_user
-      @user2 = FactoryGirl.create :user2
+      @user2 = FactoryGirl.create :user
     end
 
     describe '#new' do
       before do
-        @user_stub = User.new
-        User.should_receive(:new).and_return @user_stub
+        User.stub(:new).and_return @user2
         get :new
       end
 
@@ -105,7 +104,7 @@ describe UsersController do
       end
 
       it 'assigns @user to User.new' do
-        expect(assigns(:user)).to eq(@user_stub)
+        expect(assigns(:user)).to eq(@user2)
       end
     end
 
@@ -125,8 +124,8 @@ describe UsersController do
       context 'with invalid user id' do
         before { get :show, :id => 99 }
 
-        it 'redirects to user index' do
-          expect(response).to redirect_to(users_path)
+        it 'returns 400' do
+          expect(response.status).to eq(400)
         end
 
         it 'sets flash error' do

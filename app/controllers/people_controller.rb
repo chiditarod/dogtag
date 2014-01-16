@@ -1,5 +1,8 @@
 class PeopleController < ApplicationController
   before_filter :require_user
+  #load_and_authorize_resource :registration
+  #load_and_authorize_resource :person, :through => :registration
+  load_and_authorize_resource
 
   def destroy
     @person = Person.find params[:id]

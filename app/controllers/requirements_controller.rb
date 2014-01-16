@@ -1,6 +1,9 @@
 class RequirementsController < ApplicationController
   before_filter :require_user
 
+  load_and_authorize_resource :race
+  load_and_authorize_resource :requirement, :through => :race
+
   def destroy
     @requirement = Requirement.find params[:id]
     return render :status => 400 if @requirement.nil?

@@ -55,3 +55,5 @@ def mock_login!(user)
   session.should be_valid
   session.save
 end
+
+require "cancan/matchers"

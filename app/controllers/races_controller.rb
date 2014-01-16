@@ -1,6 +1,6 @@
 class RacesController < ApplicationController
   before_filter :require_user, :except => [:index, :show]
-  respond_to :html
+  load_and_authorize_resource
 
   def index
     @races = Race.all
@@ -9,7 +9,6 @@ class RacesController < ApplicationController
 
   def show
     @race = Race.find params[:id]
-    respond_with @race
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     redirect_to races_path
@@ -31,7 +30,6 @@ class RacesController < ApplicationController
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @race.errors.messages
-      respond_with @race
     end
   end
 
@@ -43,7 +41,6 @@ class RacesController < ApplicationController
     else
       flash[:error] = [t('update_failed')]
       flash[:error] << @race.errors.messages
-      respond_with @race
     end
   rescue ActiveRecord::RecordNotFound
     flash.now[:error] = t('not_found')

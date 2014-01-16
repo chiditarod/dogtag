@@ -18,6 +18,18 @@ FactoryGirl.define do
     password '123456'
     password_confirmation '123456'
 
+    factory :admin_user do
+      roles [:admin]
+    end
+
+    factory :operator_user do
+      roles [:operator]
+    end
+
+    factory :refunder_user do
+      roles [:refunder]
+    end
+
     factory :user2 do
       first_name 'Mr'
       last_name 'Anderson'

@@ -5,6 +5,17 @@ class ApplicationController < ActionController::Base
   helper :all
   helper_method :current_user_session, :current_user
 
+  # supposed fix for cancan and rails4
+  before_filter do
+    resource = controller_name.singularize.to_sym
+    method = "#{resource}_params"
+    params[resource] &&= send(method) if respond_to?(method, true)
+  end
+
+  rescue_from CanCan::AccessDenied do |exception|
+    redirect_to home_url, :alert => exception.message
+  end
+
   private
 
   def current_user_session

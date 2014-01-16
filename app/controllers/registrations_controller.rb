@@ -1,10 +1,6 @@
 class RegistrationsController < ApplicationController
   before_filter :require_user
-
-  # load_and_authorize_resource :team
-  # load_and_authorize_resource :through => :team
-
-  respond_to :html
+  load_and_authorize_resource
 
   def new
     unless params[:team_id]
@@ -18,8 +14,6 @@ class RegistrationsController < ApplicationController
     @registration = Registration.new
     # bring in the team's default name
     @registration.name = Team.find(team_id).name
-
-    respond_with @registration
   end
 
   def create
@@ -37,7 +31,6 @@ class RegistrationsController < ApplicationController
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @registration.errors.messages
-      respond_with @registration
     end
   end
 

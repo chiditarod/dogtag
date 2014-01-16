@@ -20,18 +20,36 @@ class Ability
     #can :manage, Project, :group => { :id => user.group_ids }
     #can :read, Project, :active => true, :user_id => user.id
 
-    # a user can update their own information
+    # guest-only stuff
+    unless user.id
+      # only show user creation form to guest users
+      can [:create], User
+    end
+
+    # User can create and manage themself
     can [:show, :update], User, :id => user.id
 
-    can :read, Race
-    can :create, Team
-    #can [:show, :update], Team, 
+    # Races:
+    can [:read], Race
+
+    # Team
+    can [:create], Team
+    can [:read, :update], Team, :user_id => user.id
+
+    # Registrations
+    can [:index], Registration
+    can [:create], Registration
+    can [:read, :update], Registration, :team => { :id => user.team_ids }
+
+    # People
+    can [:create], Person
+    can [:update], Person do |person|
+      user.team_ids.include? person.registration.team.id
+    end
 
     if user.is? :operator
-      can [:read, :update], User
-
       can [:read, :create, :update], [Race, Requirement, Tier]
-      can [:update], [Person]
+      #can [:update], [Person]
       can [:read], [Registration, Team]
     end
 

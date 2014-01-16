@@ -1,5 +1,6 @@
 class TiersController < ApplicationController
   before_filter :require_user
+  load_and_authorize_resource
 
   def destroy
     @tier = Tier.find params[:id]

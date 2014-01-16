@@ -1,7 +1,7 @@
 class UsersController < ApplicationController
   before_filter :require_user, :except => [:new, :create]
 
-  #load_and_authorize_resource
+  load_and_authorize_resource
 
   respond_to :html
 
@@ -11,9 +11,6 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find params[:id]
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    redirect_to users_url
   end
 
   alias edit show
@@ -39,7 +36,6 @@ class UsersController < ApplicationController
     return render :status => 400 unless params[:user]
 
     @user = User.find(params[:id])
-
     if @user.update_attributes user_params
       flash[:notice] = I18n.t('update_success')
       redirect_to user_url(@user)
@@ -47,9 +43,6 @@ class UsersController < ApplicationController
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @user.errors.messages
     end
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def destroy
@@ -62,14 +55,17 @@ class UsersController < ApplicationController
       flash[:error] = t('delete_failed')
     end
     redirect_to users_path
-  rescue ActiveRecord::RecordNotFound
-    render :status => 400
   end
 
   private
 
   def user_params
     params.require(:user).permit(:first_name, :last_name, :email, :phone, :password, :password_confirmation, :roles => [])
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do |ex|
+    flash.now[:error] = t('not_found')
+    render :status => 400
   end
 
 end

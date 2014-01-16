@@ -1,6 +1,6 @@
 class TeamsController < ApplicationController
   before_filter :require_user
-  respond_to :html
+  load_and_authorize_resource
 
   def index
     if race_id = (params[:race_id] || session[:last_race_id])
@@ -12,7 +12,6 @@ class TeamsController < ApplicationController
 
   def edit
     @team = Team.find params[:id]
-    respond_with @team
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     redirect_to teams_path
