@@ -1,4 +1,4 @@
-.col-sm-12
+.col-sm-6
   = form_for @user, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
     -if @user.errors.any?
       .alert-danger
@@ -7,29 +7,43 @@
           - @user.errors.full_messages.each do |msg|
             %li= msg
     .form-group
-      = label_tag :name, t('.first_name'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.first_name')
       .col-sm-8 
         = f.text_field :first_name, :class => 'form-control'
     .form-group
-      = label_tag :name, t('.last_name'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.last_name')
       .col-sm-8 
         = f.text_field :last_name, :class => 'form-control'
     .form-group
-      = label_tag :name, t('.email'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.email')
       .col-sm-8 
         = f.text_field :email, :class => 'form-control'
     .form-group
-      = label_tag :name, t('.phone'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.phone')
       .col-sm-8 
         = f.text_field :phone, :class => 'form-control'
     .form-group
-      = label_tag :name, t('.password'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.password')
       .col-sm-8 
         = f.password_field :password, :class => 'form-control'
     .form-group
-      = label_tag :name, t('.password_confirmation'), :class => ['col-sm-4', 'control-label']
+      .col-sm-4.control-label
+        = label_tag :name, t('.password_confirmation')
       .col-sm-8 
         = f.password_field :password_confirmation, :class => 'form-control'
+
+    .form-group
+      .col-sm-4.control-label
+        = label_tag :name, t('.role')
+      .col-sm-8 
+        = f.collection_select :roles, @user.class.valid_roles, :to_s, :to_s,
+          {:selected => @user.roles.map(&:to_s), :prompt => ''}, {:multiple => true}
+
     .form-group
       .col-sm-offset-4.col-sm-8
         = f.submit 'Save', :class => ['btn', 'btn-default']

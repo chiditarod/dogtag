@@ -68,6 +68,8 @@ en:
   login_failed: Login failed.
 
   users:
+    index:
+      users: Users
     create:
       create_user: Create your account
       instructions: Once you create an account, you can create a team and register for a race.

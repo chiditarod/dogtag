@@ -16,6 +16,8 @@ gem 'authlogic',
 
 # authorization
 gem 'cancan', '1.6.10'
+# roles
+gem 'role_model', '0.8.1'
 
 # Payment stuff
 #gem 'activemerchant', '1.42.3'

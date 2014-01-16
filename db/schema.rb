@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140115063253) do
+ActiveRecord::Schema.define(version: 20140116044606) do
 
   create_table "completed_requirements", force: true do |t|
     t.integer  "registration_id"
@@ -103,6 +103,7 @@ ActiveRecord::Schema.define(version: 20140115063253) do
     t.string   "current_login_ip"
     t.string   "last_login_ip"
     t.string   "stripe_customer_id"
+    t.integer  "roles_mask"
   end
 
 end

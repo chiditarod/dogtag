@@ -1,20 +1,22 @@
-%h1 User list
+%h1
+  =t('.users')
+  %small
+    = link_to new_user_path do
+      %i.fa.fa-plus
 
 %table.table.table-bordered.table-hover
   %tr
     %th Name
-    %th
-    %th
-    %th
+    %th Email
+    %th Roles
+    %th Actions
 
   - @users.each do |user|
     %tr
+      %td= user.fullname
+      %td= user.email
+      %td= user.roles.to_a.map(&:capitalize).join(', ')
       %td
-        = user.first_name
-        = user.last_name
-      %td= link_to 'Show', user
-      %td= link_to 'Edit', edit_user_path(user)
-      %td= link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
-
-%br
-= link_to 'New user', new_user_path
+        = link_to 'Show', user
+        = link_to 'Edit', edit_user_path(user)
+        = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete

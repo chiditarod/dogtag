@@ -10,6 +10,17 @@ class User < ActiveRecord::Base
     c.validate_login_field = false
   end
 
+  # ---------------------------------------------------------------
+  # http://rubydoc.info/gems/role_model/0.8.1/frames
+
+  include RoleModel
+
+  # declare the valid roles -- do not change the order if you 
+  # add more roles later, always append them at the end!
+  roles :admin, :refunder, :operator
+
+  # ---------------------------------------------------------------
+
   def fullname
     "#{first_name} #{last_name}"
   end
