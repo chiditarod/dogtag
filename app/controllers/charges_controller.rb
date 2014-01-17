@@ -1,9 +1,6 @@
 class ChargesController < ApplicationController
   before_filter :require_user
 
-  def new
-  end
-
   def create
     @customer = nil
     # lookup existing customer
@@ -50,7 +47,7 @@ class ChargesController < ApplicationController
       )
     end
 
-    # create the completed_requirement object
+    # run requirement#complete, which creates a CompletedRequirement
     cr_metadata = {'customer_id' => @customer.id, 'charge_id' => charge.id}
     req = Requirement.find metadata['requirement_id']
     req.complete metadata['registration_id'], current_user, cr_metadata
@@ -93,5 +90,4 @@ class ChargesController < ApplicationController
     redirect_to session[:prior_url]
     session.delete :prior_url
   end
-
 end

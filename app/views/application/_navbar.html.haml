@@ -1,70 +1,70 @@
 / Static navbar
 / view-source:http://getbootstrap.com/examples/navbar-static-top/
-.navbar.navbar-default.navbar-static-top{role: "navigation"}
-  .container
-    .navbar-header
+-#.navbar.navbar-default.navbar-static-top{role: "navigation"}
+.navbar.navbar-default{role: "navigation"}
+  .navbar-header
 
-      %button.navbar-toggle{"data-target" => ".navbar-collapse", "data-toggle" => "collapse", type: "button"}
-        %span.sr-only Toggle navigation
-        %span.icon-bar
-        %span.icon-bar
-        %span.icon-bar
-        = link_to(I18n.t('website_title'), home_path, :class => 'navbar-brand')
+    %button.navbar-toggle{"data-target" => ".navbar-collapse", "data-toggle" => "collapse", type: "button"}
+      %span.sr-only Toggle navigation
+      %span.icon-bar
+      %span.icon-bar
+      %span.icon-bar
+    = link_to(I18n.t('website_title'), home_url, :class => 'navbar-brand')
 
-      .navbar-collapse.collapse
-        %ul.nav.navbar-nav
-          %li
-            = link_to races_path do
-              %i.fa.fa-shopping-cart.fa-2x
-              =t '.races'
+  .navbar-collapse.collapse
+    %ul.nav.navbar-nav
+      %li
+        = link_to races_path do
+          %i.fa.fa-shopping-cart.fa-2x
+          =t '.races'
 
-          - if current_user && true
+      - if current_user && true
 
-            %li
-              = link_to teams_path do
-                %i.fa.fa-users.fa-2x
-                =t '.teams'
+        %li
+          = link_to teams_path do
+            %i.fa.fa-users.fa-2x
+            =t '.teams'
 
-            %li.dropdown
-              %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-                %i.fa.fa-star-o.fa-2x
-                = t 'admin'
-                %b.caret
-              %ul.dropdown-menu
-                %li.dropdown-header= t '.users'
-                %li= link_to t('list'), users_path
-                %li= link_to t('new'), new_user_path
-                %li.divider
+        - if current_user.gets_admin_menu?
+          %li.dropdown
+            %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+              %i.fa.fa-star-o.fa-2x
+              %b.caret
+            %ul.dropdown-menu
+              %li.dropdown-header= t '.admin_functions'
+              %li= link_to t('list'), users_path
+              %li= link_to t('new'), new_user_path
+              %li.divider
 
-        %ul.nav.navbar-nav.navbar-right
-
-          - if current_user
-            %li.dropdown
-              %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
-                %i.fa.fa-user.fa-2x
+    %ul.nav.navbar-nav.navbar-right
+      - if current_user
+        %li.dropdown
+          %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+            %i.fa.fa-user.fa-2x
+            %b.caret
+            %ul.dropdown-menu
+              %li.dropdown-header
                 = current_user.first_name
-                %b.caret
-                %ul.dropdown-menu
-                  %li.dropdown-header= t 'your_account'
-                  %li
-                    = link_to edit_user_path(current_user) do
-                      %i.fa.fa-edit.fa-2x
-                      Edit Profile
-                  %li
-                    = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
-                      %i.fa.fa-sign-out.fa-2x
-                      Logout
-          - else
-            %li
-              = link_to new_user_session_path do
-                %i.fa.fa-sign-in.fa-2x
-                =t '.login'
-            %li
-              = link_to new_user_path do
-                %i.fa.fa-check-square-o.fa-2x
-                =t '.register'
+                = current_user.last_name
+              %li
+                = link_to edit_user_path(current_user) do
+                  %i.fa.fa-edit.fa-fw
+                  Edit Profile
+              %li
+                = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
+                  %i.fa.fa-sign-out.fa-fw
+                  Logout
+      - else
+        %li
+          = link_to new_user_session_path do
+            %i.fa.fa-sign-in.fa-2x
+            =t '.login'
+        %li
+          = link_to new_user_path do
+            %i.fa.fa-check-square-o.fa-2x
+            =t '.register'
 
 
-          %li
-            = link_to "http://github.com/ometa/dogtag/" do
-              %i.fa.fa-2x.fa-github
+      %li
+        = link_to "http://github.com/ometa/dogtag/" do
+          %i.fa.fa-2x.fa-github

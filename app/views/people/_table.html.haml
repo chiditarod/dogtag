@@ -12,8 +12,8 @@
         = link_to(edit_race_registration_person_url :race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id) do
           %i.fa.fa-edit.fa-2x
       %td
-        -#todo: make this admin only
-        = button_to t('delete'), race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
+        - if current_user.is? :admin
+          = button_to t('delete'), race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
       %td
         = person.first_name
         = person.last_name

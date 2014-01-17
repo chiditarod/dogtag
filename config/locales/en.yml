@@ -55,9 +55,11 @@ en:
   completed: Completed
   incomplete: Incomplete
 
-  navbar:
-    users: Users
-    teams: Teams
+  application:
+    navbar:
+      races: Races
+      users: Users
+      teams: Teams
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
@@ -67,6 +69,11 @@ en:
   logout_success: Logout successful.
   login_failed: Login failed.
 
+
+  user_sessions:
+    new:
+      please_login: Please Login
+      instructions: In order to register, you have to have an account with us.
   users:
     index:
       users: Users
@@ -150,17 +157,16 @@ en:
       instructions: Get started by choosing a race.
       no_races: No races present in the system.
       create_race: Create one now!
-    race_item:
-      race_is_full: Race is full.
-      spots_remaining: spots remaining.
-      registration_closes_on: Registration closes on
-      registration_opens_on: Registration opens on
+    race_metadata:
       left_to_register: left to register.
       registration_closed: Registration is closed
-      #todo - pluralize this 
+      race_is_full: Race is full.
+      spots_remaining: spots remaining.
+      registration_opens_on: Registration opens on
+      on_waitlist: on the waitlist
+    race_item:
       team: team
-      teams: teams
-      on_waitlist: on the waitlist.
+      teams_registered: teams registered
       register_now: Register Now
       register_waitlist: Register for Waitlist
     form:

@@ -1,31 +1,31 @@
 = form_for [@race, @registration, @person], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
   .form-group
-    .col-sm-4.control-label
+    .col-xs-4.control-label
       = label_tag :first_name, t('.first_name')
-    .col-sm-6
+    .col-xs-6
       = f.text_field :first_name, :class => 'form-control'
   .form-group
-    .col-sm-4.control-label
+    .col-xs-4.control-label
       = label_tag :last_name, t('.last_name')
-    .col-sm-6
+    .col-xs-6
       = f.text_field :last_name, :class => 'form-control'
   .form-group
-    .col-sm-4.control-label
+    .col-xs-4.control-label
       = label_tag :email, t('.email')
-    .col-sm-8
+    .col-xs-8
       = f.text_field :email, :class => 'form-control'
   .form-group
-    .col-sm-4.control-label
+    .col-xs-4.control-label
       = label_tag :phone, t('.phone')
-    .col-sm-6
+    .col-xs-6
       = f.text_field :phone, :class => 'form-control'
   .form-group
-    .col-sm-4.control-label
+    .col-xs-4.control-label
       = label_tag :twitter, t('.twitter')
-    .col-sm-4
+    .col-xs-4
       = f.text_field :twitter, :class => 'form-control'
   .form-group
-    .col-sm-offset-4.col-sm-8
+    .col-xs-offset-4.col-xs-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
       = link_to race_registration_path(@registration.race.id, @registration.id) do
         .btn.btn-default

@@ -6,9 +6,8 @@
         - if msg.is_a? Hash
           - msg.stringify_keys.each do |k,v|
             - if k.present? && v.present?
-              %strong
-                =k
-                =v.join(', and ')
+              =k.humanize
+              =v.join(', and ')
               %br
         - else
           %strong= msg

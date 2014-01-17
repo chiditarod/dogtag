@@ -1,7 +1,8 @@
 
-= link_to edit_user_path(@user) do
-  %i.fa.fa-edit.fa-2x
-  = t('edit')
+- if can? :update, @user
+  = link_to edit_user_path(@user) do
+    %i.fa.fa-edit.fa-2x
+    = t('edit')
 
 %h3
   %small= t('.name')

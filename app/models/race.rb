@@ -34,7 +34,7 @@ class Race < ActiveRecord::Base
   end
 
   def full?
-    finalized_registrations.count == max_teams
+    finalized_registrations.count >= max_teams
   end
 
   def not_full?

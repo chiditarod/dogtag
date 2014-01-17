@@ -10,7 +10,7 @@ class UsersController < ApplicationController
   end
 
   def show
-    @user = User.find params[:id]
+    @user = User.find (params[:id] || current_user.id)
   end
 
   alias edit show
@@ -25,7 +25,8 @@ class UsersController < ApplicationController
     @user = User.new user_params
     if @user.save
       flash[:notice] = I18n.t('create_success')
-      redirect_to user_url(@user)
+      #redirect_to user_url(@user)
+      redirect_back_or_default user_url(@user)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @user.errors.messages

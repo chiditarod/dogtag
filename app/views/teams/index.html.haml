@@ -1,11 +1,14 @@
 .page-header
   .row
-    .col-md-8
+    .col-md-12
       %h1= t('.your_teams')
       - if @race.present?
         %h3= t('.registering_for_race', :race_name => @race.name)
-      %p= t('.instructions')
-      - if @race.present?
+
+  - if @race.present?
+    .row
+      .col-md-7
+        %p= t('.instructions')
         %p= t('.registration_instructions', :race_name => @race.name)
 
 - if @teams.blank?
@@ -13,8 +16,9 @@
   %p= t('please_create_to_continue')
 
 - else
-  - @teams.each do |team|
-    = render 'team_item', :team => team, :race => @race
-  .clearfix
-
-= link_to t('create'), new_team_path, :class => ['btn', 'btn-primary']
+  .row
+    - @teams.each do |team|
+      .col-sm-6.pull-left
+        = render 'team_item', :team => team, :race => @race
+.row
+  = link_to t('create'), new_team_path, :class => ['btn', 'btn-primary']

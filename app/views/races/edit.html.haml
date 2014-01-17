@@ -6,8 +6,9 @@
 .page-header
   %h3
     = t('.race_requirements')
-    = link_to new_race_requirement_url(@race) do
-      %i.fa.fa-plus
+    - if can? :create, @Requirement
+      = link_to new_race_requirement_url(@race) do
+        %i.fa.fa-plus
 
 - if @race.requirements.blank?
   = t ('.no_requirements_added')

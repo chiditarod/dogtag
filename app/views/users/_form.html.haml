@@ -1,11 +1,5 @@
 .col-sm-6
   = form_for @user, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
-    -if @user.errors.any?
-      .alert-danger
-        %h4= "#{pluralize(@user.errors.count, "issues")} detected:"
-        %ul
-          - @user.errors.full_messages.each do |msg|
-            %li= msg
     .form-group
       .col-sm-4.control-label
         = label_tag :name, t('.first_name')
@@ -37,12 +31,13 @@
       .col-sm-8 
         = f.password_field :password_confirmation, :class => 'form-control'
 
-    .form-group
-      .col-sm-4.control-label
-        = label_tag :name, t('.role')
-      .col-sm-8 
-        = f.collection_select :roles, @user.class.valid_roles, :to_s, :to_s,
-          {:selected => @user.roles.map(&:to_s), :prompt => ''}, {:multiple => true}
+    - if current_user && current_user.gets_admin_menu?
+      .form-group
+        .col-sm-4.control-label
+          = label_tag :name, t('.role')
+        .col-sm-8 
+          = f.collection_select :roles, @user.class.valid_roles, :to_s, :to_s,
+            {:selected => @user.roles.map(&:to_s), :prompt => ''}, {:multiple => true}
 
     .form-group
       .col-sm-offset-4.col-sm-8

@@ -1,39 +1,39 @@
-.col-xs-3.pull-left
-  .panel.panel-default
-    .panel-heading
+.panel.panel-default
+  .panel-heading
+    - if can? :update, team
       .pull-right
         = link_to(edit_team_url team.id) do
           %i.fa.fa-edit.fa-2x
-      %span.lead
-        = team.name
+    %span.lead
+      = team.name
 
-    .panel-body
+  .panel-body
 
-      - if race.present?
-        - unless (team.races && team.races.include?(race))
-          = link_to(new_race_registration_url(race.id, :team_id => team.id)) do
-            - if race.full?
-              .btn.btn-warning
-                = t('.register_waitlist')
-            - else
-              .btn.btn-primary
-                = t('register_for', :race_name => race.name)
+    - if race.present?
+      - unless (team.races && team.races.include?(race))
+        = link_to(new_race_registration_url(race.id, :team_id => team.id)) do
+          - if race.full?
+            .btn.btn-warning
+              = t('.register_waitlist')
+          - else
+            .btn.btn-primary
+              = t('register_for', :race_name => race.name)
 
-      - if(team.registrations.blank? && race.blank?)
-        %p= t('.no_registrations')
+    - if(team.registrations.blank? && race.blank?)
+      %p= t('.no_registrations')
 
-      - team.registrations.each do |reg|
-        %hr
-        %h4= link_to reg.race.name, race_registration_path(:race_id => reg.race.id, :id => reg.id)
+    - team.registrations.each do |reg|
+      %hr
+      %h4= link_to reg.race.name, race_registration_path(:race_id => reg.race.id, :id => reg.id)
 
-        %p=t '.registered_as', :name => reg.name
+      %p=t '.registered_as', :name => reg.name
 
-        - if reg.finalized?
-          .pull-left.fa.fa-smile-o.fa-3x.text-success
-          = link_to t('fully_registered'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-success'
-          %p.small=t '.youre_in'
-        - else
-          .pull-left.fa.fa-frown-o.fa-3x.text-danger
-          = link_to t('registration_needs_attention'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-danger'
-          %p.small
-            =t '.fix_it'
+      - if reg.finalized?
+        .pull-left.fa.fa-smile-o.fa-3x.text-success
+        = link_to t('fully_registered'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-success'
+        %p.small=t '.youre_in'
+      - else
+        .pull-left.fa.fa-frown-o.fa-3x.text-danger
+        = link_to t('registration_needs_attention'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-danger'
+        %p.small
+          =t '.fix_it'

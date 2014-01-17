@@ -2,11 +2,12 @@ class PaymentRequirement < Requirement
   has_many :tiers, :foreign_key => :requirement_id, :dependent => :delete_all
 
   def stripe_params(registration)
+    metadata = JSON.generate(
+      'race_name' => registration.race.name, 'registration_name' => registration.name,
+      'requirement_id' => id, 'registration_id' => registration.id)
+
     {:description => "#{name} for #{registration.name} | #{registration.race.name}",
-     :metadata => JSON.generate(
-       'race_name' => registration.race.name, 'registration_name' => registration.name,
-       'requirement_id' => id, 'registration_id' => registration.id
-     ),
+     :metadata => metadata,
      :amount => active_tier.price,
      :image => '/images/patch_ring.jpg',
      :name => registration.race.name
@@ -18,6 +19,10 @@ class PaymentRequirement < Requirement
     return false if metadata.blank?
     return metadata['charge'] if metadata['charge'].present?
     false
+
+    # todo: after specing replace with this
+    #return false unless (metadata.present? && metadata['charge'].present?)
+    #return metadata['charge']
   end
 
   def enabled?

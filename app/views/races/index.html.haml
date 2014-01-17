@@ -1,9 +1,10 @@
 .page-header
   %h1
     = t('.title')
-    %small
-      = link_to new_race_path do
-        %i.fa.fa-plus
+    - if can? :update, @race
+      %small
+        = link_to new_race_path do
+          %i.fa.fa-plus
   %p= t('.instructions')
 
 - if @races.blank?

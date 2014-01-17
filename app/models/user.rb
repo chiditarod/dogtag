@@ -21,6 +21,10 @@ class User < ActiveRecord::Base
 
   # ---------------------------------------------------------------
 
+  def gets_admin_menu?
+    (is? :admin) || (is? :operator)
+  end
+
   def fullname
     "#{first_name} #{last_name}"
   end

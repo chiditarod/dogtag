@@ -29,12 +29,12 @@ class Ability
     # User can create and manage themself
     can [:show, :update], User, :id => user.id
 
-    # Races:
-    can [:read], Race
-
     # Team
     can [:create], Team
     can [:read, :update], Team, :user_id => user.id
+
+    # Races:
+    can [:read], Race
 
     # Registrations
     can [:index], Registration
@@ -43,18 +43,17 @@ class Ability
 
     # People
     can [:create], Person
-    can [:update], Person do |person|
+    can [:show, :update], Person do |person|
       user.team_ids.include? person.registration.team.id
     end
 
+    # Requirement: no user-level access required
+    # Tier: no user-level access required
+
     if user.is? :operator
-      can [:read, :create, :update], [Race, Requirement, Tier]
-      #can [:update], [Person]
-      can [:read], [Registration, Team]
+      can [:read, :update], [Registration, Team]
+      can [:read, :create, :update], [Race, PaymentRequirement, Tier]
     end
 
-    #if user.is? :refunder
-      #can :refund, Charge
-    #end
   end
 end

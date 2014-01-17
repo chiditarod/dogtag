@@ -7,7 +7,7 @@
         .fa.fa-edit
 
 .row
-  .col-md-4
+  .col-sm-4
     .row
       %h1
         %small= t('.registered_as')
@@ -17,13 +17,8 @@
         - if @registration.twitter.present?
           %small
             = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}/"
-  .col-md-6
-    .row
-      %h1
-        %small= t('.description')
-    .row
-      %h3= @registration.description
-  .col-md-2
+
+  .col-sm-2
     .row
       %h1
         %small= t('.status')
@@ -34,6 +29,14 @@
       - else
         %i.fa.fa-frown-o.fa-4x
         =t ('incomplete')
+
+  .col-sm-6
+    .row
+      %h1
+        %small= t('.description')
+    .row
+      %h3= @registration.description
+
 
 -#-----------------------------------------------------------
 -# requirements  (consider partial
@@ -65,25 +68,7 @@
           .panel-body
             -#todo: render this more generically
             - if req.type == 'PaymentRequirement'
-              - if req.completed?(@registration)
-                - cr = req.cr_for(@registration)
-                - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
-                - if charge.refunded
-                  %span.label.label-primary
-                    = t('refunded')
-                - else
-                  = t('completed')
-                  = button_to t('refund'), charge_refund_url(charge.id), :method=>:post,  :data => { :confirm => 'Are you sure?' }, :class=> %w(btn btn-error)
-
-              - else
-                .lead
-                  $
-                  = req.active_tier.price_in_dollars_and_cents
-                - if @race.full?
-                  %h4
-                    %span.label.label-warning= t('.no_pay_waitlist')
-                - else
-                  = render 'charges/embed', :params => req.stripe_params(@registration)
+              = render 'payment_requirement', :reg => @registration, :req => req
 
 -#-----------------------------------------------------------
 -# people stuff      (consider partial

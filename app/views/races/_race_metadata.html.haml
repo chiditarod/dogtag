@@ -20,4 +20,4 @@
       = t('.on_waitlist')
     - else
       = t('.registration_opens_on')
-      = human_readable_short race.registration_open
+      = distance_of_time_in_words race.registration_open
