@@ -21,9 +21,9 @@
 
     - if @race.open_for_registration?
       - if @race.full?
-        = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+        = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-warning']
       - else
-        = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-primary']
+        = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-success']
 
     - else
       %h3= t('.registration_closed')

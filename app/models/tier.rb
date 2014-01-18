@@ -5,9 +5,5 @@ class Tier < ActiveRecord::Base
   # STI: PaymentRequirement ==================
   belongs_to :requirement
 
-  def price_in_dollars_and_cents
-    price.to_s.insert(-3, '.')
-  end
   # ===========================================
-
 end

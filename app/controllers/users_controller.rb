@@ -23,9 +23,10 @@ class UsersController < ApplicationController
     return render :status => 400 if params[:user].blank?
 
     @user = User.new user_params
+
     if @user.save
-      flash[:notice] = I18n.t('create_success')
-      #redirect_to user_url(@user)
+      UserMailer.welcome_email(@user).deliver
+      flash[:notice] = I18n.t('.create_success_user')
       redirect_back_or_default user_url(@user)
     else
       flash.now[:error] = [t('create_failed')]

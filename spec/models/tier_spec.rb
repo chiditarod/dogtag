@@ -7,12 +7,6 @@ describe Tier do
     @tier = @req.reload.tiers.first
   end
 
-  describe '#price_in_dollars_and_cents' do
-    it 'returns an integer of cents as a string of dollars and cents' do
-      expect(@tier.price_in_dollars_and_cents).to eq('50.00')
-    end
-  end
-
   describe 'validation' do
     it 'fails when price is not above 0' do
       expect(FactoryGirl.build :tier, :price => -1).to be_invalid

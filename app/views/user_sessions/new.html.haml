@@ -1,11 +1,18 @@
 .row
   .col-md-6
-    %h1
-      = t('.please_login')
-      %small
-        = t('or')
-        = link_to t('signup'), new_user_path
+    %h3= t('.please_login')
+
+.row
+  .col-md-6
     %p
-      = t('.instructions')
+      = t('.instructions_html', :href => link_to('create one', new_user_url))
+
+%h4= t('.login_here')
 
 = render 'form'
+
+.row
+  .col-md-6
+    %h1
+      = link_to t('.sign_up'), new_user_path
+

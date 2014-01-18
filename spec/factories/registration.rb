@@ -29,6 +29,6 @@ FactoryGirl.define do
         create_list(:person, evaluator.people_count, registration: registration)
       end
     end
-  end
 
+  end
 end

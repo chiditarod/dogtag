@@ -14,9 +14,6 @@ class RequirementsController < ApplicationController
       flash[:error] = t 'destroy_failed'
     end
     redirect_to race_url :id => @requirement.race.id
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t 'not_found'
-    render :status => 400
   end
 
   def update
@@ -32,17 +29,11 @@ class RequirementsController < ApplicationController
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @requirement.errors.messages
     end
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def edit
     @requirement = Requirement.find params[:id]
     @race = @requirement.race
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    return render :status => 400
   end
 
   def new
@@ -68,6 +59,11 @@ class RequirementsController < ApplicationController
       flash.now[:error] << @requirement.errors.messages
       puts @requirement.errors.messages
     end
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do
+    flash[:error] = t('not_found')
+    render :status => 400
   end
 
   private

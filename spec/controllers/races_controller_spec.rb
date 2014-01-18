@@ -33,15 +33,15 @@ describe RacesController do
   context '[logged in]' do
     before do
       activate_authlogic
-      user = FactoryGirl.create :user
+      user = FactoryGirl.create :admin_user
       mock_login! user
     end
 
     describe '#show' do
       context 'with invalid id' do
         before { get :show, :id => 100 }
-        it 'redirects to race index' do
-          expect(response).to redirect_to(races_path)
+        it 'sets 400' do
+          expect(response.status).to eq(400)
         end
         it 'sets flash error' do
           expect(flash[:error]).to eq(I18n.t 'not_found')
@@ -149,7 +149,7 @@ describe RacesController do
     describe '#new' do
       before do
         @race_stub = Race.new
-        Race.should_receive(:new).and_return @race_stub
+        Race.stub(:new).and_return @race_stub
         get :new
       end
 

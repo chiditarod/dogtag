@@ -35,7 +35,7 @@ describe RequirementsController do
 
   context '[logged in]' do
     before do
-      @valid_user = FactoryGirl.create :user
+      @valid_user = FactoryGirl.create :admin_user
       activate_authlogic
       mock_login! @valid_user
     end
@@ -131,7 +131,7 @@ describe RequirementsController do
     describe '#new' do
       before do
         @req_stub = Requirement.new
-        Requirement.should_receive(:new).and_return @req_stub
+        Requirement.stub(:new).and_return @req_stub
         get :new, :race_id => @req.race.id
       end
 

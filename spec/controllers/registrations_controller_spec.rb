@@ -48,7 +48,7 @@ describe RegistrationsController do
   end
 
   context '[logged in]' do
-    let(:valid_user) { FactoryGirl.create :user }
+    let(:valid_user) { FactoryGirl.create :admin_user }
     before do
       activate_authlogic
       mock_login! valid_user
@@ -67,11 +67,10 @@ describe RegistrationsController do
           expect(response).to redirect_to(teams_path)
         end
       end
-
       context 'with params[:team_id]' do
         before do
           @registration_stub = Registration.new
-          Registration.should_receive(:new).and_return @registration_stub
+          Registration.stub(:new).and_return @registration_stub
           Race.should_receive(:find).and_return @race
           Team.should_receive(:find).and_return @team
           get :new, :race_id => @race.id, :team_id => @team.id
@@ -186,8 +185,8 @@ describe RegistrationsController do
       context 'invalid id' do
         before { get :show, :race_id => @race.id, :id => 100 }
 
-        it 'redirects to teams index' do
-          expect(response).to redirect_to(teams_path)
+        it 'renders 400' do
+          expect(response.status).to eq(400)
         end
         it 'sets flash error' do
           expect(flash[:error]).to eq(I18n.t 'not_found')
@@ -209,8 +208,40 @@ describe RegistrationsController do
         it 'assigns @race' do
           expect(assigns(:race)).to eq(@registration.race)
         end
-
       end
+
+      context 'finalized? && ! notified_at' do
+        let (:today) { Time.now }
+        before do
+          double(Time.now) { today }
+          @reg = FactoryGirl.create :registration_with_people
+          @reg.team.user = valid_user
+          @reg.save
+          get :show, :race_id => @reg.race.id, :id => @reg.id
+        end
+        it 'sets notified_at to Time.now and saves in db' do
+          expect(assigns(:registration).finalized?).to be_true
+          expect(Registration.find(@reg.id).notified_at).to eq(@now)
+        end
+        it 'sets display_notification = true for the view'
+      end
+
+      context '! finalized? && notified_at' do
+        before do
+          @now = Time.now
+          Time.stub(:now) { @now }
+          @reg = FactoryGirl.create :registration
+          @reg.notified_at = @now - 1.month
+          @reg.save
+          get :show, :race_id => @reg.race.id, :id => @reg.id
+        end
+        it 'unsets notified_at and saves in db' do
+          expect(assigns(:registration).finalized?).to be_false
+          expect(assigns(:registration).notified_at).to be_nil
+          expect(@reg.reload.notified_at).to be_nil
+        end
+      end
+
     end
 
     describe '#index' do
@@ -225,7 +256,7 @@ describe RegistrationsController do
           expect(response).to be_success
         end
         it 'does not set @registrations' do
-          expect(assigns(:registrations)).to be_nil
+          expect(assigns(:registrations)).to be_empty
         end
       end
 
@@ -238,7 +269,7 @@ describe RegistrationsController do
         end
 
         it 'sets @registrations to ones associated with the race_id' do
-          expect(assigns(:registrations)).to eq([@reg1, @reg2])
+          expect(assigns(:registrations)).to eq([@reg2, @reg1])
           expect(assigns(:registrations)).to_not include @reg3
         end
         it 'sets @race per race_id' do

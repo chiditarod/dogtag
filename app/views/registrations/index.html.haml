@@ -1,32 +1,35 @@
 - if @race
 
-  .page-header
-    %h1
-      =t('.registrations_for', :name => @race.name)
+  %h1
+    =t('.registrations_for', :name => @race.name)
 
   - if @registrations.any?
-    %table.table.table-bordered.table-hover
+    %table.table.borderless.table-hover
       %tr
         %th Status
-        %th Name
-        %th Mission
-        %th Twitter
+        %th Team
+        %th Last Updated
 
       - @registrations.each do |reg|
         %tr
           %td
             - if reg.finalized?
-              %i.fa.fa-smile-o.fa-2x
+              %i.fa.fa-smile-o.fa-2x.text-success
             - else
-              %i.fa.fa-frown-o.fa-2x
+              %i.fa.fa-frown-o.fa-2x.text-danger
           %td
-            = link_to reg.name, race_registration_url(@race, reg)
-          %td= reg.description
-          %td= reg.twitter
+            .h3
+              - if can? [:show], reg
+                = link_to reg.name, race_registration_url(@race, reg)
+              - else
+                = reg.name
+              %small
+                %small=link_to reg.twitter.downcase, "http://twitter.com/#{reg.twitter}"
+            %p
+              %i.fa.fa-quote-left.pull-left.fa-border
+              = reg.description
 
-          -#%td
-            = link_to 'Show', user
-            = link_to 'Edit', edit_user_path(user)
-            = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+          %td= time_ago_in_words(reg.updated_at)
+
   - else
     =t('.no_registrations')

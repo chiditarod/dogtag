@@ -48,7 +48,11 @@ class ChargesController < ApplicationController
     end
 
     # run requirement#complete, which creates a CompletedRequirement
-    cr_metadata = {'customer_id' => @customer.id, 'charge_id' => charge.id}
+    cr_metadata = {
+      'customer_id' => @customer.id,
+      'charge_id' => charge.id,
+      'amount' => params[:amount]
+    }
     req = Requirement.find metadata['requirement_id']
     req.complete metadata['registration_id'], current_user, cr_metadata
 

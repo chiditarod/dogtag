@@ -44,7 +44,7 @@ describe PeopleController do
 
   context '[logged in]' do
     before do
-      @valid_user = FactoryGirl.create :user
+      @valid_user = FactoryGirl.create :admin_user
       activate_authlogic
       mock_login! @valid_user
     end
@@ -115,16 +115,6 @@ describe PeopleController do
           expect(response).to redirect_to(race_registration_url :race_id => @race.id, :id => @registration.id)
         end
       end
-
-      # todo - fix this spec
-      #it 'sets a flash error and redirects if the user cannot update' do
-        #mock_user = double 'User'
-        #User.should_receive(:where).and_return mock_user
-        #mock_user.should_receive(:update_attributes).and_return(false)
-        #patch :update, :id => @user2.id, :user => {:phone => '123'}
-        #flash[:error].should include('Update failed.')
-        #response.status.should == 302
-      #end
     end
 
     describe '#edit' do
@@ -157,7 +147,7 @@ describe PeopleController do
     describe '#new' do
       before do
         @person_stub = Person.new
-        Person.should_receive(:new).and_return @person_stub
+        Person.stub(:new).and_return @person_stub
         get :new, :race_id => @race.id, :registration_id => @registration.id
       end
 

@@ -47,11 +47,14 @@ ActiveRecord::Schema.define(version: 20140116044606) do
   end
 
   create_table "registrations", force: true do |t|
-    t.string  "name"
-    t.string  "description"
-    t.string  "twitter"
-    t.integer "team_id"
-    t.integer "race_id"
+    t.string   "name"
+    t.string   "description"
+    t.string   "twitter"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.datetime "notified_at"
+    t.integer  "team_id"
+    t.integer  "race_id"
   end
 
   add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true

@@ -1,41 +1,93 @@
 .page-header
-  %h1
-    = link_to @race.name, race_url(@race)
-    = t('.title')
-    %small
-      = link_to edit_race_registration_path(@race.id, @registration.id) do
-        .fa.fa-edit
+  - if @registration.finalized?
+    .alert-success
+      %h1
+        = t('.title')
+        - if @registration.race.open_for_registration?
+          %small
+            = link_to edit_race_registration_path(@race.id, @registration.id) do
+              .fa.fa-edit
+              = t('.edit')
+
+      - if @registration.race.open_for_registration?
+        = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+      - else
+        %i.lead.text-danger
+          = t('.registration_closed')
+
+- if @display_notification
+  = render 'now_complete'
 
 .row
-  .col-sm-4
-    .row
-      %h1
-        %small= t('.registered_as')
-    .row
-      %h2
-        = @registration.name
-        - if @registration.twitter.present?
-          %small
-            = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}/"
+  .col-xs-2
+    .panel.panel-default
+      .panel-heading
+        = t('.status')
+      .panel-body.text-center
+        - if @registration.finalized?
+          .text-success
+            %i.fa.fa-smile-o.fa-3x.fa-spin
+            %br
+            = t('.complete')
+        - else
+          .text-danger
+            %i.fa.fa-frown-o.fa-3x
+            %br
+            = t('.incomplete')
 
-  .col-sm-2
+  .col-xs-10
     .row
-      %h1
-        %small= t('.status')
-    .row
-      - if @registration.finalized?
-        %i.fa.fa-smile-o.fa-4x
-        =t ('complete')
-      - else
-        %i.fa.fa-frown-o.fa-4x
-        =t ('incomplete')
+      %p.lead
+        = t('.registered_as')
+        %strong
+          = @registration.name
+        = t('for')
+        = @race.name
 
-  .col-sm-6
     .row
-      %h1
-        %small= t('.description')
-    .row
-      %h3= @registration.description
+      %i.fa.fa-quote-left.fa-2x.pull-left.fa-border
+      %p
+        = @registration.description
+
+    - if @registration.twitter.present?
+      .row
+        %p.lead
+          = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}"
+
+-#-----------------------------------------------------------
+-# people stuff      (consider partial
+
+.row
+  .col-md-12
+    - if @registration.needs_people?
+      .pull-right
+        .text-danger
+          %h5
+            = t('.action_required')
+            .fa.fa-frown-o
+
+    %h2
+      %i.fa.fa-user
+      = t('.people')
+      %small
+        = @registration.people.count
+        = t('of')
+        = @registration.race.people_per_team
+        - if @registration.needs_people?
+
+          - if @registration.race.open_for_registration?
+            = link_to new_race_registration_person_url(@registration.race.id, @registration.id) do
+              %i.fa.fa-plus
+        - else
+          %i.fa.fa-smile-o.text-success
+
+    = t('.people_instructions')
+    %br
+
+    - if @registration.people.blank?
+      = t ('.no_people_added')
+    - else
+      = render 'people/table', :people => @registration.people
 
 
 -#-----------------------------------------------------------
@@ -43,7 +95,14 @@
 
 - if @registration.race.enabled_requirements.present?
   .page-header
-    %h1
+    - if ! @registration.completed_all_requirements?
+      .pull-right
+        .text-danger
+          %h5
+            = t('.action_required')
+            .fa.fa-frown-o
+
+    %h2
       %i.fa.fa-rocket
       = t('.requirements')
       %small
@@ -51,45 +110,23 @@
         = t('of')
         = @registration.race.enabled_requirements.count
         - if @registration.completed_all_requirements?
-          %i.fa.fa-smile-o
+          %i.fa.fa-smile-o.text-success
     = t('.requirement_instructions')
+
   .row
     - @registration.race.enabled_requirements.each do |req|
-      .col-xs-3.pull-left
+      .col-md-3.pull-left
         .panel.panel-default
           .panel-heading
-            .pull-right
+            .col-xs-10
+              %span.lead= req.name
+            .col-xs-2
               - if req.completed?(@registration)
-                %i.fa.fa-2x.fa-smile-o
+                %i.fa.fa-2x.fa-smile-o.text-success
               - else
-                %i.fa.fa-2x.fa-frown-o
-            %span.lead= req.name
+                %i.fa.fa-2x.fa-frown-o.text-danger
             .clearfix
-          .panel-body
-            -#todo: render this more generically
+          .panel-body.text-center
+            -# todo - render more generically
             - if req.type == 'PaymentRequirement'
-              = render 'payment_requirement', :reg => @registration, :req => req
-
--#-----------------------------------------------------------
--# people stuff      (consider partial
-
-.page-header
-  %h1
-    %i.fa.fa-user
-    = t('.people')
-    %small
-      = @registration.people.count
-      = t('of')
-      = @registration.race.people_per_team
-      - if @registration.needs_people?
-        = link_to new_race_registration_person_url(@registration.race.id, @registration.id) do
-          %i.fa.fa-plus
-      - else
-        %i.fa.fa-smile-o
-
-  = t('.people_instructions')
-
-- if @registration.people.blank?
-  = t ('.no_people_added')
-- else
-  = render 'people/table', :people => @registration.people
+              = render 'requirements/payment_requirement', :reg => @registration, :req => req

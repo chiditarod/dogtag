@@ -12,9 +12,6 @@ class PeopleController < ApplicationController
       flash[:error] = t 'destroy_failed'
     end
     redirect_to race_registration_url :race_id => @person.registration.race.id, :id => @person.registration.id
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def update
@@ -30,25 +27,18 @@ class PeopleController < ApplicationController
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @person.errors.messages
     end
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def edit
     @person = Person.find params[:id]
     @registration = @person.registration
     @race = @registration.race
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    return render :status => 400
   end
 
   def new
     # we need these b/c they are referenced in _form.html.haml
     @race = Race.find params[:race_id]
     @registration = Registration.find params[:registration_id]
-
     @person = Person.new
   end
 
@@ -69,6 +59,11 @@ class PeopleController < ApplicationController
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @person.errors.messages
     end
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do
+    flash.now[:error] = t('not_found')
+    render :status => 400
   end
 
   private

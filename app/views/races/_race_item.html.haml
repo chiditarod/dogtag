@@ -2,8 +2,8 @@
 .pull-left
   .btn
     = link_to race_path(race.id) do
-      %i.fa.fa-shopping-cart.fa-5x
-%h1= link_to race.name, race_path(race.id)
+      %i.fa.fa-shopping-cart.fa-4x
+%h2= link_to race.name, race_path(race.id)
 %small
   - if race.open_for_registration?
     = race.finalized_registrations.count
@@ -24,5 +24,5 @@
         .btn.btn-warning
           = t('.register_waitlist')
       - else
-        .btn.btn-primary
+        .btn.btn-success
           = t('.register_now')

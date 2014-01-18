@@ -20,4 +20,6 @@
       = t('.on_waitlist')
     - else
       = t('.registration_opens_on')
-      = distance_of_time_in_words race.registration_open
+      = race.registration_open.strftime("%B %e, %Y")
+      = t('.and_closes_on')
+      = race.registration_close.strftime("%B %e, %Y")

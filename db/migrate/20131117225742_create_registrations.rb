@@ -5,6 +5,9 @@ class CreateRegistrations < ActiveRecord::Migration
       t.string :description
       t.string :twitter
 
+      t.timestamps
+      t.datetime :notified_at
+
       t.belongs_to :team
       t.belongs_to :race
     end

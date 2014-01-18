@@ -22,9 +22,12 @@
 en:
   website_title: dogtag
   mush: mush!
+  dogpen: dogPen
 
   create_failed: Create failed.
   create_success: Successfully created.
+  create_success_user: Your account has been successfully created. Welcome to dogtag.
+  create_success_with_race: Team created. Now fill out your registration details.
   update_failed: Update failed.
   update_success: Successfully updated.
   delete: Delete
@@ -38,6 +41,7 @@ en:
   register: Register
   register_for: "Register for %{race_name}"
 
+
   login: Login
   signup: Signup
   admin: Admin
@@ -48,6 +52,7 @@ en:
   at: at
   or: or
   of: of
+  for: for
   configured: configured
   closed: Closed
   status: 'Status:'
@@ -69,11 +74,14 @@ en:
   logout_success: Logout successful.
   login_failed: Login failed.
 
-
   user_sessions:
     new:
-      please_login: Please Login
-      instructions: In order to register, you have to have an account with us.
+      login_here: Login below
+      please_login: Please login to continue
+      instructions_html: "In order to do most everything on this website, you need a user account. If you don't have an account, you'll have to %{href}</a>."
+      #instructions_html: "ergergerge"
+      sign_up: or Create an account
+
   users:
     index:
       users: Users
@@ -99,15 +107,24 @@ en:
       no_people_added: omg none!  go add some now
 
   teams:
+    new:
+      title: Team Creation
+      instructions: Please write down your team name somewhere. This is a very important piece of information for you to remember.
+    edit:
+      title: Edit your basic team details
+      instructions: Teams are very basic. You'll provide many more details when you register this team for a race. Please write down your team name somwhere. This is a very important piece of information for you to remember.
     index:
-      your_teams: Your teams
+      next_create_a_team: "Create a team for %{name}"
+      your_teams: Your dogPen
+      title: Manage your teams
       registering_for_race: "You are registering for %{race_name}"
-      registration_instructions: "Each of your teams can register for %{race_name} only once."
-      instructions: Here's where you manage your teams. You can create and register multiple teams, and manage them all from this page. Next year, you can register these same teams again for a new race.
+      registration_instructions: "Each of your teams can register for a certain race only once."
+      instructions: Here's where you manage your teams. Before you can register for a race, you need to create a team.  Most folks will create a single team, while others coordinate more than 1 team. Teams are reusable -- next year, you can register these same teams again for a new race.
+      example: For example, let's say you and 9 friends are racing.  That's 2 teams worth of dawgs.  You'd create 2 teams and register both of them. To register a team with 3 carts, create 3 teams and complete the registration process for each of them.
       no_teams: You haven't made any teams yet.
+      create: Create team
+
     form:
-      manage_team: Team Setup
-      instructions: Teams are very basic. You'll provide many more details when you register this team for a Race.
       name: Name your team
       name_instructions: After naming your team, you can register it in a race.
     team_item:
@@ -134,27 +151,40 @@ en:
       description: Sum up your team in a montage of prose
       twitter: Please provide a @twitter handle for fun
     show:
-      title: registration details
+      edit: edit
+      requirements: Payments
+      status: Registration Status
+      title: Team Registration Details
       registered_as: Registered as
-      description: Your mission
+      description: "Your Mission:"
       people: Racers
       no_people_added: omg none!  go add some now
-      requirement_instructions: You must complete the following requirements to complete registration.
-      people_instructions: "You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them."
-      no_pay_waitlist: Cannot pay while on waitlist.
+      requirement_instructions: You must complete the following payments to complete registration.
+      can_change_until: "You can change this information until registration closes on %{date}."
+      people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
+      registration_closed: Team registration is closed. No changes can be made.
+      no_complete_when_closed: Cannot pay when closed.
+    now_complete:
+      congratulations: Congratulations!
+      complete_instructions_html: "Your registration is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     edit:
       edit_registration: "Edit registration for %{race_name}"
     update:
       edit_registration: "Edit registration for %{race_name}"
 
+
+
+
   requirements:
+    payment_requirement:
+      no_pay_waitlist: You are on the waitlist. Payment is not available.
     table:
       tiers: tiers
 
   races:
     index:
       title: Races
-      instructions: Get started by choosing a race.
+      instructions: Get started by choosing a race.  In order to register you'll need an account. You can create one during the next step, if needed.
       no_races: No races present in the system.
       create_race: Create one now!
     race_metadata:
@@ -164,10 +194,12 @@ en:
       spots_remaining: spots remaining.
       registration_opens_on: Registration opens on
       on_waitlist: on the waitlist
+      and_closes_on: and closes on
+
     race_item:
       team: team
-      teams_registered: teams registered
-      register_now: Register Now
+      teams_registered: teams fully registered
+      register_now: Register
       register_waitlist: Register for Waitlist
     form:
       name: This race is called

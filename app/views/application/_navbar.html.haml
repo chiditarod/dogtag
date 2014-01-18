@@ -16,7 +16,7 @@
       %li
         = link_to races_path do
           %i.fa.fa-shopping-cart.fa-2x
-          =t '.races'
+          = t('.races')
 
       - if current_user && true
 
@@ -64,7 +64,6 @@
             %i.fa.fa-check-square-o.fa-2x
             =t '.register'
 
-
-      %li
+      -#%li
         = link_to "http://github.com/ometa/dogtag/" do
           %i.fa.fa-2x.fa-github

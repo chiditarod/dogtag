@@ -75,7 +75,7 @@ describe UsersController do
           post :create, :user => valid_user_hash
         end
         it 'sets a flash notice' do
-          expect(flash[:notice]).to eq(I18n.t 'create_success')
+          expect(flash[:notice]).to eq(I18n.t 'create_success_user')
         end
         it 'redirects to race#show' do
           expect(response).to redirect_to assigns(:user)

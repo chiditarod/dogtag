@@ -29,6 +29,11 @@ class Ability
     can [:create], Team
     can [:read, :update], Team, :user_id => user.id
 
+    #todo implement at some point
+    #can [:destroy], Team do |team|
+      #user.id == team.user_id && team.registration_ids.empty?
+    #end
+
     # Races:
     can [:read], Race
 

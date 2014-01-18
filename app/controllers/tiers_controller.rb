@@ -12,9 +12,6 @@ class TiersController < ApplicationController
       flash[:error] = t 'destroy_failed'
     end
     redirect_to edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t 'not_found'
-    render :status => 400
   end
 
   def update
@@ -29,26 +26,17 @@ class TiersController < ApplicationController
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @tier.errors.messages
     end
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def edit
     @tier = Tier.find params[:id]
     @requirement = @tier.requirement
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    return render :status => 400
   end
 
   def new
     @requirement = Requirement.find params[:requirement_id]
     @tier = Tier.new
     @tier.requirement = @requirement
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    return render :status => 400
   end
 
   def create
@@ -71,6 +59,11 @@ class TiersController < ApplicationController
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @tier.errors.messages
     end
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do |ex|
+    flash.now[:error] = t('not_found')
+    render :status => 400
   end
 
   private

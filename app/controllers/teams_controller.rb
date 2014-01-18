@@ -12,9 +12,6 @@ class TeamsController < ApplicationController
 
   def edit
     @team = Team.find params[:id]
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    redirect_to teams_path
   end
 
   def new
@@ -28,8 +25,15 @@ class TeamsController < ApplicationController
     if @team.valid?
       @team.user = current_user
       @team.save
-      flash[:notice] = I18n.t('create_success')
-      redirect_to teams_path
+
+      if session[:last_race_id]
+        flash[:notice] = I18n.t('create_success_with_race')
+        redirect_to new_race_registration_url(:race_id => session[:last_race_id], :team_id => @team.id)
+      else
+        flash[:notice] = I18n.t('create_success')
+        redirect_to teams_path
+      end
+
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @team.errors.messages
@@ -47,9 +51,6 @@ class TeamsController < ApplicationController
       flash.now[:error] << team.errors.messages
     end
     redirect_to teams_path
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def destroy
@@ -62,7 +63,10 @@ class TeamsController < ApplicationController
       flash[:error] = t '.delete_failed'
     end
     redirect_to teams_path
-  rescue ActiveRecord::RecordNotFound
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do
+    flash.now[:error] = t('not_found')
     render :status => 400
   end
 

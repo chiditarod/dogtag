@@ -42,9 +42,6 @@ class RacesController < ApplicationController
       flash[:error] = [t('update_failed')]
       flash[:error] << @race.errors.messages
     end
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   def destroy
@@ -57,7 +54,10 @@ class RacesController < ApplicationController
       flash[:error] = t '.destroy_failed'
     end
     redirect_to races_path
-  rescue ActiveRecord::RecordNotFound
+  end
+
+  rescue_from ActiveRecord::RecordNotFound do
+    flash.now[:error] = t('not_found')
     render :status => 400
   end
 

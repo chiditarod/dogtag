@@ -38,7 +38,7 @@ describe TeamsController do
   context '[logged in]' do
     let (:valid_team) { FactoryGirl.create :team }
     let (:valid_team_hash) { FactoryGirl.attributes_for :team }
-    let (:valid_user) { FactoryGirl.create :user }
+    let (:valid_user) { FactoryGirl.create :admin_user }
 
     before do
       activate_authlogic
@@ -48,7 +48,7 @@ describe TeamsController do
     describe '#new' do
       before do
         @team_stub = Team.new
-        Team.should_receive(:new).and_return @team_stub
+        Team.stub(:new).and_return @team_stub
         get :new
       end
 
@@ -66,7 +66,7 @@ describe TeamsController do
 
       context 'with race_id param' do
         before do
-          Race.should_receive(:find).and_return race_stub
+          Race.stub(:find).and_return race_stub
           get :index, :race_id => '69'
         end
         it 'sets @race' do
@@ -92,7 +92,7 @@ describe TeamsController do
         it 'does not set @race object' do
           expect(assigns(:race)).to be_nil
         end
-        it 'does not set session[:race_id]' do
+        it 'does not set session[:last_race_id]' do
           expect(session[:last_race_id]).to be_nil
         end
       end
@@ -102,11 +102,11 @@ describe TeamsController do
       context 'on invalid id' do
         before { get :edit, :id => 99 }
 
-        it 'redirects to team index' do
-          expect(response).to redirect_to(teams_path)
-        end
         it 'sets flash error' do
           expect(flash[:error]).to eq I18n.t('not_found')
+        end
+        it 'returns 400' do
+          expect(response.status).to eq(400)
         end
       end
 
@@ -137,9 +137,14 @@ describe TeamsController do
             post :create, :team => valid_team_hash
           end.to change(Team, :count).by 1
         end
-        it 'redirects to team index' do
+        it 'with session[:last_race_id], redirects to new_race_registation' do
+          session[:last_race_id] = 1
           post :create, :team => valid_team_hash
-          expect(response).to redirect_to(teams_path)
+          expect(response).to redirect_to(new_race_registration_url 1, :team_id => assigns(:team).id)
+        end
+        it 'w/o session[:last_race_id], redirects to team index' do
+          post :create, :team => valid_team_hash
+          expect(response).to redirect_to(teams_url)
         end
         it 'associates the current user with the new team' do
           team = FactoryGirl.build :team

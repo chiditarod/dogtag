@@ -1,0 +1,31 @@
+- if req.completed?(reg)
+  - cr = req.cr_for(reg)
+  - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
+  - if charge.refunded
+    %span.label.label-primary
+      = t('refunded')
+  - else
+    %i.fa.fa-check-circle-o.fa-5x.pull-left
+    .lead
+      $
+      = price_in_dollars_and_cents cr.metadata['amount']
+    = t('completed')
+
+    - if current_user.is_any_of? :admin, :refunder
+      = button_to t('refund'), charge_refund_url(charge.id), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
+
+- else
+
+  - if req.race.open_for_registration?
+    .lead
+      $
+      = price_in_dollars_and_cents req.active_tier.price
+    - if @race.full?
+      %h4.text-warning
+        = t('.no_pay_waitlist')
+    - else
+      = render 'charges/embed', :params => req.stripe_params(@registration)
+
+  - else
+    %i.lead.text-danger
+      = t('.no_complete_when_closed')

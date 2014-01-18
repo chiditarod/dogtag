@@ -1,0 +1,27 @@
+:::::::::::
+dogtag  :::  Chiditarod registration BoT
+:::::::::::
+
+
+Congratulations on completing your registration for <%= @reg.race.name %>
+
+Team: <%= @reg.name %>
+
+Racers:
+<% @reg.people.each do |p| %>
+- <%= p.first_name %> <%= p.last_name %>
+<% end %>
+
+You can update your team information at your Registration Page
+until <%= @reg.race.registration_close.strftime("%B %e, %Y") %>, when registration closes.
+
+More communications will of course be on the way.
+Now, go out and read our freshly-updated website content:
+
+http://www.chiditarod.org/
+
+
+
+
+glory,
+-- dogtag bot

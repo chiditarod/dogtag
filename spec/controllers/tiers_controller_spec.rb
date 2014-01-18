@@ -40,7 +40,7 @@ describe TiersController do
     let (:valid_tier_hash) { FactoryGirl.attributes_for :tier2 }
 
     before do
-      @valid_user = FactoryGirl.create :user
+      @valid_user = FactoryGirl.create :admin_user
       activate_authlogic
       mock_login! @valid_user
     end
@@ -142,7 +142,7 @@ describe TiersController do
       context 'upon success' do
         before do
           @tier_stub = Tier.new
-          Tier.should_receive(:new).and_return @tier_stub
+          Tier.stub(:new).and_return @tier_stub
           get :new, :requirement_id => @req.id
         end
 
