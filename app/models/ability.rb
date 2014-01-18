@@ -16,10 +16,6 @@ class Ability
       can :manage, :all
     end
 
-    #can :read, Project, :active => true, :user_id => user.id
-    #can :manage, Project, :group => { :id => user.group_ids }
-    #can :read, Project, :active => true, :user_id => user.id
-
     # guest-only stuff
     unless user.id
       # only show user creation form to guest users

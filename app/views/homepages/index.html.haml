@@ -1,0 +1,56 @@
+
+
+= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/marked/0.2.9/marked.min.js"
+
+.jumbotron
+
+  %i.fa.fa-shopping-cart.fa-5x.pull-left.fa-flip-horizontal
+  %h1 dogtag
+  %p
+    the chiditarod registration system
+.row
+  .col-md-6
+    %p
+      Welcome to the dogtag. It allows your team to sign up for the race, 
+      manage your team information, and pay your registration fee and cart deposit.  All from the comfort of home.
+
+    %p
+      Once registered, you have up till the close of registration to login and update and/or change this information.  
+      At 
+      %a{:href=>'http://dogtag.chiditarod.org'} dogtag.chiditarod.org
+      you can update your team details at and contact information for your racers.
+
+    %p
+      Teams that fully complete their registration will be considered official racers. Partially-completely registrations 
+      (missing required fields, people, or payments) are not considered official. With only 170 spots, they will go quickly. Make sure to
+      finish your registration in-full, early.  Once 170 spots are filled, any remaining incomplete registrations are
+      automatically put onto the waitlist.  First come, first served. Teams on the waitlist will be contacted at the
+      close of registration to determine if there is an open spot or not. 
+
+    %p
+      Now, please click MUSH ON to start your registration process. 
+
+
+  .col-md-6
+    %h4 Racer Management
+    %p
+      You will need to sign up all 5 racers to complete your registration. If you do not have all 5 racers yet, please 
+      write 
+      %b
+        unknown
+      into the fields of your missing racers.  If you have to take a racer out and put a new racer in
+      you just login and make the change.  Please do so!  Make sure you do before registration closes.  We use the
+      email addresses to communicate important information about the race to all of our racers, please ensure they
+      are accurate.
+
+    %p
+      %h4 Bugs?
+      With Dog Tag being brand new this year, we do ask for a bit of patience as we work out any bugs that might arise.
+      Please help
+      %a{:href=>"http://github.com/ometa/dogtag/issues"}
+        report bugs
+      if you encounter any.
+
+.row
+  .col-md-12
+    = link_to t('mush_on'), races_url, :class => ['btn', 'btn-success']

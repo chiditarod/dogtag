@@ -1,6 +1,7 @@
 RailsSkeleton::Application.routes.draw do
 
-  root :controller => 'races', :action => "index", :as => :home
+  # super basic static homepage text hack
+  root :controller => 'homepages', :action => "index", :as => :home
 
   resources :teams, :only => [:new, :create, :edit, :update, :index, :destroy]
   resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
