@@ -202,6 +202,11 @@ describe Race do
     end
   end
 
+  describe '#waitlisted_registrations' do
+    it 'returns a list of registration objects'
+    it 'returns them oldest first'
+  end
+
   describe '#self.find_open_races' do
     it "returns races who's registration window is open" do
       closed_race = FactoryGirl.create :race

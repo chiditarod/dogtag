@@ -144,6 +144,7 @@ en:
     new:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
+      waitlist_count: "Waitlist count: %{num}"
     create:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
@@ -176,16 +177,17 @@ en:
       people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
       registration_closed: Team registration is closed. No changes can be made.
       no_complete_when_closed: Cannot pay when closed.
-    now_complete:
+    notify_now_complete:
       congratulations: Congratulations!
       complete_instructions_html: "Your registration is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
+    notify_waitlisted:
+      waitlisted: Waitlisted!
+      waitlisted_instructions_html: "Your registration has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     edit:
       edit_registration: "Edit registration for %{race_name}"
+      waitlist_position: "In position %{num} on the waitlist"
     update:
       edit_registration: "Edit registration for %{race_name}"
-
-
-
 
   requirements:
     payment_requirement:

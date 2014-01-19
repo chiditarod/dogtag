@@ -62,6 +62,14 @@ class Registration < ActiveRecord::Base
     completed_all_requirements? && is_full?
   end
 
+  # TODO - finish this
+  def waitlist_position
+    # assume we are not on the waitlist if race is not full
+    return false if race.not_full?
+    # assume we are not on the waitlist if our requirements are met
+    return false if finalized?
+  end
+
   class << self
     def racer_types_optionlist
       VALID_RACER_TYPES.map { |r| [r.to_s.humanize, r] }

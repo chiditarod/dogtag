@@ -14,4 +14,10 @@ class UserMailer < ActionMailer::Base
     @reg = reg
     mail(to: @user.email, subject: "#{@reg.race.name}: Registration Confirmed for #{reg.name}")
   end
+
+  def registration_waitlisted_email(user, reg)
+    @user = user
+    @reg = reg
+    mail(to: @user.email, subject: "#{@reg.race.name}: Registration Waitlist for #{reg.name}")
+  end
 end

@@ -33,6 +33,11 @@ class Race < ActiveRecord::Base
     registrations.count - max_teams
   end
 
+  # todo - this works in rails console but spec it out
+  def waitlisted_registrations
+    Registration.where(:race_id => 1).order(:created_at => :desc).reject { |x| x.finalized? }
+  end
+
   def full?
     finalized_registrations.count >= max_teams
   end

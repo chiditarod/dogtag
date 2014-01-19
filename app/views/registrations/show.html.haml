@@ -13,8 +13,7 @@
     %i.lead.text-danger
       = t('.registration_closed')
 
-- if @display_notification
-  = render 'now_complete'
+= render @display_notification.to_s if @display_notification
 
 .row
   .col-xs-2
@@ -28,10 +27,16 @@
             %br
             = t('.complete')
         - else
-          .text-danger
-            %i.fa.fa-frown-o.fa-3x
-            %br
-            = t('.incomplete')
+          - if @registration.race.full?
+            .text-warning
+              %i.fa.fa-cloud.fa-3x
+              %br
+              = t('.waitlist')
+          - else
+            .text-danger
+              %i.fa.fa-frown-o.fa-3x
+              %br
+              = t('.incomplete')
 
   .col-xs-10
     .row

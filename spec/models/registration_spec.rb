@@ -66,6 +66,10 @@ describe Registration do
       end
     end
 
+    describe '#waitlist_position' do
+      it 'returns our position on the waitlist by created_at date'
+    end
+
     describe '#is_full?' do
       it 'should be the opposite of #needs_people?' do
         reg = FactoryGirl.create :registration

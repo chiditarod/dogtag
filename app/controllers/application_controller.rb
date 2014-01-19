@@ -17,13 +17,13 @@ class ApplicationController < ActionController::Base
   end
 
   # let's catch errors and route nicely in production
-  #unless Rails.configuration.consider_all_requests_local
-  if true
+  unless Rails.configuration.consider_all_requests_local
     rescue_from Exception, :with => :render_error
-    rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
     rescue_from ActionController::RoutingError, :with => :render_not_found
     rescue_from ActionController::UnknownController, :with => :render_not_found
   end
+  # we always want a 404 redirect
+  rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
 
   private
 

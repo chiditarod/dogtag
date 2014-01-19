@@ -69,17 +69,11 @@ class RegistrationsController < ApplicationController
   def index
     @race = Race.find params[:race_id]
     @registrations = Registration.where(:race_id => params[:race_id]).order('updated_at DESC')
-
+  # this block can be removed whenever registrations resource unburies itself from under races
   rescue ActiveRecord::RecordNotFound
     flash.now[:error] = t('not_found')
     render :status => 200
   end
-
-  #rescue_from ActiveRecord::RecordNotFound do |ex|
-    #Rails.logger.error "#{ex.class}: #{ex.message}"
-    #flash.now[:error] = t('not_found')
-    #render :status => 400
-  #end
 
   private
 
@@ -89,7 +83,7 @@ class RegistrationsController < ApplicationController
       if @registration.save
         UserMailer.registration_finalized_email(current_user, @registration).deliver
         Rails.logger.info "Registration finalized for #{@registration.name}, ID: #{@registration.id}"
-        @display_notification = true
+        @display_notification = :notify_now_complete
       else
         Rails.logger.error "Failed to set notified_at for #{reg}"
       end

@@ -25,13 +25,13 @@
     .col-md-5.text-right
       .control-label= label_tag :primary_inspiration, t('.primary_inspiration')
       Your answer helps us improve the event.  We remain unbiased, as always.
-    .col-md-4= f.select :primary_inspiration, options_for_select(Registration::INSPIRATIONS.map { |n| [n, n.parameterize] }), {:include_blank => true}, :class => 'form-control'
+    .col-md-4= f.select :primary_inspiration, options_for_select(Registration::INSPIRATIONS.map { |n| [n, n.parameterize] }), {:prompt => 'Please Select'}, :class => 'form-control'
 
   .form-group
     .col-md-5.text-right
       .control-label= label_tag :experience, t('.experience')
       How many years of experience do you have racing or volunteering?
-    .col-md-3= f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {}, :class => 'form-control'
+    .col-md-3= f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {:prompt => 'Please Select'}, :class => 'form-control'
 
   .form-group
     .col-md-5.text-right

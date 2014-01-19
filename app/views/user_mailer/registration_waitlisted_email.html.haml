@@ -1,0 +1,37 @@
+%html
+  %head
+    %meta{"http-equiv" => "Content-Type", :content => "text/html; charset=utf-8"}
+  %body
+    %h1 dogtag  :::  Chiditarod registration BoT
+    %h4
+      Hi, you are now on the waitlist for
+      = @reg.race.name
+    %p
+      %b
+        You will be contacted if spots open up.
+
+    %p
+      Team:
+      = @reg.name
+    %p
+      Racers:
+      %ul
+        - @reg.people.each do |p|
+          %li
+            = p.first_name
+            = p.last_name
+    %p
+      You can update your team information at your registration page until
+      = @reg.race.registration_close.strftime("%B %e, %Y")
+      when registration closes.
+    %p
+      Now, go out and read our freshly-updated
+      %a{:href=>"http://www.chiditarod.org/"}
+        www.chiditarod.org
+      website content.
+
+    %p
+      glory,
+      %br
+      %a{:href=>"mailto:dogtag@chiditarod.org"}
+        dogtag bot
