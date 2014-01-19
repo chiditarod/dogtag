@@ -16,7 +16,7 @@ class ApplicationController < ActionController::Base
     redirect_to home_url, :alert => exception.message
   end
 
-  # let's catch errors and route nicely in production
+  # catch errors and route nicely
   unless Rails.configuration.consider_all_requests_local
     rescue_from Exception, :with => :render_error
     rescue_from ActionController::RoutingError, :with => :render_not_found

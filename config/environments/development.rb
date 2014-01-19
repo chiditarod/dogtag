@@ -35,12 +35,7 @@ RailsSkeleton::Application.configure do
   config.action_mailer.smtp_settings = {
     address:              '127.0.0.1',
     port:                 '1025',
-    enable_starttls_auto: true  }
+    enable_starttls_auto: true
+  }
 
-#config.action_mailer.delivery_method = :sendmail
-# Defaults to:
-# config.action_mailer.sendmail_settings = {
-#   location: '/usr/sbin/sendmail',
-#   arguments: '-i -t'
-# }
 end

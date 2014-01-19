@@ -23,5 +23,5 @@
   %p= t('please_create_to_continue')
 - else
   - @teams.each do |team|
-    .col-xs-6.col-md-3.pull-left
+    .col-xs-6.col-md-4.pull-left
       = render 'team_item', :team => team, :race => @race

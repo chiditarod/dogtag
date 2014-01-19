@@ -19,7 +19,7 @@ RailsSkeleton::Application.routes.draw do
   end
 
   # user accounts
-  resources :users, :only => [:new, :create, :edit, :update, :index, :show]
+  resources :users, :only => [:new, :create, :edit, :update, :index, :show, :destroy]
   resource :user_session, :only => [:new, :create, :destroy]
   resource :account, :controller => :users
 

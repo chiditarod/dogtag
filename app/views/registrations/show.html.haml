@@ -38,7 +38,7 @@
               %br
               = t('.incomplete')
 
-  .col-xs-7
+  .col-xs-10
     .row
       %p.lead
         = t('.registered_as')
@@ -56,8 +56,6 @@
       .row
         %p.lead
           = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}"
-
-  .col-xs-3
 
 
 -#-----------------------------------------------------------
@@ -118,7 +116,8 @@
         = @registration.race.enabled_requirements.count
         - if @registration.completed_all_requirements?
           %i.fa.fa-smile-o.text-success
-    = t('.requirement_instructions')
+    %p= t('.requirement_instructions')
+    %h4= t('.be_patient')
 
   .row
     .col-xs-8.col-md-7

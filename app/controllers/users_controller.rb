@@ -27,7 +27,7 @@ class UsersController < ApplicationController
     if @user.save
       UserMailer.welcome_email(@user).deliver
       flash[:notice] = I18n.t('.create_success_user')
-      redirect_back_or_default user_url(@user)
+      redirect_back_or_default user_url(@user.id)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @user.errors.messages

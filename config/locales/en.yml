@@ -158,7 +158,7 @@ en:
       rules_confirmation: Do you agree to follow the race rules?
       sabotage_confirmation: Do you agree to follow the sabotage rules?
       cart_deposit_confirmation: Do you agree to the cart deposit terms?
-      food_confirmation: "Do you agree to >= 60 pounds of food?"
+      food_confirmation: "Do you agree to bring 60+ pounds of food?"
       buddies: Are you wanting to race alongside any other teams or people?
       wildcard: Favorite dance move
       private_comments: Any private comments to Coreganizers?
@@ -172,7 +172,8 @@ en:
       description: "Your Mission:"
       people: Racers
       no_people_added: omg none!  go add some now.
-      requirement_instructions: You must complete the following payments to complete registration. After clicking on payment buttons, please be patient as your transaction is complete.  Don't keep clicking!
+      requirement_instructions: You must complete the following payments to complete registration.
+      be_patient: After clicking on payment buttons, please be patient as your transaction is completed.  Don't keep clicking!
       can_change_until: "You can change this information until registration closes on %{date}."
       people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
       registration_closed: Team registration is closed. No changes can be made.
