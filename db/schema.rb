@@ -13,6 +13,9 @@
 
 ActiveRecord::Schema.define(version: 20140119093034) do
 
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "completed_requirements", force: true do |t|
     t.integer  "registration_id"
     t.integer  "requirement_id"
@@ -22,7 +25,7 @@ ActiveRecord::Schema.define(version: 20140119093034) do
     t.datetime "updated_at"
   end
 
-  add_index "completed_requirements", ["registration_id", "requirement_id"], name: "completed_requirements_index", unique: true
+  add_index "completed_requirements", ["registration_id", "requirement_id"], name: "completed_requirements_index", unique: true, using: :btree
 
   create_table "people", force: true do |t|
     t.string   "first_name"
@@ -67,7 +70,7 @@ ActiveRecord::Schema.define(version: 20140119093034) do
     t.text     "private_comments"
   end
 
-  add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true
+  add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true, using: :btree
 
   create_table "requirements", force: true do |t|
     t.integer  "race_id"

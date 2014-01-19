@@ -20,18 +20,16 @@ gem 'cancan', '1.6.10'
 gem 'role_model', '0.8.1'
 
 # Payment stuff
-#gem 'activemerchant', '1.42.3'
-
 gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
+
+# postgres for heroku
+gem 'pg', '0.17.1'
 
 # END dogtag gems
 # -------------------------------------------------------
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '4.0.2'
-
-# Use sqlite3 as the database for Active Record
-gem 'sqlite3'
 
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 4.0.1'
@@ -59,19 +57,17 @@ gem 'jbuilder', '~> 1.2'
 
 group :development do
   gem 'capistrano'
-  #todo - remove after finished
-  gem 'factory_girl_rails', '4.3.0'
 end
 
 group :test do
   gem 'webmock', '1.15.2'
-  gem 'factory_girl_rails', '4.3.0'
   gem 'simplecov', '0.8.2'
 end
 
 group :test, :development do
   gem 'rspec'
   gem 'rspec-rails'
+  gem 'factory_girl_rails', '4.3.0'
 end
 
 group :doc do
