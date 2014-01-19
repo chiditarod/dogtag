@@ -157,8 +157,8 @@ describe RegistrationsController do
     describe '#update' do
       context 'on invalid id' do
         before { put :update, :race_id => @race.id, :id => 100 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -185,11 +185,8 @@ describe RegistrationsController do
       context 'invalid id' do
         before { get :show, :race_id => @race.id, :id => 100 }
 
-        it 'renders 400' do
-          expect(response.status).to eq(400)
-        end
-        it 'sets flash error' do
-          expect(flash[:error]).to eq(I18n.t 'not_found')
+        it 'renders 404' do
+          expect(response.status).to eq(404)
         end
       end
 

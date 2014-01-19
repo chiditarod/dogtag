@@ -9,11 +9,10 @@ class RegistrationsController < ApplicationController
     end
 
     team_id = session[:team_id] = params[:team_id]
-
     @race = Race.find params[:race_id]
+
     @registration = Registration.new
-    # bring in the team's default name
-    @registration.name = Team.find(team_id).name
+    @registration.name = Team.find(team_id).name   # default team name
   end
 
   def create
@@ -22,6 +21,7 @@ class RegistrationsController < ApplicationController
     @race = Race.find params[:race_id]
     @registration = Registration.new registration_params
     @registration.race = @race
+    #team_id = session[:team_id]
     @registration.team = Team.find session[:team_id]
 
     if @registration.save
@@ -75,11 +75,11 @@ class RegistrationsController < ApplicationController
     render :status => 200
   end
 
-  rescue_from ActiveRecord::RecordNotFound do |ex|
-    Rails.logger.error "#{ex.class}: #{ex.message}"
-    flash.now[:error] = t('not_found')
-    render :status => 400
-  end
+  #rescue_from ActiveRecord::RecordNotFound do |ex|
+    #Rails.logger.error "#{ex.class}: #{ex.message}"
+    #flash.now[:error] = t('not_found')
+    #render :status => 400
+  #end
 
   private
 
@@ -104,7 +104,11 @@ class RegistrationsController < ApplicationController
   end
 
   def registration_params
-    params.require(:registration).permit(:name, :description, :twitter)
+    params.require(:registration).
+      permit(:name, :description, :twitter, :racer_type,
+             :primary_inspiration, :rules_confirmation, :sabotage_confirmation,
+             :cart_deposit_confirmation, :food_confirmation, :experience,
+             :buddies, :wildcard, :private_comments)
   end
 
 end

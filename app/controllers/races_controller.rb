@@ -56,11 +56,6 @@ class RacesController < ApplicationController
     redirect_to races_path
   end
 
-  rescue_from ActiveRecord::RecordNotFound do
-    flash.now[:error] = t('not_found')
-    render :status => 400
-  end
-
   private
 
   def race_params

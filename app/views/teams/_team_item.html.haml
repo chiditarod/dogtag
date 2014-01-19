@@ -23,10 +23,7 @@
       %p= t('.no_registrations')
 
     - team.registrations.each do |reg|
-      %hr
-      %h4= link_to reg.race.name, race_registration_path(:race_id => reg.race.id, :id => reg.id)
-
-      %p=t '.registered_as', :name => reg.name
+      %h4= link_to t('.registered_for', :name => reg.race.name), race_registration_path(:race_id => reg.race.id, :id => reg.id)
 
       - if reg.finalized?
         .pull-left.fa.fa-smile-o.fa-3x.text-success
@@ -37,3 +34,4 @@
         = link_to t('registration_needs_attention'), race_registration_path(:race_id => reg.race.id, :id => reg.id), :class => 'text-danger'
         %p.small
           =t '.fix_it'
+      %hr

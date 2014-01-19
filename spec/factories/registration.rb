@@ -9,11 +9,20 @@ FactoryGirl.define do
 
   factory :registration do
     name { generate(:registration_name) }
-    description 'This is a Sample Registration'
+    description 'OMG our sample team is the best!'
     twitter { generate(:twitter_sequence) }
 
     team
     race
+
+    # fields meant to JsonForm
+    racer_type 'racer'
+    primary_inspiration 'white fang'
+    rules_confirmation true
+    sabotage_confirmation true
+    cart_deposit_confirmation true
+    food_confirmation true
+    experience 5
 
     factory :finalized_registration do
       after(:build) do |reg|

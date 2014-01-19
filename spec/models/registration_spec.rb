@@ -104,6 +104,13 @@ describe Registration do
       end
     end
 
+    describe '#racer_types_optionlist' do
+      it 'returns valid options for select form' do
+        r = Registration::VALID_RACER_TYPES.map { |t| [t.to_s.humanize, t] }
+        expect(Registration.racer_types_optionlist).to eq(r)
+      end
+    end
+
     describe '#completed_all_requirements?' do
       before do
         @reg = FactoryGirl.create :registration

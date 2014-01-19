@@ -1,19 +1,17 @@
 .page-header
-  - if @registration.finalized?
-    .alert-success
-      %h1
-        = t('.title')
-        - if @registration.race.open_for_registration?
-          %small
-            = link_to edit_race_registration_path(@race.id, @registration.id) do
-              .fa.fa-edit
-              = t('.edit')
+  %h1
+    = t('.title')
+    - if @registration.race.open_for_registration?
+      %small
+        = link_to edit_race_registration_path(@race.id, @registration.id) do
+          .fa.fa-edit
+          = t('.edit')
 
-      - if @registration.race.open_for_registration?
-        = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
-      - else
-        %i.lead.text-danger
-          = t('.registration_closed')
+  - if @registration.race.open_for_registration?
+    = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+  - else
+    %i.lead.text-danger
+      = t('.registration_closed')
 
 - if @display_notification
   = render 'now_complete'
@@ -45,7 +43,7 @@
         = @race.name
 
     .row
-      %i.fa.fa-quote-left.fa-2x.pull-left.fa-border
+      %i.fa.fa-quote-left.pull-left.fa-border
       %p
         = @registration.description
 
@@ -85,7 +83,8 @@
     %br
 
     - if @registration.people.blank?
-      = t ('.no_people_added')
+      %br
+      .lead= t ('.no_people_added')
     - else
       = render 'people/table', :people => @registration.people
 

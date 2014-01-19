@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140116044606) do
+ActiveRecord::Schema.define(version: 20140119093034) do
 
   create_table "completed_requirements", force: true do |t|
     t.integer  "registration_id"
@@ -55,6 +55,16 @@ ActiveRecord::Schema.define(version: 20140116044606) do
     t.datetime "notified_at"
     t.integer  "team_id"
     t.integer  "race_id"
+    t.string   "racer_type"
+    t.string   "primary_inspiration"
+    t.boolean  "rules_confirmation"
+    t.boolean  "sabotage_confirmation"
+    t.boolean  "cart_deposit_confirmation"
+    t.boolean  "food_confirmation"
+    t.integer  "experience"
+    t.string   "buddies"
+    t.string   "wildcard"
+    t.text     "private_comments"
   end
 
   add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true

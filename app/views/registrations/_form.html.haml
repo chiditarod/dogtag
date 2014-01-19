@@ -1,21 +1,99 @@
 = form_for [@race, @registration], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+
   .form-group
-    .col-sm-4.control-label
-      = label_tag :name, t('.name')
-    .col-sm-6
-      = f.text_field :name, :class => 'form-control'
+    .col-md-5.control-label= label_tag :name, t('.name')
+    .col-md-4= f.text_field :name, :class => 'form-control'
+
   .form-group
-    .col-sm-4.control-label
-      = label_tag :description, t('.description')
-    .col-sm-8
-      = f.text_area :description, :class => 'form-control'
+    .col-md-5.text-right
+      .control-label= label_tag :racer_type, t('.racer_type')
+      Most will choose racer.  See
+      %a{href: "http://chiditarod.org/rules/#construction"}
+        construction rules
+      for guidance.  We love art carts and you should to, but you do have to present something super rad.
+    .col-md-3= f.select :racer_type, options_for_select(Registration.racer_types_optionlist), {}, :class => 'form-control'
+
   .form-group
-    .col-sm-4.control-label
-      = label_tag :twitter, t('.twitter')
-    .col-sm-3
-      = f.text_field :twitter, :class => 'form-control'
+    .col-md-5.control-label= label_tag :description, t('.description')
+    .col-md-6= f.text_area :description, :class => 'form-control'
+
   .form-group
-    .col-sm-offset-4.col-sm-8
+    .col-md-5.control-label= label_tag :twitter, t('.twitter')
+    .col-md-3= f.text_field :twitter, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :primary_inspiration, t('.primary_inspiration')
+      Your answer helps us improve the event.  We remain unbiased, as always.
+    .col-md-4= f.select :primary_inspiration, options_for_select(Registration::INSPIRATIONS.map { |n| [n, n.parameterize] }), {:include_blank => true}, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :experience, t('.experience')
+      How many years of experience do you have racing or volunteering?
+    .col-md-3= f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {}, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :rules_confirmation, t('.rules_confirmation')
+      Ahem, this also means, do you understand you can be DQ'd if you do not pay
+      attention to all the rules? They change every year, make sure you know what's
+      up at
+      %a{href: "http://www.chiditarod.org/rules/"}
+        www.chiditarod.org/rules
+    .col-md-1= f.check_box :rules_confirmation, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :sabotage_confirmation, t('.sabotage_confirmation')
+      To review: http://chiditarod.org/sabotage-guidelines
+      The
+      %a{href: "http://www.chiditarod.org/sabotage-guidelines/"}
+        Sabotage Rules
+      are indeed rules. Don't spoil anyone's day by being a jerk and getting DQ'd.
+    .col-md-1= f.check_box :sabotage_confirmation, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :cart_deposit_confirmation, t('.cart_deposit_confirmation')
+      Read the
+      %a{href: "http://www.chiditarod.org/rules/#cartdeposit"}
+        cart deposit rules
+      once more to be sure.
+    .col-md-1= f.check_box :cart_deposit_confirmation, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :food_confirmation, t('.food_confirmation')
+      This year's mimumum is 60 lbs, but don't stop there! Bring your food to
+      the starting line check-in. If you plan on raising GOBS of food,
+      %a{href: 'http://www.chiditarod.org/contact/'}
+        contact us for special arrangements
+      to make your life easier.
+    .col-md-1= f.check_box :food_confirmation, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :buddies, t('.buddies')
+      We can't guarantee anything, but we'll try to have you run together.
+      Choosing this removes your sabotage privileges and your ability to win
+      any time prizes.
+    .col-md-6= f.text_field :buddies, :class => 'form-control'
+
+  .form-group
+    .col-md-5.text-right
+      .control-label= label_tag :wildcard, t('.wildcard')
+      You know, for when you really want to
+      %a{href: "http://gph.is/1jeHeQw"}
+        let it out.
+    .col-md-3= f.text_field :wildcard, :class => 'form-control'
+
+  .form-group
+    .col-md-5.control-label= label_tag :private_comments, t('.private_comments')
+    .col-md-6= f.text_area :private_comments, :class => 'form-control'
+
+  .form-group
+    .col-md-offset-5.col-md-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
       - if @registration.id
         = link_to race_registration_url(@registration.race.id, @registration.id) do

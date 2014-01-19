@@ -40,11 +40,8 @@ describe RacesController do
     describe '#show' do
       context 'with invalid id' do
         before { get :show, :id => 100 }
-        it 'sets 400' do
-          expect(response.status).to eq(400)
-        end
-        it 'sets flash error' do
-          expect(flash[:error]).to eq(I18n.t 'not_found')
+        it 'sets 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -69,8 +66,8 @@ describe RacesController do
     describe '#update' do
       context 'with invalid id' do
         before { put :update, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -164,8 +161,8 @@ describe RacesController do
     describe '#destroy' do
       context 'on invalid id' do
         before { delete :destroy, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 

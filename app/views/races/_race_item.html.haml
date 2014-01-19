@@ -9,7 +9,7 @@
     = race.finalized_registrations.count
     of
     = race.max_teams
-    = t('.teams_registered')
+    = link_to t('.teams_registered'), race_registrations_url(race.id)
   - else
     = t('closed')
 
