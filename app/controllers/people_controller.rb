@@ -61,14 +61,9 @@ class PeopleController < ApplicationController
     end
   end
 
-  rescue_from ActiveRecord::RecordNotFound do
-    flash.now[:error] = t('not_found')
-    render :status => 400
-  end
-
   private
 
   def person_params
-    params.require(:person).permit(:first_name, :last_name, :email, :phone, :twitter)
+    params.require(:person).permit(:first_name, :last_name, :email, :phone, :twitter, :experience)
   end
 end

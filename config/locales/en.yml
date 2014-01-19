@@ -64,7 +64,7 @@ en:
     navbar:
       races: Races
       users: Users
-      teams: Teams
+      my_teams: My Teams
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
@@ -105,6 +105,8 @@ en:
     index:
       title: People
       no_people_added: omg none!  go add some now
+    form:
+      experience: How many years has this person participated at Chiditarod?
 
   teams:
     new:
@@ -154,7 +156,7 @@ en:
       twitter: Got @twitter?
       racer_type: What type of racer are you?
       primary_inspiration: What's your primary inspiration?
-      experience: Years of experience
+      experience: How many years has this team existed?
       rules_confirmation: Do you agree to follow the race rules?
       sabotage_confirmation: Do you agree to follow the sabotage rules?
       cart_deposit_confirmation: Do you agree to the cart deposit terms?
@@ -208,9 +210,9 @@ en:
       race_is_full: Race is full.
       spots_remaining: spots remaining.
       registration_opens_on: Registration opens on
-      on_waitlist: on the waitlist
+      on_waitlist: on the waitlist.
       and_closes_on: and closes on
-
+      team: team
     race_item:
       team: team
       teams_registered: teams fully registered

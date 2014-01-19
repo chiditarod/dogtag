@@ -30,7 +30,7 @@
   .form-group
     .col-md-5.text-right
       .control-label= label_tag :experience, t('.experience')
-      How many years of experience do you have racing or volunteering?
+      How many years has the team been around?
     .col-md-3= f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {:prompt => 'Please Select'}, :class => 'form-control'
 
   .form-group

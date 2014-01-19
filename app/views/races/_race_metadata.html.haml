@@ -15,8 +15,7 @@
     - if race.full?
       %h5
         = t('.race_is_full')
-      = race.waitlist_count
-      = t('.team')
+      = pluralize(race.waitlist_count, t('.team'))
       = t('.on_waitlist')
     - else
       = t('.registration_opens_on')

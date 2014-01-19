@@ -7,17 +7,21 @@ describe Person do
       expect(FactoryGirl.build(:person).valid?).to eq(true)
     end
 
+    it 'fails with invalid years of experience' do
+      expect(FactoryGirl.build(:person, :experience => -10)).to be_invalid
+    end
+
     it 'fails on bad email address' do
-      expect(FactoryGirl.build(:person, :email => 'bad@email').valid?).to eq(false)
-      expect(FactoryGirl.build(:person, :email => 'bad@email.').valid?).to eq(false)
-      expect(FactoryGirl.build(:person, :email => 'bademail.com').valid?).to eq(false)
-      expect(FactoryGirl.build(:person, :email => '@bademail.com').valid?).to eq(false)
-      expect(FactoryGirl.build(:person, :email => 'bad@email.a').valid?).to eq(false)
+      expect(FactoryGirl.build(:person, :email => 'bad@email')).to be_invalid
+      expect(FactoryGirl.build(:person, :email => 'bad@email.')).to be_invalid
+      expect(FactoryGirl.build(:person, :email => 'bademail.com')).to be_invalid
+      expect(FactoryGirl.build(:person, :email => '@bademail.com')).to be_invalid
+      expect(FactoryGirl.build(:person, :email => 'bad@email.a')).to be_invalid
     end
 
     it 'passes when twitter starts with an @ sign' do
-      expect(FactoryGirl.build(:person, :twitter => 'bad').valid?).to eq(false)
-      expect(FactoryGirl.build(:person, :twitter => '@good').valid?).to eq(true)
+      expect(FactoryGirl.build(:person, :twitter => 'bad')).to be_invalid
+      expect(FactoryGirl.build(:person, :twitter => '@good')).to be_valid
     end
 
     it 'fails if associated with a registration with race.people_per_team people already assigned' do

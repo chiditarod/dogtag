@@ -30,7 +30,7 @@ class Registration < ActiveRecord::Base
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_inclusion_of :racer_type, in: VALID_RACER_TYPES
 
-  EXPERIENCE_LEVELS = ["Zero, we are fresh meat",
+  EXPERIENCE_LEVELS = ["Zero. Fresh meat",
                        "1st year veterans",
                        "2nd year sophmorons",
                        "3rd year's a charm",

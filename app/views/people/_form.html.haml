@@ -12,13 +12,18 @@
   .form-group
     .col-xs-4.control-label
       = label_tag :email, t('.email')
-    .col-xs-8
+    .col-xs-6
       = f.text_field :email, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
       = label_tag :phone, t('.phone')
     .col-xs-6
       = f.text_field :phone, :class => 'form-control'
+  .form-group
+    .col-xs-4.control-label
+      = label_tag :experience, t('.experience')
+    .col-xs-5
+      = f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {:prompt => 'Please Select'}, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
       = label_tag :twitter, t('.twitter')

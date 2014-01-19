@@ -52,8 +52,8 @@ describe PeopleController do
     describe '#destroy' do
       context 'on invalid id' do
         before { delete :destroy, :race_id => @race.id, :registration_id => @registration.id, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -87,8 +87,8 @@ describe PeopleController do
     describe '#update' do
       context 'on invalid id' do
         before { put :update, :race_id => @race.id, :registration_id => @registration.id, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -97,20 +97,16 @@ describe PeopleController do
           patch :update, :id => @person.id, :race_id => @race.id, :registration_id => @registration.id,
             :person => {:last_name => 'foo'}
         end
-
         it 'updates the user' do
           expect(@person.reload.last_name).to eq('foo')
         end
-
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-
         it 'sets @race and @registration (needed by _form.html.haml)' do
           expect(assigns(:race)).to eq(@race)
           expect(assigns(:registration)).to eq(@registration)
         end
-
         it 'redirects to registration#show' do
           expect(response).to redirect_to(race_registration_url :race_id => @race.id, :id => @registration.id)
         end
@@ -122,12 +118,8 @@ describe PeopleController do
         before do
           get :edit, :race_id => @race.id, :registration_id => @registration.id, :id => 99
         end
-        it 'responds with 400' do
-          expect(response.status).to eq(400)
-        end
-
-        it 'sets flash error' do
-          expect(flash[:error]).to eq(I18n.t 'not_found')
+        it 'responds with 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -168,7 +160,7 @@ describe PeopleController do
     describe '#create' do
 
       let (:reg_no_people) { FactoryGirl.create :registration }
-      let (:new_person_hash) { FactoryGirl.attributes_for :person2 }
+      let (:new_person_hash) { FactoryGirl.attributes_for :person, :first_name => 'Dan', :last_name => 'Akroyd' }
 
       context 'without person param' do
         it 'returns 400' do

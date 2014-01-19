@@ -20,15 +20,19 @@
 
       - if current_user
 
-        %li
-          = link_to teams_path do
-            %i.fa.fa-users.fa-2x
-            =t '.teams'
+        -#fa-flag-checkered 
+
+        - if current_user.team_ids.present?
+          %li
+            = link_to teams_path do
+              %i.fa.fa-users.fa-2x
+              =t '.my_teams'
 
         - if current_user.gets_admin_menu?
           %li.dropdown
             %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
               %i.fa.fa-star-o.fa-2x
+              =t('admin')
               %b.caret
             %ul.dropdown-menu
               %li.dropdown-header= t '.admin_functions'
