@@ -64,6 +64,20 @@
             %i.fa.fa-check-square-o.fa-2x
             =t '.register'
 
-      -#%li
-        = link_to "http://github.com/ometa/dogtag/" do
-          %i.fa.fa-2x.fa-github
+
+
+      %li.dropdown
+        %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
+          %i.fa.fa-question-circle.fa-2x
+          %b.caret
+          %ul.dropdown-menu
+            %li.dropdown-header
+              Having Problems?
+            %li
+              = link_to "mailto:dogtag@chiditarod.org?subject=dogtag help" do
+                %i.fa.fa-envelope-o.fa-fw
+                Email us
+            %li
+              = link_to "http://github.com/ometa/dogtag/" do
+                %i.fa.fa-fw.fa-github
+                File a Bug
