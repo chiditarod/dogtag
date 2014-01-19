@@ -38,7 +38,7 @@
               %br
               = t('.incomplete')
 
-  .col-xs-10
+  .col-xs-7
     .row
       %p.lead
         = t('.registered_as')
@@ -56,6 +56,9 @@
       .row
         %p.lead
           = link_to @registration.twitter, "http://twitter.com/#{@registration.twitter}"
+
+  .col-xs-3
+
 
 -#-----------------------------------------------------------
 -# people stuff      (consider partial
@@ -118,19 +121,23 @@
     = t('.requirement_instructions')
 
   .row
-    - @registration.race.enabled_requirements.each do |req|
-      .col-md-3.pull-left
-        .panel.panel-default
-          .panel-heading
-            .col-xs-10
-              %span.lead= req.name
-            .col-xs-2
-              - if req.completed?(@registration)
-                %i.fa.fa-2x.fa-smile-o.text-success
-              - else
-                %i.fa.fa-2x.fa-frown-o.text-danger
-            .clearfix
-          .panel-body.text-center
-            -# todo - render more generically
-            - if req.type == 'PaymentRequirement'
-              = render 'requirements/payment_requirement', :reg => @registration, :req => req
+    .col-xs-8.col-md-7
+      - @registration.race.enabled_requirements.each do |req|
+        .col-md-5.col-xs-6.pull-left
+          .panel.panel-default
+            .panel-heading
+              .col-xs-8.col-md-8
+                %span.lead= req.name
+              .col-xs-4.col-md-2
+                - if req.completed?(@registration)
+                  %i.fa.fa-2x.fa-smile-o.text-success
+                - else
+                  %i.fa.fa-2x.fa-frown-o.text-danger
+              .clearfix
+            .panel-body.text-center
+              -# todo - render more generically
+              - if req.type == 'PaymentRequirement'
+                = render 'requirements/payment_requirement', :reg => @registration, :req => req
+
+    .col-xs-4.col-md-5
+      = render 'store'

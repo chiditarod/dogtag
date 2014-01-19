@@ -1,0 +1,33 @@
+%table.table.borderless.table-hover
+  %tr
+    %th Status
+    - if current_user.is_any_of? :admin, :operator
+      %th
+        Details
+    %th Team
+    %th Last Updated
+
+  - registrations.each do |reg|
+    %tr
+      %td
+        - if reg.finalized?
+          %i.fa.fa-smile-o.fa-2x.text-success
+        - else
+          %i.fa.fa-frown-o.fa-2x.text-danger
+      - if current_user.is_any_of? :admin, :operator
+        %td
+          = pluralize(@race.requirements.count - reg.requirements.count, 'payment')
+          missing
+      %td
+        %h4
+          - if (can? [:show], reg) || (current_user.team_ids.include? reg.team.id)
+            = link_to reg.name, race_registration_url(@race, reg)
+          - else
+            = reg.name
+          %small
+            %small=link_to reg.twitter.downcase, "http://twitter.com/#{reg.twitter}"
+        %p
+          %i.fa.fa-quote-left.pull-left.fa-border
+          = reg.description
+
+      %td= time_ago_in_words(reg.updated_at)

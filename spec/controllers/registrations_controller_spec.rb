@@ -275,6 +275,7 @@ describe RegistrationsController do
         it 'returns http success' do
           expect(response).to be_success
         end
+        it 'sets waitlisted teams'
       end
     end
 

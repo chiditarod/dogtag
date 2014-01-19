@@ -1,35 +1,13 @@
 - if @race
 
-  %h1
-    =t('.registrations_for', :name => @race.name)
+  %h1=t('.registrations_for', :name => @race.name)
 
   - if @registrations.any?
-    %table.table.borderless.table-hover
-      %tr
-        %th Status
-        %th Team
-        %th Last Updated
-
-      - @registrations.each do |reg|
-        %tr
-          %td
-            - if reg.finalized?
-              %i.fa.fa-smile-o.fa-2x.text-success
-            - else
-              %i.fa.fa-frown-o.fa-2x.text-danger
-          %td
-            .h3
-              - if can? [:show], reg
-                = link_to reg.name, race_registration_url(@race, reg)
-              - else
-                = reg.name
-              %small
-                %small=link_to reg.twitter.downcase, "http://twitter.com/#{reg.twitter}"
-            %p
-              %i.fa.fa-quote-left.pull-left.fa-border
-              = reg.description
-
-          %td= time_ago_in_words(reg.updated_at)
-
+    = render 'table', :registrations => @registrations
   - else
     =t('.no_registrations')
+
+- if current_user.is_any_of? :admin, :operator
+  - if @waitlisted_registrations.any?
+    %h2=t('.waitlisted_registrations')
+    = render 'table', :registrations => @waitlisted_registrations
