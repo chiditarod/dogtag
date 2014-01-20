@@ -107,6 +107,7 @@ en:
       no_people_added: omg none!  go add some now
     form:
       experience: How many years has this person participated at Chiditarod?
+      twitter: Got twitter? Please include the @ sign
 
   teams:
     new:
@@ -153,7 +154,7 @@ en:
     form:
       name: What name shall your team register as?
       description: Sum up your team in a montage of prose
-      twitter: Got @twitter?
+      twitter: Got twitter? Please include the @ sign
       racer_type: What type of racer are you?
       primary_inspiration: What's your primary inspiration?
       experience: How many years has this team existed?
