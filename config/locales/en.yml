@@ -148,6 +148,7 @@ en:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
       waitlist_count: "Waitlist count: %{num}"
+      instructions: Provide your team info first, then your racers on the next page.
     create:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
@@ -176,7 +177,7 @@ en:
       people: Racers
       no_people_added: omg none!  go add some now.
       requirement_instructions: You must complete the following payments to complete registration.
-      be_patient: After clicking on payment buttons, please be patient as your transaction is completed.  Don't keep clicking!
+      be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
       can_change_until: "You can change this information until registration closes on %{date}."
       people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
       registration_closed: Team registration is closed. No changes can be made.

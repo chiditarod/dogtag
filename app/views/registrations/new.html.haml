@@ -6,6 +6,9 @@
     - else
       %small= t('.waitlist_count', :num => (@race.waitlist_count + 1))
 
+  %h4
+    = t('.instructions')
+
 .row
   .col-sm-12
     = render 'form'
