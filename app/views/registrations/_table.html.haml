@@ -16,8 +16,12 @@
           %i.fa.fa-frown-o.fa-2x.text-danger
       - if current_user.is_any_of? :admin, :operator
         %td
-          = pluralize(@race.requirements.count - reg.requirements.count, 'payment')
-          missing
+          %small
+            = pluralize(@race.requirements.count - reg.requirements.count, 'payment')
+            missing
+            %br
+            = pluralize(reg.experience, 'year')
+            = t('experience')
       %td
         %h4
           - if (can? [:show], reg) || (current_user.team_ids.include? reg.team.id)
