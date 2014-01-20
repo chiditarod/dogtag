@@ -27,3 +27,11 @@
 
     - else
       %h3= t('.registration_closed')
+
+.row
+  - if @my_race_registrations.present?
+    .col-xs-12
+      %h3= t('.your_registrations')
+    - @my_race_registrations.each do |reg|
+      .col-xs-6.col-md-4.pull-left
+        = render 'teams/team_item', :team => reg.team, :race => @race

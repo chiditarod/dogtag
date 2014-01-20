@@ -141,6 +141,8 @@ describe RacesController do
       it 'sets @races to all races' do
         expect(assigns :races).to eq [@closed, @open1, @open2]
       end
+
+      it "sets @my_race_registrations to the user's registrations for this race"
     end
 
     describe '#new' do

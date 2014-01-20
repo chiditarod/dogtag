@@ -9,6 +9,9 @@ class RacesController < ApplicationController
 
   def show
     @race = Race.find params[:id]
+    if current_user
+      @my_race_registrations = @race.registrations.where(:team_id => current_user.team_ids)
+    end
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
     redirect_to races_path

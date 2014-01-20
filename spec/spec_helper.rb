@@ -56,4 +56,5 @@ def mock_login!(user)
   session.save
 end
 
+# CanCan authorization
 require "cancan/matchers"

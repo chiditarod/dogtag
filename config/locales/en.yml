@@ -235,6 +235,7 @@ en:
       race_requirements: Race Requirements
       no_requirements_added: No requirements added yet
       registration_closed: Registration is closed
+      your_registrations: Your registrations
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.
