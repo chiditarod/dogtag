@@ -8,7 +8,7 @@
     .col-md-5.text-right
       .control-label= label_tag :racer_type, t('.racer_type')
       Most will choose racer.  See
-      %a{href: "http://chiditarod.org/rules/#construction"}
+      %a{href: "http://chiditarod.org/rules/#construction", :target => '_blank'}
         construction rules
       for guidance.  We love art carts and you should to, but you do have to present something super rad.
     .col-md-3= f.select :racer_type, options_for_select(Registration.racer_types_optionlist), {}, :class => 'form-control'

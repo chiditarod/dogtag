@@ -20,7 +20,10 @@
             = p.first_name
             = p.last_name
     %p
-      You can update your team information at your registration page until
+      You can update your team information at
+      %a{:href=>"http://dogtag.chiditarod.org"}
+        dogtag.chiditarod.org
+      until
       = @reg.race.registration_close.strftime("%B %e, %Y")
       when registration closes.
     %p
