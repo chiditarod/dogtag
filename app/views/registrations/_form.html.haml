@@ -11,7 +11,7 @@
       %a{href: "http://chiditarod.org/rules/#construction", :target => '_blank'}
         construction rules
       for guidance.  We love art carts and you should to, but you do have to present something super rad.
-    .col-md-3= f.select :racer_type, options_for_select(Registration.racer_types_optionlist), {}, :class => 'form-control'
+    .col-md-3= f.select :racer_type, Registration.racer_types_optionlist, {}, :class => 'form-control'
 
   .form-group
     .col-md-5.control-label= label_tag :description, t('.description')
@@ -25,13 +25,13 @@
     .col-md-5.text-right
       .control-label= label_tag :primary_inspiration, t('.primary_inspiration')
       Your answer helps us improve the event.  We remain unbiased, as always.
-    .col-md-4= f.select :primary_inspiration, options_for_select(Registration::INSPIRATIONS.map { |n| [n, n.parameterize] }), {:prompt => 'Please Select'}, :class => 'form-control'
+    .col-md-4= f.select :primary_inspiration, Registration::INSPIRATIONS.map{ |n| [n, n.parameterize] }, {:prompt => 'Please Select'}, :class => 'form-control'
 
   .form-group
     .col-md-5.text-right
       .control-label= label_tag :experience, t('.experience')
       How many years has the team been around?
-    .col-md-3= f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {:prompt => 'Please Select'}, :class => 'form-control'
+    .col-md-3= f.select :experience, Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
 
   .form-group
     .col-md-5.text-right

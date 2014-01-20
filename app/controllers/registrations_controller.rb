@@ -68,10 +68,6 @@ class RegistrationsController < ApplicationController
     @race = Race.find params[:race_id]
     @registrations = Registration.where(:race_id => params[:race_id]).order('updated_at DESC')
     @waitlisted_registrations = @registrations.reject(&:finalized?)
-  # this block can be removed whenever registrations resource unburies itself from under races
-  rescue ActiveRecord::RecordNotFound
-    flash.now[:error] = t('not_found')
-    render :status => 200
   end
 
   private

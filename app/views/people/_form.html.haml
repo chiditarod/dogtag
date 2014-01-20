@@ -23,7 +23,7 @@
     .col-xs-4.control-label
       = label_tag :experience, t('.experience')
     .col-xs-5
-      = f.select :experience, options_for_select(Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }), {:prompt => 'Please Select'}, :class => 'form-control'
+      = f.select :experience, Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
       = label_tag :twitter, t('.twitter')
