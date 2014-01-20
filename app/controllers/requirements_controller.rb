@@ -6,7 +6,6 @@ class RequirementsController < ApplicationController
 
   def destroy
     @requirement = Requirement.find params[:id]
-    return render :status => 400 if @requirement.nil?
 
     if @requirement.destroy
       flash[:notice] = t 'delete_success'
@@ -17,7 +16,6 @@ class RequirementsController < ApplicationController
   end
 
   def update
-    return render :status => 400 unless params[:requirement]
     @requirement = Requirement.find(params[:id])
 
     @race = @requirement.race
@@ -59,11 +57,6 @@ class RequirementsController < ApplicationController
       flash.now[:error] << @requirement.errors.messages
       puts @requirement.errors.messages
     end
-  end
-
-  rescue_from ActiveRecord::RecordNotFound do
-    flash[:error] = t('not_found')
-    render :status => 400
   end
 
   private

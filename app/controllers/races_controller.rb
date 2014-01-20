@@ -49,7 +49,6 @@ class RacesController < ApplicationController
 
   def destroy
     @race = Race.find params[:id]
-    return render :status => 400 if @race.nil?
 
     if @race.destroy
       flash[:notice] = t '.delete_success'

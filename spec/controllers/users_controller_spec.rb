@@ -124,12 +124,8 @@ describe UsersController do
       context 'with invalid user id' do
         before { get :show, :id => 99 }
 
-        it 'returns 400' do
-          expect(response.status).to eq(400)
-        end
-
-        it 'sets flash error' do
-          expect(flash[:error]).to eq(I18n.t 'not_found')
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -152,8 +148,8 @@ describe UsersController do
     describe '#update' do
       context 'on invalid id' do
         before { put :update, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -175,8 +171,8 @@ describe UsersController do
     describe '#destroy' do
       context 'on invalid id' do
         before { delete :destroy, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 

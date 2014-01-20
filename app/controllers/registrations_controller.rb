@@ -47,13 +47,11 @@ class RegistrationsController < ApplicationController
 
     @race = @registration.race
     session[:prior_url] = request.original_url
-    # todo -- re-add redirect to prior url instead of 400 failure.
   end
 
   alias edit show
 
   def update
-    return render :status => 400 unless params[:registration]
     @registration = Registration.find params[:id]
 
     if @registration.update_attributes registration_params

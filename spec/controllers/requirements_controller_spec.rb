@@ -43,8 +43,8 @@ describe RequirementsController do
     describe '#destroy' do
       context 'on invalid id' do
         before { delete :destroy, :race_id => @req.race.id, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -72,8 +72,8 @@ describe RequirementsController do
     describe '#update' do
       context 'on invalid id' do
         before { put :update, :race_id => @req.race.id, :id => 99 }
-        it 'returns 400' do
-          expect(response.status).to eq(400)
+        it 'returns 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -106,12 +106,8 @@ describe RequirementsController do
         before do
           get :edit, :race_id => @req.race.id, :id => 99
         end
-        it 'responds with 400' do
-          expect(response.status).to eq(400)
-        end
-
-        it 'sets flash error' do
-          expect(flash[:error]).to eq(I18n.t 'not_found')
+        it 'responds with 404' do
+          expect(response.status).to eq(404)
         end
       end
 
@@ -152,9 +148,9 @@ describe RequirementsController do
       let (:valid_req_hash) { FactoryGirl.attributes_for :requirement2 }
 
       context 'without valid race' do
-        it 'returns 400' do
+        it 'returns 404' do
           post :create, :race_id => 99
-          expect(response.status).to eq(400)
+          expect(response.status).to eq(404)
         end
       end
 

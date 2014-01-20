@@ -41,7 +41,6 @@ class TeamsController < ApplicationController
   end
 
   def update
-    return render :status => 400 unless params[:team]
     team = Team.find params[:id]
 
     if team.update_attributes team_params
@@ -55,7 +54,6 @@ class TeamsController < ApplicationController
 
   def destroy
     @team = Team.find params[:id]
-    return render :status => 400 if @team.nil?
 
     if @team.destroy
       flash[:notice] = t 'delete_success'
@@ -63,11 +61,6 @@ class TeamsController < ApplicationController
       flash[:error] = t '.delete_failed'
     end
     redirect_to teams_path
-  end
-
-  rescue_from ActiveRecord::RecordNotFound do
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   private

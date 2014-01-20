@@ -4,7 +4,6 @@ class PeopleController < ApplicationController
 
   def destroy
     @person = Person.find params[:id]
-    return render :status => 400 if @person.nil?
 
     if @person.destroy
       flash[:notice] = t 'delete_success'
@@ -15,7 +14,6 @@ class PeopleController < ApplicationController
   end
 
   def update
-    return render :status => 400 unless params[:person]
     @person = Person.find(params[:id])
     @registration = @person.registration
     @race = @registration.race

@@ -1,9 +1,6 @@
 class UsersController < ApplicationController
   before_filter :require_user, :except => [:new, :create]
-
   load_and_authorize_resource
-
-  respond_to :html
 
   def index
     @users = User.all
@@ -35,8 +32,6 @@ class UsersController < ApplicationController
   end
 
   def update
-    return render :status => 400 unless params[:user]
-
     @user = User.find(params[:id])
     if @user.update_attributes user_params
       flash[:notice] = I18n.t('update_success')
@@ -49,7 +44,6 @@ class UsersController < ApplicationController
 
   def destroy
     @user = User.find params[:id]
-    return render :status => 400 if @user.nil?
 
     if @user.destroy
       flash[:notice] = t('delete_success')
@@ -64,10 +58,4 @@ class UsersController < ApplicationController
   def user_params
     params.require(:user).permit(:first_name, :last_name, :email, :phone, :password, :password_confirmation, :roles => [])
   end
-
-  rescue_from ActiveRecord::RecordNotFound do |ex|
-    flash.now[:error] = t('not_found')
-    render :status => 400
-  end
-
 end

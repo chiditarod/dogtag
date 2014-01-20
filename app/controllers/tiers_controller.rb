@@ -4,7 +4,6 @@ class TiersController < ApplicationController
 
   def destroy
     @tier = Tier.find params[:id]
-    return render :status => 400 if @tier.nil?
 
     if @tier.destroy
       flash[:notice] = t 'delete_success'
@@ -15,7 +14,6 @@ class TiersController < ApplicationController
   end
 
   def update
-    return render :status => 400 unless params[:tier]
     @tier = Tier.find(params[:id])
 
     if @tier.update_attributes tier_params
@@ -59,11 +57,6 @@ class TiersController < ApplicationController
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @tier.errors.messages
     end
-  end
-
-  rescue_from ActiveRecord::RecordNotFound do |ex|
-    flash.now[:error] = t('not_found')
-    render :status => 400
   end
 
   private
