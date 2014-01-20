@@ -2,16 +2,21 @@ class ApplicationController < ActionController::Base
   # Prevent CSRF attacks by raising an exception.
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
+
+  # SSL
+  force_ssl :if => :is_production?
+
   helper :all
   helper_method :current_user_session, :current_user
 
-  # supposed fix for cancan and rails4
+  # Fix for cancan and rails4
   before_filter do
     resource = controller_name.singularize.to_sym
     method = "#{resource}_params"
     params[resource] &&= send(method) if respond_to?(method, true)
   end
 
+  # CanCan error rescuing
   rescue_from CanCan::AccessDenied do |exception|
     redirect_to home_url, :alert => exception.message
   end
@@ -26,6 +31,10 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
 
   private
+
+  def is_production?
+    Rails.env == 'production'
+  end
 
   def render_not_found(ex)
     log_error(ex)
