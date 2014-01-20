@@ -4,7 +4,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   # SSL
-  force_ssl :if => :is_production?
+  #force_ssl :if => :is_production?
 
   helper :all
   helper_method :current_user_session, :current_user
