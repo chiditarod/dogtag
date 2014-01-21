@@ -1,5 +1,6 @@
 class Registration < ActiveRecord::Base
   validates_presence_of :name, :description
+  validates_length_of :name, :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less."
   validates_uniqueness_of :name, :scope => [:race], :message => 'should be unique per race'
   validates_uniqueness_of :twitter, :scope => [:race], :allow_nil => true, :allow_blank => true, :message => 'needs to be unique per race'
   validates_format_of :twitter, :with => /\A^@\w+\z/i, :allow_nil => true, :allow_blank => true, :message => 'needs to begin with @, be a single, word, and not have weird characters'
@@ -29,6 +30,7 @@ class Registration < ActiveRecord::Base
     :cart_deposit_confirmation, :food_confirmation, :accept => true
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_inclusion_of :racer_type, in: VALID_RACER_TYPES
+  validates_length_of :buddies, :maximum => 255, :message => "list is a bit long, eh? The max is 255 characters."
 
   EXPERIENCE_LEVELS = ["Zero. Fresh meat",
                        "1st year veterans",
