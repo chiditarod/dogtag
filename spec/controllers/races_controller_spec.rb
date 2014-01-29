@@ -139,7 +139,7 @@ describe RacesController do
         expect(response).to be_success
       end
       it 'sets @races to all races' do
-        expect(assigns :races).to eq [@closed, @open1, @open2]
+        expect(assigns(:races).count).to eq 3
       end
 
       it "sets @my_race_registrations to the user's registrations for this race"

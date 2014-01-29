@@ -5,16 +5,16 @@ class StripeHelper
       begin
         yield
       rescue Stripe::CardError => e
-        # Since it's a decline, Stripe::CardError will be caught
-        body = e.json_body
-        err = body[:error]
-        Rails.logger.error e.class
-        Rails.logger.error msg if msg
-        Rails.logger.error "status: #{e.http_status}"
-        Rails.logger.error "type: #{err[:type]}"
-        Rails.logger.error "code: #{err[:code]}"
-        Rails.logger.error "param: #{err[:param]}"
-        Rails.logger.error "message: #{err[:message]}"
+        # Stripe::CardError will be caught if card is declined.
+        if e.json_body.present? && e.json_body[:error].present?
+          err = e.json_body[:error]
+          Rails.logger.error e.class
+          Rails.logger.error "HTTP status: #{e.http_status}"
+          Rails.logger.error "type: #{err[:type]}"
+          Rails.logger.error "code: #{err[:code]}"
+          Rails.logger.error "param: #{err[:param]}"
+          Rails.logger.error "message: #{err[:message]}"
+        end
       rescue Stripe::InvalidRequestError => e
         # Invalid parameters were supplied to Stripe's API
         log_error e
@@ -39,7 +39,7 @@ class StripeHelper
 
     def log_error(e, msg = nil)
       Rails.logger.error e.class
-      Rails.logger.error msg if msg
+      Rails.logger.error msg if msg.present?
     end
 
   end
