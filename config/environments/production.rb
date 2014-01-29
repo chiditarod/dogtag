@@ -59,7 +59,8 @@ RailsSkeleton::Application.configure do
   # config.force_ssl = true
 
   # debug|info|warn|error|fatal
-  config.log_level = :warn
+  # Definable log level based on LOG_LEVEL environment variable with sane default
+  config.log_level = ENV['LOG_LEVEL'] ? ENV['LOG_LEVEL'].to_sym : :info
 
   # Prepend all log lines with the following tags.
   # config.log_tags = [ :subdomain, :uuid ]
