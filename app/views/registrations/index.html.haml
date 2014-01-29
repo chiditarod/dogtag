@@ -1,6 +1,11 @@
 - if @race
 
-  %h1=t('.registrations_for', :name => @race.name)
+  %h2
+    = t('.registrations_for', :name => @race.name)
+    - if @registrations.any? && current_user.is_any_of?(:admin, :operator)
+      %small
+        = mail_to @registrations.map(&:team).map(&:user).map(&:email).join(',') do
+          %i.fa.fa-envelope
 
   - if @registrations.any?
     = render 'table', :registrations => @registrations
@@ -9,5 +14,10 @@
 
 - if current_user.is_any_of? :admin, :operator
   - if @waitlisted_registrations.any?
-    %h2=t('.waitlisted_registrations')
+    %h2
+      = t('.waitlisted_registrations')
+      - if current_user.is_any_of? :admin, :operator
+        %small
+          = mail_to @waitlisted_registrations.map(&:team).map(&:user).map(&:email).join(',') do
+            %i.fa.fa-envelope
     = render 'table', :registrations => @waitlisted_registrations
