@@ -51,8 +51,8 @@ ActiveRecord::Schema.define(version: 20140121042043) do
   end
 
   create_table "registrations", force: true do |t|
-    t.string   "name",                      limit: 1000
-    t.text     "description"
+    t.string   "name"
+    t.string   "description"
     t.string   "twitter"
     t.datetime "created_at"
     t.datetime "updated_at"

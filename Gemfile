@@ -7,8 +7,10 @@ ruby '2.0.0'
 # bootstrap 3.0
 gem 'bootstrap-sass'
 
-# 12 factor (http://12factor.net/)
-gem 'rails_12factor'
+group :production do
+  # 12 factor support for rails (http://12factor.net/)
+  gem 'rails_12factor'
+end
 
 # -------------------------------------------------------
 # BEGIN dogtag gems

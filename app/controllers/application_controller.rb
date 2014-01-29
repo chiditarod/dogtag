@@ -16,12 +16,7 @@ class ApplicationController < ActionController::Base
     params[resource] &&= send(method) if respond_to?(method, true)
   end
 
-  # CanCan error rescuing
-  rescue_from CanCan::AccessDenied do |exception|
-    redirect_to home_url, :alert => exception.message
-  end
-
-  # catch errors and route nicely
+  # rescue_from ORDERING MATTERS.  Start generic first
   unless Rails.configuration.consider_all_requests_local
     rescue_from Exception, :with => :render_error
     rescue_from ActionController::RoutingError, :with => :render_not_found
@@ -29,6 +24,11 @@ class ApplicationController < ActionController::Base
   end
   # we always want a 404 redirect
   rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
+
+  # CanCan error rescuing
+  rescue_from CanCan::AccessDenied do |exception|
+    redirect_to home_url, :alert => exception.message
+  end
 
   private
 
