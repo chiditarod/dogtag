@@ -8,6 +8,7 @@
   %thead
     %tr
       %th Name
+      %th Teams
       - if current_user.is? :admin
         %th Activity
         %th Roles
@@ -20,6 +21,10 @@
           = link_to user.fullname, user
           %br
           %small= mail_to user.email
+        %td
+          - user.teams.each do |t|
+            = link_to t.name, team_url(t.id)
+            %br
         - if current_user.is? :admin
           %td
             %small
