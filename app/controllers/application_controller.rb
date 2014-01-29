@@ -21,14 +21,10 @@ class ApplicationController < ActionController::Base
     rescue_from Exception, :with => :render_error
     rescue_from ActionController::RoutingError, :with => :render_not_found
     rescue_from ActionController::UnknownController, :with => :render_not_found
+    rescue_from CanCan::AccessDenied, :with => :render_access_denied
   end
-  # we always want a 404 redirect
+  # we always want a 404 redirect (including during tests)
   rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
-
-  # CanCan error rescuing
-  rescue_from CanCan::AccessDenied do |exception|
-    redirect_to home_url, :alert => exception.message
-  end
 
   private
 
@@ -39,6 +35,11 @@ class ApplicationController < ActionController::Base
   def render_not_found(ex)
     log_error(ex)
     render template: "/error/404.html.erb", status: 404
+  end
+
+  def render_access_denied(ex)
+    log_error(ex)
+    redirect_to home_url, :alert => ex.message
   end
 
   def render_error(ex)
