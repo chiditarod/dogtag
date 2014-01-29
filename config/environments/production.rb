@@ -36,7 +36,7 @@ RailsSkeleton::Application.configure do
   # config.action_dispatch.rack_cache = true
 
   # Disable Rails's static asset server (Apache or nginx will already do this).
-  config.serve_static_assets = true
+  config.serve_static_assets = false
 
   # Compress JavaScripts and CSS.
   config.assets.js_compressor = :uglifier
@@ -58,7 +58,7 @@ RailsSkeleton::Application.configure do
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   # config.force_ssl = true
 
-  # Set to :debug to see everything in the log.
+  # debug|info|warn|error|fatal
   config.log_level = :warn
 
   # Prepend all log lines with the following tags.
@@ -69,7 +69,7 @@ RailsSkeleton::Application.configure do
 
   # Heroku log
   # https://devcenter.heroku.com/articles/logging#writing-to-your-log
-  config.logger = Logger.new(STDOUT)
+  #config.logger = Logger.new(STDOUT)
 
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store

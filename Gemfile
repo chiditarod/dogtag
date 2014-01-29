@@ -7,6 +7,9 @@ ruby '2.0.0'
 # bootstrap 3.0
 gem 'bootstrap-sass'
 
+# 12 factor (http://12factor.net/)
+gem 'rails_12factor'
+
 # -------------------------------------------------------
 # BEGIN dogtag gems
 
@@ -79,7 +82,7 @@ end
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
-# Use unicorn as the app server
+# Use unicorn as the app server (heroku)
 gem 'unicorn', '4.8.0'
 
 # Use debugger
