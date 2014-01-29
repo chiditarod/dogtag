@@ -3,20 +3,23 @@ class User < ActiveRecord::Base
   validates_format_of :email, :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i
   validates_uniqueness_of :email
 
+  has_many :completed_requirements
   has_many :teams
 
+  # cancan
   acts_as_authentic do |c|
     c.login_field = :email
     c.validate_login_field = false
   end
 
   # ---------------------------------------------------------------
+  # role_model role support for cancan
   # http://rubydoc.info/gems/role_model/0.8.1/frames
 
   include RoleModel
 
-  # declare the valid roles -- do not change the order if you 
-  # add more roles later, always append them at the end!
+  # declare the valid roles -- do not change the order if you
+  # add more roles later, always append them at the end.
   roles :admin, :refunder, :operator
 
   # ---------------------------------------------------------------

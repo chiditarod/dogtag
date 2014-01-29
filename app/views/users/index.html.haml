@@ -4,20 +4,46 @@
     = link_to new_user_path do
       %i.fa.fa-plus
 
-%table.table.table-bordered.table-hover
-  %tr
-    %th Name
-    %th Email
-    %th Roles
-    - if current_user.is? :admin
-      %th Actions
-
-  - @users.each do |user|
+%table#users.table.table-bordered.table-hover
+  %thead
     %tr
-      %td= link_to user.fullname, user
-      %td= user.email
-      %td= user.roles.to_a.map(&:capitalize).join(', ')
+      %th Name
       - if current_user.is? :admin
+        %th Activity
+        %th Roles
+        %th.filter-false Actions
+
+  %tbody
+    - @users.each do |user|
+      %tr
         %td
-          = link_to 'Edit', edit_user_path(user)
-          = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+          = link_to user.fullname, user
+          %br
+          %small= mail_to user.email
+        - if current_user.is? :admin
+          %td
+            %small
+              -#todo: make a cr presenter
+              - if user.completed_requirements
+                - user.completed_requirements.each do |cr|
+                  .col-xs-4.col-md-2
+                    = cr.updated_at.strftime("%b %e, %Y")
+                  .col-xs-8.col-md-10
+                    = cr.registration.name
+                    %br
+                    - if cr.metadata
+                      - cr.metadata.each do |k,v|
+                        - if k == 'customer_id'
+                          = link_to v, "https://manage.stripe.com/customers/#{v}"
+                        - elsif k == 'charge_id'
+                          = link_to v, "https://manage.stripe.com/payments/#{v}"
+                        %br
+          %td= user.roles.to_a.map(&:capitalize).join(', ')
+          %td
+            = link_to 'Edit', edit_user_path(user)
+            = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+
+
+= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.min.js"
+= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.widgets.min.js"
+= stylesheet_link_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/css/theme.bootstrap.css"

@@ -48,8 +48,11 @@ class Ability
       user.team_ids.include? person.registration.team.id
     end
 
-    # Requirement: no user-level access required
-    # Tier: no user-level access required
+    # Requirement
+    # no user-level access required
+
+    # Tier
+    # no user-level access required
 
     if user.is? :operator
       can [:read, :update], [Registration, Team]
