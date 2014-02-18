@@ -9,7 +9,7 @@
   - people.each do |person|
     %tr
       %td
-        - if person.registration.race.open_for_registration?
+        - if person.registration.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
           = link_to(edit_race_registration_person_url :race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id) do
             %i.fa.fa-edit.fa-2x
         - if current_user.is? :admin
