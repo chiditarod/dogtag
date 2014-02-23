@@ -9,6 +9,8 @@
         %small
           = human_readable @race.race_datetime
 
+    = render 'races/admin_buttons', :race => @race
+
     %h3
       - if @race.open_for_registration?
         = @race.finalized_registrations.count
@@ -16,7 +18,8 @@
         = @race.max_teams
         = t('.teams_registered')
       - else
-        = t('closed')
+        = t('.registration_closed')
+
     = render 'races/race_metadata', :race => @race
 
     - if @race.open_for_registration?
@@ -24,9 +27,6 @@
         = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-warning']
       - else
         = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-success']
-
-    - else
-      %h3= t('.registration_closed')
 
 .row
   - if @my_race_registrations.present?

@@ -211,14 +211,17 @@ describe RegistrationsController do
         let (:today) { Time.now }
         before do
           double(Time.now) { today }
-          @reg = FactoryGirl.create :registration_with_people
+          @reg = FactoryGirl.create :registration, :finalized
           @reg.team.user = valid_user
           @reg.save
           get :show, :race_id => @reg.race.id, :id => @reg.id
         end
+
         it 'sets notified_at to Time.now and saves in db' do
-          expect(assigns(:registration).finalized?).to be_true
           expect(Registration.find(@reg.id).notified_at).to eq(@now)
+        end
+        it 'registration reports as finalized' do
+          expect(assigns(:registration).finalized?).to be_true
         end
         it 'sets display_notification = true for the view'
       end

@@ -208,7 +208,6 @@ en:
       create_race: Create one now!
     race_metadata:
       left_to_register: left to register.
-      registration_closed: Registration is closed
       race_is_full: Race is full.
       spots_remaining: spots remaining.
       registration_opens_on: Registration opens on

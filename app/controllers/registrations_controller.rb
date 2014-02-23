@@ -33,7 +33,6 @@ class RegistrationsController < ApplicationController
     end
   end
 
-
   def show
     @registration = Registration.find params[:id]
 

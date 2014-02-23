@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Race do
   let (:valid_team) { FactoryGirl.create :team }
-  let (:today) { Time.now }
+  let (:today) { Time.now.utc }
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
@@ -106,7 +106,7 @@ describe Race do
     it 'returns the time between now and registration_close' do
       double(Time.now) { today }
       race = FactoryGirl.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
-      expect(race.days_before_close).to eq(2.weeks)
+      expect(race.days_before_close).to eq(2.weeks.to_i)
     end
   end
 

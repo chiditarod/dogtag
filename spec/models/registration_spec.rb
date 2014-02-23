@@ -53,7 +53,7 @@ describe Registration do
     describe '#needs_people?' do
       before do
         race = FactoryGirl.create :race
-        @reg = FactoryGirl.create :registration_with_people, :race => race, :people_count => (race.people_per_team - 1)
+        @reg = FactoryGirl.create :registration, :with_people, :race => race, :people_count => (race.people_per_team - 1)
       end
 
       it 'returns true if there are less than race.people_per_team people' do

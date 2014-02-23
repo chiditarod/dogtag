@@ -6,4 +6,11 @@ class Person < ActiveRecord::Base
   validates_with PersonValidator, :on => :create
 
   belongs_to :registration
+
+  def self.registered_for_race(race_id)
+    race = Race.find race_id
+    race.finalized_registrations.inject([]) do |total, reg|
+      total.concat reg.people.reject{ |person| person.email.downcase =~ /unknown/}
+    end
+  end
 end

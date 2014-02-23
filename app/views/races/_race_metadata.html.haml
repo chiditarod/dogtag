@@ -1,24 +1,20 @@
 %p
   - if race.registerable?
-
-    - if race.open_for_registration?
-      = distance_of_time_in_words race.days_before_close
-      = t('.left_to_register')
-    - else
-      %h3= t('.registration_closed')
+    = distance_of_time_in_words race.days_before_close
+    = t('.left_to_register')
     %br
 
-    = race.spots_remaining
-    = t '.spots_remaining'
+  - if Time.now < race.registration_open
+    = t('.registration_opens_on')
+    = race.registration_open.strftime("%B %e, %Y")
+    = t('.and_closes_on')
+    = race.registration_close.strftime("%B %e, %Y")
 
-  - else
-    - if race.full?
-      %h5
-        = t('.race_is_full')
-      = pluralize(race.waitlist_count, t('.team'))
-      = t('.on_waitlist')
-    - else
-      = t('.registration_opens_on')
-      = race.registration_open.strftime("%B %e, %Y")
-      = t('.and_closes_on')
-      = race.registration_close.strftime("%B %e, %Y")
+  = race.spots_remaining
+  = t '.spots_remaining'
+
+  - if race.full?
+    %h5
+      = t('.race_is_full')
+    = pluralize(race.waitlist_count, t('.team'))
+    = t('.on_waitlist')

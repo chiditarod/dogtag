@@ -4,7 +4,7 @@ describe PeopleController do
 
 
   before do
-    @registration = FactoryGirl.create :registration_with_people
+    @registration = FactoryGirl.create :registration, :with_people
     @person = @registration.people.first
     @race = @registration.race
   end

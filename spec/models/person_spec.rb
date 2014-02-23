@@ -2,6 +2,28 @@ require 'spec_helper'
 
 describe Person do
 
+  class << self
+    describe '#registered_for_race' do
+      it 'returns all the people on finalized teams in a race' do
+        reg = FactoryGirl.create :registration, :finalized
+        expect(Person.registered_for_race reg.race_id).to eq(reg.people)
+      end
+
+      it 'does not return people for non-finalized teams in a race' do
+        reg = FactoryGirl.create :registration, :with_people
+        expect(Person.registered_for_race reg.race_id).to eq([])
+      end
+
+      it 'filters out all emails with the word "unknown"' do
+        reg = FactoryGirl.create :registration, :finalized
+        person = reg.people.first
+        person.email = 'unknown@gmail.com'
+        person.save
+        expect(Person.registered_for_race(reg.race_id).count).to eq(4)
+      end
+    end
+  end
+
   describe 'validation' do
     it 'passes with all required parameters' do
       expect(FactoryGirl.build(:person).valid?).to eq(true)
