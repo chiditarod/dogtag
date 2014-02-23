@@ -1,4 +1,4 @@
-- if current_user.is_any_of? :admin, :operator
+- if current_user && current_user.is_any_of?(:admin, :operator)
   .btn-group
     %button.btn.btn-default.dropdown-toggle{:type => 'button', :'data-toggle' => 'dropdown'}
       %i.fa.fa-envelope-o.fa-fw
