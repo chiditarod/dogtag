@@ -1,11 +1,12 @@
-.btn-group
-  %button.btn.btn-default.dropdown-toggle{:type => 'button', :'data-toggle' => 'dropdown'}
-    %i.fa.fa-envelope-o.fa-fw
-    = t('.email')
-    %span.caret
-  %ul.dropdown-menu{:role => 'menu'}
-    %li
-      = mail_to Person.registered_for_race(race.id).map(&:email).uniq.join(',') do
-        %i.fa.fa-envelope
-        All Registered Dawgs
-    -#%li.divider
+- if current_user.is_any_of? :admin, :operator
+  .btn-group
+    %button.btn.btn-default.dropdown-toggle{:type => 'button', :'data-toggle' => 'dropdown'}
+      %i.fa.fa-envelope-o.fa-fw
+      = t('.email')
+      %span.caret
+    %ul.dropdown-menu{:role => 'menu'}
+      %li
+        = mail_to Person.registered_for_race(race.id).map(&:email).uniq.join(',') do
+          %i.fa.fa-envelope
+          All Registered Dawgs
+      -#%li.divider
