@@ -28,6 +28,11 @@ describe RacesController do
         delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
+    describe '#export' do
+      it 'redirects to login' do
+        get :export, :race_id => 1; expect(response).to redirect_to(new_user_session_path)
+      end
+    end
   end
 
   context '[logged in]' do
@@ -35,6 +40,28 @@ describe RacesController do
       activate_authlogic
       user = FactoryGirl.create :admin_user
       mock_login! user
+    end
+
+    describe '#export' do
+      context 'with invalid id' do
+        before { get :export, :race_id => 100 }
+        it 'sets 404' do
+          expect(response.status).to eq(404)
+        end
+      end
+
+      context 'with valid id' do
+        before do
+          @registration = FactoryGirl.create :registration, :finalized
+          get :show, :id => @registration.race.id
+        end
+
+        it 'returns 200' do
+          expect(response).to be_success
+        end
+        it 'sends CSV data'
+        it 'handles the finalized param'
+      end
     end
 
     describe '#show' do

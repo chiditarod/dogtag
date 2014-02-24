@@ -1,3 +1,5 @@
+require 'csv'
+
 class RacesController < ApplicationController
   before_filter :require_user, :except => [:index, :show]
   load_and_authorize_resource
@@ -21,6 +23,20 @@ class RacesController < ApplicationController
 
   def new
     @race = Race.new
+  end
+
+  # todo: specs
+  def export
+    return render :status => 400 if params[:race_id].blank?
+
+    race_id = params[:race_id]
+    regs = params[:finalized] ? Registration.export(race_id, :finalized => true) : Registration.export(race_id)
+
+    data = CSV.generate do |csv|
+      regs.each { |i| csv << i }
+    end
+
+    send_data data, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment; filename=race_#{race_id}_export.csv"
   end
 
   def create

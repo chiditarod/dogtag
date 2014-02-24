@@ -50,6 +50,11 @@ describe Registration do
       expect(FactoryGirl.build :registration, :twitter => '@foo').to be_valid
     end
 
+    describe '#export' do
+      it 'sets the correct columns'
+      it 'returns a multi-dimensional array of registrations'
+    end
+
     describe '#needs_people?' do
       before do
         race = FactoryGirl.create :race

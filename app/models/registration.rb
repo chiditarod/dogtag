@@ -76,5 +76,48 @@ class Registration < ActiveRecord::Base
     def racer_types_optionlist
       VALID_RACER_TYPES.map { |r| [r.to_s.humanize, r] }
     end
+
+    # todo: spec
+    def export(race_id, options = {})
+      race = Race.find race_id
+      person_keys = %w(first_name last_name email phone twitter experience)
+      user_keys = %w(first_name last_name email phone stripe_customer_id)
+
+      header = []
+      header << 'finalized'
+
+      header.concat(Registration.attribute_names.reject do |n|
+        %w(created_at	updated_at notified_at team_id race_id).include? n
+      end)
+
+      race.people_per_team.times do |i|
+        header.concat person_keys.map{ |k| "dawg_#{i}_#{k}" }
+      end
+
+      header.concat user_keys.map{ |k| "user_#{k}" }
+
+      # body
+      regs = options[:finalized] ? race.finalized_registrations : race.registrations
+      regs.inject(Array.new << header) do |total, reg|
+        row = []
+        row << reg.finalized?
+
+        cols = []
+        cols.concat(Registration.attribute_names.reject do |n|
+          %w(created_at	updated_at notified_at team_id race_id).include? n
+        end)
+
+        row.concat cols.map{ |n| reg[n] }
+
+        race.people_per_team.times do |i|
+          row.concat person_keys.map{ |k| reg.people[i].present? ? reg.people[i][k] : '' }
+        end
+
+        row.concat user_keys.map{ |k| reg.team.user[k] }
+
+        # finally.. 
+        total << row
+      end
+    end
   end
 end

@@ -5,6 +5,7 @@ RailsSkeleton::Application.routes.draw do
 
   resources :teams, :only => [:new, :create, :edit, :update, :index, :destroy]
   resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
+    get :export
     resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
     resources :registrations, :only => [:new, :create, :edit, :update, :index, :show] do
       resources :people, :only => [:new, :create, :edit, :update, :destroy]

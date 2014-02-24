@@ -55,6 +55,7 @@ class Ability
     # no user-level access required
 
     if user.is? :operator
+      can [:export], Race
       can [:read, :update], [Registration, Team]
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
     end

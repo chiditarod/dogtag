@@ -1,12 +1,20 @@
 - if current_user && current_user.is_any_of?(:admin, :operator)
   .btn-group
     %button.btn.btn-default.dropdown-toggle{:type => 'button', :'data-toggle' => 'dropdown'}
-      %i.fa.fa-envelope-o.fa-fw
-      = t('.email')
+      %i.fa.fa-save.fa-fw
+      = t('.export')
       %span.caret
     %ul.dropdown-menu{:role => 'menu'}
       %li
         = mail_to Person.registered_for_race(race.id).map(&:email).uniq.join(',') do
-          %i.fa.fa-envelope
+          %i.fa.fa-envelope.fa-fw
           All Registered Dawgs
-      -#%li.divider
+      %li.divider
+      %li
+        = link_to race_export_url(race, :finalized => true) do
+          %i.fa.fa-table.fa-fw
+          = t('.finalized_registrations')
+      %li
+        = link_to race_export_url(race) do
+          %i.fa.fa-table.fa-fw
+          = t('.all_registrations')
