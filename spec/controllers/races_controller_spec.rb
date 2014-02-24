@@ -48,6 +48,10 @@ describe RacesController do
         it 'sets 404' do
           expect(response.status).to eq(404)
         end
+        it 'sends only finalized data when params[:finalized] is present'
+        it 'sends finalized and non-finalized registrations by default'
+        it 'sends CSV data'
+        it 'sets headers correctly'
       end
 
       context 'with valid id' do

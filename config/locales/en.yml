@@ -166,6 +166,7 @@ en:
       buddies: Are you wanting to race alongside any other teams or people?
       wildcard: Favorite dance move
       private_comments: Any private comments to Coreganizers?
+      registration_closed: Team registration is closed. No changes can be made.
     show:
       edit: edit
       requirements: Payments
@@ -180,7 +181,6 @@ en:
       be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
       can_change_until: "You can change this information until registration closes on %{date}."
       people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
-      registration_closed: Team registration is closed. No changes can be made.
       no_complete_when_closed: Cannot pay when closed.
     notify_now_complete:
       congratulations: Congratulations!

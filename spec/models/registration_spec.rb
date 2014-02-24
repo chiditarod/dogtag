@@ -9,11 +9,6 @@ describe Registration do
       expect(FactoryGirl.build :registration, race: race, team: team).to be_valid
     end
 
-    it 'fails when a race is not open' do
-      race.stub(:open_for_registration?).and_return false
-      expect(FactoryGirl.build :registration, race: race, team: team).to be_invalid
-    end
-
     it 'fails when the same team registers for a single race more than once' do
       expect(FactoryGirl.create :registration, race: race, team: team).to be_valid
       expect(FactoryGirl.build :registration, race: race, team: team).to be_invalid

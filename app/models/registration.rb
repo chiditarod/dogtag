@@ -12,7 +12,6 @@ class Registration < ActiveRecord::Base
   validates_presence_of :team, :race
   validates_uniqueness_of :team, :scope => [:race], :allow_nil => true, :message => 'is already registered for this race. go create another team'
   validates_uniqueness_of :race, :scope => [:team], :allow_nil => true, :message => 'already has this team registered'
-  validates_with RegistrationValidator
 
   # A registration has a certain number of people, per the settings for the race.
   has_many :people
