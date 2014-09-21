@@ -4,9 +4,9 @@
       = link_to race_path(race.id) do
         %i.fa.fa-shopping-cart.fa-4x
   .col-xs-9
-    %h2= link_to race.name, race_path(race.id)
+    %h2= link_to race.name, race_path(race)
     %small
-      = race.finalized_teams.count
+      = race.finalized_teams.size
       of
       = race.max_teams
       = link_to t('.teams_registered'), race_registrations_url(:race_id => race.id)

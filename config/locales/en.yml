@@ -194,6 +194,9 @@ en:
       waitlisted_instructions_html: "Your team has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     update:
       edit_team: "Edit team for %{race_name}"
+    table:
+      exp: exp
+      paid: paid
 
   requirements:
     payment_requirement:

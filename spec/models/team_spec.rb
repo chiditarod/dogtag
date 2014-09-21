@@ -54,6 +54,11 @@ describe Team do
     it 'returns a multi-dimensional array of teams'
   end
 
+  describe '#percent_complete' do
+    it 'factors in the number of people the team has'
+    it 'factors in the number of requirements the race has'
+  end
+
   describe '#needs_people?' do
     let(:race) { FactoryGirl.create :race }
     let(:reg) { FactoryGirl.create :team, :with_people, :race => race, :people_count => (race.people_per_team - 1) }

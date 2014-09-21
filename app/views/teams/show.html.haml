@@ -34,9 +34,10 @@
               = t('.waitlist')
           - else
             .text-danger
-              %i.fa.fa-frown-o.fa-3x
+              %i.fa.fa-frown-o.fa-4x
               %br
               = t('.incomplete')
+          = render 'progressbar', :pct => @team.percent_complete
 
   .col-xs-10
     .row

@@ -42,6 +42,12 @@ class Team < ActiveRecord::Base
                   "Contests", "Charity", "Pleasure", "Sabotage", "Spectable",
                   "Fundraising", "Foodraising", "The Experience, Man", "DFL", "I am heavily uninspired"]
 
+  def percent_complete
+    total = race.requirements.select(&:enabled?).size + race.people_per_team
+    var = people.size + requirements.size
+    (var * 100) / total
+  end
+
   def needs_people?
     (race.people_per_team - people.count) > 0
   end

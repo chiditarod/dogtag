@@ -5,7 +5,7 @@ class RacesController < ApplicationController
   load_and_authorize_resource
 
   def index
-    @races = Race.all
+    @races = Race.order('created_at DESC').includes(:teams)
   end
 
   def show
