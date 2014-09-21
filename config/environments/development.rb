@@ -37,5 +37,4 @@ RailsSkeleton::Application.configure do
     port:                 '1025',
     enable_starttls_auto: true
   }
-
 end

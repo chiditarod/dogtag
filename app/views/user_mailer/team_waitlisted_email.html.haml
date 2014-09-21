@@ -5,24 +5,24 @@
     %h1 dogtag  :::  Chiditarod registration BoT
     %h4
       Hi, you are now on the waitlist for
-      = @reg.race.name
+      = @team.race.name
     %p
       %b
         You will be contacted if spots open up.
 
     %p
       Team:
-      = @reg.name
+      = @team.name
     %p
       Racers:
       %ul
-        - @reg.people.each do |p|
+        - @team.people.each do |p|
           %li
             = p.first_name
             = p.last_name
     %p
-      You can update your team information at your registration page until
-      = @reg.race.registration_close.strftime("%B %e, %Y")
+      You can update your team information until
+      = @team.race.registration_close.strftime("%B %e, %Y")
       when registration closes.
     %p
       Now, go out and read our freshly-updated

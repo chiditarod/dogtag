@@ -5,17 +5,17 @@ describe Person do
   class << self
     describe '#registered_for_race' do
       it 'returns all the people on finalized teams in a race' do
-        reg = FactoryGirl.create :registration, :finalized
+        reg = FactoryGirl.create :team, :finalized
         expect(Person.registered_for_race reg.race_id).to eq(reg.people)
       end
 
       it 'does not return people for non-finalized teams in a race' do
-        reg = FactoryGirl.create :registration, :with_people
+        reg = FactoryGirl.create :team, :with_people
         expect(Person.registered_for_race reg.race_id).to eq([])
       end
 
       it 'filters out all emails with the word "unknown"' do
-        reg = FactoryGirl.create :registration, :finalized
+        reg = FactoryGirl.create :team, :finalized
         person = reg.people.first
         person.email = 'unknown@gmail.com'
         person.save
@@ -46,13 +46,13 @@ describe Person do
       expect(FactoryGirl.build(:person, :twitter => '@good')).to be_valid
     end
 
-    it 'fails if associated with a registration with race.people_per_team people already assigned' do
+    it 'fails if associated with a team with race.people_per_team people already assigned' do
       person_hash = FactoryGirl.attributes_for :person
-      reg = FactoryGirl.create :registration
+      reg = FactoryGirl.create :team
       reg.race.people_per_team.times { |x| reg.people.create person_hash }
       person = reg.people.new person_hash
       expect(person).to be_invalid
-      expect(person.errors.messages[:maximum]).to eq(['people already added to this registration'])
+      expect(person.errors.messages[:maximum]).to eq(['people already added to this team'])
     end
 
   end

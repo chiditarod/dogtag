@@ -1,5 +1,5 @@
-- if req.completed?(reg)
-  - cr = req.cr_for(reg)
+- if req.completed?(team)
+  - cr = req.cr_for(team)
   - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
   - if charge.refunded
     %span.label.label-primary
@@ -24,7 +24,7 @@
       %h4.text-warning
         = t('.no_pay_waitlist')
     - else
-      = render 'charges/embed', :params => req.stripe_params(@registration)
+      = render 'charges/embed', :params => req.stripe_params(@team)
 
   - else
     %i.lead.text-danger

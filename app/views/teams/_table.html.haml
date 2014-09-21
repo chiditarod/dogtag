@@ -1,0 +1,41 @@
+
+%table.table.borderless.table-hover
+  %tr
+    %th Status
+    - if current_user.is_any_of? :admin, :operator
+      %th
+        Details
+    %th Team
+    %th Last Updated
+
+  - teams.each do |team|
+    %tr
+      %td
+        - if team.finalized?
+          %i.fa.fa-smile-o.fa-2x.text-success
+        - else
+          %i.fa.fa-frown-o.fa-2x.text-danger
+      - if current_user.is_any_of? :admin, :operator
+        %td
+          %small
+            = pluralize(@race.requirements.count - team.requirements.count, 'payment')
+            missing
+            %br
+            = pluralize(team.experience, 'year')
+            = t('experience')
+      %td
+        %h4
+          - if (can? [:show], team) || (current_user.team_ids.include? team.id)
+            = link_to team.name, team_url(team)
+          - else
+            = team.name
+
+          -#TODO: added during reg --> team
+          - if team.twitter.present?
+            %small
+              %small=link_to team.twitter.downcase, "http://twitter.com/#{team.twitter}"
+        %p
+          %i.fa.fa-quote-left.pull-left.fa-border
+          = team.description
+
+      %td= time_ago_in_words(team.updated_at)

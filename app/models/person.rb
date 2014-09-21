@@ -5,11 +5,11 @@ class Person < ActiveRecord::Base
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_with PersonValidator, :on => :create
 
-  belongs_to :registration
+  belongs_to :team
 
   def self.registered_for_race(race_id)
     race = Race.find race_id
-    race.finalized_registrations.inject([]) do |total, reg|
+    race.finalized_teams.inject([]) do |total, reg|
       total.concat reg.people.reject{ |person| person.email.downcase =~ /unknown/}
     end
   end

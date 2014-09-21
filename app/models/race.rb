@@ -8,9 +8,7 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
-  # Registrations are the intermediary model between a team registering for a race.
-  has_many :registrations
-  has_many :teams, -> {distinct}, :through => :registrations
+  has_many :teams
 
   # Each race has different registration requirements that needs
   # to be fulfilled before a team is fully registered.
@@ -20,26 +18,26 @@ class Race < ActiveRecord::Base
     requirements.select(&:enabled?)
   end
 
-  def finalized_registrations
-    registrations.select(&:finalized?)
+  def finalized_teams
+    teams.select(&:finalized?)
   end
 
   def spots_remaining
-    max_teams - finalized_registrations.count
+    max_teams - finalized_teams.count
   end
 
   def waitlist_count
     return 0 if not_full?
-    registrations.count - max_teams
+    teams.count - max_teams
   end
 
   # todo - this works in rails console but spec it out
-  def waitlisted_registrations
-    Registration.where(:race_id => 1).order(:created_at => :desc).reject { |x| x.finalized? }
+  def waitlisted_teams
+    Team.where(:race_id => self.id).order(:created_at => :desc).reject { |x| x.finalized? }
   end
 
   def full?
-    finalized_registrations.count >= max_teams
+    finalized_teams.count >= max_teams
   end
 
   def not_full?

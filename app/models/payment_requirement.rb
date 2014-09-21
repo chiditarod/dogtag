@@ -1,16 +1,16 @@
 class PaymentRequirement < Requirement
   has_many :tiers, :foreign_key => :requirement_id, :dependent => :delete_all
 
-  def stripe_params(registration)
+  def stripe_params(team)
     metadata = JSON.generate(
-      'race_name' => registration.race.name, 'registration_name' => registration.name,
-      'requirement_id' => id, 'registration_id' => registration.id)
+      'race_name' => team.race.name, 'team_name' => team.name,
+      'requirement_id' => id, 'team_id' => team.id)
 
-    {:description => "#{name} for #{registration.name} | #{registration.race.name}",
+    {:description => "#{name} for #{team.name} | #{team.race.name}",
      :metadata => metadata,
      :amount => active_tier.price,
      :image => '/images/patch_ring.jpg',
-     :name => registration.race.name
+     :name => team.race.name
     }
   end
 

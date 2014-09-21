@@ -47,14 +47,14 @@ class ChargesController < ApplicationController
       )
     end
 
-    # run requirement#complete, which creates a CompletedRequirement
+    # run requirement#complete, which creates a CompletedRequirement record
     cr_metadata = {
       'customer_id' => @customer.id,
       'charge_id' => charge.id,
       'amount' => params[:amount]
     }
     req = Requirement.find metadata['requirement_id']
-    req.complete metadata['registration_id'], current_user, cr_metadata
+    req.complete metadata['team_id'], current_user, cr_metadata
 
     redirect_to session[:prior_url]
     session.delete :prior_url
@@ -81,13 +81,13 @@ class ChargesController < ApplicationController
     end
 
     req_id = @charge['metadata']['requirement_id']
-    reg_id = @charge['metadata']['registration_id']
+    # this supports both the old registration_id and the newer team_id
+    team_id = @charge['metadata']['team_id'] || @charge['metadata']['registration_id']
 
-    cr = CompletedRequirement.where(:requirement_id => req_id, :registration_id => reg_id).first
-    reg = cr.registration
+    cr = CompletedRequirement.where(:requirement_id => req_id, :team_id => team_id).first
     CompletedRequirement.delete(cr)
 
-    redirect_to race_registration_url(reg.race.id, reg.id)
+    redirect_to team_url(team_id)
 
   rescue Stripe::InvalidRequestError => e
     flash[:error] = e.message

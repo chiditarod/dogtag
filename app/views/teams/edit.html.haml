@@ -1,7 +1,12 @@
-.row
-  .col-md-7
-    .page-header
-      %h1= t('.title')
-      = t('.instructions')
+.page-header
+  %h1
+    = t('.title')
+  %h1
+    = t('.edit_team', :race_name => @race.name)
 
+.row
+  .col-sm-12
+    = t('.instructions')
+.row
+  .col-sm-12
     = render 'form'
