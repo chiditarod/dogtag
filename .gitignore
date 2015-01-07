@@ -21,3 +21,6 @@
 
 PostgreSQL dumps
 *.dump
+
+# OSX stuff
+.DS_Store
