@@ -9,4 +9,12 @@
 
 # Make sure your secret_key_base is kept private
 # if you're sharing your code publicly.
-RailsSkeleton::Application.config.secret_key_base = 'cc38079f9266743e9d3a4160751838541f306e3ce61401e89b9e1997ebbd042025a27cca0fa2cc4ceb38493ad9ae99a703e1a67bcd4f6cfc2f62754927e11abb'
+#
+#
+token = if Rails.env.development? or Rails.env.test?
+          ('x' * 30) # meets minimum requirement of 30 chars long
+        else
+          ENV['RAILS_SECRET_TOKEN']
+        end
+
+RailsSkeleton::Application.config.secret_key_base = token

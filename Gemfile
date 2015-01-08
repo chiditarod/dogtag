@@ -63,6 +63,7 @@ gem 'jbuilder', '~> 1.2'
 
 group :development do
   gem 'capistrano'
+  gem 'mailcatcher'
 end
 
 group :test do
