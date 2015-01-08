@@ -11,13 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140121042043) do
+ActiveRecord::Schema.define(version: 20140920223230) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
   create_table "completed_requirements", force: true do |t|
-    t.integer  "registration_id"
+    t.integer  "team_id"
     t.integer  "requirement_id"
     t.integer  "user_id"
     t.text     "metadata"
@@ -25,7 +25,7 @@ ActiveRecord::Schema.define(version: 20140121042043) do
     t.datetime "updated_at"
   end
 
-  add_index "completed_requirements", ["registration_id", "requirement_id"], name: "completed_requirements_index", unique: true, using: :btree
+  add_index "completed_requirements", ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id", unique: true, using: :btree
 
   create_table "people", force: true do |t|
     t.string   "first_name"
@@ -35,7 +35,7 @@ ActiveRecord::Schema.define(version: 20140121042043) do
     t.string   "twitter"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer  "registration_id"
+    t.integer  "team_id"
     t.integer  "experience"
   end
 
@@ -50,29 +50,6 @@ ActiveRecord::Schema.define(version: 20140121042043) do
     t.datetime "updated_at"
   end
 
-  create_table "registrations", force: true do |t|
-    t.string   "name"
-    t.string   "description"
-    t.string   "twitter"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-    t.datetime "notified_at"
-    t.integer  "team_id"
-    t.integer  "race_id"
-    t.string   "racer_type"
-    t.string   "primary_inspiration"
-    t.boolean  "rules_confirmation"
-    t.boolean  "sabotage_confirmation"
-    t.boolean  "cart_deposit_confirmation"
-    t.boolean  "food_confirmation"
-    t.integer  "experience"
-    t.string   "buddies"
-    t.string   "wildcard"
-    t.text     "private_comments"
-  end
-
-  add_index "registrations", ["team_id", "race_id"], name: "index_registrations_on_team_id_and_race_id", unique: true, using: :btree
-
   create_table "requirements", force: true do |t|
     t.integer  "race_id"
     t.string   "type"
@@ -86,7 +63,23 @@ ActiveRecord::Schema.define(version: 20140121042043) do
     t.integer  "user_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.text     "description"
+    t.string   "twitter"
+    t.datetime "notified_at"
+    t.integer  "race_id"
+    t.string   "racer_type"
+    t.string   "primary_inspiration"
+    t.boolean  "rules_confirmation"
+    t.boolean  "sabotage_confirmation"
+    t.boolean  "cart_deposit_confirmation"
+    t.boolean  "food_confirmation"
+    t.integer  "experience"
+    t.string   "buddies"
+    t.string   "wildcard"
+    t.text     "private_comments"
   end
+
+  add_index "teams", ["race_id"], name: "index_teams_on_race_id", using: :btree
 
   create_table "tiers", force: true do |t|
     t.integer  "requirement_id"

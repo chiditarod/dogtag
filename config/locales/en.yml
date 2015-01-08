@@ -112,47 +112,43 @@ en:
   teams:
     new:
       title: Team Creation
-      instructions: Please write down your team name somewhere. This is a very important piece of information for you to remember.
-    edit:
-      title: Edit your basic team details
-      instructions: Teams are very basic. You'll provide many more details when you register this team for a race. Please write down your team name somwhere. This is a very important piece of information for you to remember.
-    index:
-      next_create_a_team: "Create a team for %{name}"
-      your_teams: Your dogPen
-      title: Manage your teams
-      registering_for_race: "You are registering for %{race_name}"
-      registration_instructions: "Each of your teams can register for a certain race only once."
-      instructions: Here's where you manage your teams. Before you can register for a race, you need to create a team.  Most folks will create a single team, while others coordinate more than 1 team. Teams are reusable -- next year, you can register these same teams again for a new race.
-      example: For example, let's say you and 9 friends are racing.  That's 2 teams worth of dawgs.  You'd create 2 teams and register both of them. To register a team with 3 carts, create 3 teams and complete the registration process for each of them.
-      no_teams: You haven't made any teams yet.
-      create: Create team
 
-    form:
-      name: Name your team
-      name_instructions: After naming your team, you can register it in a race.
-    team_item:
-      already_registered_for: "Registered for %{race_name}"
-      youre_in: "You're in, buddy."
-      fix_it: "Fix it before we sellout."
-      no_registrations: You have not yet registered for any races. Visit the Races page to get started.
-      registered_as: "Registered as %{name}"
-      register_waitlist: Register for Waitlist
-      registered_for: "Registered for %{name}"
-
-  registrations:
-    index:
-      race_not_found: Race not found.
-      registrations_for: "Registrations for %{name}"
-      no_registrations: No registrations yet.
-    new:
+      # from reg
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
       waitlist_count: "Waitlist count: %{num}"
-      instructions: Provide your team info first, then your racers on the next page.
+      instructions: |
+        Provide your team info first, then your racers on the next page.
+        Please write down your team name somewhere. This is a very important piece of information for you to remember.
+    edit:
+      title: "Edit team for %{race_name}"
+      instructions: This information is editable up until registration closes.
+      waitlist_position: "In position %{num} on the waitlist"
+    index:
+      next_create_a_team: "Create a team for %{name}"
+      your_teams_for_race: "Your dogPen for %{name}"
+      your_teams: Your dogPen
+      title: Manage your teams
+      registering_for_race: "You are registering for %{race_name}"
+      instructions: |
+        Use the dogPen to create and manage your teams. You can create and edit your team only
+        when the race registration window is open.
+        If you are a larger "team" made up of
+        multiple carts, you'd register one team for each cart.
+        For example, let's say you and 9 friends are racing. You'd register 2 teams.
+      no_teams: No teams match.
+      create: Create team
+      # from reg
+      race_not_found: Race not found.
+      teams_for: "Teams for %{name}"
+      register_for: "Register for %{name}"
     create:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
     form:
+      name: Name your team
+      name_instructions: After naming your team, you can register it in a race.
+      # from reg
       name: What name shall your team register as?
       description: Sum up your team in a montage of prose
       twitter: Got twitter? Please include the @ sign
@@ -167,11 +163,18 @@ en:
       wildcard: Favorite dance move
       private_comments: Any private comments to Coreganizers?
       registration_closed: Team registration is closed. No changes can be made.
+    team_item:
+      already_registered_for: "Registered for %{race_name}"
+      youre_in: "You're in, buddy."
+      fix_it: "Fix it before we sellout."
+      registered_as: "Registered as %{name}"
+      register_waitlist: Register for Waitlist
+      registered_for: "Registered for %{name}"
     show:
       edit: edit
       requirements: Payments
-      status: Registration Status
-      title: Team Registration Details
+      status: Team Status
+      title: Team Details
       registered_as: Registered as
 
       description: "Your Mission:"
@@ -180,19 +183,19 @@ en:
       requirement_instructions: You must complete the following payments to complete registration.
       be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
       can_change_until: "You can change this information until registration closes on %{date}."
-      people_instructions: You must add the proper number of racers to complete registration.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
+      people_instructions: You must add the proper number of racers to complete your team.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
       no_complete_when_closed: Cannot pay when closed.
     notify_now_complete:
       congratulations: Congratulations!
-      complete_instructions_html: "Your registration is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
+      complete_instructions_html: "Your team is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     notify_waitlisted:
       waitlisted: Waitlisted!
-      waitlisted_instructions_html: "Your registration has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
-    edit:
-      edit_registration: "Edit registration for %{race_name}"
-      waitlist_position: "In position %{num} on the waitlist"
+      waitlisted_instructions_html: "Your team has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     update:
-      edit_registration: "Edit registration for %{race_name}"
+      edit_team: "Edit team for %{race_name}"
+    table:
+      exp: exp
+      paid: paid
 
   requirements:
     payment_requirement:
@@ -201,6 +204,10 @@ en:
       tiers: tiers
 
   races:
+    registrations:
+      finalized_teams_for: "Finalized teams for %{name}"
+      waitlisted_teams_for: "Waitlisted teams for %{name}"
+      no_teams: No teams match.
     index:
       title: Races
       instructions: Get started by choosing a race.  In order to register you'll need an account. You can create one during the next step, if needed.
@@ -236,7 +243,7 @@ en:
       race_requirements: Race Requirements
       no_requirements_added: No requirements added yet
       registration_closed: Registration is closed
-      your_registrations: Your registrations
+      your_teams: Your teams
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.

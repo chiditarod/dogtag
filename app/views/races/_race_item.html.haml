@@ -4,12 +4,12 @@
       = link_to race_path(race.id) do
         %i.fa.fa-shopping-cart.fa-4x
   .col-xs-9
-    %h2= link_to race.name, race_path(race.id)
+    %h2= link_to race.name, race_path(race)
     %small
-      = race.finalized_registrations.count
+      = race.finalized_teams.size
       of
       = race.max_teams
-      = link_to t('.teams_registered'), race_registrations_url(race.id)
+      = link_to t('.teams_registered'), race_registrations_url(:race_id => race.id)
       %br
       - if race.open_for_registration?
         = t('open')
@@ -22,7 +22,7 @@
       = render 'races/race_metadata', :race => race
 
       .center-block
-        = link_to teams_path(:race_id => race.id) do
+        = link_to new_team_path(:race_id => race.id) do
           - if race.full?
             .btn.btn-warning
               = t('.register_waitlist')

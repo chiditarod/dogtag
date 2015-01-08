@@ -7,7 +7,7 @@ describe PaymentRequirement do
 
   describe '#stripe_params' do
     it 'sets the description to the name of the payment requirement'
-    it 'stores the requirement_id and registration_id in the metadata'
+    it 'stores the requirement_id and team_id in the metadata'
     it 'sets the amount of the active_tier'
     it 'sets an image'
     it 'sets the company name to the race name'

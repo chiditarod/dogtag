@@ -1,27 +1,38 @@
 .page-header
   - if @race.present?
-    - if @teams.blank?
-      %h1= t('.next_create_a_team', :name => @race.name)
-    - else
-      %h1= t('.title')
+    %h2= t('.your_teams_for_race', :name => @race.name)
   - else
-    %h1= t('.title')
+    %h2= t('.your_teams')
+
+- unless @myteams.present?
+  .row
+    .col-lg-9.col-xs-12
+      .alert.alert-warning.alert-dismissible{:role => 'alert'}
+        %button.close{ :data => { :dismiss => "alert" } }
+          %span{:'aria-hidden' => true}
+            &times;
+          %span.sr-only
+            Close
+        =t('.no_teams')
 
 .row
-  .col-md-8
+  .col-lg-9.col-xs-12
     %p= t('.instructions')
-    %p= t('.example')
-    %p= t('.registration_instructions')
-    %br
-    = link_to t('.create'), new_team_path, :class => ['btn', 'btn-success']
 
-.page-header
-  %h3
-    = t('.your_teams')
-- if @teams.blank?
-  %p= t('.no_teams')
-  %p= t('please_create_to_continue')
-- else
-  - @teams.each do |team|
-    .col-xs-6.col-md-4.pull-left
-      = render 'team_item', :team => team, :race => @race
+- if @race.present?
+  .row
+    .col-lg-9.col-xs-12
+      - if @race.open_for_registration?
+        = link_to new_team_path(:race_id => @race.id) do
+          - if @race.full?
+            .btn.btn-warning
+              = t('.register_waitlist')
+          - else
+            .btn.btn-success
+              = t('.register_for', :name => @race.name)
+
+- if @myteams.present?
+  - @myteams.each do |team|
+    .row
+      .col-xs-6.col-md-4.pull-left
+        = render 'team_item', :team => team

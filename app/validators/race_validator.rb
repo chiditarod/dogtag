@@ -29,5 +29,4 @@ class RaceValidator < ActiveModel::Validator
     end
     record.errors.count == 0
   end
-
 end

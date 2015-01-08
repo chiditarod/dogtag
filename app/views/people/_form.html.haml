@@ -1,4 +1,4 @@
-= form_for [@race, @registration, @person], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
+= form_for [@team, @person], :html => {:role => 'form', :class => 'form-horizontal'} do |f|
   .form-group
     .col-xs-4.control-label
       = label_tag :first_name, t('.first_name')
@@ -23,7 +23,7 @@
     .col-xs-4.control-label
       = label_tag :experience, t('.experience')
     .col-xs-5
-      = f.select :experience, Registration::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
+      = f.select :experience, Team::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
       = label_tag :twitter, t('.twitter')
@@ -32,6 +32,6 @@
   .form-group
     .col-xs-offset-4.col-xs-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
-      = link_to race_registration_path(@registration.race.id, @registration.id) do
+      = link_to team_path(@team.id) do
         .btn.btn-default
           = t('back')

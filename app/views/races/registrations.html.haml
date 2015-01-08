@@ -1,0 +1,21 @@
+- if @finalized_teams.any?
+  %h3
+    = t('.finalized_teams_for', :name => @race.name)
+    - if @finalized_teams.any? && current_user.is_any_of?(:admin, :operator)
+      %small
+        = mail_to @finalized_teams.map(&:user).map(&:email).join(',') do
+          %i.fa.fa-envelope
+          Email Addresses
+
+  = render 'teams/table', :teams => @finalized_teams
+
+- if @waitlisted_teams.any?
+  %h3
+    = t('.waitlisted_teams_for', :name => @race.name)
+    - if @waitlisted_teams.any? && current_user.is_any_of?(:admin, :operator)
+      %small
+        = mail_to @waitlisted_teams.map(&:user).map(&:email).join(',') do
+          %i.fa.fa-envelope
+          Email Addresses
+
+  = render 'teams/table', :teams => @waitlisted_teams

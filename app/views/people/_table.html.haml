@@ -9,11 +9,11 @@
   - people.each do |person|
     %tr
       %td
-        - if person.registration.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-          = link_to(edit_race_registration_person_url :race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id) do
+        - if person.team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+          = link_to(edit_team_person_url :team_id => person.team.id, :id => person.id) do
             %i.fa.fa-edit.fa-2x
         - if current_user.is? :admin
-          = button_to t('delete'), race_registration_person_url(:race_id => person.registration.race.id, :registration_id => person.registration.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
+          = button_to t('delete'), team_person_url(:team_id => person.team.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
       %td
         = person.first_name
         = person.last_name

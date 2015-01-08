@@ -33,6 +33,12 @@ describe RacesController do
         get :export, :race_id => 1; expect(response).to redirect_to(new_user_session_path)
       end
     end
+    describe '#registrations' do
+      it 'redirects to login' do
+        get :registrations, :race_id => 1; expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+    describe '#show'
   end
 
   context '[logged in]' do
@@ -40,6 +46,58 @@ describe RacesController do
       activate_authlogic
       user = FactoryGirl.create :admin_user
       mock_login! user
+    end
+
+    describe '#registrations' do
+
+      shared_examples "empty_finalized_teams" do
+        it "assigns finalized_teams to []" do
+          expect(assigns :finalized_teams).to be_empty
+        end
+      end
+      shared_examples "empty_waitlisted_teams" do
+        it "assigns waitlisted_teams to []" do
+          expect(assigns :waitlisted_teams).to be_empty
+        end
+      end
+
+      context 'with invalid race_id' do
+        before { get :registrations, :race_id => 100 }
+        it 'sets 404' do
+          expect(response.status).to eq(404)
+        end
+      end
+
+      context "with no teams" do
+        let(:race) { FactoryGirl.create :race }
+        before { get :registrations, :race_id => race.id }
+
+        include_examples 'empty_finalized_teams'
+        include_examples 'empty_waitlisted_teams'
+        it "sets flash[:alert]" do
+          expect(flash[:alert]).to be_present
+        end
+      end
+
+      context "with a finalized team" do
+        let(:team) { FactoryGirl.create :team, :finalized }
+        before { get :registrations, :race_id => team.race.id }
+
+        it 'assigns finalized_teams' do
+          expect(assigns :finalized_teams).to eq([team])
+        end
+        include_examples 'empty_waitlisted_teams'
+      end
+
+      context "with a non-finalized team" do
+        let(:team) { FactoryGirl.create :team }
+        before { get :registrations, :race_id => team.race.id }
+
+        it 'assigns waitlisted_teams' do
+          expect(assigns :waitlisted_teams).to eq([team])
+        end
+        include_examples 'empty_finalized_teams'
+      end
     end
 
     describe '#export' do
@@ -56,8 +114,8 @@ describe RacesController do
 
       context 'with valid id' do
         before do
-          @registration = FactoryGirl.create :registration, :finalized
-          get :show, :id => @registration.race.id
+          @team = FactoryGirl.create :team, :finalized
+          get :show, :id => @team.race.id
         end
 
         it 'returns 200' do
@@ -87,6 +145,7 @@ describe RacesController do
         it 'returns 200' do
           expect(response).to be_success
         end
+        it "sets @my_race_teams to the user's teams for this race"
       end
     end
 
@@ -172,8 +231,6 @@ describe RacesController do
       it 'sets @races to all races' do
         expect(assigns(:races).count).to eq 3
       end
-
-      it "sets @my_race_registrations to the user's registrations for this race"
     end
 
     describe '#new' do

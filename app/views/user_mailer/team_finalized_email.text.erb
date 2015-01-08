@@ -3,17 +3,17 @@ dogtag  :::  Chiditarod registration BoT
 :::::::::::
 
 
-Congratulations on completing your registration for <%= @reg.race.name %>
+Congratulations on completing your registration for <%= @team.race.name %>
 
-Team: <%= @reg.name %>
+Team: <%= @team.name %>
 
 Racers:
-<% @reg.people.each do |p| %>
+<% @team.people.each do |p| %>
 - <%= p.first_name %> <%= p.last_name %>
 <% end %>
 
 You can update your team information at http://dogtag.chiditarod.org
-until <%= @reg.race.registration_close.strftime("%B %e, %Y") %>, when registration closes.
+until <%= @team.race.registration_close.strftime("%B %e, %Y") %>, when registration closes.
 
 More communications will of course be on the way.
 Now, go out and read our freshly-updated website content:

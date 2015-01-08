@@ -3,13 +3,14 @@ RailsSkeleton::Application.routes.draw do
   # super basic static homepage text hack
   root :controller => 'homepages', :action => "index", :as => :home
 
-  resources :teams, :only => [:new, :create, :edit, :update, :index, :destroy]
+  resources :teams, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
+    resources :people, :only => [:new, :create, :edit, :update, :destroy]
+  end
+
   resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
+    get :registrations
     get :export
     resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
-    resources :registrations, :only => [:new, :create, :edit, :update, :index, :show] do
-      resources :people, :only => [:new, :create, :edit, :update, :destroy]
-    end
   end
 
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
@@ -66,7 +67,7 @@ RailsSkeleton::Application.routes.draw do
   #       get 'recent', on: :collection
   #     end
   #   end
-  
+
   # Example resource route with concerns:
   #   concern :toggleable do
   #     post 'toggle'

@@ -4,9 +4,9 @@ class PersonValidator < ActiveModel::Validator
   end
 
   def validate_person_count(record)
-    if record.registration.present? && record.registration.race.present?
-      if record.registration.people.count == record.registration.race.people_per_team
-        record.errors[:maximum] << "people already added to this registration"
+    if record.team.present? && record.team.race.present?
+      if record.team.people.count == record.team.race.people_per_team
+        record.errors[:maximum] << "people already added to this team"
       end
     end
   end

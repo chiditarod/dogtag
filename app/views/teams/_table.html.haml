@@ -1,0 +1,49 @@
+
+%table.table.table-hover.table-responsive
+  %tr
+    %th Status
+    - if current_user.is_any_of? :admin, :operator
+      %th Admin
+    %th Team
+    %th Updated
+
+  - teams.each do |team|
+    %tr
+      %td
+        - if team.finalized?
+          %i.fa.fa-smile-o.fa-2x.text-success
+        - else
+          %i.fa.fa-frown-o.fa-2x.text-danger
+          .text-danger.text_center
+            %small
+              = team.percent_complete
+              &#37;
+
+      - if current_user.is_any_of? :admin, :operator
+        %td{:style => 'width: 100px'}
+          %small
+            = team.requirements.count
+            = t('of')
+            = @race.requirements.count
+            = t('.paid')
+            %br
+            = pluralize(team.experience, 'year')
+            = t('.exp')
+      %td
+        %h4
+          - if (can? [:show], team) || (current_user.team_ids.include? team.id)
+            = link_to team.name, team_url(team)
+          - else
+            = team.name
+
+          -#TODO: added during reg --> team
+          - if team.twitter.present?
+            %small
+              %small=link_to team.twitter.downcase, "http://twitter.com/#{team.twitter}"
+        %p
+          %i.fa.fa-quote-left.pull-left.fa-border
+          = team.description
+
+      %td
+        %small
+          = time_ago_in_words(team.updated_at)

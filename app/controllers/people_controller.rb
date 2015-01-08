@@ -10,17 +10,16 @@ class PeopleController < ApplicationController
     else
       flash[:error] = t 'destroy_failed'
     end
-    redirect_to race_registration_url :race_id => @person.registration.race.id, :id => @person.registration.id
+    redirect_to team_url :id => @person.team.id
   end
 
   def update
-    @person = Person.find(params[:id])
-    @registration = @person.registration
-    @race = @registration.race
+    @person = Person.includes(:team).find(params[:id])
+    @team = @person.team
 
     if @person.update_attributes person_params
       flash[:notice] = I18n.t('update_success')
-      redirect_to race_registration_url :race_id => @person.registration.race.id, :id => @person.registration.id
+      redirect_to team_url :id => @person.team.id
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @person.errors.messages
@@ -28,31 +27,25 @@ class PeopleController < ApplicationController
   end
 
   def edit
-    @person = Person.find params[:id]
-    @registration = @person.registration
-    @race = @registration.race
+    @person = Person.includes(:team).find(params[:id])
+    @team = @person.team
   end
 
   def new
-    # we need these b/c they are referenced in _form.html.haml
-    @race = Race.find params[:race_id]
-    @registration = Registration.find params[:registration_id]
+    @team = Team.find params[:team_id]
     @person = Person.new
   end
 
   def create
     return render :status => 400 if params[:person].blank?
 
-    @registration = Registration.find params[:registration_id]
+    @team = Team.find params[:team_id]
     @person = Person.new person_params
-    @person.registration = @registration
-
-    # we need these b/c they are referenced in _form.html.haml
-    @race = Race.find params[:race_id]
+    @person.team = @team
 
     if @person.save
       flash[:notice] = I18n.t('create_success')
-      redirect_to race_registration_url({:race_id => params[:race_id], :id => params[:registration_id]})
+      redirect_to team_url :id => @person.team.id
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @person.errors.messages

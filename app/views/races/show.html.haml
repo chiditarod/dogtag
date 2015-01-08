@@ -13,7 +13,7 @@
 
     %h3
       - if @race.open_for_registration?
-        = @race.finalized_registrations.count
+        = @race.finalized_teams.count
         of
         = @race.max_teams
         = t('.teams_registered')
@@ -24,14 +24,14 @@
 
     - if @race.open_for_registration?
       - if @race.full?
-        = link_to t('.register_waitlist'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-warning']
+        = link_to t('.register_waitlist'), new_team_url(:race_id => params[:id]), :class => ['btn', 'btn-warning']
       - else
-        = link_to t('.register_now'), teams_path(:race_id => params[:id]), :class => ['btn', 'btn-success']
+        = link_to t('.register_now'), new_team_url(:race_id => params[:id]), :class => ['btn', 'btn-success']
 
 .row
-  - if @my_race_registrations.present?
+  - if @my_race_teams.present?
     .col-xs-12
-      %h3= t('.your_registrations')
-    - @my_race_registrations.each do |reg|
+      %h3= t('.your_teams')
+    - @my_race_teams.each do |team|
       .col-xs-6.col-md-4.pull-left
-        = render 'teams/team_item', :team => reg.team, :race => @race
+        = render 'teams/team_item', :team => team, :race => @race

@@ -5,39 +5,49 @@ describe TeamsController do
   context '[logged out]' do
     describe '#index' do
       it 'redirects to login' do
-        get :index; expect(response).to redirect_to(new_user_session_path)
+        get :index
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#new' do
       it 'redirects to login' do
-        get :new; expect(response).to redirect_to(new_user_session_path)
+        get :new
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create; expect(response).to redirect_to(new_user_session_path)
+        post :create
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        get :edit, :id => 1
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        patch :update, :id => 1
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+    describe '#show' do
+      it 'redirects to login' do
+        get :show, :id => 1
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        delete :destroy, :id => 1
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
   end
 
   context '[logged in]' do
-    let (:valid_team) { FactoryGirl.create :team }
-    let (:valid_team_hash) { FactoryGirl.attributes_for :team }
     let (:valid_user) { FactoryGirl.create :admin_user }
 
     before do
@@ -46,81 +56,159 @@ describe TeamsController do
     end
 
     describe '#new' do
-      before do
-        @team_stub = Team.new
-        Team.stub(:new).and_return @team_stub
-        get :new
+
+      context 'without :race_id param' do
+        before { get :new }
+
+        it 'sets flash error' do
+          expect(flash[:error]).to eq(I18n.t 'must_select_race')
+        end
+        it 'redirects to races index' do
+          expect(response).to redirect_to(races_path)
+        end
       end
 
-      it 'returns http success' do
-        expect(response).to be_success
+      context 'with :race_id param' do
+        let(:team) { Team.new }
+        let(:race) { FactoryGirl.create :race }
+
+        before do
+          allow(Team).to receive(:new).and_return team
+          get :new, :race_id => race.id
+        end
+
+        it 'returns http success' do
+          expect(response).to be_success
+        end
+        it 'assigns team to Team.new' do
+          expect(assigns(:team)).to eq(team)
+        end
+        it 'assigns race' do
+          expect(assigns(:race)).to eq(race)
+        end
+        it 'assigns the race to the team' do
+          expect(assigns(:team).race).to eq(race)
+        end
       end
 
-      it 'assigns @team to Team.new' do
-        expect(assigns(:team)).to eq(@team_stub)
-      end
+      context 'with invalid :race_id param'
     end
 
     describe '#index' do
-      let (:race_stub) { FactoryGirl.build :race }
 
-      context 'with race_id param' do
-        before do
-          Race.stub(:find).and_return race_stub
-          get :index, :race_id => '69'
+      shared_examples 'is_http_success' do
+        it 'returns success' do
+          expect(response).to be_success
         end
-        it 'sets @race' do
-          expect(assigns(:race)).to eq(race_stub)
-        end
-        it 'sets session[:last_race_id]' do
-          expect(session[:last_race_id]).to eq(race_stub.id)
+      end
+      shared_examples 'myteams_empty' do
+        it 'sets @myteams to empty array' do
+          expect(assigns(:myteams)).to be_empty
         end
       end
 
-      it 'sets @teams to all teams associated with the current user' do
-        valid_team.user = valid_user
-        valid_team.save
-        not_our_team = FactoryGirl.create :team
-        get :index
-        expect(assigns(:teams)).to eq([valid_team])
-        expect(assigns(:teams)).to_not include not_our_team
-      end
-
-      context 'normal query' do
-        before { get :index }
-
-        it 'does not set @race object' do
+      shared_examples 'no_race' do
+        it "does not assign @race" do
           expect(assigns(:race)).to be_nil
         end
-        it 'does not set session[:last_race_id]' do
-          expect(session[:last_race_id]).to be_nil
+      end
+
+      context 'when user has no teams' do
+        let (:valid_team) { FactoryGirl.create :team }
+
+        context '[no race_id]' do
+          before { get :index }
+          include_examples 'no_race'
+          include_examples 'myteams_empty'
+          include_examples 'is_http_success'
+        end
+
+        context '[valid race_id]' do
+          before { get :index, :race_id => valid_team.race.id }
+
+          it 'assigns @race' do
+            expect(assigns(:race)).to eq(valid_team.race)
+          end
+          include_examples 'myteams_empty'
+          include_examples 'is_http_success'
+        end
+
+        context '[unknown race_id]' do
+          before { get :index, :race_id => 99 }
+          it "does not assign @race" do
+            expect(assigns(:race)).to be_nil
+          end
+          include_examples 'myteams_empty'
+          include_examples 'is_http_success'
+        end
+      end
+
+      context 'when user has teams' do
+        let (:valid_team) { FactoryGirl.create :team, :user => valid_user }
+        before do
+          valid_team.user = valid_user
+          valid_team.save
+        end
+
+        context '[no race_id]' do
+          before { get :index }
+          it "assigns @myteams to the user's teams" do
+            expect(assigns(:myteams)).to eq([valid_team])
+          end
+          include_examples 'no_race'
+          include_examples 'is_http_success'
+        end
+
+        context "[valid race_id]" do
+
+          context "matching user's teams" do
+            before do
+              get :index, :race_id => valid_team.race.id
+            end
+            it 'sets race' do
+              expect(assigns(:race)).to eq(valid_team.race)
+            end
+            it "assigns @myteams to the user's teams for this race" do
+              expect(assigns :myteams).to eq([valid_team])
+            end
+            include_examples 'is_http_success'
+          end
+
+          context "not matching user's teams" do
+            let(:team_different_race) { FactoryGirl.create :team }
+            before do
+              get :index, :race_id => team_different_race.race.id
+            end
+            it 'sets race' do
+              expect(assigns(:race)).to eq(team_different_race.race)
+            end
+            include_examples 'myteams_empty'
+            include_examples 'is_http_success'
+          end
+        end
+
+        context '[unknown race_id]' do
+          before { get :index, :race_id => 99 }
+          include_examples 'no_race'
+          it "assigns @myteams to the user's teams" do
+            expect(assigns(:myteams)).to eq([valid_team])
+          end
+          include_examples 'is_http_success'
         end
       end
     end
 
     describe '#edit' do
-      context 'on invalid id' do
-        before { get :edit, :id => 99 }
-
-        it 'returns 404' do
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context 'on success' do
-        before { get :edit, :id => valid_team.id }
-
-        it 'assigns the @team object' do
-          expect(assigns(:team)).to eq(valid_team)
-        end
-
-        it 'returns 200' do
-          expect(response.status).to eq(200)
-        end
-      end
+      # edit is aliased to show, so no need to spec.
     end
 
     describe '#create' do
+      let(:race) { FactoryGirl.create :race }
+      let (:valid_team_hash) do
+        _t = FactoryGirl.attributes_for :team
+        _t.merge(:race_id => race.id)
+      end
+
       context 'without team param' do
         it 'returns 400' do
           post :create
@@ -128,32 +216,58 @@ describe TeamsController do
         end
       end
 
-      context 'with team param' do
-        it 'creates a new team' do
+      context 'with valid team parameters' do
+        it 'writes a new db record' do
           expect do
             post :create, :team => valid_team_hash
           end.to change(Team, :count).by 1
         end
-        it 'with session[:last_race_id], redirects to new_race_registation' do
-          session[:last_race_id] = 1
+
+        context 'upon success' do
+          before do
+            post :create, :team => valid_team_hash
+          end
+
+          it 'associates the current user with the new team' do
+            expect(assigns(:team).user).to eq(valid_user)
+          end
+          it 'assigns team' do
+            expect(assigns(:team)).to be_present
+          end
+          it 'sets a flash notice' do
+            expect(flash[:notice]).to eq(I18n.t 'create_success')
+          end
+          it 'redirects to team#show' do
+            expect(response).to redirect_to(team_url(assigns(:team).id))
+          end
+        end
+      end
+
+      context 'with invalid team parameters' do
+        let(:team_stub) do
+          _t = Team.new
+          _t.stub(:valid?) { false }
+          _t
+        end
+        before do
+          allow(Team).to receive(:new).and_return team_stub
           post :create, :team => valid_team_hash
-          expect(response).to redirect_to(new_race_registration_url 1, :team_id => assigns(:team).id)
         end
-        it 'w/o session[:last_race_id], redirects to team index' do
-          post :create, :team => valid_team_hash
-          expect(response).to redirect_to(teams_url)
+
+        it 'returns http success' do
+          expect(response).to be_success
         end
-        it 'associates the current user with the new team' do
-          team = FactoryGirl.build :team
-          team.user = valid_user
-          team_hash = FactoryGirl.attributes_for :team
-          post :create, :team => team_hash
-          expect(assigns(:team).user).to eq(valid_user)
-        end
+        it 'sets a flash notice' do
+          expect(flash.now[:error]).to include(I18n.t 'create_failed')
+          expect(flash.now[:error]).to_not be_nil
+          #expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
+         end
       end
     end
 
     describe '#update' do
+      let (:valid_team) { FactoryGirl.create :team }
+
       context 'on invalid id' do
         before { put :update, :id => 99 }
         it 'returns 404' do
@@ -162,15 +276,87 @@ describe TeamsController do
       end
 
       context 'with valid patch data' do
-        before { patch :update, :id => valid_team.id, :team => {:name => 'foo'} }
+        before do
+          patch :update,
+            :id => valid_team.id,
+            :team => {:description => 'New Description'}
+        end
+
         it 'updates the team' do
-          expect(valid_team.reload.name).to eq('foo')
+          expect(valid_team.reload.description).to eq('New Description')
         end
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-        it 'redirects to team index' do
-          expect(response).to redirect_to(teams_path)
+        it 'redirects to team#show' do
+          expect(response).to redirect_to(team_url valid_team.id)
+        end
+      end
+    end
+
+    describe '#show' do
+      context 'invalid id' do
+        before { get :show, :id => 100 }
+
+        it 'renders 404' do
+          expect(response.status).to eq(404)
+        end
+      end
+
+      context 'with valid id' do
+        let (:valid_team) { FactoryGirl.create :team }
+        before do
+          get :show, :id => valid_team.id
+        end
+
+        it 'assigns team' do
+          expect(assigns(:team)).to eq(valid_team)
+        end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
+        it 'assigns race' do
+          expect(assigns(:race)).to eq(valid_team.race)
+        end
+      end
+
+      context 'newly finalized (finalized? && ! notified_at)' do
+        before do
+          @now = Time.now
+          Time.stub(:now) { @now }
+          @team = FactoryGirl.create :team, :finalized, :user => valid_user
+          get :show, :id => @team.id
+        end
+
+        it 'sets notified_at to Time.now and saves in db' do
+          expect(Team.find(@team.id).notified_at).to eq(@now)
+        end
+        it 'the team thinks it is finalized' do
+          expect(assigns(:team).finalized?).to be_true
+        end
+        it 'sets display_notification = true for the view'
+        it 'emails the user'
+        it 'logs'
+      end
+
+      context 'newly unfinalized (! finalized? && notified_at)' do
+        before do
+          @now = Time.now
+          Time.stub(:now) { @now }
+          @team = FactoryGirl.create :team
+          @team.notified_at = @now - 1.month
+          @team.save
+          get :show, :id => @team.id
+        end
+
+        it 'the team thinks it is not finalized' do
+          expect(assigns(:team).finalized?).to be_false
+        end
+        it 'unsets notified_at' do
+          expect(assigns(:team).notified_at).to be_nil
+        end
+        it 'saves the database record' do
+          expect(@team.reload.notified_at).to be_nil
         end
       end
     end
@@ -189,10 +375,11 @@ describe TeamsController do
       end
 
       context 'with valid id' do
+        let(:valid_team) { FactoryGirl.create :team }
         before do
-          @team = FactoryGirl.create :team
-          delete :destroy, :id => @team.id
+          delete :destroy, :id => valid_team.id
         end
+
         it 'sets the flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
         end
@@ -200,7 +387,12 @@ describe TeamsController do
           expect(response).to redirect_to teams_path
         end
       end
-    end
 
+      context 'when team has made payments' do
+        it 'does not allow deletion'
+        it 'sets the flash notice'
+        it 'redirects to the team index'
+      end
+    end
   end
 end

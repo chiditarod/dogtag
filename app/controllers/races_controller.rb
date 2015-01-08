@@ -5,14 +5,13 @@ class RacesController < ApplicationController
   load_and_authorize_resource
 
   def index
-    @races = Race.all
-    @all_races = Race.all
+    @races = Race.order('created_at DESC').includes(:teams)
   end
 
   def show
     @race = Race.find params[:id]
     if current_user
-      @my_race_registrations = @race.registrations.where(:team_id => current_user.team_ids)
+      @my_race_teams = @race.teams.where(:id => current_user.team_ids)
     end
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
@@ -25,13 +24,23 @@ class RacesController < ApplicationController
     @race = Race.new
   end
 
+  def registrations
+    @race = Race.find params[:race_id]
+    race_teams = Team.where(:race_id => @race.id).order('updated_at DESC')
+    @finalized_teams = race_teams.select(&:finalized?)
+    @waitlisted_teams = race_teams.reject(&:finalized?)
+    if @finalized_teams.empty? && @waitlisted_teams.empty?
+      flash[:alert] = t('.no_teams')
+    end
+  end
+
   def export
     return render :status => 400 if params[:race_id].blank?
 
     race_id = params[:race_id]
-    regs = params[:finalized] ? Registration.export(race_id, :finalized => true) : Registration.export(race_id)
+    teams = params[:finalized] ? Team.export(race_id, :finalized => true) : Team.export(race_id)
     data = CSV.generate do |csv|
-      regs.each { |i| csv << i }
+      teams.each { |i| csv << i }
     end
     send_data data, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment; filename=race_#{race_id}_export.csv"
   end

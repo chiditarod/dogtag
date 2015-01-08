@@ -47,32 +47,32 @@ describe Race do
     end
 
     it 'returns requirements where enabled? == true' do
-      expect(@race.enabled_requirements).to eq([@req])
+      expect(@race.enabled_requirements).to eq [@req]
     end
 
     it 'does not return disabled requirements' do
       FactoryGirl.create :payment_requirement, :race => @race
-      expect(@race.enabled_requirements).to eq([@req])
+      expect(@race.enabled_requirements).to eq [@req]
     end
   end
 
-  describe '#finalized_registrations' do
+  describe '#finalized_teams' do
     before do
       @race = FactoryGirl.create :race
-      @reg = FactoryGirl.create(:registration, race: @race)
+      @reg = FactoryGirl.create :team, :race => @race
       @reg.stub(:finalized?).and_return(true)
-      @race.registrations << @reg
+      @race.teams << @reg
     end
 
-    it 'returns registrations with finalized? == true' do
-      expect(@race.finalized_registrations).to eq([@reg])
+    it 'returns teams with finalized? == true' do
+      expect(@race.finalized_teams).to eq [@reg]
     end
 
-    it 'does not return non-finalized registrations' do
-      reg = FactoryGirl.create(:registration, race: @race)
+    it 'does not return non-finalized teams' do
+      reg = FactoryGirl.create :team, :race => @race
       #todo: figure out why the next line is necessary (reverse key lookup?)
-      @race.registrations << reg
-      expect(@race.finalized_registrations).to eq([@reg])
+      @race.teams << reg
+      expect(@race.finalized_teams).to eq [@reg]
     end
   end
 
@@ -114,29 +114,29 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        reg = FactoryGirl.create :registration, race: @race
-        reg.stub(:finalized?).and_return true
+        team = FactoryGirl.create :team, race: @race
+        team.stub(:finalized?).and_return true
         #todo: figure out why the next line is necessary (reverse key lookup?)
-        @race.registrations << reg
+        @race.teams << team
       end
     end
 
-    it 'returns false if races has less than the maximum finalized registrations' do
-      expect(@race.full?).to eq(false)
+    it 'returns false if races has less than the maximum finalized teams' do
+      expect(@race.full?).to be_false
     end
 
-    it 'returns false if registrations are >= the maximum but some are not finalized' do
-      @race.registrations << FactoryGirl.create(:registration)
-      expect(@race.full?).to eq(false)
-      @race.registrations << FactoryGirl.create(:registration)
-      expect(@race.full?).to eq(false)
+    it 'returns false if teams are >= the maximum but some are not finalized' do
+      @race.teams << FactoryGirl.create(:team)
+      expect(@race.full?).to be_false
+      @race.teams << FactoryGirl.create(:team)
+      expect(@race.full?).to be_false
     end
 
-    it 'returns true if the race has the maximum finalized registrations' do
-      reg = FactoryGirl.create :registration
+    it 'returns true if the race has the maximum finalized teams' do
+      reg = FactoryGirl.create :team
       reg.stub(:finalized?).and_return true
-      @race.registrations << reg
-      expect(@race.full?).to eq(true)
+      @race.teams << reg
+      expect(@race.full?).to be_true
     end
   end
 
@@ -144,9 +144,9 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        reg = FactoryGirl.create(:registration, race: @race)
+        reg = FactoryGirl.create(:team, race: @race)
         reg.stub(:finalized?).and_return true
-        @race.registrations << reg
+        @race.teams << reg
       end
     end
 
@@ -155,9 +155,9 @@ describe Race do
     end
 
     it 'returns 0 if there are no spots remaining' do
-      reg = FactoryGirl.create :registration
+      reg = FactoryGirl.create :team
       reg.stub(:finalized?).and_return true
-      @race.registrations << reg
+      @race.teams << reg
       expect(@race.spots_remaining).to eq 0
     end
   end
@@ -202,8 +202,8 @@ describe Race do
     end
   end
 
-  describe '#waitlisted_registrations' do
-    it 'returns a list of registration objects'
+  describe '#waitlisted_teams' do
+    it 'returns a list of team objects'
     it 'returns them oldest first'
   end
 
@@ -222,10 +222,10 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        reg = FactoryGirl.create :registration, race: @race
+        reg = FactoryGirl.create :team, race: @race
         reg.stub(:finalized?).and_return true
         #todo: figure out why the next line is necessary (reverse key lookup?)
-        @race.registrations << reg
+        @race.teams << reg
       end
     end
 
@@ -235,21 +235,20 @@ describe Race do
 
     describe 'when full? == true' do
       before do
-        reg = FactoryGirl.create :registration, race: @race
+        reg = FactoryGirl.create :team, race: @race
         reg.stub(:finalized?).and_return true
-        @race.registrations << reg
+        @race.teams << reg
       end
 
-      it 'returns 0 if total registrations = finalized_registrations' do
+      it 'returns 0 if total teams = finalized_teams' do
         expect(@race.waitlist_count).to eq(0)
       end
 
-      it 'returns the delta between total registrations and finalized_registrations' do
-        reg = FactoryGirl.create :registration, race: @race
-        @race.registrations << reg
+      it 'returns the delta between total teams and finalized_teams' do
+        reg = FactoryGirl.create :team, race: @race
+        @race.teams << reg
         expect(@race.waitlist_count).to eq(1)
       end
     end
   end
-
 end

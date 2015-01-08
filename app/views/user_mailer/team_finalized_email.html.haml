@@ -5,17 +5,17 @@
     %h1 dogtag  :::  Chiditarod registration BoT
     %h4
       Congratulations on completing your
-      = @reg.race.name
+      = @team.race.name
       registration. You are now
       %b
         Fully Registered.
     %p
       Team:
-      = @reg.name
+      = @team.name
     %p
       Racers:
       %ul
-        - @reg.people.each do |p|
+        - @team.people.each do |p|
           %li
             = p.first_name
             = p.last_name
@@ -24,7 +24,7 @@
       %a{:href=>"http://dogtag.chiditarod.org"}
         dogtag.chiditarod.org
       until
-      = @reg.race.registration_close.strftime("%B %e, %Y")
+      = @team.race.registration_close.strftime("%B %e, %Y")
       when registration closes.
     %p
       More communications will of course be on the way.

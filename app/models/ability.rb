@@ -26,26 +26,23 @@ class Ability
     can [:show, :update], User, :id => user.id
 
     # Team
-    can [:create], Team
+    can [:index, :create], Team
     can [:read, :update], Team, :user_id => user.id
 
     #todo implement at some point
     #can [:destroy], Team do |team|
-      #user.id == team.user_id && team.registration_ids.empty?
+      #user.id == team.user_id && team.completed_requirements.empty?
     #end
 
-    # Races:
-    can [:read], Race
-
-    # Registrations
-    can [:index], Registration
-    can [:create], Registration
-    can [:read, :update], Registration, :team => { :id => user.team_ids }
+    # Races
+    # /races/
+    # /races/:race_id/registrations
+    can [:read, :registrations], Race
 
     # People
     can [:create], Person
     can [:show, :update], Person do |person|
-      user.team_ids.include? person.registration.team.id
+      user.team_ids.include? person.team.id
     end
 
     # Requirement
@@ -56,9 +53,8 @@ class Ability
 
     if user.is? :operator
       can [:export], Race
-      can [:read, :update], [Registration, Team]
+      can [:read, :update], Team
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
     end
-
   end
 end

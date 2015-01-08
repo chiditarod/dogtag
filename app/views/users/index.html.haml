@@ -34,7 +34,7 @@
                   .col-xs-4.col-md-2
                     = cr.updated_at.strftime("%b %e, %Y")
                   .col-xs-8.col-md-10
-                    = cr.registration.name
+                    = cr.team.name
                     %br
                     - if cr.metadata
                       - cr.metadata.each do |k,v|

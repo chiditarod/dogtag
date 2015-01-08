@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :completed_requirement, aliases: [:cr] do
     requirement
-    registration
+    team
     user
   end
 

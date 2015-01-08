@@ -25,14 +25,14 @@ describe CompletedRequirement do
   describe 'validation' do
     describe 'fails' do
       let (:rr) { FactoryGirl.create :completed_requirement }
-      it 'when registration/requirement pair exists (with same user)' do
-        expect(FactoryGirl.build :cr, :registration => rr.registration,
+      it 'when team/requirement pair exists (with same user)' do
+        expect(FactoryGirl.build :cr, :team => rr.team,
                :requirement => rr.requirement, :user => rr.user)
         .to be_invalid
       end
 
-      it 'when registration/requirement pair exists (with different user)' do
-        expect(FactoryGirl.build :cr, :registration => rr.registration,
+      it 'when team/requirement pair exists (with different user)' do
+        expect(FactoryGirl.build :cr, :team => rr.team,
                :requirement => rr.requirement, :user => FactoryGirl.create(:user2))
         .to be_invalid
       end
