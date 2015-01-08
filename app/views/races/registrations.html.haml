@@ -1,21 +1,48 @@
-- if @finalized_teams.any?
-  %h3
-    = t('.finalized_teams_for', :name => @race.name)
-    - if @finalized_teams.any? && current_user.is_any_of?(:admin, :operator)
-      %small
-        = mail_to @finalized_teams.map(&:user).map(&:email).join(',') do
-          %i.fa.fa-envelope
-          Email Addresses
+.panel-group#accordion{:role => "tablist", :'aria-multiselectable' => true}
 
-  = render 'teams/table', :teams => @finalized_teams
+  %h2
+    =t('.registrations_for', name: @race.name)
 
-- if @waitlisted_teams.any?
-  %h3
-    = t('.waitlisted_teams_for', :name => @race.name)
-    - if @waitlisted_teams.any? && current_user.is_any_of?(:admin, :operator)
-      %small
-        = mail_to @waitlisted_teams.map(&:user).map(&:email).join(',') do
-          %i.fa.fa-envelope
-          Email Addresses
+  -# completed
 
-  = render 'teams/table', :teams => @waitlisted_teams
+  .panel.panel-default
+    .panel-heading{:role => 'tab', :id => 'headingOne'}
+      %h4.panel-title
+        %span.fa.fa-smile-o.text-success{:alt => "complete"}
+        %a{:'data-toggle' => "collapse", :'data-parent' => "#accordion", :href => "#collapseOne", :'aria-expanded' => 'false', :'aria-controls' => "collapseOne"}
+          = t('.finalized_teams')
+
+        - if @finalized_teams.any? && current_user.is_any_of?(:admin, :operator)
+          %small
+            = mail_to @finalized_teams.map(&:user).map(&:email).join(',') do
+              %i.fa.fa-envelope
+              Email Addresses
+
+    .panel-collapse.collapse#collapseOne{:role => "tabpanel", :'aria-labelledby' => "headingOne"}
+      .panel-body
+        - if @finalized_teams.any?
+          = render 'teams/table', :teams => @finalized_teams
+        - else
+          = t('.no_finalized_teams')
+
+  -# waitlisted
+
+  .panel.panel-default
+    .panel-heading{:role => 'tab', :id => 'headingTwo'}
+      %h4.panel-title
+        %span.fa.fa-frown-o.text-danger{:alt => "incomplete"}
+        %a{:'data-toggle' => "collapse", :'data-parent' => "#accordion", :href => "#collapseTwo", :'aria-expanded' => 'false', :'aria-controls' => "collapseTwo"}
+          = t('.waitlisted_teams')
+
+          - if @waitlisted_teams.any? && current_user.is_any_of?(:admin, :operator)
+            %small
+              = mail_to @waitlisted_teams.map(&:user).map(&:email).join(',') do
+                %i.fa.fa-envelope
+                Email Addresses
+
+    .panel-collapse.collapse#collapseTwo{:role => "tabpanel", :'aria-labelledby' => "headingTwo"}
+      .panel-body
+        - if @waitlisted_teams.any?
+          = render 'teams/table', :teams => @waitlisted_teams
+        - else
+          %h3= t('.no_waitedlisted_teams')

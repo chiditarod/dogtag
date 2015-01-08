@@ -205,8 +205,11 @@ en:
 
   races:
     registrations:
-      finalized_teams_for: "Finalized teams for %{name}"
-      waitlisted_teams_for: "Waitlisted teams for %{name}"
+      registrations_for: "Registrations for %{name}"
+      finalized_teams: Finalized Teams
+      no_finalized_teams: No finalized teams, yet.
+      waitlisted_teams: Incomplete or Waitlisted Teams
+      no_waitlisted_teams: No incomplete/waitlisted teams, yet.
       no_teams: No teams match.
     index:
       title: Races
