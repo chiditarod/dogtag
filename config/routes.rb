@@ -25,6 +25,9 @@ RailsSkeleton::Application.routes.draw do
   resource :user_session, :only => [:new, :create, :destroy]
   resource :account, :controller => :users
 
+  # password reset
+  resources :password_resets, :only => [:new, :create, :edit, :update]
+
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
 
   # The priority is based upon order of creation: first created -> highest priority.

@@ -50,11 +50,22 @@ require 'authlogic/test_case'
 include Authlogic::TestCase
 
 def mock_login!(user)
-  user.should_not be_nil
+  expect(user).to_not be_nil
   session = UserSession.create!(user, false)
-  session.should be_valid
+  expect(session).to be_valid
   session.save
 end
+
+def mock_emailer!
+  ActionMailer::Base.delivery_method = :test
+  ActionMailer::Base.perform_deliveries = true
+  ActionMailer::Base.deliveries = []
+end
+
+def reset_mailer!
+  ActionMailer::Base.deliveries.clear
+end
+
 
 # CanCan authorization
 require "cancan/matchers"
