@@ -112,17 +112,17 @@ en:
   teams:
     new:
       title: Team Creation
-      instructions: Please write down your team name somewhere. This is a very important piece of information for you to remember.
+
       # from reg
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
       waitlist_count: "Waitlist count: %{num}"
-      instructions: Provide your team info first, then your racers on the next page.
+      instructions: |
+        Provide your team info first, then your racers on the next page.
+        Please write down your team name somewhere. This is a very important piece of information for you to remember.
     edit:
-      title: Edit your basic team details
-      instructions: Teams are very basic. You'll provide many more details when you register this team for a race. Please write down your team name somwhere. This is a very important piece of information for you to remember.
-      # from reg
-      edit_team: "Edit team for %{race_name}"
+      title: "Edit team for %{race_name}"
+      instructions: This information is editable up until registration closes.
       waitlist_position: "In position %{num} on the waitlist"
     index:
       next_create_a_team: "Create a team for %{name}"
@@ -135,8 +135,7 @@ en:
         when the race registration window is open.
         If you are a larger "team" made up of
         multiple carts, you'd register one team for each cart.
-        For example, let's say you and 9 friends are racing.  That's 2 teams worth of dawgs.
-        You'd register 2 teams.
+        For example, let's say you and 9 friends are racing. You'd register 2 teams.
       no_teams: No teams match.
       create: Create team
       # from reg
