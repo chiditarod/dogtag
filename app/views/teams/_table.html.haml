@@ -1,27 +1,29 @@
 
-%table.table.table-hover.table-responsive
-  %tr
-    %th Status
-    - if current_user.is_any_of? :admin, :operator
-      %th Admin
-    %th Team
-    %th Updated
+%table.team_sort.table.table-hover.table-responsive
+  %thead
+    %tr
+      %th.filter-false Status
+      %th.filter-false Details
+      %th Team
+      %th.filter-select Type
 
   - teams.each do |team|
     %tr
       %td
         - if team.finalized?
-          %i.fa.fa-smile-o.fa-2x.text-success
+          %span.fa.fa-smile-o.fa-2x.text-success{:alt => "complete"}
         - else
-          %i.fa.fa-frown-o.fa-2x.text-danger
+          %span.fa.fa-frown-o.fa-2x.text-danger{:alt => "incomplete"}
           .text-danger.text_center
             %small
               = team.percent_complete
               &#37;
 
-      - if current_user.is_any_of? :admin, :operator
-        %td{:style => 'width: 100px'}
-          %small
+      %td{:style => 'width: 100px'}
+        %small
+          = time_ago_in_words(team.updated_at)
+          %br
+          - if current_user.is_any_of? :admin, :operator
             = team.requirements.count
             = t('of')
             = @race.requirements.count
@@ -29,6 +31,7 @@
             %br
             = pluralize(team.experience, 'year')
             = t('.exp')
+
       %td
         %h4
           - if (can? [:show], team) || (current_user.team_ids.include? team.id)
@@ -45,5 +48,8 @@
           = team.description
 
       %td
-        %small
-          = time_ago_in_words(team.updated_at)
+        = team.racer_type.humanize
+
+= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.min.js"
+= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.widgets.min.js"
+= stylesheet_link_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/css/theme.bootstrap.css"

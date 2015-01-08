@@ -9,12 +9,8 @@ FactoryGirl.define do
     end
   end
 
-  sequence :payment_requirement_name do |n|
-    "Payment Requirement #{n}"
-  end
-
   factory :payment_requirement do
-    name { generate(:payment_requirement_name) }
+    sequence(:name) { |n| "Payment Requirement #{n}" }
     type 'PaymentRequirement'
     race
 
@@ -25,5 +21,4 @@ FactoryGirl.define do
       end
     end
   end
-
 end
