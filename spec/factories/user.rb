@@ -1,20 +1,11 @@
 FactoryGirl.define do
 
-  sequence :s_first do |n|
-    "First#{n}"
-  end
-  sequence :s_last do |n|
-    "Last#{n}"
-  end
-  sequence :s_email do |n|
-    "email#{n}@fake.com"
-  end
-
   factory :user do
-    first_name { generate :s_first }
-    last_name { generate :s_last }
+    sequence(:first_name) { |n| "First#{n}" }
+    sequence(:last_name)  { |n| "Last#{n}" }
+    sequence(:email)      { |n| "email#{n}@fake.com" }
+
     phone '312-867-5309'
-    email { generate :s_email }
     password '123456'
     password_confirmation '123456'
 
@@ -40,5 +31,4 @@ FactoryGirl.define do
   trait :with_user do
     user
   end
-
 end
