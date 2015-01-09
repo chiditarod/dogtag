@@ -40,6 +40,30 @@ describe Race do
     end
   end
 
+  describe '#over?' do
+    context 'race is in the future' do
+      it 'returns false'
+    end
+    context 'race is right now' do
+      it 'returns false'
+    end
+    context 'race is in the past' do
+      it 'returns true'
+    end
+  end
+
+  describe '#registration_over?' do
+    context 'registration close is in the future' do
+      it 'returns false'
+    end
+    context 'registration close is right now' do
+      it 'returns true'
+    end
+    context 'registration close is in the past' do
+      it 'returns true'
+    end
+  end
+
   describe '#enabled_requirements' do
     before do
       @race = FactoryGirl.create :race

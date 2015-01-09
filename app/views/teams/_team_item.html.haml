@@ -5,18 +5,41 @@
         = link_to(edit_team_url team.id) do
           %i.fa.fa-edit.fa-2x
     %span.lead
-      = team.name
+      = link_to team.name, team_path(id: team.id)
 
   .panel-body
-    %h4= link_to t('.registered_for', :name => team.race.name), team_path(:id => team.id)
+    .row
 
-    - if team.finalized?
-      .pull-left.fa.fa-smile-o.fa-3x.text-success
-      = link_to t('fully_registered'), team_path(:id => team.id), :class => 'text-success'
-      %p.small=t '.youre_in'
-    - else
-      .pull-left.fa.fa-frown-o.fa-3x.text-danger
-      = link_to t('team_needs_attention'), team_path(:id => team.id), :class => 'text-danger'
-      %p.small
-        =t '.fix_it'
+      .col-xs-3.col-sm-2.col-md-3.col-lg-2
+        - if team.finalized?
+          .pull-left.fa.fa-smile-o.fa-3x.text-success
+        - else
+          - if team.race.over?
+            .pull-left.fa.fa-frown-o.fa-3x.text-muted
+          - elsif team.race.registration_over?
+            .pull-left.fa.fa-frown-o.fa-3x.text-muted
+          - else
+            .pull-left.fa.fa-frown-o.fa-3x.text-danger
+
+      .col-xs-9.col-sm-10.col-md-9.col-lg-10
+        = link_to t('.competing_in', race: team.race.name), race_path(team.race)
+        %br
+        %small
+
+          - if team.finalized?
+            = link_to t('fully_registered'), team_path(:id => team.id), :class => 'text-success'
+            %p= t('.youre_in')
+          - else
+            - if team.race.over?
+              = link_to t('.team_is_dead'), team_path(:id => team.id), :class => 'text-muted'
+              %p=t '.race_over_slacked'
+
+            - elsif team.race.registration_over?
+              = link_to t('.team_is_dead'), team_path(:id => team.id), :class => 'text-muted'
+              %p=t '.registration_over_slacked'
+
+            - else
+              = link_to t('team_needs_attention'), team_path(:id => team.id), :class => 'text-danger'
+              %p
+                =t '.fix_it'
     %hr

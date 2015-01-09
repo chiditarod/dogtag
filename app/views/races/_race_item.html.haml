@@ -3,29 +3,32 @@
     .btn
       = link_to race_path(race.id) do
         %i.fa.fa-shopping-cart.fa-4x
+
+    - if race.open_for_registration?
+      = link_to new_team_path(:race_id => race.id) do
+        - if race.full?
+          .btn.btn-warning
+            = t('.register_waitlist')
+        - else
+          .btn.btn-success
+            = t('.register_now')
+
   .col-xs-9
-    %h2= link_to race.name, race_path(race)
+    %h2
+      = link_to race.name, race_path(race)
+
     %small
       = race.finalized_teams.size
       of
       = race.max_teams
       = link_to t('.teams_registered'), race_registrations_url(:race_id => race.id)
+
       %br
-      - if race.open_for_registration?
-        = t('open')
+
+      - if race.over?
+        = t('.race_complete')
+      - elsif race.open_for_registration?
+        = t('.registration_open')
+        = render 'races/race_metadata', :race => race
       - else
-        = t('closed')
-
-.row
-  .col-xs-12
-    - if race.open_for_registration?
-      = render 'races/race_metadata', :race => race
-
-      .center-block
-        = link_to new_team_path(:race_id => race.id) do
-          - if race.full?
-            .btn.btn-warning
-              = t('.register_waitlist')
-          - else
-            .btn.btn-success
-              = t('.register_now')
+        = t('.registration_closed')

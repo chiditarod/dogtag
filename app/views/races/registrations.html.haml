@@ -5,21 +5,21 @@
 
   -# completed
 
-  .panel.panel-default
+  .panel.panel-default.panel-success
     .panel-heading{:role => 'tab', :id => 'headingOne'}
       %h4.panel-title
         %span.fa.fa-smile-o.text-success{:alt => "complete"}
-        %a{:'data-toggle' => "collapse", :'data-parent' => "#accordion", :href => "#collapseOne", :'aria-expanded' => 'false', :'aria-controls' => "collapseOne"}
+        %a{:'data-toggle' => "collapse", :'data-parent' => "#accordion", :href => "#collapseOne", :'aria-expanded' => 'true', :'aria-controls' => "collapseOne"}
           = t('.finalized_teams')
 
         - if @finalized_teams.any? && current_user.is_any_of?(:admin, :operator)
           %small
-            = mail_to @finalized_teams.map(&:user).map(&:email).join(',') do
+            = mail_to('dogtag@chiditarod.org', bcc: @finalized_teams.map(&:user).map(&:email).join(',')) do
               %i.fa.fa-envelope
               Email Addresses
 
-    .panel-collapse.collapse#collapseOne{:role => "tabpanel", :'aria-labelledby' => "headingOne"}
-      .panel-body
+    .panel-collapse.collapse.in#collapseOne{:role => "tabpanel", :'aria-labelledby' => "headingOne"}
+      .panel-body{:style => "max-height: 600px; overflow-y: scroll;"}
         - if @finalized_teams.any?
           = render 'teams/table', :teams => @finalized_teams
         - else
@@ -27,7 +27,7 @@
 
   -# waitlisted
 
-  .panel.panel-default
+  .panel.panel-default.panel-warning
     .panel-heading{:role => 'tab', :id => 'headingTwo'}
       %h4.panel-title
         %span.fa.fa-frown-o.text-danger{:alt => "incomplete"}
@@ -36,12 +36,12 @@
 
           - if @waitlisted_teams.any? && current_user.is_any_of?(:admin, :operator)
             %small
-              = mail_to @waitlisted_teams.map(&:user).map(&:email).join(',') do
+              = mail_to('dogtag@chiditarod.org', bcc: @waitlisted_teams.map(&:user).map(&:email).join(',')) do
                 %i.fa.fa-envelope
                 Email Addresses
 
     .panel-collapse.collapse#collapseTwo{:role => "tabpanel", :'aria-labelledby' => "headingTwo"}
-      .panel-body
+      .panel-body{:style => "max-height: 600px; overflow-y: scroll;"}
         - if @waitlisted_teams.any?
           = render 'teams/table', :teams => @waitlisted_teams
         - else

@@ -17,6 +17,8 @@
   .form-group
     .col-xs-4.control-label
       = label_tag :phone, t('.phone')
+      %br
+      = t('.we_will_sms')
     .col-xs-6
       = f.text_field :phone, :class => 'form-control'
   .form-group

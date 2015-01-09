@@ -27,20 +27,26 @@ class Team < ActiveRecord::Base
   validates_inclusion_of :racer_type, in: VALID_RACER_TYPES
   validates_length_of :buddies, :maximum => 255, :message => "list is a bit long, eh? The max is 255 characters."
 
-  EXPERIENCE_LEVELS = ["Zero. Fresh meat",
-                       "1st year veterans",
-                       "2nd year sophmorons",
-                       "3rd year's a charm",
-                       "4th year senioritis",
-                       "5th year repeat offenders",
-                       "6th year and we're still drunk",
-                       "7th years of good luck",
-                       "8th year elite",
-                       "9th year elders"]
+  EXPERIENCE_LEVELS = [
+    "Zero. Fresh meat",
+    "1st year veterans",
+    "2nd year sophmorons",
+    "3rd year's a charm",
+    "4th year senioritis",
+    "5th year repeat offenders",
+    "6th year and we're still drunk",
+    "7th years of good luck",
+    "8th year elite",
+    "9th year elders",
+    "10th year anniversary"
+  ]
 
-  INSPIRATIONS = ["Speed / 1st Place", "Art", "Costuming & Themes",
-                  "Contests", "Charity", "Pleasure", "Sabotage", "Spectable",
-                  "Fundraising", "Foodraising", "The Experience, Man", "DFL", "I am heavily uninspired"]
+  INSPIRATIONS = [
+    "Industrial Design", 'Building Cool Stuff', 'Doing a good thing but doing it all wrong',
+    "Speed / 1st Place", "Art", "Costuming & Themes", 'Participatory Culture',
+    "Contests", "Charity", "Pleasure", "Sabotage", "Spectacle",
+    "Fundraising", "Foodraising", "The Experience, Man", "I am heavily uninspired", 'DFL'
+  ]
 
   def percent_complete
     total = race.requirements.select(&:enabled?).size + race.people_per_team
