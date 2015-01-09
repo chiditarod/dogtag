@@ -36,6 +36,10 @@ class Race < ActiveRecord::Base
     Team.where(:race_id => self.id).order(:created_at => :desc).reject { |x| x.finalized? }
   end
 
+  def over?
+    return true if race_datetime < Time.now
+  end
+
   def full?
     finalized_teams.count >= max_teams
   end
@@ -49,6 +53,10 @@ class Race < ActiveRecord::Base
     return false if now < registration_open
     return false if registration_close < now
     true
+  end
+
+  def registration_over?
+    registration_close < Time.now
   end
 
   def registerable?

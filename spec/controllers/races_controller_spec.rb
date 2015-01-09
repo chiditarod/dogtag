@@ -74,9 +74,6 @@ describe RacesController do
 
         include_examples 'empty_finalized_teams'
         include_examples 'empty_waitlisted_teams'
-        it "sets flash[:alert]" do
-          expect(flash[:alert]).to be_present
-        end
       end
 
       context "with a finalized team" do

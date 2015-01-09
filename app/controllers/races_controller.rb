@@ -29,9 +29,6 @@ class RacesController < ApplicationController
     race_teams = Team.where(:race_id => @race.id).order('updated_at DESC')
     @finalized_teams = race_teams.select(&:finalized?)
     @waitlisted_teams = race_teams.reject(&:finalized?)
-    if @finalized_teams.empty? && @waitlisted_teams.empty?
-      flash[:alert] = t('.no_teams')
-    end
   end
 
   def export

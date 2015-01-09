@@ -4,35 +4,34 @@
   - else
     %h2= t('.your_teams')
 
+.row
+  .col-xs-12.col-md-9
+    %p= t('.instructions')
+
 - unless @myteams.present?
   .row
-    .col-lg-9.col-xs-12
+    .col-xs-12.col-md-9
       .alert.alert-warning.alert-dismissible{:role => 'alert'}
         %button.close{ :data => { :dismiss => "alert" } }
           %span{:'aria-hidden' => true}
             &times;
           %span.sr-only
             Close
-        =t('.no_teams')
+        =t('.you_have_no_teams')
 
-.row
-  .col-lg-9.col-xs-12
-    %p= t('.instructions')
-
-- if @race.present?
+- if @race.present? && @race.open_for_registration?
   .row
-    .col-lg-9.col-xs-12
-      - if @race.open_for_registration?
-        = link_to new_team_path(:race_id => @race.id) do
-          - if @race.full?
-            .btn.btn-warning
-              = t('.register_waitlist')
-          - else
-            .btn.btn-success
-              = t('.register_for', :name => @race.name)
+    .col-xs-12.col-md-9
+      = link_to new_team_path(:race_id => @race.id) do
+        - if @race.full?
+          .btn.btn-warning
+            = t('.register_waitlist')
+        - else
+          .btn.btn-success
+            = t('.register_for', :name => @race.name)
 
 - if @myteams.present?
-  - @myteams.each do |team|
-    .row
-      .col-xs-6.col-md-4.pull-left
+  .row
+    - @myteams.each do |team|
+      .col-xs-12.col-sm-6.col-md-4.col-lg-4.pull-left
         = render 'team_item', :team => team

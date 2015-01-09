@@ -20,7 +20,8 @@ class TeamsController < ApplicationController
       return redirect_to races_path
     end
 
-    @race = Race.find params[:race_id] # || session[:last_race_id] ???
+    session[:signup_race_id] = params[:race_id]
+    @race = Race.find(params[:race_id])
     @team = Team.new
     @team.race = @race
   end
@@ -30,6 +31,7 @@ class TeamsController < ApplicationController
 
     @team = Team.new team_params
     @team.user = current_user
+    @team.race = Race.find(session[:signup_race_id] || params[:race_id])
 
     if @team.save
       flash.now[:notice] = I18n.t('create_success')

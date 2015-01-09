@@ -108,7 +108,8 @@ en:
     form:
       experience: How many years has this person participated at Chiditarod?
       twitter: Got twitter? Please include the @ sign
-
+      phone: Mobile Phone
+      we_will_sms: Please be accurate; we will send you important texts on race day
   teams:
     new:
       title: Team Creation
@@ -169,7 +170,11 @@ en:
       fix_it: "Fix it before we sellout."
       registered_as: "Registered as %{name}"
       register_waitlist: Register for Waitlist
-      registered_for: "Registered for %{name}"
+      competing_in: "Competing in %{race}"
+      team_needs_attention: Team needs attention
+      team_is_dead: Team is dead
+      registration_over_slacked: Registration is over and you slacked
+      race_over_slacked: The race is over and you slacked
     show:
       edit: edit
       requirements: Payments
@@ -183,7 +188,11 @@ en:
       requirement_instructions: You must complete the following payments to complete registration.
       be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
       can_change_until: "You can change this information until registration closes on %{date}."
-      people_instructions: You must add the proper number of racers to complete your team.  You can't delete a person, but you can change everything about them.  If you do not know all your racers please enter UNKNOWN into the required fields. Email will need to be unknown@unknown.com. Once your racers have been entered, please complete the payment sequence.
+      people_instructions: |
+        You must add the proper number of racers to complete your team.  You cannot delete a racer,
+        but you can change everything about them. It is very important to enter this information accurately,
+        since we will be sending pre-race updates to each email address and day-of announcements to racer
+        cell-phones via SMS. If you do not add all the racers, YOU ARE NOT REGISTERED!
       no_complete_when_closed: Cannot pay when closed.
     notify_now_complete:
       congratulations: Congratulations!
