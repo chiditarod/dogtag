@@ -31,4 +31,9 @@ class User < ActiveRecord::Base
   def fullname
     "#{first_name} #{last_name}"
   end
+
+  def deliver_password_reset_instructions!(host)
+    reset_perishable_token!
+    UserMailer.password_reset_instructions(self, host).deliver
+  end
 end

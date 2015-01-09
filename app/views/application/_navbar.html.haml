@@ -59,16 +59,25 @@
                   %i.fa.fa-sign-out.fa-fw
                   Logout
       - else
-        %li
-          = link_to new_user_session_path do
+        %li.dropdown
+          %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
             %i.fa.fa-sign-in.fa-2x
-            =t '.login'
+            Login
+            %b.caret
+            %ul.dropdown-menu
+              %li
+                = link_to new_user_session_path do
+                  %i.fa.fa-sign-in.fa-fw.fa-2x
+                  =t '.login'
+              %li
+                = link_to new_password_reset_url do
+                  %i.fa.fa-paper-plane-o.fa-fw.fa-2x
+                  =t '.forgot_password'
+
         %li
           = link_to new_user_path do
             %i.fa.fa-check-square-o.fa-2x
             =t '.register'
-
-
 
       %li.dropdown
         %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}

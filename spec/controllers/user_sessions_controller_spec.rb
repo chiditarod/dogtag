@@ -3,8 +3,10 @@ require 'spec_helper'
 describe UserSessionsController do
 
   context '[logged out]' do
+    before do
+      activate_authlogic
+    end
 
-    before { activate_authlogic }
     let(:user_session_hash) { FactoryGirl.attributes_for :user_session }
 
     describe '#destroy' do
