@@ -47,14 +47,16 @@ class ChargesController < ApplicationController
       )
     end
 
-    # run requirement#complete, which creates a CompletedRequirement record
+
     cr_metadata = {
       'customer_id' => @customer.id,
       'charge_id' => charge.id,
       'amount' => params[:amount]
     }
     req = Requirement.find metadata['requirement_id']
-    req.complete metadata['team_id'], current_user, cr_metadata
+
+    # call requirement#complete, which creates a CompletedRequirement record
+    req.complete(metadata['team_id'], current_user, cr_metadata)
 
     redirect_to session[:prior_url]
     session.delete :prior_url

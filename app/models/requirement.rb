@@ -3,8 +3,8 @@ class Requirement < ActiveRecord::Base
   validates_presence_of :name
 
   belongs_to :race
-  # todo: add database index for uniqueness
   validates_presence_of :race
+
   has_many :completed_requirements
   has_many :teams, :through => :completed_requirements
 
