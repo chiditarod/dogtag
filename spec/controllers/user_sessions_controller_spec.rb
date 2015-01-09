@@ -33,22 +33,40 @@ describe UserSessionsController do
         end
       end
 
-      # todo: this still doesn't work (pcorliss?)
-      #context 'on successful save of the user_session' do
-        #before do
-          #FactoryGirl.create :user
-          #session[:return_to] = 'http://somewhere'
-          #post :create, :user_session => user_session_hash
-        #end
+      context 'on successful save of the user_session' do
+        before do
+          mock = UserSession.new(user_session_hash)
+          mock.stub(:save) { true }
+          allow(UserSession).to receive(:new).and_return(mock)
+        end
 
-        #it 'sets a flash notice' do
-          #expect(flash[:notice]).to eq(I18n.t 'login_success')
-        #end
+        context 'with session[:return_to]' do
+          before do
+            session[:return_to] = 'http://somewhere'
+            post :create, user_session: user_session_hash
+          end
 
-        #it 'redirects to value saved in session[:prior_url]' do
-          #expect(response).to redirect_to('http://somewhere')
-        #end
-      #end
+          it 'redirects to session[:return_to]' do
+            expect(response).to redirect_to('http://somewhere')
+          end
+          it 'sets a flash notice' do
+            expect(flash[:notice]).to eq(I18n.t 'login_success')
+          end
+        end
+
+        context 'without session[:return_to]' do
+          before do
+            post :create, user_session: user_session_hash
+          end
+
+          it 'redirects to account page' do
+            expect(response).to redirect_to(account_url)
+          end
+          it 'sets a flash notice' do
+            expect(flash[:notice]).to eq(I18n.t 'login_success')
+          end
+        end
+      end
 
       context 'on failure to save the user_session' do
         before do
@@ -91,5 +109,4 @@ describe UserSessionsController do
       end
     end
   end
-
 end
