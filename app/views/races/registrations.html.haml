@@ -40,7 +40,7 @@
                 %i.fa.fa-envelope
                 Email Addresses
 
-    .panel-collapse.collapse#collapseTwo{:role => "tabpanel", :'aria-labelledby' => "headingTwo"}
+    .panel-collapse.collapse.in#collapseTwo{:role => "tabpanel", :'aria-labelledby' => "headingTwo"}
       .panel-body{:style => "max-height: 600px; overflow-y: scroll;"}
         - if @waitlisted_teams.any?
           = render 'teams/table', :teams => @waitlisted_teams

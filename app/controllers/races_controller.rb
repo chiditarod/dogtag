@@ -5,7 +5,8 @@ class RacesController < ApplicationController
   load_and_authorize_resource
 
   def index
-    @races = Race.order('created_at DESC').includes(:teams)
+    @past_races = Race.past.order('created_at DESC').includes(:teams)
+    @current_races = Race.current.order('created_at DESC').includes(:teams)
   end
 
   def show
@@ -80,8 +81,10 @@ class RacesController < ApplicationController
   private
 
   def race_params
-    params.require(:race).permit(:name, :max_teams, :people_per_team,
-                                 :race_datetime, :registration_open, :registration_close)
+    params.require(:race).permit(
+      :name, :max_teams, :people_per_team,
+      :race_datetime, :registration_open, :registration_close,
+      :jsonform
+    )
   end
-
 end

@@ -30,6 +30,9 @@ gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
 # postgres for heroku
 gem 'pg', '0.17.1'
 
+
+gem 'json-schema'
+
 # END dogtag gems
 # -------------------------------------------------------
 
@@ -56,7 +59,7 @@ gem 'haml-rails'
 gem 'jquery-rails'
 
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
-gem 'turbolinks'
+#gem 'turbolinks'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 1.2'
@@ -64,6 +67,7 @@ gem 'jbuilder', '~> 1.2'
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
+  gem 'guard-rspec', require: false
 end
 
 group :test do

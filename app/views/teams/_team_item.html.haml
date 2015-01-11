@@ -9,7 +9,6 @@
 
   .panel-body
     .row
-
       .col-xs-3.col-sm-2.col-md-3.col-lg-2
         - if team.finalized?
           .pull-left.fa.fa-smile-o.fa-3x.text-success
@@ -21,11 +20,15 @@
           - else
             .pull-left.fa.fa-frown-o.fa-3x.text-danger
 
+
       .col-xs-9.col-sm-10.col-md-9.col-lg-10
-        = link_to t('.competing_in', race: team.race.name), race_path(team.race)
+        - if team.finalized?
+          = link_to t('.registered_for', race: team.race.name), team_path(team)
+        - else
+          = link_to t('.registering_for', race: team.race.name), team_path(team)
+
         %br
         %small
-
           - if team.finalized?
             = link_to t('fully_registered'), team_path(:id => team.id), :class => 'text-success'
             %p= t('.youre_in')

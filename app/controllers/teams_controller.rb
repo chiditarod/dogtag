@@ -1,5 +1,5 @@
 class TeamsController < ApplicationController
-  before_filter :require_user
+  before_filter :require_user, except: [:questions]
   load_and_authorize_resource
 
   def index
@@ -37,7 +37,7 @@ class TeamsController < ApplicationController
 
     if @team.save
       flash.now[:notice] = I18n.t('create_success')
-      return redirect_to team_url(@team.id)
+      return redirect_to team_questions_path(@team)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @team.errors.messages
@@ -67,7 +67,7 @@ class TeamsController < ApplicationController
 
     if @team.update_attributes team_params
       flash[:notice] = I18n.t('update_success')
-      return redirect_to team_url(@team.id)
+      return redirect_to team_questions_path(@team)
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @team.errors.messages
@@ -89,13 +89,9 @@ class TeamsController < ApplicationController
   private
 
   def team_params
-    params.require(:team).permit(
-      :race_id,
-      :name, :description, :twitter, :racer_type,
-      :primary_inspiration, :rules_confirmation, :sabotage_confirmation,
-      :cart_deposit_confirmation, :food_confirmation, :experience,
-      :buddies, :wildcard, :private_comments
-    )
+    params
+      .require(:team)
+      .permit(:race_id, :name, :description, :experience)
   end
 
   # TODO: move emailer to observer pattern?

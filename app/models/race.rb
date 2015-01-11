@@ -8,6 +8,9 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
+  scope :past, -> { where("race_datetime < ?", Time.now) }
+  scope :current, -> { where("race_datetime > ?", Time.now) }
+
   has_many :teams
 
   # Each race has different registration requirements that needs
@@ -78,5 +81,4 @@ class Race < ActiveRecord::Base
       Race.all.select(&:open_for_registration?)
     end
   end
-
 end

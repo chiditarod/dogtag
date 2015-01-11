@@ -39,16 +39,12 @@
           - else
             = team.name
 
-          -#TODO: added during reg --> team
-          - if team.twitter.present?
-            %small
-              %small=link_to team.twitter.downcase, "http://twitter.com/#{team.twitter}"
         %p
           %i.fa.fa-quote-left.pull-left.fa-border
           = team.description
 
       %td
-        = team.racer_type.humanize
+        -#= team.racer_type.humanize
 
 = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.min.js"
 = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.widgets.min.js"

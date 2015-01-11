@@ -15,11 +15,13 @@
       = label_tag :registration_open, t('.registration_open')
     .col-sm-8
       = f.datetime_select :registration_open, :class => 'form-control'
+
   .form-group
     .col-sm-4.control-label
       = label_tag :registration_close, t('.registration_close')
     .col-sm-8
       = f.datetime_select :registration_close, :class => 'form-control'
+
   .form-group
     .col-sm-4.control-label
       = label_tag :race_datetime, t('.race_datetime')
@@ -31,11 +33,20 @@
       = label_tag :max_teams, t('.max_teams')
     .col-xs-2
       = f.text_field :max_teams, :class => 'form-control'
+
   .form-group
     .col-sm-4.control-label
       = label_tag :people_per_team, t('.people_per_team')
     .col-xs-2
       = f.text_field :people_per_team, :class => 'form-control'
+
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :jsonform, t('.jsonform_data')
+    .col-sm-8
+      = f.text_area :jsonform, :class => 'form-control'
+
   .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
+

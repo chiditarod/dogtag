@@ -190,13 +190,20 @@ describe TeamsController do
       end
     end
 
+    describe '#jsonform' do
+      context 'when team_id is not found in db' do
+        it 'sets flash error'
+        it 'redirects to home page'
+      end
+    end
+
     describe '#edit' do
       # edit is aliased to show, so no need to spec.
     end
 
     describe '#create' do
       let(:race) { FactoryGirl.create :race }
-      let (:valid_team_hash) do
+      let(:valid_team_hash) do
         _t = FactoryGirl.attributes_for :team
         _t.merge(:race_id => race.id)
       end
@@ -229,8 +236,8 @@ describe TeamsController do
           it 'sets a flash notice' do
             expect(flash[:notice]).to eq(I18n.t 'create_success')
           end
-          it 'redirects to team#show' do
-            expect(response).to redirect_to(team_url(assigns(:team).id))
+          it 'redirects to team#questions' do
+            expect(response).to redirect_to(team_questions_url(assigns(:team).id))
           end
         end
       end
@@ -275,8 +282,8 @@ describe TeamsController do
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-        it 'redirects to team#show' do
-          expect(response).to redirect_to(team_url valid_team.id)
+        it 'redirects to team#questions' do
+          expect(response).to redirect_to(team_questions_url valid_team.id)
         end
       end
     end

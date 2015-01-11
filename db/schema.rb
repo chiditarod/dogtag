@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140920223230) do
+ActiveRecord::Schema.define(version: 20150111222828) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -48,6 +48,7 @@ ActiveRecord::Schema.define(version: 20140920223230) do
     t.integer  "people_per_team"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.text     "jsonform"
   end
 
   create_table "requirements", force: true do |t|
@@ -77,6 +78,7 @@ ActiveRecord::Schema.define(version: 20140920223230) do
     t.string   "buddies"
     t.string   "wildcard"
     t.text     "private_comments"
+    t.text     "jsonform"
   end
 
   add_index "teams", ["race_id"], name: "index_teams_on_race_id", using: :btree

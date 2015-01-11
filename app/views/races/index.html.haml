@@ -7,13 +7,24 @@
           %i.fa.fa-plus
   %p= t('.instructions')
 
-- if @races.blank?
+- if @current_races.blank?
   = t '.no_races'
 - else
   .row.well
-    - @races.each do |race|
+    - @current_races.each do |race|
       .col-xs-12.col-sm-6.col-md-6.col-lg-4.pull-left
         .panel.panel-default
           .panel-body
             = render 'race_item', :race => race
 .clearfix
+
+%h3= t('.past_races')
+- if @past_races.blank?
+  = t '.no_races'
+- else
+  .row.well
+    - @past_races.each do |race|
+      .col-xs-12.col-sm-6.col-md-6.col-lg-4.pull-left
+        .panel.panel-default
+          .panel-body
+            = render 'race_item', :race => race
