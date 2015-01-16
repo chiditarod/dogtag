@@ -27,7 +27,13 @@ class Ability
 
     # Team
     can [:index, :create], Team
-    can [:read, :update], Team, :user_id => user.id
+    can [:read], Team, user_id: user.id
+    can [:update], Team do |team|
+      team.user_id == user.id && team.race.open_for_registration?
+    end
+
+    # Questions
+    can [:show, :create], :questions
 
     #todo implement at some point
     #can [:destroy], Team do |team|
@@ -42,7 +48,7 @@ class Ability
     # People
     can [:create], Person
     can [:show, :update], Person do |person|
-      user.team_ids.include? person.team.id
+      user.team_ids.include?(person.team.id) && person.team.race.open_for_registration?
     end
 
     # Requirement
@@ -54,6 +60,7 @@ class Ability
     if user.is? :operator
       can [:export], Race
       can [:read, :update], Team
+      can [:read, :update], Person
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
     end
   end

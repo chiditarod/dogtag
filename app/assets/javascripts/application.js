@@ -12,5 +12,8 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require turbolinks
-//= require_tree .
+//= require underscore-min
+//= require jsv
+//= require jsonform
+//= require jsonform-split
+//= require jsonform-defaults

@@ -46,6 +46,9 @@ describe Person do
       expect(FactoryGirl.build(:person, :twitter => '@good')).to be_valid
     end
 
+    it 'fails with poorly formed zipcode'
+    it 'fails with poorly formed phone number'
+
     it 'fails if associated with a team with race.people_per_team people already assigned' do
       person_hash = FactoryGirl.attributes_for :person
       reg = FactoryGirl.create :team

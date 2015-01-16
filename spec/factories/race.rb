@@ -11,5 +11,8 @@ FactoryGirl.define do
     factory :closed_race do
       registration_close (Time.now - 1.week)
     end
+
+    #trait :with_jsonform do
+    #end
   end
 end

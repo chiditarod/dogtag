@@ -14,21 +14,15 @@ end
 # -------------------------------------------------------
 # BEGIN dogtag gems
 
-# authentication
-gem 'authlogic',
-  :git => 'git://github.com/binarylogic/authlogic',
-  :ref => 'abc09970ed1fad98c6c12f4ca64d1670d37d11db'
+gem 'authlogic', '~> 3.4.0'     # authentication
+gem 'cancan', '~> 1.6.10'       # authorization
+gem 'role_model', '~> 0.8.1'    # roles
 
-# authorization
-gem 'cancan', '1.6.10'
-# roles
-gem 'role_model', '0.8.1'
-
-# Payment stuff
+# payments
 gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
 
-# postgres for heroku
-gem 'pg', '0.17.1'
+gem 'pg', '~> 0.18.1'           # postgres for heroku
+gem 'json-schema'               # validate incoming jsonform
 
 # END dogtag gems
 # -------------------------------------------------------
@@ -56,7 +50,7 @@ gem 'haml-rails'
 gem 'jquery-rails'
 
 # Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
-gem 'turbolinks'
+#gem 'turbolinks'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 1.2'
@@ -64,6 +58,7 @@ gem 'jbuilder', '~> 1.2'
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
+  gem 'guard-rspec', require: false
 end
 
 group :test do

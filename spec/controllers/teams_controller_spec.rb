@@ -3,53 +3,45 @@ require 'spec_helper'
 describe TeamsController do
 
   context '[logged out]' do
-    describe '#index' do
+    shared_examples 'redirects to login' do
       it 'redirects to login' do
-        get :index
+        endpoint.call
         expect(response).to redirect_to(new_user_session_path)
       end
+    end
+
+    describe '#index' do
+      let(:endpoint) { lambda { get :index }}
+      include_examples 'redirects to login'
     end
     describe '#new' do
-      it 'redirects to login' do
-        get :new
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { get :new }}
+      include_examples 'redirects to login'
     end
     describe '#create' do
-      it 'redirects to login' do
-        post :create
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { post :create }}
+      include_examples 'redirects to login'
     end
     describe '#edit' do
-      it 'redirects to login' do
-        get :edit, :id => 1
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { get :edit, id: 1 }}
+      include_examples 'redirects to login'
     end
     describe '#update' do
-      it 'redirects to login' do
-        patch :update, :id => 1
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { patch :update, id: 1 }}
+      include_examples 'redirects to login'
     end
     describe '#show' do
-      it 'redirects to login' do
-        get :show, :id => 1
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { get :show, id: 1 }}
+      include_examples 'redirects to login'
     end
     describe '#destroy' do
-      it 'redirects to login' do
-        delete :destroy, :id => 1
-        expect(response).to redirect_to(new_user_session_path)
-      end
+      let(:endpoint) { lambda { delete :destroy, id: 1 }}
+      include_examples 'redirects to login'
     end
   end
 
   context '[logged in]' do
     let (:valid_user) { FactoryGirl.create :admin_user }
-
     before do
       activate_authlogic
       mock_login! valid_user
@@ -198,13 +190,20 @@ describe TeamsController do
       end
     end
 
+    describe '#jsonform' do
+      context 'when team_id is not found in db' do
+        it 'sets flash error'
+        it 'redirects to home page'
+      end
+    end
+
     describe '#edit' do
       # edit is aliased to show, so no need to spec.
     end
 
     describe '#create' do
       let(:race) { FactoryGirl.create :race }
-      let (:valid_team_hash) do
+      let(:valid_team_hash) do
         _t = FactoryGirl.attributes_for :team
         _t.merge(:race_id => race.id)
       end
@@ -237,19 +236,15 @@ describe TeamsController do
           it 'sets a flash notice' do
             expect(flash[:notice]).to eq(I18n.t 'create_success')
           end
-          it 'redirects to team#show' do
-            expect(response).to redirect_to(team_url(assigns(:team).id))
+          it 'redirects to team#questions' do
+            expect(response).to redirect_to(team_questions_url(assigns(:team).id))
           end
         end
       end
 
       context 'with invalid team parameters' do
-        let(:team_stub) do
-          _t = Team.new
-          _t.stub(:valid?) { false }
-          _t
-        end
         before do
+          team_stub = double('team', save: false).as_null_object
           allow(Team).to receive(:new).and_return team_stub
           post :create, :team => valid_team_hash
         end
@@ -260,7 +255,6 @@ describe TeamsController do
         it 'sets a flash notice' do
           expect(flash.now[:error]).to include(I18n.t 'create_failed')
           expect(flash.now[:error]).to_not be_nil
-          #expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
          end
       end
     end
@@ -288,8 +282,8 @@ describe TeamsController do
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')
         end
-        it 'redirects to team#show' do
-          expect(response).to redirect_to(team_url valid_team.id)
+        it 'redirects to team#questions' do
+          expect(response).to redirect_to(team_questions_url valid_team.id)
         end
       end
     end

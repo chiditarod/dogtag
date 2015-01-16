@@ -2,8 +2,9 @@ class Team < ActiveRecord::Base
   validates_presence_of :name, :description
   validates_length_of :name, :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less."
   validates_uniqueness_of :name, :scope => [:race], :message => 'should be unique per race'
-  validates_uniqueness_of :twitter, :scope => [:race], :allow_nil => true, :allow_blank => true, :message => 'needs to be unique per race'
-  validates_format_of :twitter, :with => /\A^@\w+\z/i, :allow_nil => true, :allow_blank => true, :message => 'needs to begin with @, be a single, word, and not have weird characters'
+  validates_presence_of :experience
+  validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
+  validates_with TeamValidator
 
   belongs_to :user
   belongs_to :race
@@ -15,17 +16,6 @@ class Team < ActiveRecord::Base
   # A team must track which race requirements have been fulfilled.
   has_many :completed_requirements
   has_many :requirements, :through => :completed_requirements
-
-  # Other fields (originally JsonForm-bound but whatevs)
-
-  VALID_RACER_TYPES = %w(racer art_cart)
-
-  validates_presence_of :racer_type, :primary_inspiration, :experience
-  validates_acceptance_of :rules_confirmation, :sabotage_confirmation,
-    :cart_deposit_confirmation, :food_confirmation, :accept => true
-  validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
-  validates_inclusion_of :racer_type, in: VALID_RACER_TYPES
-  validates_length_of :buddies, :maximum => 255, :message => "list is a bit long, eh? The max is 255 characters."
 
   EXPERIENCE_LEVELS = [
     "Zero. Fresh meat",
@@ -41,16 +31,12 @@ class Team < ActiveRecord::Base
     "10th year anniversary"
   ]
 
-  INSPIRATIONS = [
-    "Industrial Design", 'Building Cool Stuff', 'Doing a good thing but doing it all wrong',
-    "Speed / 1st Place", "Art", "Costuming & Themes", 'Participatory Culture',
-    "Contests", "Charity", "Pleasure", "Sabotage", "Spectacle",
-    "Fundraising", "Foodraising", "The Experience, Man", "I am heavily uninspired", 'DFL'
-  ]
-
   def percent_complete
     total = race.requirements.select(&:enabled?).size + race.people_per_team
+    total += 1 if race.jsonform.present?
+
     var = people.size + requirements.size
+    var += 1 if jsonform.present?
     (var * 100) / total
   end
 
@@ -62,13 +48,18 @@ class Team < ActiveRecord::Base
     ! needs_people?
   end
 
+  def completed_questions?
+    return true if race.jsonform.blank?
+    jsonform.present?
+  end
+
   def completed_all_requirements?
     return true if race.requirements.blank?
     race.requirements.select(&:enabled?) == requirements
   end
 
   def finalized?
-    completed_all_requirements? && is_full?
+    completed_all_requirements? && is_full? && completed_questions?
   end
 
   # TODO - finish this
@@ -80,10 +71,6 @@ class Team < ActiveRecord::Base
   end
 
   class << self
-    def racer_types_optionlist
-      VALID_RACER_TYPES.map { |r| [r.to_s.humanize, r] }
-    end
-
     # todo: spec
     def export(race_id, options = {})
       race = Race.find race_id

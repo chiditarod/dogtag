@@ -1,20 +1,3 @@
-.page-header
-  %h1
-    = t('.title')
-    - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-      %small
-        = link_to edit_team_path(@team.id) do
-          .fa.fa-edit
-          = t('.edit')
-
-  - if @team.race.open_for_registration?
-    = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
-  - else
-    %i.lead.text-danger
-      = t('.registration_closed')
-
-= render @display_notification.to_s if @display_notification
-
 .row
   .col-xs-2
     .panel.panel-default
@@ -41,29 +24,78 @@
 
   .col-xs-10
     .row
-      %p.lead
-        = t('.registered_as')
-        %strong
-          = @team.name
-        = t('for')
-        = @race.name
+      %h1
+        = @team.name
+        - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+          %small
+            = link_to edit_team_path(@team.id) do
+              .fa.fa-edit
+              = t('.edit')
 
+      %h4
+        - if @team.finalized?
+          = t('.registered_for')
+        - else
+          = t('.registering_for')
+        = link_to @race.name, race_path(@race)
+
+      - if @team.race.open_for_registration?
+        = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+      - else
+        %i.lead.text-danger
+          = t('.registration_closed')
     .row
+      %br
       %i.fa.fa-quote-left.pull-left.fa-border
       %p
         = @team.description
 
-    - if @team.twitter.present?
-      .row
-        %p.lead
-          = link_to @team.twitter, "http://twitter.com/#{@team.twitter}"
+= render @display_notification.to_s if @display_notification
 
+%ul.nav.nav-tabs
+  %li.active
+    %a{"href" => "#people", "data-toggle" => "tab"}
+      =t('.people')
 
--#-----------------------------------------------------------
--# people stuff      (consider partial
+      - if @team.needs_people?
+        .text-danger.fa.fa-frown-o
+      - else
+        %i.fa.fa-smile-o.text-success
 
-.row
-  .col-md-12
+  %li
+    %a{"href" => "#requirements", "data-toggle" => "tab"}
+      =t('.payments')
+      - if @team.completed_all_requirements?
+        .text-success.fa.fa-smile-o
+      - else
+        .text-danger.fa.fa-frown-o
+
+  %li
+    = link_to t('.basics'), edit_team_path(@team)
+
+  %li
+    - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+      = link_to team_questions_path(@team) do
+        = t('.details')
+        - if @team.race.jsonform.present? && @team.jsonform.blank?
+          .text-danger.fa.fa-frown-o
+        - else
+          .text-success.fa.fa-smile-o
+    - else
+      %a{:href => '#'}
+        =t('.details')
+        - if @team.race.jsonform.present? && @team.jsonform.blank?
+          .text-danger.fa.fa-frown-o
+        - else
+          .text-success.fa.fa-smile-o
+
+.tab-content
+
+  -#-----------------------------------------------------------
+  -# people stuff      (consider partial
+
+  .tab-pane.active{:id => "people"}
+
     - if @team.needs_people?
       .pull-right
         .text-danger
@@ -71,15 +103,15 @@
             = t('.action_required')
             .fa.fa-frown-o
 
-    %h2
+    %h3
       %i.fa.fa-user
       = t('.people')
       %small
         = @team.people.count
         = t('of')
         = @team.race.people_per_team
-        - if @team.needs_people?
 
+        - if @team.needs_people?
           - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
             = link_to new_team_person_url(@team.id) do
               %i.fa.fa-plus
@@ -95,49 +127,50 @@
     - else
       = render 'people/table', :people => @team.people
 
+  -#-----------------------------------------------------------
+  -# requirements  (consider partial
 
--#-----------------------------------------------------------
--# requirements  (consider partial
+  .tab-pane{:id => "requirements"}
 
-- if @team.race.enabled_requirements.present?
-  .page-header
-    - if ! @team.completed_all_requirements?
-      .pull-right
-        .text-danger
-          %h5
-            = t('.action_required')
-            .fa.fa-frown-o
+    - if @team.race.enabled_requirements.present?
+      .page-header
+        - if ! @team.completed_all_requirements?
+          .pull-right
+            .text-danger
+              %h5
+                = t('.action_required')
+                .fa.fa-frown-o
 
-    %h2
-      %i.fa.fa-rocket
-      = t('.requirements')
-      %small
-        = @team.requirements.count
-        = t('of')
-        = @team.race.enabled_requirements.count
-        - if @team.completed_all_requirements?
-          %i.fa.fa-smile-o.text-success
-    %p= t('.requirement_instructions')
-    %h4= t('.be_patient')
+        %h2
+          %i.fa.fa-rocket
+          = t('.requirements')
+          %small
+            = @team.requirements.count
+            = t('of')
+            = @team.race.enabled_requirements.count
+            - if @team.completed_all_requirements?
+              %i.fa.fa-smile-o.text-success
+        %p= t('.requirement_instructions')
+        %h4= t('.be_patient')
 
-  .row
-    .col-xs-8.col-md-7
-      - @team.race.enabled_requirements.each do |req|
-        .col-md-5.col-xs-6.pull-left
-          .panel.panel-default
-            .panel-heading
-              .col-xs-8.col-md-8
-                %span.lead= req.name
-              .col-xs-4.col-md-2
-                - if req.completed?(@team)
-                  %i.fa.fa-2x.fa-smile-o.text-success
-                - else
-                  %i.fa.fa-2x.fa-frown-o.text-danger
-              .clearfix
-            .panel-body.text-center
-              -# todo - render more generically
-              - if req.type == 'PaymentRequirement'
-                = render 'requirements/payment_requirement', :team => @team, :req => req
+      .row
+        .col-xs-8.col-md-7
+          - @team.race.enabled_requirements.each do |req|
+            .col-md-5.col-xs-6.pull-left
+              .panel.panel-default
+                .panel-heading
+                  .col-xs-8.col-md-8
+                    %span.lead= req.name
+                  .col-xs-4.col-md-2
+                    - if req.completed?(@team)
+                      %i.fa.fa-2x.fa-smile-o.text-success
+                    - else
+                      %i.fa.fa-2x.fa-frown-o.text-danger
+                  .clearfix
+                .panel-body.text-center
+                  -# todo - render more generically
+                  - if req.type == 'PaymentRequirement'
+                    = render 'requirements/payment_requirement', :team => @team, :req => req
 
-    .col-xs-4.col-md-5
-      = render 'store'
+        .col-xs-4.col-md-5
+          = render 'store'

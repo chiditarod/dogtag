@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140920223230) do
+ActiveRecord::Schema.define(version: 20150116063514) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -26,6 +26,7 @@ ActiveRecord::Schema.define(version: 20140920223230) do
   end
 
   add_index "completed_requirements", ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id", unique: true, using: :btree
+  add_index "completed_requirements", ["user_id"], name: "index_completed_requirements_on_user_id", using: :btree
 
   create_table "people", force: true do |t|
     t.string   "first_name"
@@ -37,7 +38,10 @@ ActiveRecord::Schema.define(version: 20140920223230) do
     t.datetime "updated_at"
     t.integer  "team_id"
     t.integer  "experience"
+    t.string   "zipcode",    null: false
   end
+
+  add_index "people", ["team_id"], name: "index_people_on_team_id", using: :btree
 
   create_table "races", force: true do |t|
     t.string   "name"
@@ -48,6 +52,7 @@ ActiveRecord::Schema.define(version: 20140920223230) do
     t.integer  "people_per_team"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.text     "jsonform"
   end
 
   create_table "requirements", force: true do |t|
@@ -77,9 +82,11 @@ ActiveRecord::Schema.define(version: 20140920223230) do
     t.string   "buddies"
     t.string   "wildcard"
     t.text     "private_comments"
+    t.text     "jsonform"
   end
 
   add_index "teams", ["race_id"], name: "index_teams_on_race_id", using: :btree
+  add_index "teams", ["user_id"], name: "index_teams_on_user_id", using: :btree
 
   create_table "tiers", force: true do |t|
     t.integer  "requirement_id"

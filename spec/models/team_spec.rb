@@ -28,24 +28,13 @@ describe Team do
       expect(FactoryGirl.create :team, name: 'mushfaces', race: race).to be_valid
       expect(FactoryGirl.build :team, name: 'mushfaces', race: race2).to be_valid
     end
+  end
 
-    it "a team's twitter account (if present) is unique per race" do
-      expect(FactoryGirl.create :team, race: race, twitter: '@foo').to be_valid
-      expect(FactoryGirl.build :team, race: race, twitter: '@foo').to be_invalid
-    end
-
-    it "a team's twitter account can be the same for different races" do
-      race2 = FactoryGirl.create :race
-      expect(FactoryGirl.create :team, name: 'mushfaces', twitter: '@foo', race: race).to be_valid
-      expect(FactoryGirl.create :team, name: 'mushfaces', twitter: '@foo', race: race2).to be_valid
-    end
-
-    it "a team's twitter account fails without a leading @" do
-      expect(FactoryGirl.build :team, :twitter => 'foo').to be_invalid
-    end
-
-    it "a team's twitter account starts with a leading @" do
-      expect(FactoryGirl.build :team, :twitter => '@foo').to be_valid
+  describe '#completed_questions?' do
+    context 'race has no jsonform'
+    context 'race has a jsonform' do
+      context 'team has jsonform data'
+      context 'team has no jsonform data'
     end
   end
 
@@ -57,6 +46,10 @@ describe Team do
   describe '#percent_complete' do
     it 'factors in the number of people the team has'
     it 'factors in the number of requirements the race has'
+    context 'when race has some jsonschema' do
+      context 'and team does not'
+      context 'and team does also'
+    end
   end
 
   describe '#needs_people?' do
@@ -112,13 +105,6 @@ describe Team do
       @reg.stub(:completed_all_requirements?).and_return false
       @reg.stub(:is_full?).and_return false
       expect(@reg.finalized?).to be_false
-    end
-  end
-
-  describe '#racer_types_optionlist' do
-    it 'returns valid options for select form' do
-      r = Team::VALID_RACER_TYPES.map { |t| [t.to_s.humanize, t] }
-      expect(Team.racer_types_optionlist).to eq(r)
     end
   end
 

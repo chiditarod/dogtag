@@ -82,6 +82,9 @@ en:
       #instructions_html: "ergergerge"
       sign_up: or Create an account
 
+  questions:
+    none_defined: No questions have been defined for this race.
+
   users:
     index:
       users: Users
@@ -123,7 +126,7 @@ en:
         Please write down your team name somewhere. This is a very important piece of information for you to remember.
     edit:
       title: "Edit team for %{race_name}"
-      instructions: This information is editable up until registration closes.
+
       waitlist_position: "In position %{num} on the waitlist"
     index:
       next_create_a_team: "Create a team for %{name}"
@@ -147,15 +150,16 @@ en:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
     form:
+      instructions: This information is editable up until registration closes.
       name: Name your team
       name_instructions: After naming your team, you can register it in a race.
       # from reg
-      name: What name shall your team register as?
+      name: What's your team name?
       description: Sum up your team in a montage of prose
       twitter: Got twitter? Please include the @ sign
       racer_type: What type of racer are you?
       primary_inspiration: What's your primary inspiration?
-      experience: How many years has this team existed?
+      experience: How many years has the team been around?
       rules_confirmation: Do you agree to follow the race rules?
       sabotage_confirmation: Do you agree to follow the sabotage rules?
       cart_deposit_confirmation: Do you agree to the cart deposit terms?
@@ -168,7 +172,8 @@ en:
       already_registered_for: "Registered for %{race_name}"
       youre_in: "You're in, buddy."
       fix_it: "Fix it before we sellout."
-      registered_as: "Registered as %{name}"
+      registered_for: "Registered for %{race}"
+      registering_for: "Registering for %{race}"
       register_waitlist: Register for Waitlist
       competing_in: "Competing in %{race}"
       team_needs_attention: Team needs attention
@@ -179,15 +184,15 @@ en:
       edit: edit
       requirements: Payments
       status: Team Status
-      title: Team Details
-      registered_as: Registered as
+      registered_for: Registered for
+      can_change_until: "You can update this information until registration closes on %{date}."
 
       description: "Your Mission:"
       people: Racers
       no_people_added: omg none!  go add some now.
       requirement_instructions: You must complete the following payments to complete registration.
       be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
-      can_change_until: "You can change this information until registration closes on %{date}."
+
       people_instructions: |
         You must add the proper number of racers to complete your team.  You cannot delete a racer,
         but you can change everything about them. It is very important to enter this information accurately,

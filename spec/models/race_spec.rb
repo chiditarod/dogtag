@@ -4,6 +4,11 @@ describe Race do
   let (:valid_team) { FactoryGirl.create :team }
   let (:today) { Time.now.utc }
 
+  describe 'scopes' do
+    describe 'past'
+    describe 'current'
+  end
+
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
       FactoryGirl.create(:race).should be_valid
