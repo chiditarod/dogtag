@@ -19,6 +19,11 @@ describe User do
     end
   end
 
+  describe 'validations' do
+    describe 'phone'
+    describe 'email'
+  end
+
   describe '#gets_admin_menu?' do
     it 'true if user.roles contains :admin' do
       expect(FactoryGirl.build(:admin_user).gets_admin_menu?).to be_true

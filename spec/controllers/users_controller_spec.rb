@@ -154,10 +154,10 @@ describe UsersController do
       end
 
       context 'with valid patch data' do
-        before { patch :update, :id => @user2.id, :user => {:phone => '123'} }
+        before { patch :update, :id => @user2.id, :user => {:phone => '000-000-0000'} }
 
         it 'updates the user' do
-          expect(@user2.reload.phone).to eq('123')
+          expect(@user2.reload.phone).to eq('000-000-0000')
         end
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'update_success')

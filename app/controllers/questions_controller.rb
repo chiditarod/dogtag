@@ -15,7 +15,7 @@ class QuestionsController < ApplicationController
 
     jsonform = @team.race.jsonform
 
-    unless jsonform
+    if jsonform.blank?
       flash[:info] = I18n.t('questions.none_defined')
       return redirect_to team_path(@team)
     end

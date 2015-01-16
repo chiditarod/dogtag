@@ -23,6 +23,11 @@
       = f.text_field :phone, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
+      = label_tag :zipcode, t('.zip_code')
+    .col-xs-6
+      = f.text_field :zipcode, :class => 'form-control'
+  .form-group
+    .col-xs-4.control-label
       = label_tag :experience, t('.experience')
     .col-xs-5
       = f.select :experience, Team::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'

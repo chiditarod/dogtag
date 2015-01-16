@@ -60,6 +60,7 @@ class Ability
     if user.is? :operator
       can [:export], Race
       can [:read, :update], Team
+      can [:read, :update], Person
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
     end
   end
