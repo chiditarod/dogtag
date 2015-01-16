@@ -1,5 +1,5 @@
 class TeamsController < ApplicationController
-  before_filter :require_user, except: [:questions]
+  before_filter :require_user
   load_and_authorize_resource
 
   def index
