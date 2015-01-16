@@ -62,6 +62,11 @@ class Team < ActiveRecord::Base
     completed_all_requirements? && is_full? && completed_questions?
   end
 
+  # todo spec
+  def has_saved_answers?
+    jsonform.present?
+  end
+
   # TODO - finish this
   def waitlist_position
     # assume we are not on the waitlist if race is not full
