@@ -17,3 +17,5 @@
 //= require jsonform
 //= require jsonform-split
 //= require jsonform-defaults
+//= require jquery-readyselector
+//= require_tree .

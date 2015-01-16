@@ -1,4 +1,4 @@
-$ ->
+$(".questions.show").ready ->
   team_id = $('#questions').attr('data-team_id')
   questions = $.parseJSON($('#questions').attr('data-questions'))
 
