@@ -47,7 +47,8 @@ class QuestionsController < ApplicationController
       flash[:info] = I18n.t('questions.updated')
       redirect_to team_path(@team)
     else
-      flash[:error] = I18n.t('.could_not_save_questions')
+      Rails.logger.error "Issue saving questions for team ID: #{@team.id} with jsonform: #{@team.jsonform}"
+      flash[:error] = I18n.t('questions.could_not_save')
       redirect_to team_questions_path(@team)
     end
   end
