@@ -44,7 +44,7 @@ class QuestionsController < ApplicationController
 
     # save to team record
     if @team.valid? && @team.save
-      flash[:info] = I18n.t('.questions_updated')
+      flash[:info] = I18n.t('questions.updated')
       redirect_to team_path(@team)
     else
       flash[:error] = I18n.t('.could_not_save_questions')
