@@ -1,5 +1,4 @@
-$(document).on "ready page:load", ->
-  console.log('yo')
+$(".races.registrations").ready ->
   # ------------------------------------------------------------------------
   # TableSorter Stuff
 

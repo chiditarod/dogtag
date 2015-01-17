@@ -149,7 +149,7 @@ describe PasswordResetsController do
       end
 
       context 'when user is found' do
-        let(:user) { double('user', email: 'foo').as_null_object }
+        let(:user) { double('user', email: 'foo@bar.com').as_null_object }
         before do
           expect(User).to receive(:find_by_email).and_return(user)
           post :create, email: user.email

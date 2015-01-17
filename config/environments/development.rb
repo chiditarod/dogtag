@@ -24,6 +24,9 @@ RailsSkeleton::Application.configure do
   # number of complex assets.
   config.assets.debug = true
 
+  # dcb -- quiet the dev logs.
+  config.log_level = :debug
+
   # SMTP config
   config.action_mailer.raise_delivery_errors = true
 

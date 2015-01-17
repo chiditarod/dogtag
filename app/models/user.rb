@@ -7,10 +7,15 @@ class User < ActiveRecord::Base
   has_many :completed_requirements
   has_many :teams
 
-  # cancan
+  # authlogic
   acts_as_authentic do |c|
     c.login_field = :email
     c.validate_login_field = false
+    c.perishable_token_valid_for = 3.hours
+
+    # In version 3.4.0, the default crypto_provider was changed from Sha512 to SCrypt.
+    c.transition_from_crypto_providers = [Authlogic::CryptoProviders::Sha512]
+    c.crypto_provider = Authlogic::CryptoProviders::SCrypt
   end
 
   # ---------------------------------------------------------------

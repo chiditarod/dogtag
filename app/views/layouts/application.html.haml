@@ -14,15 +14,12 @@
 
     = javascript_include_tag 'application'
     = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"
-    -#= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"
 
-    = javascript_include_if_exists controller_name
-    = javascript_include_if_exists "#{controller_name}/#{action_name}"
+  %body{:class => "#{controller_name} #{action_name}"}
 
-  %body
     .container
       = render "navbar"
       = render 'flash'
       = yield
 
-    %script{:src=>"//netdna.bootstrapcdn.com/bootstrap/3.0.2/js/bootstrap.min.js"}
+    %script{:src=>"//netdna.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"}

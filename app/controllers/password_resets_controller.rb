@@ -7,7 +7,13 @@ class PasswordResetsController < ApplicationController
   end
 
   def create
+    unless params[:email].present?
+      flash.now[:error] = "No email address provided."
+      return render action: :new, status: 400
+    end
+
     @user = User.find_by_email(params[:email])
+
     if @user
       @user.deliver_password_reset_instructions!(request.host_with_port)
       flash[:notice] = "Instructions to reset your password have been emailed to you"

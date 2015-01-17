@@ -84,6 +84,7 @@ en:
 
   questions:
     none_defined: No questions have been defined for this race.
+    updated: Your details have been updated.
 
   users:
     index:
@@ -107,7 +108,7 @@ en:
   people:
     index:
       title: People
-      no_people_added: omg none!  go add some now
+      no_people_added: omg, you need to add racers!
     form:
       experience: How many years has this person participated at Chiditarod?
       twitter: Got twitter? Please include the @ sign
@@ -189,7 +190,7 @@ en:
 
       description: "Your Mission:"
       people: Racers
-      no_people_added: omg none!  go add some now.
+      no_people_added: omg, you need to add racers!
       requirement_instructions: You must complete the following payments to complete registration.
       be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
 
@@ -198,6 +199,7 @@ en:
         but you can change everything about them. It is very important to enter this information accurately,
         since we will be sending pre-race updates to each email address and day-of announcements to racer
         cell-phones via SMS. If you do not add all the racers, YOU ARE NOT REGISTERED!
+        To add a racer, click the sign next to the Racer symbol.
       no_complete_when_closed: Cannot pay when closed.
     notify_now_complete:
       congratulations: Congratulations!
