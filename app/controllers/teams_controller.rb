@@ -3,7 +3,7 @@ class TeamsController < ApplicationController
   load_and_authorize_resource
 
   def index
-    @myteams = Team.where(:user => current_user)
+    @myteams = Team.where(:user => current_user).order(created_at: :desc)
     if params[:race_id].present?
       begin
         @race = Race.find params[:race_id]
@@ -102,6 +102,8 @@ class TeamsController < ApplicationController
         UserMailer.team_finalized_email(current_user, @team).deliver
         Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
         @display_notification = :notify_now_complete
+        # refresh the # of finalized teams
+        @team.race.finalized_teams(force: true)
       else
         Rails.logger.error "Failed to set notified_at for #{reg}"
       end
@@ -113,6 +115,8 @@ class TeamsController < ApplicationController
     if !@team.finalized? && @team.notified_at.present?
       @team.notified_at = nil
       @team.save
+      # refresh the # of finalized teams
+      @team.race.finalized_teams(force: true)
     end
   end
 end
