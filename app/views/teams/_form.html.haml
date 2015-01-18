@@ -20,7 +20,7 @@
 
         .form-group
           .col-sm-6.col-sm-offset-6.col-md-offset-5.col-md-8
-            = f.submit t('save'), :class => ['btn', 'btn-default']
+            = f.submit t('save'), :class => ['btn', 'btn-default'], data: { disable_with: "Please wait..." }
             - if @team.id
               = link_to team_url(@team.id) do
                 .btn.btn-default
