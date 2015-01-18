@@ -103,6 +103,11 @@ describe Race do
       @race.teams << reg
       expect(@race.finalized_teams).to eq [@reg]
     end
+
+    it 'pulls from the cache'
+    context 'when force: true' do
+      it 'refreshes the cache'
+    end
   end
 
   describe '#open_for_registration?' do

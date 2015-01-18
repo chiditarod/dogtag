@@ -147,6 +147,7 @@ describe TeamsController do
           it "assigns @myteams to the user's teams" do
             expect(assigns(:myteams)).to eq([valid_team])
           end
+          it 'sorts newest to oldest'
           include_examples 'no_race'
           include_examples 'is_http_success'
         end
@@ -163,6 +164,7 @@ describe TeamsController do
             it "assigns @myteams to the user's teams for this race" do
               expect(assigns :myteams).to eq([valid_team])
             end
+            it 'sorts newest to oldest'
             include_examples 'is_http_success'
           end
 
@@ -331,6 +333,7 @@ describe TeamsController do
         it 'sets display_notification = true for the view'
         it 'emails the user'
         it 'logs'
+        it 'refreshes the finalized teams cache'
       end
 
       context 'newly unfinalized (! finalized? && notified_at)' do
@@ -342,6 +345,8 @@ describe TeamsController do
           @team.save
           get :show, :id => @team.id
         end
+
+        it 'refreshes the finalized teams cache'
 
         it 'the team thinks it is not finalized' do
           expect(assigns(:team).finalized?).to be_false
