@@ -113,6 +113,21 @@ en:
       price_instructions: "Enter the number in USD Cents.  e.g. For $50.00, enter 5000"
       begin_at_instructions: "This is when this tier will become active over any prior tiers"
 
+
+  charges:
+    unable_to_get_customer: Unable to find or save your data in Stripe, our payment gateway. Email chiditarod@gmail.com ASAP!
+    card_declined: The card was declined
+    incorrect_number: The card number is incorrect
+    invalid_number: The card number is not a valid credit card number
+    invalid_expiry_month: The card's expiration month is invalid
+    invalid_expiry_year: The card's expiration year is invalid
+    invalid_cvc: The card's security code is invalid
+    expired_card: The card has expired
+    incorrect_cvc: The card's security code is incorrect
+    card_declined: The card was declined
+    missing: There is no card on a customer that is being charged.
+    processing_error: An error occurred while processing the card
+
   people:
     index:
       title: People

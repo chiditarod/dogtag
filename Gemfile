@@ -65,6 +65,7 @@ end
 group :test do
   gem 'webmock', '1.15.2'
   gem 'simplecov', '0.8.2'
+  gem 'stripe-ruby-mock', '~> 2.0.1'
 end
 
 group :test, :development do

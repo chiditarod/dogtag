@@ -55,7 +55,6 @@ class RequirementsController < ApplicationController
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @requirement.errors.messages
-      puts @requirement.errors.messages
     end
   end
 

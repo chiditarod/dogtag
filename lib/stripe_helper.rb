@@ -1,6 +1,29 @@
 class StripeHelper
   class << self
 
+    def log_charge_error(e)
+      hash = {
+        message: e.message
+      }
+      hash[:http_status] = e.http_status if e.http_status
+
+      if e.json_body.present? && e.json_body[:error].present?
+        json = e.json_body[:error]
+        hash.merge!(
+          {
+            type: json[:type],
+            code: json[:code],
+            param: json[:param],
+            message2: json[:message]
+          }
+        )
+      end
+
+      Rails.logger.error hash.to_json
+    rescue => e
+      Rails.logger.error "Error when logging stripe error: #{e}"
+    end
+
     def safely_call_stripe
       begin
         yield
@@ -38,9 +61,7 @@ class StripeHelper
     private
 
     def log_error(e, msg = nil)
-      Rails.logger.error e.class
-      Rails.logger.error msg if msg.present?
+      Rails.logger.error "#{e.class}: #{msg}"
     end
-
   end
 end

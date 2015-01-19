@@ -28,7 +28,7 @@ FactoryGirl.define do
     end
   end
 
-  trait :with_user do
-    user
+  trait :with_stripe_account do
+    sequence(:stripe_customer_id) { |n| "stripe_customer_#{n}" }
   end
 end
