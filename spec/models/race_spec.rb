@@ -88,25 +88,30 @@ describe Race do
   describe '#finalized_teams' do
     before do
       @race = FactoryGirl.create :race
-      @reg = FactoryGirl.create :team, :race => @race
-      @reg.stub(:finalized?).and_return(true)
-      @race.teams << @reg
+      @team = FactoryGirl.create :team, :finalized, race: @race
     end
 
-    it 'returns teams with finalized? == true' do
-      expect(@race.finalized_teams).to eq [@reg]
+    it 'returns finalized teams' do
+      expect(@race.finalized_teams).to eq [@team]
     end
 
     it 'does not return non-finalized teams' do
-      reg = FactoryGirl.create :team, :race => @race
-      #todo: figure out why the next line is necessary (reverse key lookup?)
-      @race.teams << reg
-      expect(@race.finalized_teams).to eq [@reg]
+      FactoryGirl.create :team, race: @race
+      expect(@race.finalized_teams).to eq [@team]
     end
 
-    it 'pulls from the cache'
+    it 'pulls from the cache' do
+      params = {expires_in: 1.hour, race_condition_ttl: 10.seconds}
+      expect(Rails.cache).to receive(:fetch).with("finalized_teams_#{@race.id}", params)
+      @race.finalized_teams
+    end
+
     context 'when force: true' do
-      it 'refreshes the cache'
+      it 'refreshes the cache' do
+        params = {expires_in: 1.hour, race_condition_ttl: 10.seconds, force: true}
+        expect(Rails.cache).to receive(:fetch).with("finalized_teams_#{@race.id}", params)
+        @race.finalized_teams(force: true)
+      end
     end
   end
 

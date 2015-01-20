@@ -23,7 +23,7 @@ class Race < ActiveRecord::Base
 
   # If :force => true, refresh the cache
   def finalized_teams(params={})
-    options = { expires_in: 1.hour, race_condition_ttl: 1.minute }.merge(params)
+    options = { expires_in: 1.hour, race_condition_ttl: 10.seconds }.merge(params)
     Rails.cache.fetch("finalized_teams_#{id}", options) do
       teams.select(&:finalized?)
     end
