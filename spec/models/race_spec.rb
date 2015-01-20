@@ -1,8 +1,7 @@
 require 'spec_helper'
 
 describe Race do
-  let (:valid_team) { FactoryGirl.create :team }
-  let (:today) { Time.now.utc }
+  let(:today) { Time.now.utc }
 
   describe 'scopes' do
     describe 'past'
@@ -153,10 +152,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        team = FactoryGirl.create :team, race: @race
-        team.stub(:finalized?).and_return true
-        #todo: figure out why the next line is necessary (reverse key lookup?)
-        @race.teams << team
+        FactoryGirl.create :team, :finalized, race: @race
       end
     end
 
@@ -172,9 +168,7 @@ describe Race do
     end
 
     it 'returns true if the race has the maximum finalized teams' do
-      reg = FactoryGirl.create :team
-      reg.stub(:finalized?).and_return true
-      @race.teams << reg
+      FactoryGirl.create :team, :finalized, race: @race
       expect(@race.full?).to be_true
     end
   end
@@ -183,9 +177,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        reg = FactoryGirl.create(:team, race: @race)
-        reg.stub(:finalized?).and_return true
-        @race.teams << reg
+        FactoryGirl.create :team, :finalized, race: @race
       end
     end
 
@@ -194,9 +186,7 @@ describe Race do
     end
 
     it 'returns 0 if there are no spots remaining' do
-      reg = FactoryGirl.create :team
-      reg.stub(:finalized?).and_return true
-      @race.teams << reg
+      FactoryGirl.create :team, :finalized, race: @race
       expect(@race.spots_remaining).to eq 0
     end
   end
@@ -261,10 +251,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        reg = FactoryGirl.create :team, race: @race
-        reg.stub(:finalized?).and_return true
-        #todo: figure out why the next line is necessary (reverse key lookup?)
-        @race.teams << reg
+        FactoryGirl.create :team, :finalized, race: @race
       end
     end
 
@@ -274,9 +261,7 @@ describe Race do
 
     describe 'when full? == true' do
       before do
-        reg = FactoryGirl.create :team, race: @race
-        reg.stub(:finalized?).and_return true
-        @race.teams << reg
+        FactoryGirl.create :team, :finalized, race: @race
       end
 
       it 'returns 0 if total teams = finalized_teams' do
@@ -284,8 +269,7 @@ describe Race do
       end
 
       it 'returns the delta between total teams and finalized_teams' do
-        reg = FactoryGirl.create :team, race: @race
-        @race.teams << reg
+        FactoryGirl.create :team, race: @race
         expect(@race.waitlist_count).to eq(1)
       end
     end
