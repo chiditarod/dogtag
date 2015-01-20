@@ -35,6 +35,9 @@ class Ability
     # Questions
     can [:show, :create], :questions
 
+    # Stripe charges
+    can [:create, :refund], :charges
+
     #todo implement at some point
     #can [:destroy], Team do |team|
       #user.id == team.user_id && team.completed_requirements.empty?

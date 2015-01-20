@@ -21,8 +21,12 @@ class Race < ActiveRecord::Base
     requirements.select(&:enabled?)
   end
 
-  def finalized_teams
-    teams.select(&:finalized?)
+  # If :force => true, refresh the cache
+  def finalized_teams(params={})
+    options = { expires_in: 1.hour, race_condition_ttl: 10.seconds }.merge(params)
+    Rails.cache.fetch("finalized_teams_#{id}", options) do
+      teams.select(&:finalized?)
+    end
   end
 
   def spots_remaining

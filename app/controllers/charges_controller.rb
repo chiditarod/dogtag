@@ -2,6 +2,8 @@ class ChargesController < ApplicationController
   before_filter :require_user
 
   def create
+    authorize! :create, :charges
+
     @customer = nil
     # lookup existing customer
     if current_user.stripe_customer_id
@@ -64,6 +66,8 @@ class ChargesController < ApplicationController
 
 
   def refund
+    authorize! :refund, :charges
+
     Rails.logger.info "Refund requested for charge: #{params[:charge_id]}"
 
     StripeHelper.safely_call_stripe do

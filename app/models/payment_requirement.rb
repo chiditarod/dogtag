@@ -3,14 +3,18 @@ class PaymentRequirement < Requirement
 
   def stripe_params(team)
     metadata = JSON.generate(
-      'race_name' => team.race.name, 'team_name' => team.name,
-      'requirement_id' => id, 'team_id' => team.id)
+      'race_name' => team.race.name,
+      'team_name' => team.name,
+      'requirement_id' => id,
+      'team_id' => team.id
+    )
 
-    {:description => "#{name} for #{team.name} | #{team.race.name}",
-     :metadata => metadata,
-     :amount => active_tier.price,
-     :image => '/images/patch_ring.jpg',
-     :name => team.race.name
+    {
+      :description => "#{name} for #{team.name} | #{team.race.name}",
+      :metadata => metadata,
+      :amount => active_tier.price,
+      :image => '/images/patch_ring.jpg',
+      :name => team.race.name
     }
   end
 

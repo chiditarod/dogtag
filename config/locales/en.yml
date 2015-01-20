@@ -74,17 +74,21 @@ en:
   logout_success: Logout successful.
   login_failed: Login failed.
 
+  password_resets:
+    new:
+      instructions: 'Please enter your email address below. The email will show up within 10 minutes.'
+
   user_sessions:
     new:
-      login_here: Login below
       please_login: Please login to continue
       instructions_html: "In order to do most everything on this website, you need a user account. If you don't have an account, you'll have to %{href}</a>."
-      #instructions_html: "ergergerge"
+      forgot_password: "Forgot your password?"
       sign_up: or Create an account
 
   questions:
     none_defined: No questions have been defined for this race.
     updated: Your details have been updated.
+    could_not_save: There was an issue saving your questions.
 
   users:
     index:
