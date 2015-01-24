@@ -4,8 +4,8 @@ ruby "2.1.5"
 # -------------------------------------------------------
 # rails-skeleton
 
-# bootstrap 3.0
 gem 'bootstrap-sass'
+gem 'bootswatch-rails'
 
 group :production do
   # 12 factor support for rails (http://12factor.net/)
