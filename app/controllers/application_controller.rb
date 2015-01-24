@@ -26,6 +26,12 @@ class ApplicationController < ActionController::Base
   # we always want a 404 redirect (including during tests)
   rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
 
+  def should_run_update_checker
+    return false if params['controller'] == 'users' && %w(edit update).include?(params['action'])
+    return false if params['controller'] == 'user_sessions' && params['action'] == 'destroy'
+    true
+  end
+
   private
 
   def is_production?
@@ -69,6 +75,20 @@ class ApplicationController < ActionController::Base
       flash[:notice] = "You must be logged in to access this page"
       redirect_to new_user_session_path
       return false
+    end
+
+    user_update_checker
+  end
+
+  # if the current_user's User object is invalid, there's been a change in the underlying
+  # validation. redirect user to update their info.
+  def user_update_checker
+    if should_run_update_checker
+      user = User.find(current_user.id)
+      if user.invalid?
+        flash[:notice] = t('users.review_your_info')
+        return redirect_to edit_user_url(user)
+      end
     end
   end
 

@@ -10,9 +10,16 @@ describe UserSessionsController do
     let(:user_session_hash) { FactoryGirl.attributes_for :user_session }
 
     describe '#destroy' do
-      it 'redirects to login' do
+      before do
         delete :destroy
+      end
+
+      it 'redirects to login' do
         expect(response).to redirect_to(new_user_session_url)
+      end
+
+      it 'should not run the user_update_checker' do
+        expect(controller.should_run_update_checker).to be_false
       end
     end
 
