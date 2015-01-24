@@ -10,7 +10,9 @@ class UsersController < ApplicationController
     @user = User.find (params[:id] || current_user.id)
   end
 
-  alias edit show
+  def edit
+    @user = User.find (params[:id] || current_user.id)
+  end
 
   def new
     @user = User.new
@@ -23,7 +25,7 @@ class UsersController < ApplicationController
 
     if @user.save
       UserMailer.welcome_email(@user).deliver
-      flash[:notice] = I18n.t('.create_success_user')
+      flash[:notice] = I18n.t('create_success_user')
       redirect_back_or_default user_url(@user.id)
     else
       flash.now[:error] = [t('create_failed')]
@@ -34,7 +36,7 @@ class UsersController < ApplicationController
   def update
     @user = User.find(params[:id])
     if @user.update_attributes user_params
-      flash[:notice] = I18n.t('update_success')
+      flash[:notice] = I18n.t('users.update.update_success')
       redirect_to user_url(@user)
     else
       flash.now[:error] = [t('update_failed')]

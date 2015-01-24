@@ -124,6 +124,10 @@ describe UsersController do
       context 'with invalid user id' do
         before { get :show, :id => 99 }
 
+        it 'should run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_true
+        end
+
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -131,6 +135,10 @@ describe UsersController do
 
       context 'with valid user id' do
         before { get :show, :id => @user2.id }
+
+        it 'should run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_true
+        end
 
         it 'sets the @user object' do
           expect(assigns(:user)).to eq(@user2)
@@ -142,12 +150,42 @@ describe UsersController do
     end
 
     describe '#edit' do
-      # edit is aliased to show, so no need to spec.
+      context 'with invalid user id' do
+        before { get :edit, :id => 99 }
+
+        it 'should not run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_false
+        end
+
+        it 'returns 404' do
+          expect(response.status).to eq(404)
+        end
+      end
+
+      context 'with valid user id' do
+        before { get :edit, :id => @user2.id }
+
+        it 'should not run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_false
+        end
+
+        it 'sets the @user object' do
+          expect(assigns(:user)).to eq(@user2)
+        end
+        it 'returns 200' do
+          expect(response).to be_success
+        end
+      end
     end
 
     describe '#update' do
       context 'on invalid id' do
         before { put :update, :id => 99 }
+
+        it 'should not run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_false
+        end
+
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -156,11 +194,15 @@ describe UsersController do
       context 'with valid patch data' do
         before { patch :update, :id => @user2.id, :user => {:phone => '000-000-0000'} }
 
+        it 'should not run the user_update_checker' do
+          expect(controller.should_run_update_checker).to be_false
+        end
+
         it 'updates the user' do
           expect(@user2.reload.phone).to eq('000-000-0000')
         end
         it 'sets flash notice' do
-          expect(flash[:notice]).to eq(I18n.t 'update_success')
+          expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
         end
         it 'redirects to user#show' do
           expect(response).to redirect_to(@user2)
