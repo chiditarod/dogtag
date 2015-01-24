@@ -1,8 +1,8 @@
 GIT
   remote: https://github.com/stripe/stripe-ruby
-  revision: 7087e38bb96d79ce35728bc1cce958edd4d939eb
+  revision: 583f025c1f2da2aa4de927db48451346d06e05e7
   specs:
-    stripe (1.17.3)
+    stripe (1.18.0)
       json (~> 1.8.1)
       mime-types (>= 1.25, < 3.0)
       rest-client (~> 1.4)

@@ -1,5 +1,3 @@
-require 'pry'
-
 class ChargesController < ApplicationController
   before_filter :require_user
   before_filter :require_stripe_params, only: [:create]

@@ -23,3 +23,4 @@ Developer Setup
         postgres -D /usr/local/var/postgres
         mailcatcher
         rails s
+
