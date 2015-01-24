@@ -12,7 +12,8 @@ FactoryGirl.define do
       registration_close (Time.now - 1.week)
     end
 
-    #trait :with_jsonform do
-    #end
+    trait :with_jsonform do
+      jsonform File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
+    end
   end
 end
