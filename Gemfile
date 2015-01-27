@@ -10,6 +10,7 @@ gem 'bootswatch-rails'
 group :production do
   # 12 factor support for rails (http://12factor.net/)
   gem 'rails_12factor'
+  gem 'newrelic_rpm'
 end
 
 # -------------------------------------------------------

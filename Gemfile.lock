@@ -155,6 +155,7 @@ GEM
       net-ssh (>= 2.6.5)
     net-ssh (2.9.2)
     netrc (0.10.2)
+    newrelic_rpm (3.9.9.275)
     notiffany (0.0.3)
       nenv (~> 0.1)
       shellany (~> 0.0)
@@ -307,6 +308,7 @@ DEPENDENCIES
   jquery-rails
   json-schema
   mailcatcher
+  newrelic_rpm
   pg (~> 0.18.1)
   rails (= 4.0.2)
   rails_12factor
