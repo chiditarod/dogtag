@@ -1,5 +1,5 @@
 
-%table.team_sort.table.table-hover.table-responsive
+%table.team_sort.table.table-hover.table-responsive{:id => table_id}
   %thead
     %tr
       %th.filter-false Status
@@ -45,7 +45,3 @@
 
       %td
         -#= team.racer_type.humanize
-
-= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.min.js"
-= javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.widgets.min.js"
-= stylesheet_link_tag "//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/css/theme.bootstrap.css"

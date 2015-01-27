@@ -9,24 +9,34 @@ $(".races.registrations").ready ->
     sortAsc: "icon-chevron-up glyphicon glyphicon-chevron-up" # includes classes for Bootstrap v2 & v3
     sortDesc: "icon-chevron-down glyphicon glyphicon-chevron-down" # includes classes for Bootstrap v2 & v3
 
-  $(".team_sort").tablesorter(
-    theme: 'bootstrap'
+  $finalized = $(".team_sort#finalized").tablesorter(
     headerTemplate: '{content} {icon}'
-    widgets: [ "uitheme", "filter" ]
+    widgets: ["zebra", "filter"],
+    widgetOptions:
+      filter_columnFilters: false,
+      filter_saveFilters : true,
+      filter_reset: '.reset_finalized'
     widthFixed: true
     headers:
       0:
         sorter: false
   )
 
-  # ------------------------------------------------------------------------
-  # Column Title Popovers
+  $.tablesorter.filter.bindSearch( $finalized, $('.search_finalized') );
 
-  popover_options =
-    placement: 'bottom'
-    trigger: 'hover'
-    delay:
-      show: 500
-      hide: 1000
-    html: true
-  $('[id^=popover-]').popover(popover_options)
+  #todo: this can be DRY'd up into a function
+
+  $waitlisted = $(".team_sort#waitlisted").tablesorter(
+    headerTemplate: '{content} {icon}'
+    widgets: ["zebra", "filter"],
+    widgetOptions:
+      filter_columnFilters: false,
+      filter_saveFilters : true,
+      filter_reset: '.reset_waitlisted'
+    widthFixed: true
+    headers:
+      0:
+        sorter: false
+  )
+
+  $.tablesorter.filter.bindSearch( $waitlisted, $('.search_waitlisted') );
