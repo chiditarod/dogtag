@@ -10,7 +10,11 @@
 // And finally bootswatch style itself
 @import "bootswatch/superhero/bootswatch";
 
+// Tablesorter bootstrap bindings
+@import "tablesorter.theme.bootstrap";
+
 // Whatever application styles you have go last
+
 /*@import "base";*/
 
 // Use bootstrap form error styling
@@ -24,6 +28,16 @@
 select {
   color: black;
 }
+
+input {
+  color: black;
+  background: #bbb;
+}
+
+button {
+  color: black;
+}
+
 
 .jsonform-errortext {
   color: red;

@@ -21,14 +21,13 @@ class QuestionsController < ApplicationController
       return redirect_to home_path
     end
 
-    unless @team.race.jsonform
+    unless @team.race.jsonform.present?
       flash[:info] = I18n.t('questions.none_defined')
       return redirect_to team_path(@team)
     end
 
     # manipulate the jsonform
     jsonform = JSON.parse(@team.race.jsonform)
-
     jsonform = add_csrf(jsonform)
     jsonform = add_saved_answers(jsonform)
     @questions = jsonform.to_json

@@ -1,45 +1,30 @@
 class ChargesController < ApplicationController
   before_filter :require_user
+  before_filter :require_stripe_params, only: [:create]
+
+  STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
 
   def create
     authorize! :create, :charges
 
-    @customer = nil
-    # lookup existing customer
-    if current_user.stripe_customer_id
-      StripeHelper.safely_call_stripe do
-        @customer = Stripe::Customer.retrieve current_user.stripe_customer_id
-      end
-    end
+    user = User.find(current_user.id)
+    customer_id = user.stripe_customer_id
 
-    # create new customer
-    unless @customer
-      StripeHelper.safely_call_stripe do
-        @customer = Stripe::Customer.create(
-          :card  => params[:stripeToken],
-          :email => params[:stripeEmail],
-          :metadata => {
-            :user_id => current_user.id
-          }
-        )
-      end
-    end
+    Rails.logger.info "customer id: #{customer_id}"
+    @customer = Customer.find_by_customer_id(customer_id)
+    @customer ||= Customer.create_new_customer(
+      current_user, params[:stripeToken], params[:stripeEmail])
 
     unless @customer
-      Rails.logger.error 'Unable to create customer object from Stripe'
-      flash[:error] = 'Unable to connect to Stripe at this time. Contact chiditarod@gmail.com ASAP'
-      return render :status => 500
+      Rails.logger.error "Unable to create customer object with Stripe, User ID: #{current_user.id}"
+      flash[:error] = I18n.t('charges.unable_to_get_customer')
+      url = session.delete(:prior_url)
+      return redirect_to(url)
     end
 
     metadata = JSON.parse params[:metadata]
 
-    # save stripe customer_id if needed
-    current_user.stripe_customer_id ||= @customer.id
-    current_user.save
-
-    # create and perform the charge
-    charge = nil
-    StripeHelper.safely_call_stripe do
+    begin
       charge = Stripe::Charge.create(
         :customer    => @customer.id,
         :amount      => params[:amount],
@@ -49,21 +34,38 @@ class ChargesController < ApplicationController
       )
     end
 
+    # if we're here, we have a successful charge.
+    # create a completed_requirement object and save it.
 
-    cr_metadata = {
+    @cr_metadata = {
       'customer_id' => @customer.id,
       'charge_id' => charge.id,
       'amount' => params[:amount]
     }
-    req = Requirement.find metadata['requirement_id']
+    req = Requirement.find(metadata['requirement_id'])
+    req.complete(metadata['team_id'], current_user, @cr_metadata)
 
-    # call requirement#complete, which creates a CompletedRequirement record
-    req.complete(metadata['team_id'], current_user, cr_metadata)
+    # finally, redirect
+    flash[:notice] = "Your card has been charged successfully."
+    url = session.delete(:prior_url)
+    redirect_to url
 
-    redirect_to session[:prior_url]
-    session.delete :prior_url
+  rescue Stripe::CardError => e
+    flash[:error] = e.message
+    log_and_redirect(e)
+  rescue Stripe::InvalidRequestError => e
+    flash[:error] = "An error occured processing your credit card. Please try again."
+    log_and_redirect(e)
+  rescue Stripe::APIConnectionError => e
+    flash[:error] = 'We could not connect to the Stripe API. Please try again.'
+    log_and_redirect(e)
+  rescue Stripe::StripeError => e
+    flash[:error] = 'An error occured connecting to Stripe. Please email dogtag@chiditarod.org.'
+    log_and_redirect(e)
+  rescue => e
+    flash[:error] = 'An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org.'
+    log_and_redirect(e)
   end
-
 
   def refund
     authorize! :refund, :charges
@@ -82,8 +84,9 @@ class ChargesController < ApplicationController
     end
 
     unless @charge.refunded
-      Rails.logger.info "Refund completed for charge: #{@charge.id}"
-      return render :status => 500, :error => "Charge was not refunded. No action taken."
+      str = "Charge ID: #{@charge.id} could not be refunded. No action taken."
+      Rails.logger.info str
+      return render status: 500, error: str
     end
 
     req_id = @charge['metadata']['requirement_id']
@@ -99,5 +102,26 @@ class ChargesController < ApplicationController
     flash[:error] = e.message
     redirect_to session[:prior_url]
     session.delete :prior_url
+  end
+
+  private
+
+  def log_and_redirect(e)
+    StripeHelper.log_charge_error(e)
+    url = session.delete :prior_url
+    redirect_to url
+  end
+
+  def require_stripe_params
+    stripe_params = params.slice(*STRIPE_PARAMS)
+    if stripe_params.size < STRIPE_PARAMS.size
+      missing = STRIPE_PARAMS - stripe_params.keys
+      render(
+        status: :bad_request,
+        json: {
+          errors: "Missing required stripe parameter(s): #{missing.join(',')}",
+        }
+      )
+    end
   end
 end

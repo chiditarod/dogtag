@@ -20,7 +20,6 @@ class TiersController < ApplicationController
       flash[:notice] = I18n.t('update_success')
       redirect_to edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id
     else
-      puts @tier.errors.inspect
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @tier.errors.messages
     end

@@ -10,6 +10,7 @@ gem 'bootswatch-rails'
 group :production do
   # 12 factor support for rails (http://12factor.net/)
   gem 'rails_12factor'
+  gem 'newrelic_rpm'
 end
 
 # -------------------------------------------------------
@@ -29,7 +30,7 @@ gem 'json-schema'               # validate incoming jsonform
 # -------------------------------------------------------
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
-gem 'rails', '4.0.2'
+gem 'rails', '~> 4.0.2'
 #gem 'rails', '4.1.6'
 
 # Use SCSS for stylesheets
@@ -65,6 +66,7 @@ end
 group :test do
   gem 'webmock', '1.15.2'
   gem 'simplecov', '0.8.2'
+  gem 'stripe-ruby-mock', '~> 2.0.1'
 end
 
 group :test, :development do
