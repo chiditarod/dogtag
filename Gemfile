@@ -26,6 +26,9 @@ gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
 gem 'pg', '~> 0.18.1'           # postgres for heroku
 gem 'json-schema'               # validate incoming jsonform
 
+# google analytics
+gem 'rack-tracker'
+
 # END dogtag gems
 # -------------------------------------------------------
 
