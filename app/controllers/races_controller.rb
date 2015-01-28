@@ -27,9 +27,8 @@ class RacesController < ApplicationController
 
   def registrations
     @race = Race.find params[:race_id]
-    race_teams = Team.where(:race_id => @race.id).order('updated_at DESC')
-    @finalized_teams = race_teams.select(&:finalized?)
-    @waitlisted_teams = race_teams.reject(&:finalized?)
+    @finalized_teams = Team.all_finalized.where(race_id: @race.id).order('updated_at DESC')
+    @waitlisted_teams = Team.all_unfinalized.where(race_id: @race.id).order('updated_at DESC')
   end
 
   def export

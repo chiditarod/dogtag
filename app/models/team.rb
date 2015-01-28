@@ -17,6 +17,9 @@ class Team < ActiveRecord::Base
   has_many :completed_requirements
   has_many :requirements, :through => :completed_requirements
 
+  scope :all_finalized, -> { where('teams.finalized = ?', true) }
+  scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
+
   EXPERIENCE_LEVELS = [
     "Zero. Fresh meat",
     "1st year veterans",
@@ -58,7 +61,7 @@ class Team < ActiveRecord::Base
     race.requirements.select(&:enabled?) == requirements
   end
 
-  def finalized?
+  def meets_finalization_requirements?
     completed_all_requirements? && is_full? && completed_questions?
   end
 
@@ -72,7 +75,7 @@ class Team < ActiveRecord::Base
     # assume we are not on the waitlist if race is not full
     return false if race.not_full?
     # assume we are not on the waitlist if our requirements are met
-    return false if finalized?
+    return false if finalized
   end
 
   class << self
@@ -99,7 +102,7 @@ class Team < ActiveRecord::Base
       regs = options[:finalized] ? race.finalized_teams : race.teams
       regs.inject(Array.new << header) do |total, reg|
         row = []
-        row << reg.finalized?
+        row << reg.finalized
 
         cols = []
         cols.concat(Team.attribute_names.reject do |n|

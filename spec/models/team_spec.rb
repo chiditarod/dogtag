@@ -2,6 +2,30 @@ require 'spec_helper'
 
 describe Team do
 
+  describe 'scopes' do
+    describe 'all_finalized' do
+      before do
+        @finalized = FactoryGirl.create :finalized_team
+        FactoryGirl.create :team
+      end
+
+      it 'returns only finalized teams' do
+        expect(Team.all_finalized).to eq([@finalized])
+      end
+    end
+
+    describe 'all_unfinalized' do
+      before do
+        FactoryGirl.create :finalized_team
+        @unfinalized = FactoryGirl.create :team
+      end
+
+      it 'returns only finalized teams' do
+        expect(Team.all_unfinalized).to eq([@unfinalized])
+      end
+    end
+  end
+
   describe 'validation' do
     let (:race) { FactoryGirl.create :race }
     let (:team) { FactoryGirl.create :team }
@@ -78,7 +102,7 @@ describe Team do
     end
   end
 
-  describe '#finalized?' do
+  describe '#meets_finalization_requirements?' do
     before do
       @reg = FactoryGirl.create :team
     end
@@ -86,25 +110,25 @@ describe Team do
     it "returns true if it doesn't need people, and all requirements are met" do
       @reg.stub(:completed_all_requirements?).and_return true
       @reg.stub(:is_full?).and_return true
-      expect(@reg.finalized?).to be_true
+      expect(@reg.meets_finalization_requirements?).to be_true
     end
 
     it "returns false if it needs people, and all requirements are met" do
       @reg.stub(:completed_all_requirements?).and_return true
       @reg.stub(:is_full?).and_return false
-      expect(@reg.finalized?).to be_false
+      expect(@reg.meets_finalization_requirements?).to be_false
     end
 
     it "returns false if it doesn't need people, and all requirements are NOT met" do
       @reg.stub(:completed_all_requirements?).and_return false
       @reg.stub(:is_full?).and_return true
-      expect(@reg.finalized?).to be_false
+      expect(@reg.meets_finalization_requirements?).to be_false
     end
 
     it "returns false if it needs people, and all requirements are NOT met" do
       @reg.stub(:completed_all_requirements?).and_return false
       @reg.stub(:is_full?).and_return false
-      expect(@reg.finalized?).to be_false
+      expect(@reg.meets_finalization_requirements?).to be_false
     end
   end
 

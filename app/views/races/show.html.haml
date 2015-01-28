@@ -13,7 +13,7 @@
 
     %h3
       - if @race.open_for_registration?
-        = @race.finalized_teams.count
+        = @race.finalized_teams.size
         of
         = @race.max_teams
         = t('.teams_registered')

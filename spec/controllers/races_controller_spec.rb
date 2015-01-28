@@ -77,7 +77,7 @@ describe RacesController do
       end
 
       context "with a finalized team" do
-        let(:team) { FactoryGirl.create :team, :finalized }
+        let(:team) { FactoryGirl.create :finalized_team }
         before { get :registrations, :race_id => team.race.id }
 
         it 'assigns finalized_teams' do
@@ -111,7 +111,7 @@ describe RacesController do
 
       context 'with valid id' do
         before do
-          @team = FactoryGirl.create :team, :finalized
+          @team = FactoryGirl.create :finalized_team
           get :show, :id => @team.race.id
         end
 

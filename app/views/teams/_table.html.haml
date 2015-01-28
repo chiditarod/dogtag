@@ -10,7 +10,7 @@
   - teams.each do |team|
     %tr
       %td
-        - if team.finalized?
+        - if team.finalized
           %span.fa.fa-smile-o.fa-2x.text-success{:alt => "complete"}
         - else
           %span.fa.fa-frown-o.fa-2x.text-danger{:alt => "incomplete"}

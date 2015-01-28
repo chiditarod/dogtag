@@ -96,14 +96,13 @@ class TeamsController < ApplicationController
 
   # TODO: move emailer to observer pattern?
   def process_if_newly_finalized
-    if @team.finalized? && @team.notified_at.blank? && @team.user == current_user
+    if @team.meets_finalization_requirements? && !@team.finalized && @team.user == current_user
       @team.notified_at = Time.now
+      @team.finalized = true
       if @team.save
         UserMailer.team_finalized_email(current_user, @team).deliver
         Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
         @display_notification = :notify_now_complete
-        # refresh the # of finalized teams
-        @team.race.finalized_teams(force: true)
       else
         Rails.logger.error "Failed to set notified_at for #{reg}"
       end
@@ -112,11 +111,10 @@ class TeamsController < ApplicationController
 
   # TODO: move this to observer pattern?
   def unprocess_if_newly_unfinalized
-    if !@team.finalized? && @team.notified_at.present?
+    if !@team.meets_finalization_requirements? && @team.finalized
       @team.notified_at = nil
+      @team.finalized = nil
       @team.save
-      # refresh the # of finalized teams
-      @team.race.finalized_teams(force: true)
     end
   end
 end

@@ -87,7 +87,7 @@ describe Race do
   describe '#finalized_teams' do
     before do
       @race = FactoryGirl.create :race
-      @team = FactoryGirl.create :team, :finalized, race: @race
+      @team = FactoryGirl.create :finalized_team, race: @race
     end
 
     it 'returns finalized teams' do
@@ -97,20 +97,6 @@ describe Race do
     it 'does not return non-finalized teams' do
       FactoryGirl.create :team, race: @race
       expect(@race.finalized_teams).to eq [@team]
-    end
-
-    it 'pulls from the cache' do
-      params = {expires_in: 1.hour, race_condition_ttl: 10.seconds}
-      expect(Rails.cache).to receive(:fetch).with("finalized_teams_#{@race.id}", params)
-      @race.finalized_teams
-    end
-
-    context 'when force: true' do
-      it 'refreshes the cache' do
-        params = {expires_in: 1.hour, race_condition_ttl: 10.seconds, force: true}
-        expect(Rails.cache).to receive(:fetch).with("finalized_teams_#{@race.id}", params)
-        @race.finalized_teams(force: true)
-      end
     end
   end
 
@@ -152,7 +138,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        FactoryGirl.create :team, :finalized, race: @race
+        FactoryGirl.create :finalized_team, race: @race
       end
     end
 
@@ -168,7 +154,7 @@ describe Race do
     end
 
     it 'returns true if the race has the maximum finalized teams' do
-      FactoryGirl.create :team, :finalized, race: @race
+      FactoryGirl.create :finalized_team, race: @race
       expect(@race.full?).to be_true
     end
   end
@@ -177,7 +163,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        FactoryGirl.create :team, :finalized, race: @race
+        FactoryGirl.create :finalized_team, race: @race
       end
     end
 
@@ -186,7 +172,7 @@ describe Race do
     end
 
     it 'returns 0 if there are no spots remaining' do
-      FactoryGirl.create :team, :finalized, race: @race
+      FactoryGirl.create :finalized_team, race: @race
       expect(@race.spots_remaining).to eq 0
     end
   end
@@ -251,7 +237,7 @@ describe Race do
     before do
       @race = FactoryGirl.create :race
       (@race.max_teams - 1).times do
-        FactoryGirl.create :team, :finalized, race: @race
+        FactoryGirl.create :finalized_team, race: @race
       end
     end
 
@@ -261,7 +247,7 @@ describe Race do
 
     describe 'when full? == true' do
       before do
-        FactoryGirl.create :team, :finalized, race: @race
+        FactoryGirl.create :finalized_team, race: @race
       end
 
       it 'returns 0 if total teams = finalized_teams' do

@@ -5,7 +5,7 @@ describe Person do
   class << self
     describe '#registered_for_race' do
       it 'returns all the people on finalized teams in a race' do
-        reg = FactoryGirl.create :team, :finalized
+        reg = FactoryGirl.create :finalized_team
         expect(Person.registered_for_race reg.race_id).to eq(reg.people)
       end
 
@@ -15,7 +15,7 @@ describe Person do
       end
 
       it 'filters out all emails with the word "unknown"' do
-        reg = FactoryGirl.create :team, :finalized
+        reg = FactoryGirl.create :finalized_team
         person = reg.people.first
         person.email = 'unknown@gmail.com'
         person.save

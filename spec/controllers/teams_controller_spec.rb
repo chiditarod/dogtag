@@ -300,7 +300,7 @@ describe TeamsController do
       end
 
       context 'with valid id' do
-        let (:valid_team) { FactoryGirl.create :team }
+        let(:valid_team) { FactoryGirl.create :team }
         before do
           get :show, :id => valid_team.id
         end
@@ -316,11 +316,11 @@ describe TeamsController do
         end
       end
 
-      context 'newly finalized (finalized? && ! notified_at)' do
+      context 'newly finalized (meets_finalization_requirements? && !finalized)' do
         before do
           @now = Time.now
           Time.stub(:now) { @now }
-          @team = FactoryGirl.create :team, :finalized, :user => valid_user
+          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: valid_user
           get :show, :id => @team.id
         end
 
@@ -328,33 +328,23 @@ describe TeamsController do
           expect(Team.find(@team.id).notified_at).to eq(@now)
         end
         it 'the team thinks it is finalized' do
-          expect(assigns(:team).finalized?).to be_true
+          expect(assigns(:team).finalized).to be_true
         end
         it 'sets display_notification = true for the view'
         it 'emails the user'
         it 'logs'
-        it 'refreshes the finalized teams cache'
       end
 
-      context 'newly unfinalized (! finalized? && notified_at)' do
+      context 'newly unfinalized (!meets_finalization_requirements? && finalized)' do
         before do
-          @now = Time.now
-          Time.stub(:now) { @now }
-          @team = FactoryGirl.create :team
-          @team.notified_at = @now - 1.month
-          @team.save
+          @team = FactoryGirl.create :team, :with_people, finalized: true
           get :show, :id => @team.id
         end
 
-        it 'refreshes the finalized teams cache'
-
         it 'the team thinks it is not finalized' do
-          expect(assigns(:team).finalized?).to be_false
+          expect(assigns(:team).finalized).to be_false
         end
         it 'unsets notified_at' do
-          expect(assigns(:team).notified_at).to be_nil
-        end
-        it 'saves the database record' do
           expect(@team.reload.notified_at).to be_nil
         end
       end

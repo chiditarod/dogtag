@@ -21,26 +21,17 @@ class Race < ActiveRecord::Base
     requirements.select(&:enabled?)
   end
 
-  # If :force => true, refresh the cache
-  def finalized_teams(params={})
-    options = { expires_in: 1.hour, race_condition_ttl: 10.seconds }.merge(params)
-    Rails.cache.fetch("finalized_teams_#{id}", options) do
-      teams.select(&:finalized?)
-    end
+  def finalized_teams
+    Team.all_finalized.where(race_id: id)
   end
 
   def spots_remaining
-    max_teams - finalized_teams.count
+    max_teams - finalized_teams.size
   end
 
   def waitlist_count
     return 0 if not_full?
-    teams.count - max_teams
-  end
-
-  # todo - this works in rails console but spec it out
-  def waitlisted_teams
-    Team.where(:race_id => self.id).order(:created_at => :desc).reject { |x| x.finalized? }
+    teams.size - max_teams
   end
 
   def over?
@@ -48,7 +39,7 @@ class Race < ActiveRecord::Base
   end
 
   def full?
-    finalized_teams.count >= max_teams
+    finalized_teams.size >= max_teams
   end
 
   def not_full?
