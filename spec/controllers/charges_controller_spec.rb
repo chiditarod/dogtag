@@ -38,8 +38,7 @@ describe ChargesController do
 
       context 'when stripe cannot find or create a customer' do
         before do
-          expect(Customer).to receive(:find_by_customer_id).and_return nil
-          expect(Customer).to receive(:create_new_customer).and_return nil
+          expect(Customer).to receive(:get).and_return nil
           session[:prior_url] = '/prior_url/'
           post :create, amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz}
         end
@@ -112,7 +111,7 @@ describe ChargesController do
 
         before do
           StripeMock.start
-          expect(Customer).to receive(:find_by_customer_id).and_return customer
+          expect(Customer).to receive(:get).and_return(customer)
           expect(Stripe::Charge).to receive(:create).and_return(charge)
           session[:prior_url] = '/prior_url/'
 
@@ -179,7 +178,7 @@ describe ChargesController do
           include_examples 'logs an error'
 
           before do
-            expect(Customer).to receive(:find_by_customer_id).and_return customer
+            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::InvalidRequestError.new(I18n.t("foo"), :foo))
             session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
@@ -195,7 +194,7 @@ describe ChargesController do
         context "Stripe returns API connection error" do
           include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:find_by_customer_id).and_return customer
+            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("foo", :foo))
             session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
@@ -211,7 +210,7 @@ describe ChargesController do
         context "Stripe returns generic StripeError" do
           include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:find_by_customer_id).and_return customer
+            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::StripeError.new("foo", :foo))
             session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
@@ -227,7 +226,7 @@ describe ChargesController do
         context "Something raises an uncaught error" do
           include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:find_by_customer_id).and_return customer
+            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise
             session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
@@ -249,7 +248,7 @@ describe ChargesController do
             include_examples 'logs an error'
             before do
               StripeMock.prepare_card_error(e)
-              expect(Customer).to receive(:find_by_customer_id).and_return customer
+              expect(Customer).to receive(:get).and_return(customer)
               session[:prior_url] = '/prior_url/'
               post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
             end

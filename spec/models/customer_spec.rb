@@ -1,70 +1,75 @@
 require 'spec_helper'
+require 'stripe_mock'
 
 describe Customer do
   class << self
 
-    describe '#find_by_customer_id' do
-      let(:customer) { double(Customer, id: 1) }
-      let(:user) { FactoryGirl.create :user, stripe_customer_id: 1 }
+    describe '#get' do
+      let(:stripe_helper) { StripeMock.create_test_helper }
+      let(:token) { stripe_helper.generate_card_token }
+      before { StripeMock.start }
+      after { StripeMock.stop }
 
-      context 'when customer_id is nil' do
-        it 'returns nil' do
-          expect(Customer.find_by_customer_id(nil)).to be_nil
-        end
-      end
-
-      context 'when stripe finds the customer_id' do
-        before do
-          expect(Stripe::Customer).to receive(:retrieve)
-            .with(customer.id).and_return(customer)
-        end
-        it 'returns the customer' do
-          expect(Customer.find_by_customer_id(customer.id)).to eq(customer)
-        end
-      end
-
-      context 'when stripe cannot find the customer_id' do
-        before do
-          expect(Stripe::Customer).to receive(:retrieve)
-            .with(customer.id).and_return(nil)
-        end
-
-        it 'returns nil' do
-          expect(Customer.find_by_customer_id(customer.id)).to be_nil
-        end
-      end
-    end
-
-    describe '#create_new_customer' do
-      let(:customer) { double(Customer, id: 'cus_abcdefghijklmn') }
-      let(:user) { FactoryGirl.create :user }
-      let(:endpoint) do
-        Customer.create_new_customer(user, 'some-token', 'foo@bar.com')
-      end
-
-      context 'stripe successfully creates the customer' do
-        before do
-          expect(Stripe::Customer).to receive(:create).and_return(customer)
-        end
-
-        it 'saves the customer id to the user object' do
-          expect(user.stripe_customer_id).to be_nil
-          customer = endpoint
-          expect(user.reload.stripe_customer_id).to eq(customer.id)
-        end
-
-        it 'returns the created customer' do
-          expect(endpoint).to eq(customer)
-        end
-      end
-
-      context 'stripe is unable to create customer' do
+      context 'when stripe cannot create a new customer' do
+        let(:user) { FactoryGirl.create :user }
         before do
           expect(Stripe::Customer).to receive(:create).and_return(nil)
         end
 
         it 'returns nil' do
-          expect(endpoint).to be_nil
+          expect(Customer.get(user, token, 'email')).to be_nil
+        end
+      end
+
+      context 'when stripe cannot retrieve a customer' do
+        let(:customer) do
+          Stripe::Customer.create({
+            card: stripe_helper.generate_card_token,
+            email: 'email@foo.com'
+          })
+        end
+        let(:user) { FactoryGirl.create :user, stripe_customer_id: customer.id }
+        before do
+          expect(Stripe::Customer).to receive(:retrieve).and_return(nil)
+        end
+
+        it 'returns nil' do
+          expect(Customer.get(user, token, 'email')).to be_nil
+        end
+      end
+
+      context 'when user is not yet a stripe customer' do
+        let(:customer) do
+          Stripe::Customer.create({
+            card: stripe_helper.generate_card_token,
+            email: 'email@foo.com'
+          })
+        end
+        let(:user) { FactoryGirl.create :user }
+
+        it 'creates a stripe customer, saves it to the user, and returns the customer' do
+          expect(Stripe::Customer).to receive(:create).and_return(customer)
+          result = Customer.get(user, token, 'email')
+          expect(result).to eq(customer)
+          expect(User.find(user.id).stripe_customer_id).to eq(customer.id)
+        end
+      end
+
+      context 'when the user already is a stripe customer' do
+        let(:customer) do
+          Stripe::Customer.create({
+            card: stripe_helper.generate_card_token,
+            email: 'email@foo.com'
+          })
+        end
+        let(:user) { FactoryGirl.create :user, stripe_customer_id: customer.id }
+
+        it 'updates customer with new token, saves, and returns the customer' do
+          expect(Stripe::Customer).to receive(:retrieve).with(user.stripe_customer_id).and_return(customer)
+          expect(customer).to receive(:card=).with(token)
+          expect(customer).to receive(:save).and_return(customer)
+          result = Customer.get(user, token, 'email')
+          expect(result).to eq(customer)
         end
       end
     end
