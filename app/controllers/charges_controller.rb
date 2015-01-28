@@ -7,16 +7,10 @@ class ChargesController < ApplicationController
   def create
     authorize! :create, :charges
 
-    user = User.find(current_user.id)
-    customer_id = user.stripe_customer_id
-
-    Rails.logger.info "customer id: #{customer_id}"
-    @customer = Customer.find_by_customer_id(customer_id)
-    @customer ||= Customer.create_new_customer(
-      current_user, params[:stripeToken], params[:stripeEmail])
+    @customer = Customer.get(current_user, params[:stripeToken], params[:stripeEmail])
 
     unless @customer
-      Rails.logger.error "Unable to create customer object with Stripe, User ID: #{current_user.id}"
+      Rails.logger.error "Unable to create/retrieve customer from Stripe, User ID: #{current_user.id}"
       flash[:error] = I18n.t('charges.unable_to_get_customer')
       url = session.delete(:prior_url)
       return redirect_to(url)
