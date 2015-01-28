@@ -4,7 +4,7 @@
       .panel-heading
         = t('.status')
       .panel-body.text-center
-        - if @team.finalized?
+        - if @team.finalized
           .text-success
             %i.fa.fa-smile-o.fa-3x.fa-spin
             %br
@@ -33,7 +33,7 @@
               = t('.edit')
 
       %h4
-        - if @team.finalized?
+        - if @team.finalized
           = t('.registered_for')
         - else
           = t('.registering_for')
