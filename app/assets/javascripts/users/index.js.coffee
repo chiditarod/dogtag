@@ -14,9 +14,8 @@ $(".users.index").ready ->
     #if node.contains("span") then node.children("span").attr("alt") else node.innerHTML
 
   $("#users").tablesorter(
-    theme: 'bootstrap'
     headerTemplate: '{content} {icon}'
-    widgets: [ "uitheme", "filter" ]
+    widgets: ["zebra", "filter"],
     widthFixed: true
     #textExtraction: matrixFilterFunction
   )
