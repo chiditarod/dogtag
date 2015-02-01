@@ -44,6 +44,30 @@ describe Race do
     end
   end
 
+  describe '#question_fields' do
+    context 'when there is no jsonform data' do
+      it 'returns empty array'
+    end
+    context 'when there is jsonform data' do
+      it 'returns an unumerable of the json schema keys'
+    end
+    context 'when json is malformed' do
+      it 'returns empty array'
+    end
+  end
+
+  describe '#filter_field_array' do
+    context 'when filter_field is nil' do
+      it 'returns empty array'
+    end
+    context 'when filter_field is blank' do
+      it 'returns empty array'
+    end
+    context 'when filter_field contains comma-separated values' do
+      it 'returns array of values'
+    end
+  end
+
   describe '#over?' do
     context 'race is in the future' do
       it 'returns false'

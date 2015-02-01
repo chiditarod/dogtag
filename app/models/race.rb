@@ -8,6 +8,8 @@ class Race < ActiveRecord::Base
   validates_uniqueness_of :name
   validates_with RaceValidator
 
+  # todo: validate filter_field based on contents of jsonform schema
+
   scope :past, -> { where("race_datetime < ?", Time.now) }
   scope :current, -> { where("race_datetime > ?", Time.now) }
 
@@ -16,6 +18,19 @@ class Race < ActiveRecord::Base
   # Each race has different registration requirements that needs
   # to be fulfilled before a team is fully registered.
   has_many :requirements
+
+  def question_fields
+    return [] unless jsonform.present?
+    JSON.parse(jsonform)['schema']['properties'].keys
+  rescue => e
+    Rails.logger.error "Could not retrieve possible jsonschema filter fields: #{e}"
+    []
+  end
+
+  def filter_field_array
+    return [] if filter_field.nil?
+    filter_field.split(',')
+  end
 
   def enabled_requirements
     requirements.select(&:enabled?)

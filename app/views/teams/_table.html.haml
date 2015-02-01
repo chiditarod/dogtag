@@ -1,11 +1,13 @@
-
 %table.team_sort.table.table-hover.table-responsive{:id => table_id}
   %thead
     %tr
       %th.filter-false Status
       %th.filter-false Details
       %th Team
-      %th.filter-select Type
+      - if filter_field.any?
+        - filter_field.each do |f|
+          %th.filter-select
+            = f.humanize
 
   - teams.each do |team|
     %tr
@@ -43,5 +45,7 @@
           %i.fa.fa-quote-left.pull-left.fa-border
           = team.description
 
-      %td
-        -#= team.racer_type.humanize
+      - if filter_field.any?
+        - filter_field.each do |f|
+          %td
+            = team.jsonform_value(f)

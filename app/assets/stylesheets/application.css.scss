@@ -1,19 +1,15 @@
 // First import theme variables
 @import "bootswatch/superhero/variables";
 
-// Then bootstrap itself
+// Then bootstrap
 @import "bootstrap";
 
-// Bootstrap body padding for fixed navbar
-/*body { padding-top: 60px; }*/
-
-// And finally bootswatch style itself
+// And finally bootswatch style
 @import "bootswatch/superhero/bootswatch";
 
-// Tablesorter bootstrap bindings
 @import "tablesorter.theme.bootstrap";
 
-// Whatever application styles you have go last
+@import "select2.min";
 
 /*@import "base";*/
 
@@ -42,3 +38,13 @@ button {
 .jsonform-errortext {
   color: red;
 }
+
+li.select2-selection__choice {
+  color: #000;
+}
+
+li.select2-results__option {
+  color: #000;
+}
+
+
