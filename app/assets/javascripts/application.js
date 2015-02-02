@@ -21,5 +21,7 @@
 //= require jquery.tablesorter.min
 //= require jquery.tablesorter.widgets.min
 //= require jquery.tablesorter.widgets-filter-formatter.min
+//= require flash_fade
+//= require select2.min
 //
 //= require_tree .

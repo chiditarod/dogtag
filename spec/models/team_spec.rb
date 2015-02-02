@@ -54,6 +54,18 @@ describe Team do
     end
   end
 
+  describe '#jsonform_value' do
+    context 'when team has jsonform data' do
+      it 'returns the value'
+    end
+    context 'when team has no jsonform data' do
+      it 'returns nil'
+    end
+    context 'when team does not have jsonform data for a certain key' do
+      it 'returns nil'
+    end
+  end
+
   describe '#completed_questions?' do
     context 'race has no jsonform'
     context 'race has a jsonform' do

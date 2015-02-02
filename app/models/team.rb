@@ -56,6 +56,12 @@ class Team < ActiveRecord::Base
     jsonform.present?
   end
 
+  def jsonform_value(key)
+    return nil if jsonform.nil?
+    @jsonform_hash ||= JSON.parse(jsonform)
+    @jsonform_hash[key]
+  end
+
   def completed_all_requirements?
     return true if race.requirements.blank?
     race.requirements.select(&:enabled?) == requirements
@@ -81,45 +87,64 @@ class Team < ActiveRecord::Base
   class << self
     # todo: spec
     def export(race_id, options = {})
-      race = Race.find race_id
+      race = Race.find(race_id)
       person_keys = %w(first_name last_name email phone twitter experience)
       user_keys = %w(first_name last_name email phone stripe_customer_id)
 
+      table = []
+      table << make_header(race, person_keys, user_keys)
+      table.concat(make_body(race, options, person_keys, user_keys))
+    end
+
+    def make_body(race, options, person_keys, user_keys)
+      teams = options[:finalized] ? race.finalized_teams : race.teams
+      teams.inject([]) do |memo, team|
+        row = []
+        row << team.finalized.to_s
+
+        cols = [].concat(Team.attribute_names.select do |n|
+          %w(name experience description).include?(n)
+        end)
+
+        # team basics
+        row.concat cols.map{ |n| team[n] }
+
+        # race-specific details
+        row.concat race.question_fields.map{ |n| team.jsonform_value(n) }
+
+        # user info
+        row.concat user_keys.map{ |k| team.user[k] }
+
+        # racers
+        race.people_per_team.times do |i|
+          row.concat person_keys.map{ |k| team.people[i].present? ? team.people[i][k] : '' }
+        end
+
+        memo << row
+      end
+    end
+
+    def make_header(race, person_keys, user_keys)
       header = []
       header << 'finalized'
 
-      header.concat(Team.attribute_names.reject do |n|
-        %w(created_at	updated_at notified_at race_id).include? n
+      # team basics
+      header.concat(Team.attribute_names.select do |n|
+        %w(name experience description).include?(n)
       end)
 
+      # race-specific details
+      header.concat race.question_fields.map{ |n| n.humanize }
+
+      # user info
+      header.concat user_keys.map{ |k| "user_#{k}" }
+
+      # racers
       race.people_per_team.times do |i|
         header.concat person_keys.map{ |k| "dawg_#{i}_#{k}" }
       end
 
-      header.concat user_keys.map{ |k| "user_#{k}" }
-
-      # body
-      regs = options[:finalized] ? race.finalized_teams : race.teams
-      regs.inject(Array.new << header) do |total, reg|
-        row = []
-        row << reg.finalized
-
-        cols = []
-        cols.concat(Team.attribute_names.reject do |n|
-          %w(created_at	updated_at notified_at race_id).include? n
-        end)
-
-        row.concat cols.map{ |n| reg[n] }
-
-        race.people_per_team.times do |i|
-          row.concat person_keys.map{ |k| reg.people[i].present? ? reg.people[i][k] : '' }
-        end
-
-        row.concat user_keys.map{ |k| reg.team.user[k] }
-
-        # finally..
-        total << row
-      end
+      header
     end
   end
 end

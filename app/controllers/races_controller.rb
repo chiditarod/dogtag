@@ -45,7 +45,8 @@ class RacesController < ApplicationController
   def create
     return render :status => 400 if params[:race].blank?
 
-    @race = Race.new race_params
+    @race = Race.new(prepare_for_save(race_params))
+
     if @race.save
       flash[:notice] = I18n.t('create_success')
       return redirect_to races_path
@@ -57,7 +58,8 @@ class RacesController < ApplicationController
 
   def update
     @race = Race.find params[:id]
-    if @race.update_attributes(race_params)
+
+    if @race.update_attributes(prepare_for_save(race_params))
       flash[:notice] = t('update_success')
       return redirect_to race_url(@race)
     else
@@ -79,11 +81,20 @@ class RacesController < ApplicationController
 
   private
 
+  def prepare_for_save(hash)
+    prepared = hash
+    if hash[:filter_field].present?
+      prepared[:filter_field] = hash[:filter_field].reject{|f| f.empty?}.join(',')
+    end
+    prepared
+  end
+
   def race_params
-    params.require(:race).permit(
-      :name, :max_teams, :people_per_team,
-      :race_datetime, :registration_open, :registration_close,
-      :jsonform
-    )
+    params.
+      require(:race).
+      permit(:name, :max_teams, :people_per_team,
+             :race_datetime, :registration_open, :registration_close,
+             :jsonform, {filter_field: []}
+      )
   end
 end

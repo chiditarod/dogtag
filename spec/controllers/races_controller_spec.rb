@@ -172,6 +172,7 @@ describe RacesController do
         it 'redirects to race#show' do
           expect(response).to redirect_to(race_url @race.id)
         end
+        it 'converts filter_field array into comma-separated list'
       end
     end
 
@@ -205,6 +206,9 @@ describe RacesController do
         before do
           post :create, :race => valid_race_hash
         end
+
+        it 'converts filter_field array into comma-separated list'
+
         it 'sets a flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'create_success')
         end

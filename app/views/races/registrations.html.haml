@@ -26,7 +26,7 @@
     .panel-collapse.collapse.in#collapseOne{:role => "tabpanel", :'aria-labelledby' => "headingOne"}
       .panel-body{:style => "max-height: 600px; overflow-y: scroll;"}
         - if @finalized_teams.any?
-          = render 'teams/table', :teams => @finalized_teams, :table_id => 'finalized'
+          = render 'teams/table', teams: @finalized_teams, table_id: 'finalized', filter_field: @race.filter_field_array
         - else
           = t('.no_finalized_teams')
 
@@ -53,6 +53,6 @@
     .panel-collapse.collapse.in#collapseTwo{:role => "tabpanel", :'aria-labelledby' => "headingTwo"}
       .panel-body{:style => "max-height: 600px; overflow-y: scroll;"}
         - if @waitlisted_teams.any?
-          = render 'teams/table', :teams => @waitlisted_teams, :table_id => 'waitlisted'
+          = render 'teams/table', :teams => @waitlisted_teams, :table_id => 'waitlisted', filter_field: @race.filter_field_array
         - else
           %h3= t('.no_waitedlisted_teams')

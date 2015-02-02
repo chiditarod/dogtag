@@ -47,6 +47,12 @@
       = f.text_area :jsonform, :class => 'form-control'
 
   .form-group
+    .col-sm-4.control-label
+      = label_tag :filter_field, t('.filter_field')
+    .col-sm-8
+      = f.select :filter_field, options_for_select(@race.question_fields, @race.filter_field_array), {}, {multiple: true, class: 'form-control'}
+
+  .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
 
