@@ -318,7 +318,7 @@ describe TeamsController do
 
       context 'newly finalized (meets_finalization_requirements? && !finalized)' do
         before do
-          @now = Time.now
+          @now = Time.now.utc
           Time.stub(:now) { @now }
           @team = FactoryGirl.create :team, :with_people, people_count: 5, user: valid_user
           get :show, :id => @team.id
