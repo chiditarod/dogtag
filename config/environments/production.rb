@@ -17,6 +17,13 @@ RailsSkeleton::Application.configure do
     :enable_starttls_auto => true
   }
 
+  # wire in Google Analytics
+  if ENV['GOOGLE_ANALYTICS'].present?
+    config.middleware.use(Rack::Tracker) do
+      handler :google_analytics, { tracker: ENV['GOOGLE_ANALYTICS'] }
+    end
+  end
+
   # Code is not reloaded between requests.
   config.cache_classes = true
 

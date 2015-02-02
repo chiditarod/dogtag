@@ -1,6 +1,5 @@
 / Static navbar
 / view-source:http://getbootstrap.com/examples/navbar-static-top/
--#.navbar.navbar-default.navbar-static-top{role: "navigation"}
 .navbar.navbar-default{role: "navigation"}
   .navbar-header
 
@@ -20,8 +19,6 @@
 
       - if current_user
 
-        -#fa-flag-checkered 
-
         - if current_user.team_ids.present?
           %li
             = link_to teams_path do
@@ -39,6 +36,11 @@
               %li= link_to t('list'), users_path
               %li= link_to t('new'), new_user_path
               %li.divider
+
+      %li
+        %a{:"href" => '#shopify-store'}
+          %i.fa.fa-diamond.fa-2x
+          =t 'shop'
 
     %ul.nav.navbar-nav.navbar-right
       - if current_user
@@ -94,3 +96,5 @@
               = link_to "https://github.com/ometa/dogtag/issues/new" do
                 %i.fa.fa-fw.fa-github
                 File a Bug
+
+= render 'store'
