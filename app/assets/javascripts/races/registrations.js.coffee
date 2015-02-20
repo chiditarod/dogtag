@@ -13,8 +13,9 @@ $(".races.registrations").ready ->
     headerTemplate: '{content} {icon}'
     widgets: ["zebra", "filter"],
     widgetOptions:
-      filter_columnFilters: true,
+      filter_columnFilters: false,
       filter_saveFilters : true,
+      filter_external : '.search_finalized'
       filter_reset: '.reset_finalized'
     widthFixed: true
     headers:
@@ -30,7 +31,7 @@ $(".races.registrations").ready ->
     headerTemplate: '{content} {icon}'
     widgets: ["zebra", "filter"],
     widgetOptions:
-      filter_columnFilters: true,
+      filter_columnFilters: false,
       filter_saveFilters : true,
       filter_reset: '.reset_waitlisted'
     widthFixed: true

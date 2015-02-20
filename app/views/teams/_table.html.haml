@@ -2,7 +2,10 @@
   %thead
     %tr
       %th.filter-false Status
-      %th.filter-false Details
+      - if current_user.is_any_of?(:admin, :operator)
+        %th.filter-false Payments
+      %th.filter-false Team Experience
+      %th.filter-false Racer Experience
       %th Team
       - if filter_field.any?
         - filter_field.each do |f|
@@ -21,18 +24,21 @@
               = team.percent_complete
               &#37;
 
-      %td{:style => 'width: 100px'}
-        %small
-          = time_ago_in_words(team.updated_at)
-          %br
-          - if current_user.is_any_of? :admin, :operator
+      - if current_user.is_any_of?(:admin, :operator)
+        %td{:style => 'width: 100px'}
+          %p
             = team.requirements.count
             = t('of')
             = @race.requirements.count
             = t('.paid')
-            %br
-            = pluralize(team.experience, 'year')
-            = t('.exp')
+          %p.small
+            = time_ago_in_words(team.updated_at)
+
+      %td
+        = pluralize(team.experience, 'year')
+
+      %td
+        = pluralize(team.person_experience, 'year')
 
       %td
         %h4

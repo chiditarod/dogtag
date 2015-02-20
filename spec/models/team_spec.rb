@@ -27,8 +27,8 @@ describe Team do
   end
 
   describe 'validation' do
-    let (:race) { FactoryGirl.create :race }
-    let (:team) { FactoryGirl.create :team }
+    let(:race) { FactoryGirl.create :race }
+    let(:team) { FactoryGirl.create :team }
 
     context 'succeeds' do
       it 'when all required parameters are present' do
@@ -54,7 +54,24 @@ describe Team do
     end
   end
 
-  describe '#jsonform_value' do
+  describe '.person_experience' do
+
+    context "when there are no people on the team" do
+      let(:team) { FactoryGirl.create :team }
+      it "returns 0" do
+        expect(team.person_experience).to eq(0)
+      end
+    end
+
+    context "when there are people on the team" do
+      let(:team) { FactoryGirl.create :team, :with_people }
+      it "sums their total experience" do
+        expect(team.person_experience).to eq(12)
+      end
+    end
+  end
+
+  describe '.jsonform_value' do
     context 'when team has jsonform data' do
       it 'returns the value'
     end
@@ -80,8 +97,57 @@ describe Team do
   end
 
   describe '#percent_complete' do
-    it 'factors in the number of people the team has'
-    it 'factors in the number of requirements the race has'
+
+    context "when no people have been added and payment requirements are not satisfied" do
+      let(:req) { FactoryGirl.create :payment_requirement }
+      let(:team) { FactoryGirl.create :team, race: req.race}
+
+      it "returns 0" do
+        expect(team.percent_complete).to eq(0)
+      end
+    end
+
+    context "when no people have been added and payment requirements are satisfied" do
+      before do
+        req = FactoryGirl.create :payment_requirement_with_tier
+        @team = FactoryGirl.create :team, race: req.race
+        FactoryGirl.create :completed_requirement, requirement: req, team: @team
+      end
+
+      it "returns correct percentage" do
+        expect(@team.percent_complete).to eq(16)
+      end
+    end
+
+    context "when some people have been added and payment requirements are not satisfied" do
+      let(:req) { FactoryGirl.create :payment_requirement_with_tier }
+      let(:team) { FactoryGirl.create :team, :with_people, race: req.race }
+
+      it "returns correct percentage" do
+        expect(team.percent_complete).to eq(66)
+      end
+    end
+
+    context "when some people have been added and payment requirements are satisfied" do
+      let(:team) { FactoryGirl.create :team, :with_people }
+      let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
+      let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+
+      it "returns correct percentage" do
+        expect(team.percent_complete).to eq(80)
+      end
+    end
+
+    context "when all people have been added and payment requirements are satisfied" do
+      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
+      let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+
+      it "returns 100 percent" do
+        expect(team.percent_complete).to eq(100)
+      end
+    end
+
     context 'when race has some jsonschema' do
       context 'and team does not'
       context 'and team does also'

@@ -2,6 +2,8 @@
 
   %h2
     =t('.registrations_for', name: @race.name)
+  %p
+    You can sort the columns by clicking the column headers!
 
   -# completed
 
@@ -13,7 +15,7 @@
           = t('.finalized_teams')
 
         .pull-right
-          %input.search_finalized{:type => 'search', :'data-column' => "2"}
+          %input.search_finalized{:type => 'search', :'data-column' => "4"}
           %button.reset_finalized{:type => 'button'}
             Reset
 
@@ -40,7 +42,7 @@
           = t('.waitlisted_teams')
 
         .pull-right
-          %input.search_waitlisted{:type => 'search', :'data-column' => "2"}
+          %input.search_waitlisted{:type => 'search', :'data-column' => "4"}
           %button.reset_waitlisted{:type => 'button'}
             Reset
 
