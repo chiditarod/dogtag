@@ -34,6 +34,10 @@ class Team < ActiveRecord::Base
     "10th year anniversary"
   ]
 
+  def person_experience
+    people.reduce(0) { |memo, person| person.experience + memo }
+  end
+
   def percent_complete
     total = race.requirements.select(&:enabled?).size + race.people_per_team
     total += 1 if race.jsonform.present?
