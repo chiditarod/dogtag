@@ -83,6 +83,17 @@ class Race < ActiveRecord::Base
   end
 
   class << self
+
+    def load_stats(race_id)
+      race = Race.find race_id
+
+      money_raised = race.finalized_teams.reduce(0) { |memo, t| memo + t.money_paid_in_cents }
+
+      {
+        'money_raised' => money_raised
+      }
+    end
+
     def find_registerable_races
       Race.all.select(&:registerable?)
     end

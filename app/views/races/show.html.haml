@@ -1,6 +1,8 @@
 .row
-  .col-md-8
+  .col-sm-12
     .page-header
+      .pull-right
+        = render 'races/admin_buttons', :race => @race
       %h1
         - if can? :update, @race
           = link_to edit_race_path @race do
@@ -9,8 +11,8 @@
         %small
           = human_readable @race.race_datetime
 
-    = render 'races/admin_buttons', :race => @race
-
+.row
+  .col-sm-12.col-md-6.col-lg-4
     %h3
       - if @race.open_for_registration?
         = @race.finalized_teams.size
@@ -28,10 +30,18 @@
       - else
         = link_to t('.register_now'), new_team_url(:race_id => params[:id]), :class => ['btn', 'btn-success']
 
-.row
   - if @my_race_teams.present?
-    .col-xs-12
+    .col-sm-12.col-md-6.col-lg-4
       %h3= t('.your_teams')
-    - @my_race_teams.each do |team|
-      .col-xs-6.col-md-4.pull-left
-        = render 'teams/team_item', :team => team, :race => @race
+      .row
+        - @my_race_teams.each do |team|
+          .pull-left
+            = render 'teams/team_item', :team => team, :race => @race
+
+  - if can? :update, @race
+    .col-sm-12.col-md-6.col-lg-4
+      %h3= t('.statistics')
+      %dl
+        %dd Money Raised
+        %dt= price_in_dollars_and_cents(@stats['money_raised'])
+      -#= @stats.inspect

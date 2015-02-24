@@ -55,6 +55,14 @@ class Team < ActiveRecord::Base
     ! needs_people?
   end
 
+  # todo: make more generic,
+  # this relies on the presence of metadata['amount'] in the completed requirement
+  def money_paid_in_cents
+    completed_requirements.reduce(0) do |memo, cr|
+      memo + cr.metadata.fetch('amount').to_i
+    end
+  end
+
   def completed_questions?
     return true if race.jsonform.blank?
     jsonform.present?
