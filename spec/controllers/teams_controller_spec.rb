@@ -41,7 +41,10 @@ describe TeamsController do
   end
 
   context '[logged in]' do
-    let (:valid_user) { FactoryGirl.create :admin_user }
+    # todo: change unprivileged calls to use normal_user instead of admin_user
+    let (:valid_user)  { FactoryGirl.create :admin_user }
+    let (:admin_user)  { FactoryGirl.create :admin_user }
+    let (:normal_user) { FactoryGirl.create :user }
     before do
       activate_authlogic
       mock_login! valid_user
@@ -317,22 +320,44 @@ describe TeamsController do
       end
 
       context 'newly finalized (meets_finalization_requirements? && !finalized)' do
-        before do
-          @now = Time.now
-          Time.stub(:now) { @now }
-          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: valid_user
-          get :show, :id => @team.id
+        let(:mock_mailer) { double("mailer", deliver: true) }
+
+        shared_examples "does finalization stuff" do
+          it 'sets notified_at to Time.now and saves in db' do
+            get :show, id: @team.id
+            expect(Team.find(@team.id).notified_at).to eq(@now)
+          end
+          it 'the team thinks it is finalized' do
+            get :show, id: @team.id
+            expect(assigns(:team).finalized).to be_true
+          end
+          it 'sets display_notification = true for the view' do
+            get :show, id: @team.id
+            expect(assigns(:display_notification)).to eq(:notify_now_complete)
+          end
+          it 'emails the user and logs' do
+            expect(Rails.logger).to receive(:info).with("Finalized Team: #{@team.name} (id: #{@team.id})")
+            expect(UserMailer).to receive(:team_finalized_email).and_return(mock_mailer)
+            get :show, id: @team.id
+          end
         end
 
-        it 'sets notified_at to Time.now and saves in db' do
-          expect(Team.find(@team.id).notified_at).to eq(@now)
+        before do
+          activate_authlogic
+          @now = Time.now
+          Time.stub(:now) { @now }
+          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: normal_user
         end
-        it 'the team thinks it is finalized' do
-          expect(assigns(:team).finalized).to be_true
+
+        context "when the user is the user who owns the team" do
+          before { mock_login! normal_user }
+          include_examples "does finalization stuff"
         end
-        it 'sets display_notification = true for the view'
-        it 'emails the user'
-        it 'logs'
+
+        context "when the user is an admin user" do
+          before { mock_login! admin_user }
+          include_examples "does finalization stuff"
+        end
       end
 
       context 'newly unfinalized (!meets_finalization_requirements? && finalized)' do

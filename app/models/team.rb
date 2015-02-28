@@ -34,6 +34,10 @@ class Team < ActiveRecord::Base
     "10th year anniversary"
   ]
 
+  def unfinalized
+    ! finalized
+  end
+
   def person_experience
     people.reduce(0) { |memo, person| person.experience + memo }
   end
