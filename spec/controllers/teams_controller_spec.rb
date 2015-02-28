@@ -337,7 +337,7 @@ describe TeamsController do
           end
           it 'emails the user and logs' do
             expect(Rails.logger).to receive(:info).with("Finalized Team: #{@team.name} (id: #{@team.id})")
-            expect(UserMailer).to receive(:team_finalized_email).and_return(mock_mailer)
+            expect(UserMailer).to receive(:team_finalized_email).with(normal_user, @team).and_return(mock_mailer)
             get :show, id: @team.id
           end
         end

@@ -101,7 +101,7 @@ class TeamsController < ApplicationController
     @team.notified_at = Time.now
     @team.finalized = true
     if @team.save
-      UserMailer.team_finalized_email(current_user, @team).deliver
+      UserMailer.team_finalized_email(@team.user, @team).deliver
       Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
       @display_notification = :notify_now_complete
     else
