@@ -246,7 +246,16 @@ describe Race do
     it 'returns them oldest first'
   end
 
-  describe '#self.find_open_races' do
+  describe 'self#load_stats' do
+    context 'with invalid race' do
+      it 'returns empty hash'
+    end
+    context 'with valid race' do
+      it 'returns metadata statistics'
+    end
+  end
+
+  describe 'self#find_open_races' do
     it "returns races who's registration window is open" do
       closed_race = FactoryGirl.create :race
       closed_race.stub(:open_for_registration?).and_return(false)

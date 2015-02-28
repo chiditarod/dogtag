@@ -91,6 +91,10 @@ describe Team do
     end
   end
 
+  describe ".money_paid_in_cents" do
+    it "reports the amount of money a team has paid according to its completed requirements"
+  end
+
   describe '#export' do
     it 'sets the correct columns'
     it 'returns a multi-dimensional array of teams'

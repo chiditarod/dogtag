@@ -285,7 +285,7 @@ en:
       race_requirements: Race Requirements
       no_requirements_added: No requirements added yet
       registration_closed: Registration is closed
-      your_teams: Your teams
+      your_teams: Your Teams
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.

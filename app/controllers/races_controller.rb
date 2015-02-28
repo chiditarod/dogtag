@@ -13,6 +13,9 @@ class RacesController < ApplicationController
     @race = Race.find params[:id]
     if current_user
       @my_race_teams = @race.teams.where(:id => current_user.team_ids)
+      if current_user.is_any_of?(:admin, :operator)
+        @stats = Race.load_stats(@race.id)
+      end
     end
   rescue ActiveRecord::RecordNotFound
     flash[:error] = t('not_found')
