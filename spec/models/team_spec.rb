@@ -54,6 +54,18 @@ describe Team do
     end
   end
 
+  describe '.unfinalized' do
+    it 'returns true when team is unfinalized 'do
+      team = FactoryGirl.create :team
+      expect(team.unfinalized).to be_true
+    end
+
+    it 'returns false when team is finalized 'do
+      team = FactoryGirl.create :finalized_team
+      expect(team.unfinalized).to be_false
+    end
+  end
+
   describe '.person_experience' do
 
     context "when there are no people on the team" do

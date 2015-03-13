@@ -94,22 +94,21 @@ class TeamsController < ApplicationController
       .permit(:race_id, :name, :description, :experience)
   end
 
-  # TODO: move emailer to observer pattern?
   def process_if_newly_finalized
-    if @team.meets_finalization_requirements? && !@team.finalized && @team.user == current_user
-      @team.notified_at = Time.now
-      @team.finalized = true
-      if @team.save
-        UserMailer.team_finalized_email(current_user, @team).deliver
-        Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
-        @display_notification = :notify_now_complete
-      else
-        Rails.logger.error "Failed to set notified_at for #{reg}"
-      end
+    return unless (@team.meets_finalization_requirements? && @team.unfinalized)
+    return unless (current_user == @team.user || current_user.is_any_of?(:admin, :operator))
+
+    @team.notified_at = Time.now
+    @team.finalized = true
+    if @team.save
+      UserMailer.team_finalized_email(@team.user, @team).deliver
+      Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
+      @display_notification = :notify_now_complete
+    else
+      Rails.logger.error "Failed to finalize team: #{team}"
     end
   end
 
-  # TODO: move this to observer pattern?
   def unprocess_if_newly_unfinalized
     if !@team.meets_finalization_requirements? && @team.finalized
       @team.notified_at = nil
