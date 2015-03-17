@@ -60,6 +60,10 @@ class Ability
     # Tier
     # no user-level access required
 
+    if user.is? :refunder
+      can [:index], User
+    end
+
     if user.is? :operator
       can [:export], Race
       can [:read, :update], Team

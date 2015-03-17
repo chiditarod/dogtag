@@ -8,42 +8,69 @@
   %thead
     %tr
       %th Name
-      %th Teams
-      - if current_user.is? :admin
+      %th Team
+      %th Race
+      - if current_user.is_any_of?([:admin, :refunder])
         %th Activity
+      - if current_user.is?(:admin)
         %th Roles
         %th.filter-false Actions
 
   %tbody
     - @users.each do |user|
-      %tr
-        %td
-          = link_to user.fullname, user
-          %br
-          %small= mail_to user.email
-        %td
-          - user.teams.each do |t|
-            = link_to t.name, team_url(t.id)
+
+      - if user.teams.empty?
+        %tr
+          %td
+            = link_to user.fullname, user
             %br
-        - if current_user.is? :admin
+            %small= mail_to user.email
           %td
-            %small
-              -#todo: make a cr presenter
-              - if user.completed_requirements
-                - user.completed_requirements.each do |cr|
-                  .col-xs-4.col-md-2
-                    = cr.updated_at.strftime("%b %e, %Y")
-                  .col-xs-8.col-md-10
-                    = cr.team.name
-                    %br
-                    - if cr.metadata
-                      - cr.metadata.each do |k,v|
-                        - if k == 'customer_id'
-                          = link_to v, "https://manage.stripe.com/customers/#{v}"
-                        - elsif k == 'charge_id'
-                          = link_to v, "https://manage.stripe.com/payments/#{v}"
+          %td
+          %td
+          - if current_user.is?(:admin)
+            %td= user.roles.to_a.map(&:capitalize).join(', ')
+            %td
+              = link_to 'Edit', edit_user_path(user)
+              = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+          - else
+            %td
+            %td
+
+      - else
+
+        - user.teams.each do |t|
+          %tr
+            %td
+              = link_to user.fullname, user
+              %br
+              %small= mail_to user.email
+            %td= link_to t.name, team_url(t.id)
+            %td= link_to t.race.name, race_url(t.race.id)
+
+            %td
+              %small
+                - if current_user.is_any_of?([:admin, :refunder])
+                  - t.completed_requirements.each do |cr|
+                    .col-xs-4.col-md-4
+                      = cr.updated_at.strftime("%b %e, %Y")
+                    .col-xs-8.col-md-8
+                      - if cr.metadata
+                        - cr.metadata.each do |k,v|
+                          - if k == 'customer_id'
+                            = link_to v, "https://manage.stripe.com/customers/#{v}"
+                          - elsif k == 'charge_id'
+                            = link_to v, "https://manage.stripe.com/payments/#{v}"
+                          - elsif k == 'amount'
+                            = price_in_dollars_and_cents(v)
+                          %br
                         %br
-          %td= user.roles.to_a.map(&:capitalize).join(', ')
-          %td
-            = link_to 'Edit', edit_user_path(user)
-            = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+
+            - if current_user.is? :admin
+              %td= user.roles.to_a.map(&:capitalize).join(', ')
+              %td
+                = link_to 'Edit', edit_user_path(user)
+                = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
+            - else
+              %td
+              %td
