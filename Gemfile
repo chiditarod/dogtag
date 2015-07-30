@@ -16,9 +16,9 @@ end
 # -------------------------------------------------------
 # BEGIN dogtag gems
 
-gem 'authlogic', '~> 3.4.0'     # authentication
-gem 'cancan', '~> 1.6.10'       # authorization
-gem 'role_model', '~> 0.8.1'    # roles
+gem 'authlogic',  '~> 3.4.0'   # authentication
+gem 'cancan',     '~> 1.6.10'  # authorization
+gem 'role_model', '~> 0.8.1'   # roles
 
 # payments
 gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
@@ -32,7 +32,6 @@ gem 'rack-tracker'
 # END dogtag gems
 # -------------------------------------------------------
 
-# Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 4.0.2'
 #gem 'rails', '4.1.6'
 
@@ -67,9 +66,10 @@ group :development do
 end
 
 group :test do
-  gem 'webmock', '1.15.2'
-  gem 'simplecov', '0.8.2'
+  gem 'webmock'
+  gem 'simplecov'
   gem 'stripe-ruby-mock', '~> 2.0.1'
+  gem 'codeclimate-test-reporter'
 end
 
 group :test, :development do

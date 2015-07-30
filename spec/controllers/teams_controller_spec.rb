@@ -322,31 +322,32 @@ describe TeamsController do
       context 'newly finalized (meets_finalization_requirements? && !finalized)' do
         let(:mock_mailer) { double("mailer", deliver: true) }
 
+        before do
+          activate_authlogic
+          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: normal_user
+        end
+
         shared_examples "does finalization stuff" do
           it 'sets notified_at to Time.now and saves in db' do
             get :show, id: @team.id
-            expect(Team.find(@team.id).notified_at).to eq(@now)
+            expect(Team.find(@team.id).notified_at.to_datetime).to eq(@now_stub.to_datetime)
           end
+
           it 'the team thinks it is finalized' do
             get :show, id: @team.id
             expect(assigns(:team).finalized).to be_true
           end
+
           it 'sets display_notification = true for the view' do
             get :show, id: @team.id
             expect(assigns(:display_notification)).to eq(:notify_now_complete)
           end
+
           it 'emails the user and logs' do
             expect(Rails.logger).to receive(:info).with("Finalized Team: #{@team.name} (id: #{@team.id})")
             expect(UserMailer).to receive(:team_finalized_email).with(normal_user, @team).and_return(mock_mailer)
             get :show, id: @team.id
           end
-        end
-
-        before do
-          activate_authlogic
-          @now = Time.now
-          Time.stub(:now) { @now }
-          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: normal_user
         end
 
         context "when the user is the user who owns the team" do

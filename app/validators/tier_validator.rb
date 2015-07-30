@@ -1,8 +1,8 @@
 class TierValidator < ActiveModel::Validator
 
   def validate(record)
-    validate_unique_begin_at record
-    validate_unique_price record
+    validate_unique_begin_at(record)
+    validate_unique_price(record)
   end
 
   private
@@ -18,7 +18,7 @@ class TierValidator < ActiveModel::Validator
 
   def validate_unique_price(record)
     tiers = non_self_tiers(record)
-    return unless tiers
+    return unless tiers.present?
     prices = tiers.map(&:price)
     if prices.include? record.price
       record.errors[:price] << 'must be unique per payment requirement'
@@ -32,5 +32,4 @@ class TierValidator < ActiveModel::Validator
       tiers.reject { |t| t == record }
     end
   end
-
 end

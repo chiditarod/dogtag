@@ -18,12 +18,15 @@ describe Tier do
 
     it 'fails when another tier has the same "begin_at" value' do
       tier2 = FactoryGirl.build :tier, :price => 6000
+      puts tier2.begin_at
+      puts @tier.begin_at
       @req.tiers << tier2
+      @req.save
       expect(tier2).to be_invalid
     end
 
     it 'fails when another tier has the same "price" value' do
-      tier2 = FactoryGirl.build :tier, :begin_at => (Time.now - 4.weeks)
+      tier2 = FactoryGirl.build :tier, :begin_at => (@now_stub - 4.weeks)
       @req.tiers << tier2
       expect(tier2).to be_invalid
     end
@@ -35,5 +38,4 @@ describe Tier do
       expect(tier2).to be_valid
     end
   end
-
 end
