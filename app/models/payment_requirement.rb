@@ -34,7 +34,9 @@ class PaymentRequirement < Requirement
   end
 
   def active_tier
-    selected_tier = chronological_tiers.select { |tier| tier.begin_at < Time.now }.last
+    selected_tier = chronological_tiers.select do |tier|
+      tier.begin_at < Time.now
+    end.last
     selected_tier ||= false
   end
 

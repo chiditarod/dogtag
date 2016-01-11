@@ -1,3 +1,5 @@
+require 'spec_helper'
+
 describe PaymentRequirement do
 
   let (:req) { FactoryGirl.create :payment_requirement }
@@ -12,6 +14,10 @@ describe PaymentRequirement do
     it 'sets an image'
     it 'sets the company name to the race name'
   end
+
+  let(:thetime) { Time.local(1980, 9, 1, 12, 0, 0) }
+  before { Timecop.freeze(thetime) }
+  after  { Timecop.return }
 
   describe '#enabled?' do
     it 'returns false when no tiers are assigned' do
@@ -30,6 +36,7 @@ describe PaymentRequirement do
   end
 
   describe '#active_tier' do
+
     it 'returns false if no tiers are defined' do
       expect(req.active_tier).to eq(false)
     end
@@ -54,5 +61,4 @@ describe PaymentRequirement do
       expect(req.active_tier).to eq(false)
     end
   end
-
 end

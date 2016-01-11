@@ -4,4 +4,8 @@ class Tier < ActiveRecord::Base
 
   # Single Table Inheritance: PaymentRequirement
   belongs_to :requirement
+
+  def to_s
+    price
+  end
 end

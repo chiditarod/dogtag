@@ -325,12 +325,15 @@ describe TeamsController do
         before do
           activate_authlogic
           @team = FactoryGirl.create :team, :with_people, people_count: 5, user: normal_user
+          thenow = Time.parse("01/01/2010 10:00")
+          allow(Time).to receive(:now).and_return(thenow)
         end
 
         shared_examples "does finalization stuff" do
+
           it 'sets notified_at to Time.now and saves in db' do
             get :show, id: @team.id
-            expect(Team.find(@team.id).notified_at.to_datetime).to eq(@now_stub.to_datetime)
+            expect(Team.find(@team.id).notified_at.to_datetime).to eq(Time.now.to_datetime)
           end
 
           it 'the team thinks it is finalized' do

@@ -41,10 +41,10 @@ RSpec.configure do |config|
   config.order = "random"
 
   # stub Time.now for all specs
-  config.before(:each) do
-    @now_stub = Time.parse("01/01/2010 10:00")
-    allow(Time).to receive(:now).and_return(@now_stub)
-  end
+  #config.before(:each) do
+    #@now_stub = Time.parse("01/01/2010 10:00")
+    #allow(Time).to receive(:now).and_return(@now_stub)
+  #end
 
   # whitelist codeclimate.com so test coverage can be reported
   config.after(:suite) do

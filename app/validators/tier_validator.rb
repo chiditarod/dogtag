@@ -26,6 +26,7 @@ class TierValidator < ActiveModel::Validator
   end
 
   # helper method
+
   def non_self_tiers(record)
     if record.requirement.present? && record.requirement.tiers.present?
       tiers = record.requirement.tiers

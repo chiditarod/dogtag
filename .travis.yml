@@ -1,9 +1,21 @@
-rvm:
-  - "2.1.5"
+language: ruby
+
 branches:
   only:
     - master
+
+#script:
+  #- bundle exec rspec spec/models/tier_spec.rb
+
+#services:
+  #- postgresql
+#addons:
+  #postgresql: "9.4"
+#before_script:
+  #- psql -c 'create database dogtag_test;' -U postgres
+  #- cp config/database.yml.travis config/database.yml
+
 addons:
   code_climate:
-    repo_token: 089cb1c23b8276356d91cbdbe7806a519650a28b22e0d685174e28be846971e6
-    #repo_token: 379577d8af4de08eadd70623c15527e43115ab8525bc7c7803572f5ab54b6390
+    repo_token: 089cb1c23b8276356d91cbdbe7806a519650a28b22e0d685174e28be846971e6  # ometa/dogtag
+    #repo_token: 379577d8af4de08eadd70623c15527e43115ab8525bc7c7803572f5ab54b6390   # chiditarod/dogtag

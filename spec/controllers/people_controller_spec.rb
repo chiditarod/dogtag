@@ -2,45 +2,43 @@ require 'spec_helper'
 
 describe PeopleController do
 
-  before do
-    @team = FactoryGirl.create :team, :with_people
-    @person = @team.people.first
-  end
-
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
-        get :new, :team_id => @team.id
+        get :new, :team_id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create, :team_id => @team.id
+        post :create, :team_id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :team_id => @team.id, :id => 1
+        get :edit, :team_id => -1, :id => 1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :team_id => @team.id, :id => 1
+        patch :update, :team_id => -1, :id => 1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :team_id => @team.id, :id => 1
+        delete :destroy, :team_id => -1, :id => 1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
   end
 
   context '[logged in]' do
+    let(:team)   { FactoryGirl.create :team, :with_people }
+    let(:person) { team.people.first }
+
     before do
       @valid_user = FactoryGirl.create :admin_user
       activate_authlogic
@@ -49,15 +47,17 @@ describe PeopleController do
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :team_id => @team.id, :id => 99 }
+        before { delete :destroy, :team_id => team.id, :id => 99 }
+
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
       end
 
-      it 'removes a record' do
+      it 'destroys a record correctly' do
+        team = FactoryGirl.create :team, :with_people
         expect do
-          delete :destroy, :team_id => @team.id, :id => @person.id
+          delete :destroy, :team_id => team.id, :id => team.people.first.id
         end.to change(Person, :count).by(-1)
       end
 
@@ -69,22 +69,19 @@ describe PeopleController do
 
       context 'with valid id' do
         before do
-          delete :destroy, :team_id => @team.id, :id => @person.id
+          delete :destroy, :team_id => team.id, :id => person.id
         end
 
-        it 'sets flash notice' do
+        it 'sets flash notice and redirects to team#show' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
-        end
-
-        it 'redirects to team#show' do
-          expect(response).to redirect_to(team_url :id => @team.id)
+          expect(response).to redirect_to(team_url :id => team.id)
         end
       end
     end
 
     describe '#update' do
       context 'on invalid id' do
-        before { put :update, :team_id => @team.id, :id => 99 }
+        before { put :update, :team_id => team.id, :id => 99 }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -92,20 +89,14 @@ describe PeopleController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => @person.id, :team_id => @team.id,
+          patch :update, :id => person.id, :team_id => team.id,
             :person => {:last_name => 'foo'}
         end
-        it 'updates the user' do
-          expect(@person.reload.last_name).to eq('foo')
-        end
-        it 'sets flash notice' do
+        it 'updates the user, sets team (needed by _form.html.haml), sets flash, and redirects to team#show' do
+          expect(person.reload.last_name).to eq('foo')
+          expect(assigns(:team)).to eq(team)
           expect(flash[:notice]).to eq(I18n.t 'update_success')
-        end
-        it 'sets @team (needed by _form.html.haml)' do
-          expect(assigns(:team)).to eq(@team)
-        end
-        it 'redirects to team#show' do
-          expect(response).to redirect_to(team_url :id => @team.id)
+          expect(response).to redirect_to(team_url :id => team.id)
         end
       end
     end
@@ -113,7 +104,7 @@ describe PeopleController do
     describe '#edit' do
       context 'with invalid user id' do
         before do
-          get :edit, :team_id => @team.id, :id => 99
+          get :edit, :team_id => team.id, :id => -1
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -122,34 +113,26 @@ describe PeopleController do
 
       context 'with valid user id' do
         before do
-          get :edit, :team_id => @team.id, :id => @person.id
+          get :edit, :team_id => team.id, :id => person.id
         end
-        it 'assigns person' do
-          expect(assigns(:person)).to eq(@person)
-        end
-        it 'returns 200' do
+        it 'assigns person and returns 200' do
+          expect(assigns(:person)).to eq(person)
           expect(response).to be_success
         end
       end
     end
 
     describe '#new' do
+      let(:dude) { Person.new }
       before do
-        @person_stub = Person.new
-        Person.stub(:new).and_return @person_stub
-        get :new, :team_id => @team.id
+        allow(Person).to receive(:new).and_return(dude)
+        get :new, :team_id => team.id
       end
 
-      it 'returns http success' do
+      it 'assigns person to Person.new, sets team (needed by _form.html.haml), and returns http success' do
+        expect(assigns(:person)).to eq(dude)
+        expect(assigns(:team)).to eq(team)
         expect(response).to be_success
-      end
-
-      it 'assigns @person to Person.new' do
-        expect(assigns(:person)).to eq(@person_stub)
-      end
-
-      it 'sets @team (needed by _form.html.haml)' do
-        expect(assigns(:team)).to eq(@team)
       end
     end
 
@@ -175,33 +158,21 @@ describe PeopleController do
           post :create, :team_id => team_no_people.id, :person => new_person_hash
         end
 
-        it 'sets a flash notice' do
-          expect(flash[:notice]).to eq(I18n.t 'create_success')
-        end
-
-        it 'redirects to team#show' do
-          expect(response).to redirect_to team_url(team_no_people.id)
-        end
-
-        it 'assigns the person to their team' do
+        it 'assigns person to team, sets a flash notice, redirects to team#show' do
           expect(assigns(:person).team).to eq(team_no_people)
+          expect(flash[:notice]).to eq(I18n.t 'create_success')
+          expect(response).to redirect_to team_url(team_no_people.id)
         end
       end
 
       context "when person object is invalid" do
-        before do
-          @person_stub = Person.new
-          Person.stub(:new).and_return @person_stub
-          expect(@person_stub).to receive(:valid?).and_return false
-          post :create, :team_id => @team.id, :person => new_person_hash
-        end
 
-        it 'returns http success' do
+        let(:incomplete_hash) { new_person_hash.delete(:email); new_person_hash }
+
+        it 'returns http success and sets flash error' do
+          post :create, :team_id => team.id, :person => incomplete_hash
           expect(response).to be_success
-        end
-        it 'sets flash error' do
           expect(flash[:error]).to_not be_nil
-          #expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
         end
       end
     end

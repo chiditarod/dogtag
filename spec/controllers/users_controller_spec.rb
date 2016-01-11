@@ -53,14 +53,17 @@ describe UsersController do
         response.status.should == 400
       end
 
-      it 'returns 200 and sets flash[:error] when required params are missing' do
-        required = [:first_name, :last_name, :email, :phone, :password, :password_confirmation]
-        required.each do |param|
-          bad_payload = valid_user_hash.dup
-          bad_payload.delete param
-          post :create, :user => bad_payload
-          response.status.should == 200
-          flash[:error].detect { |val| val.is_a? Hash }.should include param
+      %i(first_name last_name email phone password password_confirmation).each do |param|
+
+        context "when required param '#{param}' is missing" do
+
+          it 'returns 200 and sets flash[:error]' do
+            bad_payload = valid_user_hash.dup
+            bad_payload.delete param
+            post :create, :user => bad_payload
+            response.status.should == 200
+            flash[:error].detect { |val| val.is_a? Hash }.should include param
+          end
         end
       end
 
@@ -86,159 +89,132 @@ describe UsersController do
   end
 
   context '[logged in]' do
-    let(:valid_user)      { FactoryGirl.create :admin_user }
+    let(:valid_user) { FactoryGirl.create :admin_user }
+    let(:some_user)  { FactoryGirl.create :user }
+    let(:new_user)   { User.new }
+
     before do
       activate_authlogic
       mock_login! valid_user
-      @user2 = FactoryGirl.create :user
     end
 
     describe '#new' do
       before do
-        User.stub(:new).and_return @user2
+        User.stub(:new).and_return(new_user)
         get :new
       end
 
-      it 'returns http success' do
+      it 'assigns @user to User.new and returns success' do
+        expect(assigns(:user)).to eq(new_user)
         expect(response).to be_success
-      end
-
-      it 'assigns @user to User.new' do
-        expect(assigns(:user)).to eq(@user2)
       end
     end
 
     describe '#index' do
-      before { get :index }
 
-      it 'sets @users to all users' do
+      it 'sets @users to all users and returns http success' do
+        get :index
         expect(assigns(:users)).to_not be_nil
-      end
-
-      it 'returns http success' do
         expect(response).to be_success
       end
     end
 
     describe '#show' do
+
       context 'with invalid user id' do
-        before { get :show, :id => 99 }
 
-        it 'should run the user_update_checker' do
+        it 'runs the user_update_checker and returns 404' do
+          get :show, :id => -1
           expect(controller.should_run_update_checker).to be_true
-        end
-
-        it 'returns 404' do
           expect(response.status).to eq(404)
         end
       end
 
       context 'with valid user id' do
-        before { get :show, :id => @user2.id }
 
-        it 'should run the user_update_checker' do
+        it 'sets the @user, runs the user_update_checker, returns 200' do
+          get :show, :id => some_user.id
+          expect(assigns(:user)).to eq(some_user)
           expect(controller.should_run_update_checker).to be_true
-        end
-
-        it 'sets the @user object' do
-          expect(assigns(:user)).to eq(@user2)
-        end
-        it 'returns 200' do
           expect(response).to be_success
         end
       end
     end
 
     describe '#edit' do
+
       context 'with invalid user id' do
-        before { get :edit, :id => 99 }
 
-        it 'should not run the user_update_checker' do
+        it 'does not run user_update_checker and returns 404' do
+          get :edit, :id => -1
           expect(controller.should_run_update_checker).to be_false
-        end
-
-        it 'returns 404' do
           expect(response.status).to eq(404)
         end
       end
 
       context 'with valid user id' do
-        before { get :edit, :id => @user2.id }
 
-        it 'should not run the user_update_checker' do
-          expect(controller.should_run_update_checker).to be_false
-        end
-
-        it 'sets the @user object' do
-          expect(assigns(:user)).to eq(@user2)
-        end
-        it 'returns 200' do
+        it 'sets the @user object, returns 200, does not run user_update_checker' do
+          get :edit, :id => some_user.id
+          expect(assigns(:user)).to eq(some_user)
           expect(response).to be_success
+          expect(controller.should_run_update_checker).to be_false
         end
       end
     end
 
     describe '#update' do
+
       context 'on invalid id' do
-        before { put :update, :id => 99 }
 
-        it 'should not run the user_update_checker' do
+        it 'does not run user_update_checker and returns 404' do
+          put :update, :id => -1
           expect(controller.should_run_update_checker).to be_false
-        end
-
-        it 'returns 404' do
           expect(response.status).to eq(404)
         end
       end
 
       context 'with valid patch data' do
-        before { patch :update, :id => @user2.id, :user => {:phone => '000-000-0000'} }
 
-        it 'should not run the user_update_checker' do
+        it 'updates the user, does not run user_update_checker, sets flash, and redirects to user#show' do
+          patch :update, :id => some_user.id, :user => {:phone => '000-000-0000'}
+          expect(some_user.reload.phone).to eq('000-000-0000')
           expect(controller.should_run_update_checker).to be_false
-        end
-
-        it 'updates the user' do
-          expect(@user2.reload.phone).to eq('000-000-0000')
-        end
-        it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
-        end
-        it 'redirects to user#show' do
-          expect(response).to redirect_to(@user2)
+          expect(response).to redirect_to(some_user)
         end
       end
     end
 
     describe '#destroy' do
+
       context 'on invalid id' do
-        before { delete :destroy, :id => 99 }
+
         it 'returns 404' do
+          delete :destroy, :id => -1
           expect(response.status).to eq(404)
         end
       end
 
       #todo - there's probably a way to DRY this up.
       context 'with valid id' do
+
         it 'destroys the user' do
-          expect { delete :destroy, :id => @user2.id }.to change(User, :count).by(-1)
+          some_user = FactoryGirl.create :user
+          expect do
+            delete :destroy, :id => some_user.id
+          end.to change(User, :count).by(-1)
         end
 
-        it 'sets the flash notice' do
-          delete :destroy, :id => @user2.id
+        it 'sets the flash notice and redirects to the user index' do
+          delete :destroy, :id => some_user.id
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
-        end
-
-        it 'redirects to the user index' do
-          delete :destroy, :id => @user2.id
           expect(response).to redirect_to users_path
         end
-
       end
 
       # todo: figure out how to mock the delete failing
       it 'sets flash error and redirects if delete fails'
     end
-
   end
 end

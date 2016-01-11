@@ -1,16 +1,23 @@
+# TODO: consolidate 'thetime' variable to a single place.
+thetime = Time.local(1980, 9, 1, 12, 0, 0)
+
 FactoryGirl.define do
   factory :tier do
-    begin_at (Time.now - 2.weeks)
+    ignore do
+      thetime { Timecop.freeze(thetime) { Time.now } }
+    end
+
     price 5000
+    begin_at { thetime - 2.weeks }
 
     factory :tier2 do
       price 6000
-      begin_at (Time.now - 1.second)
+      begin_at { thetime - 1.second }
     end
 
     factory :tier3 do
       price 7000
-      begin_at (Time.now + 2.weeks)
+      begin_at { thetime + 2.weeks }
     end
   end
 end

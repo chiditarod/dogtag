@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.1.5"
+ruby "2.3.0"
 
 # -------------------------------------------------------
 # rails-skeleton
@@ -16,14 +16,15 @@ end
 # -------------------------------------------------------
 # BEGIN dogtag gems
 
-gem 'authlogic',  '~> 3.4.0'   # authentication
+gem 'authlogic',  '~> 3.4.6'   # authentication
 gem 'cancan',     '~> 1.6.10'  # authorization
-gem 'role_model', '~> 0.8.1'   # roles
+gem 'role_model', '~> 0.8.2'   # roles
 
 # payments
-gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
+#gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
+gem 'stripe', '~> 1.31.0'
 
-gem 'pg', '~> 0.18.1'           # postgres for heroku
+gem 'pg', '~> 0.18.4'           # postgres for heroku
 gem 'json-schema'               # validate incoming jsonform
 
 # google analytics
@@ -47,6 +48,8 @@ gem 'coffee-rails', '~> 4.0.1'
 gem 'haml'
 gem 'haml-rails'
 
+gem 'awesome_print'
+
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
 
@@ -66,13 +69,15 @@ group :development do
 end
 
 group :test do
+  gem 'timecop'
   gem 'webmock'
   gem 'simplecov'
-  gem 'stripe-ruby-mock', '~> 2.0.1'
+  gem 'stripe-ruby-mock', '~> 2.2.1'
   gem 'codeclimate-test-reporter'
 end
 
 group :test, :development do
+  gem 'test-unit'
   gem 'rspec', '~> 2.14.0'
   gem 'rspec-rails'
   gem 'factory_girl_rails', '4.3.0'
@@ -87,7 +92,8 @@ end
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
 # Use unicorn as the app server (heroku)
-gem 'unicorn', '4.8.0'
+#gem 'unicorn', '4.8.0'
+gem 'unicorn', '5.0.1'
 
 # Use debugger
 # gem 'debugger', group: [:development, :test]
