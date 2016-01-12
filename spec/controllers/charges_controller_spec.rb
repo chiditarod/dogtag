@@ -97,19 +97,20 @@ describe ChargesController do
         let(:charge) do
           Stripe::Charge.create({
             customer:    customer.id,
-            amount:      '7000',
+            amount:      7000,
+            currency:    'usd',
             description: 'Registration Fee for Arizona Quints | Chiditarod X',
             metadata: {
               race_name: team.race.name,
               team_name: team.name,
               requirement_id: requirement.id,
               team_id: team.id
-            },
-            currency:    'usd'
+            }
           })
         end
 
         before do
+          Stripe.api_key = 'abc123' # hack, see: https://github.com/rebelidealist/stripe-ruby-mock/issues/209
           StripeMock.start
           expect(Customer).to receive(:get).and_return(customer)
           expect(Stripe::Charge).to receive(:create).and_return(charge)
@@ -162,6 +163,12 @@ describe ChargesController do
 
       context "Stripe Errors" do
         let(:stripe_helper) { StripeMock.create_test_helper }
+        before do
+          Stripe.api_key = 'blablabla' # hack, see: https://github.com/rebelidealist/stripe-ruby-mock/issues/209
+          StripeMock.start
+        end
+        after  { StripeMock.stop }
+
         let(:customer) do
           Stripe::Customer.create({
             card: stripe_helper.generate_card_token,
@@ -171,8 +178,6 @@ describe ChargesController do
             }
           })
         end
-        before { StripeMock.start }
-        after { StripeMock.stop }
 
         context "Stripe returns invalid request" do
           include_examples 'logs an error'

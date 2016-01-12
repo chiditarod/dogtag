@@ -7,7 +7,11 @@ describe Customer do
     describe '#get' do
       let(:stripe_helper) { StripeMock.create_test_helper }
       let(:token) { stripe_helper.generate_card_token }
-      before { StripeMock.start }
+
+      before do
+        Stripe.api_key = 'abc123' # hack, see: https://github.com/rebelidealist/stripe-ruby-mock/issues/209
+        StripeMock.start
+      end
       after { StripeMock.stop }
 
       context 'when stripe cannot create a new customer' do
