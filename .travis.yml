@@ -17,5 +17,5 @@ branches:
 
 addons:
   code_climate:
-    repo_token: 089cb1c23b8276356d91cbdbe7806a519650a28b22e0d685174e28be846971e6  # ometa/dogtag
-    #repo_token: 379577d8af4de08eadd70623c15527e43115ab8525bc7c7803572f5ab54b6390   # chiditarod/dogtag
+    #repo_token: 089cb1c23b8276356d91cbdbe7806a519650a28b22e0d685174e28be846971e6  # ometa/dogtag
+    repo_token: 379577d8af4de08eadd70623c15527e43115ab8525bc7c7803572f5ab54b6390   # chiditarod/dogtag
