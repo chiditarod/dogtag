@@ -42,15 +42,18 @@ describe TeamsController do
 
   context '[logged in]' do
     # todo: change unprivileged calls to use normal_user instead of admin_user
-    let (:valid_user)  { FactoryGirl.create :admin_user }
-    let (:admin_user)  { FactoryGirl.create :admin_user }
-    let (:normal_user) { FactoryGirl.create :user }
+    let (:valid_user)     { FactoryGirl.create :admin_user }
+    let (:admin_user)     { FactoryGirl.create :admin_user }
+    let (:operator_user)  { FactoryGirl.create :admin_user }
+    let (:normal_user)    { FactoryGirl.create :user } # unused for now ^^
+
     before do
       activate_authlogic
-      mock_login! valid_user
+      mock_login! the_user
     end
 
     describe '#new' do
+      let(:the_user) { valid_user }
 
       context 'without :race_id param' do
         before { get :new }
@@ -90,6 +93,7 @@ describe TeamsController do
     end
 
     describe '#index' do
+      let(:the_user) { valid_user }
 
       shared_examples 'is_http_success' do
         it 'returns success' do
@@ -101,7 +105,6 @@ describe TeamsController do
           expect(assigns(:myteams)).to be_empty
         end
       end
-
       shared_examples 'no_race' do
         it "does not assign @race" do
           expect(assigns(:race)).to be_nil
@@ -161,10 +164,8 @@ describe TeamsController do
             before do
               get :index, :race_id => valid_team.race.id
             end
-            it 'sets race' do
+            it "sets race and assigns @myteams to the user's teams for this race" do
               expect(assigns(:race)).to eq(valid_team.race)
-            end
-            it "assigns @myteams to the user's teams for this race" do
               expect(assigns :myteams).to eq([valid_team])
             end
             it 'sorts newest to oldest'
@@ -196,6 +197,8 @@ describe TeamsController do
     end
 
     describe '#jsonform' do
+      let(:the_user) { valid_user }
+
       context 'when team_id is not found in db' do
         it 'sets flash error'
         it 'redirects to home page'
@@ -207,6 +210,8 @@ describe TeamsController do
     end
 
     describe '#create' do
+      let(:the_user) { valid_user }
+
       let(:race) { FactoryGirl.create :race }
       let(:valid_team_hash) do
         _t = FactoryGirl.attributes_for :team
@@ -265,6 +270,7 @@ describe TeamsController do
     end
 
     describe '#update' do
+      let(:the_user) { valid_user }
       let (:valid_team) { FactoryGirl.create :team }
 
       context 'on invalid id' do
@@ -295,6 +301,7 @@ describe TeamsController do
 
     describe '#show' do
       context 'invalid id' do
+        let(:the_user) { valid_user }
         before { get :show, :id => 100 }
 
         it 'renders 404' do
@@ -303,83 +310,63 @@ describe TeamsController do
       end
 
       context 'with valid id' do
+        let(:the_user) { valid_user }
         let(:valid_team) { FactoryGirl.create :team }
         before do
           get :show, :id => valid_team.id
         end
 
-        it 'assigns team' do
+        it 'assigns team, assigns race, returns 200' do
           expect(assigns(:team)).to eq(valid_team)
-        end
-        it 'returns 200' do
-          expect(response).to be_success
-        end
-        it 'assigns race' do
           expect(assigns(:race)).to eq(valid_team.race)
+          expect(response).to be_success
         end
       end
 
-      context 'newly finalized (meets_finalization_requirements? && !finalized)' do
-        let(:mock_mailer) { double("mailer", deliver: true) }
+      shared_examples "finalizes" do
+        it "calls team.finalize and displays a message to user" do
+          allow(Team).to receive(:find).and_return(team)
+          expect(team).to receive(:finalize).and_return(true)
+          get :show, id: team.id
+          expect(assigns(:display_notification)).to eq(:notify_now_complete)
+        end
+      end
 
-        before do
-          activate_authlogic
-          @team = FactoryGirl.create :team, :with_people, people_count: 5, user: normal_user
-          thenow = Time.parse("01/01/2010 10:00")
-          allow(Time).to receive(:now).and_return(thenow)
+      context 'team is ready for finalization' do
+        let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+
+        context "admin user" do
+          let(:the_user) { admin_user }
+          include_examples "finalizes"
         end
 
-        shared_examples "does finalization stuff" do
-
-          it 'sets notified_at to Time.now and saves in db' do
-            get :show, id: @team.id
-            expect(Team.find(@team.id).notified_at.to_datetime).to eq(Time.now.to_datetime)
-          end
-
-          it 'the team thinks it is finalized' do
-            get :show, id: @team.id
-            expect(assigns(:team).finalized).to be_true
-          end
-
-          it 'sets display_notification = true for the view' do
-            get :show, id: @team.id
-            expect(assigns(:display_notification)).to eq(:notify_now_complete)
-          end
-
-          it 'emails the user and logs' do
-            expect(Rails.logger).to receive(:info).with("Finalized Team: #{@team.name} (id: #{@team.id})")
-            expect(UserMailer).to receive(:team_finalized_email).with(normal_user, @team).and_return(mock_mailer)
-            get :show, id: @team.id
-          end
+        context "operator user" do
+          let(:the_user) { operator_user }
+          include_examples "finalizes"
         end
 
-        context "when the user is the user who owns the team" do
-          before { mock_login! normal_user }
-          include_examples "does finalization stuff"
-        end
-
-        context "when the user is an admin user" do
-          before { mock_login! admin_user }
-          include_examples "does finalization stuff"
+        context "when web user is the team's user" do
+          let(:the_user) { team.user }
+          include_examples "finalizes"
         end
       end
 
       context 'newly unfinalized (!meets_finalization_requirements? && finalized)' do
-        before do
-          @team = FactoryGirl.create :team, :with_people, finalized: true
-          get :show, :id => @team.id
-        end
+        let(:team) { FactoryGirl.create :team, :with_people, finalized: true }
+        let(:the_user) { team.user }
 
-        it 'the team thinks it is not finalized' do
-          expect(assigns(:team).finalized).to be_false
-        end
-        it 'unsets notified_at' do
-          expect(@team.reload.notified_at).to be_nil
+        it 'calls team.unfinalize' do
+          allow(Team).to receive(:find).and_return(team)
+          expect(team).to receive(:unfinalize)
+          get :show, :id => team.id
         end
       end
     end
 
     describe '#destroy' do
+
+      let(:the_user) { valid_user }
+
       context 'on invalid id' do
         before { delete :destroy, :id => 99 }
         it 'returns 404' do
