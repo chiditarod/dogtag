@@ -10,10 +10,11 @@ class Race < ActiveRecord::Base
 
   # todo: validate filter_field based on contents of jsonform schema
 
-  scope :past, -> { where("race_datetime < ?", Time.now) }
+  scope :past,    -> { where("race_datetime < ?", Time.now) }
   scope :current, -> { where("race_datetime > ?", Time.now) }
 
   has_many :teams
+  MAX_TEAMS_PER_RACE = 4096 # arbitrary number of maximum teams per race.
 
   # Each race has different registration requirements that needs
   # to be fulfilled before a team is fully registered.
@@ -86,9 +87,7 @@ class Race < ActiveRecord::Base
 
     def load_stats(race_id)
       race = Race.find race_id
-
-      money_raised = race.finalized_teams.reduce(0) { |memo, t| memo + t.money_paid_in_cents }
-
+      money_raised = race.teams.reduce(0) { |memo, t| memo + t.money_paid_in_cents }
       {
         'money_raised' => money_raised
       }

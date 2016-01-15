@@ -1,10 +1,7 @@
-# TODO: consolidate 'thetime' variable to a single place.
-thetime = Time.local(1980, 9, 1, 12, 0, 0)
-
 FactoryGirl.define do
   factory :tier do
     ignore do
-      thetime { Timecop.freeze(thetime) { Time.now } }
+      thetime { Timecop.freeze(THE_TIME) { Time.now } }
     end
 
     price 5000

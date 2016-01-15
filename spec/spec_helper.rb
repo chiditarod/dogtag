@@ -59,6 +59,9 @@ include Authlogic::TestCase
 # CanCan authorization
 require "cancan/matchers"
 
+# Global time constant for use with Timecop
+THE_TIME = Time.local(1980, 9, 1, 12, 0, 0)
+
 def mock_login!(user)
   expect(user).to_not be_nil
   session = UserSession.create!(user, false)

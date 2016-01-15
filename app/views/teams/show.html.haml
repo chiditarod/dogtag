@@ -39,6 +39,11 @@
           = t('.registering_for')
         = link_to @race.name, race_path(@race)
 
+        - if @team.assigned_team_number && current_user.is_any_of?(:admin, :operator)
+          as team
+          \#
+          = @team.assigned_team_number
+
       - if @team.race.open_for_registration?
         = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
       - else

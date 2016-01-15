@@ -2,7 +2,7 @@ FactoryGirl.define do
 
   factory :team do
     sequence(:name)    { |n| "Team #{n}" }
-    description        { |n| "omg! #{name} is the best team evar." }
+    description        { "omg! #{name} is the best team evar." }
     sequence(:twitter) { |n| "@twitter#{n}" }
     experience 5
 
@@ -10,9 +10,11 @@ FactoryGirl.define do
     race
 
     factory :finalized_team do
-      finalized true
       after(:create) do |team|
-        create_list(:person, 5, team: team)
+        Timecop.freeze(THE_TIME) do
+          create_list(:person, 5, team: team)
+          team.finalize
+        end
       end
     end
   end

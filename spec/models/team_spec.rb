@@ -56,21 +56,48 @@ describe Team do
 
   describe '.finalize' do
 
-    # todo: timecop
-    before do
-      thenow = Time.parse("01/01/2010 10:00")
-      allow(Time).to receive(:now).and_return(thenow)
-    end
-
     context 'not yet finalized and meets all requirements' do
       let(:mock_mailer) { double("mailer", deliver: true) }
       let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
 
       it 'sets finalized flat and notified_at in the db' do
-        team.finalize
-        record = Team.find(team.id)
-        expect(record.notified_at.to_datetime).to eq(Time.now.to_datetime)
-        expect(record.finalized).to be_true
+        Timecop.freeze(THE_TIME) do
+          team.finalize
+          record = Team.find(team.id)
+          expect(record.notified_at.to_datetime).to eq(THE_TIME.to_datetime)
+          expect(record.finalized).to be_true
+        end
+      end
+
+      context 'team number assignments' do
+        it 'assigns the next available team number' do
+          team.finalize
+          team.reload
+          expect(team.assigned_team_number).to eq(1)
+        end
+
+        context 'if the team already has an assigned team number' do
+          it 'uses the same number' do
+            team.finalize
+            team.unfinalize
+            team.finalize
+            team.reload
+            expect(team.assigned_team_number).to eq(1)
+          end
+        end
+
+        context 'when there are teams that used to be finalized and now are not' do
+          it 'skips over the formerly assigned team number to a new one' do
+            t = FactoryGirl.create :finalized_team, race: team.race
+            t.unfinalize
+            t.reload
+            expect(t.finalized).to be_false
+
+            team.finalize
+            team.reload
+            expect(team.assigned_team_number).to eq(2)
+          end
+        end
       end
 
       it 'emails the user and logs' do
@@ -99,6 +126,13 @@ describe Team do
         record = Team.find(team.id)
         expect(record.notified_at).to be_nil
         expect(record.finalized).to be_nil
+      end
+
+      it "leaves the 'assigned_team_number' field alone (immutable)" do
+        num = team.assigned_team_number
+        team.unfinalize
+        team.reload
+        expect(team.assigned_team_number).to eq(num)
       end
     end
   end
