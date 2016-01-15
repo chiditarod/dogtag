@@ -9,7 +9,7 @@ FactoryGirl.define do
 
     factory :tier2 do
       price 6000
-      begin_at { thetime - 1.second }
+      begin_at { thetime - 2.days }
     end
 
     factory :tier3 do

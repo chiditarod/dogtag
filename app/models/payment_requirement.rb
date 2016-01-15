@@ -19,7 +19,7 @@ class PaymentRequirement < Requirement
   end
 
   def charge_data(reg)
-    metadata = metadata_for reg
+    metadata = metadata_for(reg)
     return false if metadata.blank?
     return metadata['charge'] if metadata['charge'].present?
     false
@@ -34,15 +34,20 @@ class PaymentRequirement < Requirement
   end
 
   def active_tier
-    selected_tier = chronological_tiers.select do |tier|
+    chronological_tiers.select do |tier|
       tier.begin_at < Time.now
-    end.last
-    selected_tier ||= false
+    end.last || false
+  end
+
+  def next_tiers
+    chronological_tiers.select do |tier|
+      tier.begin_at >= Time.now
+    end || []
   end
 
   private
 
   def chronological_tiers
-    tiers.sort_by(&:begin_at)
+    @chronological_tiers ||= tiers.sort_by(&:begin_at)
   end
 end
