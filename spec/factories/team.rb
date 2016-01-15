@@ -1,21 +1,13 @@
 FactoryGirl.define do
 
   factory :team do
-    sequence(:name) { |n| "Team #{n}" }
-    description 'OMG our team is the best!'
+    sequence(:name)    { |n| "Team #{n}" }
+    description        { |n| "omg! #{name} is the best team evar." }
     sequence(:twitter) { |n| "@twitter#{n}" }
     experience 5
 
     user
     race
-
-    # todo: delete these once we delete the columns from the db
-    racer_type 'racer'
-    primary_inspiration 'white fang'
-    rules_confirmation true
-    sabotage_confirmation true
-    cart_deposit_confirmation true
-    food_confirmation true
 
     factory :finalized_team do
       finalized true

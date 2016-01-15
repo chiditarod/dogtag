@@ -159,18 +159,14 @@ describe RacesController do
       end
 
       context 'with valid patch data' do
+        let(:race) { FactoryGirl.create :race }
         before do
-          @race = FactoryGirl.create :race
-          patch :update, :id => @race.id, :race => {:max_teams => 200}
+          patch :update, :id => race.id, :race => {:max_teams => 200}
         end
-        it 'updates the race' do
-          expect(@race.reload.max_teams).to eq(200)
-        end
-        it 'sets flash notice' do
+        it 'updates the race, sets flash, redirects to race#show' do
+          expect(race.reload.max_teams).to eq(200)
           expect(flash[:notice]).to eq(I18n.t 'update_success')
-        end
-        it 'redirects to race#show' do
-          expect(response).to redirect_to(race_url @race.id)
+          expect(response).to redirect_to(race_url race.id)
         end
         it 'converts filter_field array into comma-separated list'
       end
@@ -219,33 +215,25 @@ describe RacesController do
     end
 
     describe '#index' do
-      before do
-        @closed = FactoryGirl.create :closed_race
-        @open1 = FactoryGirl.create :race
-        @open2 = FactoryGirl.create :race
+      it 'returns http success, sets @races to all races' do
+        race1 = FactoryGirl.create :race
+        race2 = FactoryGirl.create :race
         get :index
-      end
-
-      it 'returns http success' do
         expect(response).to be_success
-      end
-      it 'sets @races to all races' do
-        expect(assigns(:races).count).to eq 3
+        expect(assigns(:races)).to eq([race1, race2])
       end
     end
 
     describe '#new' do
+      let(:race) { double "race" }
       before do
-        @race_stub = Race.new
-        Race.stub(:new).and_return @race_stub
+        Race.stub(:new).and_return(race)
         get :new
       end
 
-      it 'returns http success' do
+      it 'returns http success, assigns @race to Race.new' do
         expect(response).to be_success
-      end
-      it 'assigns @race to Race.new' do
-        expect(assigns(:race)).to eq(@race_stub)
+        expect(assigns(:race)).to eq(race)
       end
     end
 

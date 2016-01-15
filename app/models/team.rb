@@ -47,7 +47,7 @@ class Team < ActiveRecord::Base
     self.notified_at = Time.now
     self.finalized = true
     if self.save
-      # TODO: This needs to go async
+      # todo: This needs to go async
       UserMailer.team_finalized_email(self.user, self).deliver
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
