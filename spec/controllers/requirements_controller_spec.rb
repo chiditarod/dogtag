@@ -2,61 +2,61 @@ require 'spec_helper'
 
 describe RequirementsController do
 
-  before do
-    @req = FactoryGirl.create :requirement
-  end
-
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
-        get :new, :race_id => @req.race.id
+        get :new, :race_id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create, :race_id => @req.race.id
+        post :create, :race_id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :race_id => @req.race.id, :id => 1
+        get :edit, :race_id => -1, :id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :race_id => @req.race.id, :id => 1
+        patch :update, :race_id => -1, :id => 1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
   end
 
   context '[logged in]' do
+    let(:req)        { FactoryGirl.create :requirement }
+    # todo: change this from admin.
+    let(:valid_user) { FactoryGirl.create :admin_user }
+
     before do
-      @valid_user = FactoryGirl.create :admin_user
       activate_authlogic
-      mock_login! @valid_user
+      mock_login! valid_user
     end
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :race_id => @req.race.id, :id => 99 }
+        before { delete :destroy, :race_id => req.race.id, :id => 99 }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
       end
 
       it 'removes a record' do
+        req # create db record
         expect do
-          delete :destroy, :race_id => @req.race.id, :id => @req.id
+          delete :destroy, :race_id => req.race.id, :id => req.id
         end.to change(Requirement, :count).by(-1)
       end
 
       context 'with valid id' do
         before do
-          delete :destroy, :race_id => @req.race.id, :id => @req.id
+          delete :destroy, :race_id => req.race.id, :id => req.id
         end
 
         it 'sets flash notice' do
@@ -64,14 +64,14 @@ describe RequirementsController do
         end
 
         it 'redirects to race#show' do
-          expect(response).to redirect_to(race_url(@req.race))
+          expect(response).to redirect_to(race_url(req.race))
         end
       end
     end
 
     describe '#update' do
       context 'on invalid id' do
-        before { put :update, :race_id => @req.race.id, :id => 99 }
+        before { put :update, :race_id => req.race.id, :id => 99 }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -79,12 +79,12 @@ describe RequirementsController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => @req.id, :race_id => @req.race.id,
+          patch :update, :id => req.id, :race_id => req.race.id,
             :requirement => {:name => 'new name'}
         end
 
         it 'updates the requirement' do
-          expect(@req.reload.name).to eq('new name')
+          expect(req.reload.name).to eq('new name')
         end
 
         it 'sets flash notice' do
@@ -92,11 +92,11 @@ describe RequirementsController do
         end
 
         it 'sets @race (needed by _form.html.haml)' do
-          expect(assigns(:race)).to eq(@req.race)
+          expect(assigns(:race)).to eq(req.race)
         end
 
-        it 'redirects to race#show' do
-          expect(response).to redirect_to(race_url :id => @req.race.id)
+        it 'redirects to race#edit' do
+          expect(response).to redirect_to(edit_race_url req.race)
         end
       end
     end
@@ -104,7 +104,7 @@ describe RequirementsController do
     describe '#edit' do
       context 'with invalid id' do
         before do
-          get :edit, :race_id => @req.race.id, :id => 99
+          get :edit, :race_id => req.race.id, :id => 99
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -113,10 +113,10 @@ describe RequirementsController do
 
       context 'with valid user id' do
         before do
-          get :edit, :race_id => @req.race.id, :id => @req.id
+          get :edit, :race_id => req.race.id, :id => req.id
         end
-        it 'sets the @requirement object' do
-          expect(assigns(:requirement)).to eq(@req)
+        it 'sets the requirement object' do
+          expect(assigns(:requirement)).to eq(req)
         end
         it 'returns 200' do
           expect(response).to be_success
@@ -125,22 +125,22 @@ describe RequirementsController do
     end
 
     describe '#new' do
+      let(:req_stub) { Requirement.new }
       before do
-        @req_stub = Requirement.new
-        Requirement.stub(:new).and_return @req_stub
-        get :new, :race_id => @req.race.id
+        allow(Requirement).to receive(:new).and_return(req_stub)
+        get :new, :race_id => req.race.id
       end
 
       it 'returns http success' do
         expect(response).to be_success
       end
 
-      it 'assigns @requirement to Requirement.new' do
-        expect(assigns(:requirement)).to eq(@req_stub)
+      it 'assigns requirement to Requirement.new' do
+        expect(assigns(:requirement)).to eq(req_stub)
       end
 
       it 'sets @race (needed by _form.html.haml)' do
-        expect(assigns(:race)).to eq(@req.race)
+        expect(assigns(:race)).to eq(req.race)
       end
     end
 
@@ -156,20 +156,21 @@ describe RequirementsController do
 
       context 'without requirement param' do
         it 'returns 400' do
-          post :create, :race_id => @req.race.id
+          post :create, :race_id => req.race.id
           expect(response.status).to eq(400)
         end
       end
 
       it 'adds a record' do
+        req # create db record
         expect do
-          post :create, :race_id => @req.race.id, :requirement => valid_req_hash
+          post :create, :race_id => req.race.id, :requirement => valid_req_hash
         end.to change(Requirement, :count).by 1
       end
 
       context 'upon success' do
         before do
-          post :create, :race_id => @req.race.id, :requirement => valid_req_hash
+          post :create, :race_id => req.race.id, :requirement => valid_req_hash
         end
 
         it 'sets a flash notice' do
@@ -182,10 +183,9 @@ describe RequirementsController do
         end
 
         it 'assigns the requirement to their race' do
-          expect(assigns(:requirement).race).to eq(@req.race)
+          expect(assigns(:requirement).race).to eq(req.race)
         end
       end
     end
-
   end
 end

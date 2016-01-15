@@ -22,7 +22,7 @@ class RequirementsController < ApplicationController
 
     if @requirement.update_attributes requirement_params
       flash[:notice] = I18n.t('update_success')
-      redirect_to race_url :id => @requirement.race.id
+      redirect_to edit_race_url :id => @requirement.race.id
     else
       flash.now[:error] = [t('update_failed')]
       flash.now[:error] << @requirement.errors.messages
