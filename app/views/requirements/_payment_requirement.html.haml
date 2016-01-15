@@ -19,7 +19,21 @@
   - if req.race.open_for_registration?
     .lead
       $
-      = price_in_dollars_and_cents req.active_tier.price
+      = price_in_dollars_and_cents(req.active_tier.price)
+
+      -# show next tiers
+      - unless req.next_tiers.empty?
+        %small
+          %small
+            %small
+              - req.next_tiers.each do |tier|
+                %br
+                %em
+                  $
+                  = price_in_dollars_and_cents(tier.price)
+                  \:
+                  = tier.begin_at.strftime("%b %e, %Y")
+
     - if @race.full?
       %h4.text-warning
         = t('.no_pay_waitlist')
