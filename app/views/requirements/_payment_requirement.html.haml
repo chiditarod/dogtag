@@ -1,4 +1,5 @@
 - if req.completed?(team)
+  -# todo: this is now my least favorite part of this codebase. put this somewhere better.
   - cr = req.cr_for(team)
   - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
   - if charge.refunded

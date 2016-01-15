@@ -8,12 +8,18 @@
     -# mobile first.
     %meta{name: "viewport", content: "width=device-width, initial-scale=1.0"}
 
-    %link{:href=>"//netdna.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css", :rel=>"stylesheet"}
+    %link{:href=>"//netdna.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css", :rel=>"stylesheet"}
     = stylesheet_link_tag "application", :media => "all"
     = csrf_meta_tags
 
     = javascript_include_tag 'application'
     = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"
+
+
+    -# comodo ssl graphic
+    %script
+      var tlJsHost = ((window.location.protocol == "https:") ? "https://secure.comodo.com/" : "http://www.trustlogo.com/");
+      document.write(unescape("%3Cscript src='" + tlJsHost + "trustlogo/javascript/trustlogo.js' type='text/javascript'%3E%3C/script%3E"));
 
   %body{:class => "#{controller_name} #{action_name}"}
 
@@ -22,4 +28,14 @@
       = render 'flash'
       = yield
 
-    %script{:src=>"//netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"}
+    %script{:src=>"//netdna.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"}
+
+    -# comodo ssl graphic
+    .container
+      .text-center
+        %br
+        %br
+        %script
+          TrustLogo("https://dogtag.chiditarod.org/comodo_secure_76x26_transp.png", "CL1", "none");
+        %a{:href => "https://www.positivessl.com/", :id => "comodoTL"}
+          Positive SSL
