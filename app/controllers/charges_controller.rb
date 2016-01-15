@@ -48,10 +48,12 @@ class ChargesController < ApplicationController
     flash[:error] = e.message
     log_and_redirect(e)
   rescue Stripe::InvalidRequestError => e
-    flash[:error] = "An error occured processing your credit card. Please try again."
+    error = StripeHelper.exception_to_hash(e)
+    flash[:error] = "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: #{error[:message]}"
     log_and_redirect(e)
   rescue Stripe::APIConnectionError => e
-    flash[:error] = 'We could not connect to the Stripe API. Please try again.'
+    error = StripeHelper.exception_to_hash(e)
+    flash[:error] = "There is an issue connecting to the Stripe API: #{error[:message]}"
     log_and_redirect(e)
   rescue Stripe::StripeError => e
     flash[:error] = 'An error occured connecting to Stripe. Please email dogtag@chiditarod.org.'

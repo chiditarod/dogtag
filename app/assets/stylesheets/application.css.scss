@@ -47,4 +47,25 @@ li.select2-results__option {
   color: #000;
 }
 
+.control-group {
+  font-size: 110%;
+  margin-bottom: 1em;
 
+  input {
+    width: 400px;
+  }
+
+  .help-block {
+    font-size: 115%;
+    background: #233241;
+    padding: .3em;
+  }
+}
+
+label.control-label {
+  font-size: 100%;
+}
+.help-inline {
+  font-size:85%;
+  margin-left: 1em;
+}

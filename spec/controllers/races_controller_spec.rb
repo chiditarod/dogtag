@@ -163,10 +163,10 @@ describe RacesController do
         before do
           patch :update, :id => race.id, :race => {:max_teams => 200}
         end
-        it 'updates the race, sets flash, redirects to race#show' do
+        it 'updates the race, sets flash, redirects to race#edit' do
           expect(race.reload.max_teams).to eq(200)
           expect(flash[:notice]).to eq(I18n.t 'update_success')
-          expect(response).to redirect_to(race_url race.id)
+          expect(response).to redirect_to(edit_race_url race.id)
         end
         it 'converts filter_field array into comma-separated list'
       end

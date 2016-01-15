@@ -1,7 +1,7 @@
 class StripeHelper
   class << self
 
-    def log_charge_error(e)
+    def exception_to_hash(e)
       hash = {
         message: e.message
       }
@@ -18,10 +18,13 @@ class StripeHelper
           }
         )
       end
+      hash
+    end
 
-      Rails.logger.error hash.to_json
+    def log_charge_error(e)
+      Rails.logger.error exception_to_hash(e).to_json
     rescue => e
-      Rails.logger.error "Error when logging stripe error: #{e}"
+      Rails.logger.error "Error logging stripe error: #{e}"
     end
 
     def safely_call_stripe

@@ -108,6 +108,17 @@
             = t('.action_required')
             .fa.fa-frown-o
 
+
+    - if current_user.is_any_of?(:admin, :operator)
+      %h3
+        %i.fa.fa-user
+          = t('.captain')
+      = link_to user_url(@team.user.id) do
+        = @team.user.first_name
+        = @team.user.last_name
+      %br
+      = @team.user.email
+
     %h3
       %i.fa.fa-user
       = t('.people')
