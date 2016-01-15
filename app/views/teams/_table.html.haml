@@ -7,6 +7,8 @@
       %th.filter-false Team Experience
       %th.filter-false Racer Experience
       %th Team
+      - if current_user.is_any_of?(:admin, :operator)
+        %th Number
       - if filter_field.any?
         - filter_field.each do |f|
           %th.filter-select
@@ -50,6 +52,11 @@
         %p
           %i.fa.fa-quote-left.pull-left.fa-border
           = team.description
+
+      %td
+        - if current_user.is_any_of?(:admin, :operator)
+          %h4
+            = team.assigned_team_number
 
       - if filter_field.any?
         - filter_field.each do |f|

@@ -104,7 +104,7 @@ en:
       instructions: Once you create an account, you can create a team and register for a race.
     update:
       update_user: Update your account
-      update_success: Thanks for updating your account information.
+      update_success: Account information successfully updated.
     edit:
       update_user: Update your account
 

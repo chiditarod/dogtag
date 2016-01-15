@@ -15,8 +15,7 @@ describe PaymentRequirement do
     it 'sets the company name to the race name'
   end
 
-  let(:thetime) { Time.local(1980, 9, 1, 12, 0, 0) }
-  before { Timecop.freeze(thetime) }
+  before { Timecop.freeze(THE_TIME) }
   after  { Timecop.return }
 
   describe '#enabled?' do

@@ -39,27 +39,30 @@ class Team < ActiveRecord::Base
     ! finalized
   end
 
-  # confirms the team as finalized and runs associated tasks
+  # sets the finalization bits and triggers follow-up actions
   def finalize
     return nil if finalized
     return nil unless meets_finalization_requirements?
-
+    # finalize
     self.notified_at = Time.now
+    self.assigned_team_number = self.assigned_team_number || next_available_team_num
     self.finalized = true
+
     if self.save
-      # todo: This needs to go async
+      # todo: move mailer to async process
       UserMailer.team_finalized_email(self.user, self).deliver
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
     else
-      Rails.logger.error "Failed to finalize team: #{name}"
-      false
+      msg = "Failed to finalize team: #{name}"
+      Rails.logger.error(msg)
+      raise StandardError, msg
     end
   end
 
+  # remove the finalization bits from the team
   def unfinalize
     return nil unless finalized
-
     # unset the notification field so they can be again notified in the future.
     self.notified_at = nil
     self.finalized = nil
@@ -128,6 +131,18 @@ class Team < ActiveRecord::Base
     return false if finalized
   end
 
+  private
+
+  def next_available_team_num
+    teams = Team.where(race_id: race.id).where('teams.assigned_team_number IS NOT NULL')
+    used_numbers = teams.map(&:assigned_team_number).compact
+
+    (1..Race::MAX_TEAMS_PER_RACE).detect do |n|
+      ! used_numbers.include?(n)
+    end
+  end
+
+
   class << self
     # todo: spec
     def export(race_id, options = {})
@@ -147,6 +162,7 @@ class Team < ActiveRecord::Base
       teams.inject([]) do |memo, team|
         row = []
         row << team.finalized.to_s
+        row << team.assigned_team_number.to_s
 
         cols = [].concat(Team.attribute_names.select do |n|
           %w(name experience description).include?(n)
@@ -173,6 +189,7 @@ class Team < ActiveRecord::Base
     def make_header(race, person_keys, user_keys)
       header = []
       header << 'finalized'
+      header << 'number'
 
       # team basics
       header.concat(Team.attribute_names.select do |n|
