@@ -190,7 +190,7 @@ describe ChargesController do
           end
 
           it 'renders flash error' do
-            expect(flash[:error]).to eq("An error occured processing your credit card. Please try again.")
+            expect(flash[:error]).to match(/Invalid parameters supplied to Stripe API/)
           end
 
           include_examples "redirects to prior url"
@@ -206,7 +206,7 @@ describe ChargesController do
           end
 
           it 'renders flash error' do
-            expect(flash[:error]).to eq('We could not connect to the Stripe API. Please try again.')
+            expect(flash[:error]).to match(/There is an issue connecting to the Stripe API/)
           end
 
           include_examples "redirects to prior url"
