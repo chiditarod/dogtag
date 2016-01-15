@@ -1,8 +1,9 @@
 dogTag
 ======
 
-[![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
-[![Code Climate](https://codeclimate.com/github/ometa/dogtag.png)](https://codeclimate.com/github/ometa/dogtag)
+![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
+[![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
+[![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
 
 [chiditarod.org](http://chiditarod.org) registration and racer management system
 

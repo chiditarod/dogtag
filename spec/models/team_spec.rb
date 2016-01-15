@@ -54,6 +54,55 @@ describe Team do
     end
   end
 
+  describe '.finalize' do
+
+    # todo: timecop
+    before do
+      thenow = Time.parse("01/01/2010 10:00")
+      allow(Time).to receive(:now).and_return(thenow)
+    end
+
+    context 'not yet finalized and meets all requirements' do
+      let(:mock_mailer) { double("mailer", deliver: true) }
+      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+
+      it 'sets finalized flat and notified_at in the db' do
+        team.finalize
+        record = Team.find(team.id)
+        expect(record.notified_at.to_datetime).to eq(Time.now.to_datetime)
+        expect(record.finalized).to be_true
+      end
+
+      it 'emails the user and logs' do
+        expect(Rails.logger).to receive(:info).with("Finalized Team: #{team.name} (id: #{team.id})")
+        expect(UserMailer).to receive(:team_finalized_email).with(team.user, team).and_return(mock_mailer)
+        team.finalize
+      end
+    end
+  end
+
+  describe '.unfinalize' do
+
+    context 'called on a unfinalized team' do
+      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+
+      it 'returns nil' do
+        expect(team.unfinalize).to be_nil
+      end
+    end
+
+    context 'called on a finalized team' do
+      let(:team) { FactoryGirl.create :finalized_team }
+
+      it 'unsets finalized flat and notified_at in the db' do
+        team.unfinalize
+        record = Team.find(team.id)
+        expect(record.notified_at).to be_nil
+        expect(record.finalized).to be_nil
+      end
+    end
+  end
+
   describe '.unfinalized' do
     it 'returns true when team is unfinalized 'do
       team = FactoryGirl.create :team

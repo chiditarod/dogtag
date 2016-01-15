@@ -17,7 +17,7 @@ class Team < ActiveRecord::Base
   has_many :completed_requirements
   has_many :requirements, :through => :completed_requirements
 
-  scope :all_finalized, -> { where('teams.finalized = ?', true) }
+  scope :all_finalized,   -> { where('teams.finalized = ?', true) }
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
 
   EXPERIENCE_LEVELS = [
@@ -31,11 +31,39 @@ class Team < ActiveRecord::Base
     "7th years of good luck",
     "8th year elite",
     "9th year elders",
-    "10th year anniversary"
+    "10th year anniversary",
+    "11th year OGs"
   ]
 
   def unfinalized
     ! finalized
+  end
+
+  # confirms the team as finalized and runs associated tasks
+  def finalize
+    return nil if finalized
+    return nil unless meets_finalization_requirements?
+
+    self.notified_at = Time.now
+    self.finalized = true
+    if self.save
+      # TODO: This needs to go async
+      UserMailer.team_finalized_email(self.user, self).deliver
+      Rails.logger.info "Finalized Team: #{name} (id: #{id})"
+      true
+    else
+      Rails.logger.error "Failed to finalize team: #{name}"
+      false
+    end
+  end
+
+  def unfinalize
+    return nil unless finalized
+
+    # unset the notification field so they can be again notified in the future.
+    self.notified_at = nil
+    self.finalized = nil
+    self.save
   end
 
   def person_experience
@@ -111,6 +139,8 @@ class Team < ActiveRecord::Base
       table << make_header(race, person_keys, user_keys)
       table.concat(make_body(race, options, person_keys, user_keys))
     end
+
+    private
 
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams

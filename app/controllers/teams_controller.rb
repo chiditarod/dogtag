@@ -47,13 +47,11 @@ class TeamsController < ApplicationController
   def show
     @team = Team.find params[:id]
 
-    # if this team is finalized and the user hasn't
-    # been notified (e.g. newly finalized)
-    process_if_newly_finalized
-
-    # if this team is now unfinalized for some reason,
-    # unset the notification bit so they can be again notified in the future.
+    # check and do stuff if this team is now unfinalized for some reason
     unprocess_if_newly_unfinalized
+
+    # check if the team now meets all finalization criteria and do stuff if so
+    process_if_newly_finalized
 
     @race = @team.race
     session[:prior_url] = request.original_url
@@ -95,25 +93,19 @@ class TeamsController < ApplicationController
   end
 
   def process_if_newly_finalized
-    return unless (@team.meets_finalization_requirements? && @team.unfinalized)
+    # precaution to ensure the team cannot be finalized unless by the owner or an admin-style user
     return unless (current_user == @team.user || current_user.is_any_of?(:admin, :operator))
 
-    @team.notified_at = Time.now
-    @team.finalized = true
-    if @team.save
-      UserMailer.team_finalized_email(@team.user, @team).deliver
-      Rails.logger.info "Finalized Team: #{@team.name} (id: #{@team.id})"
+    if @team.finalize
       @display_notification = :notify_now_complete
-    else
-      Rails.logger.error "Failed to finalize team: #{team}"
+      @team.reload
     end
   end
 
   def unprocess_if_newly_unfinalized
     if !@team.meets_finalization_requirements? && @team.finalized
-      @team.notified_at = nil
-      @team.finalized = nil
-      @team.save
+      @team.unfinalize
+      @team.reload
     end
   end
 end
