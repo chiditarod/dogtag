@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150201221604) do
+ActiveRecord::Schema.define(version: 20160115050348) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -73,12 +73,6 @@ ActiveRecord::Schema.define(version: 20150201221604) do
     t.string   "twitter"
     t.datetime "notified_at"
     t.integer  "race_id"
-    t.string   "racer_type"
-    t.string   "primary_inspiration"
-    t.boolean  "rules_confirmation"
-    t.boolean  "sabotage_confirmation"
-    t.boolean  "cart_deposit_confirmation"
-    t.boolean  "food_confirmation"
     t.integer  "experience"
     t.string   "buddies"
     t.string   "wildcard"
