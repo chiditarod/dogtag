@@ -6,10 +6,11 @@ class QuestionsController < ApplicationController
 
   # This is a hack to get around strong parameters.
   # These are the names of the parameter keys in the Race's jsonschema.
+  # todo: figure out how to calculate this dynamically.
   HACK_PARAMS = [
-    :'racer-type', :'primary-inspiration', :'twitter', :'buddies', :'shower-song', :'private-comments',
-    :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
-    :'agree-not-a-donation', :'agree-to-orientation', :'party-bus-interest', :'party-bus-seats'
+    :'racer-type', :'primary-inspiration', :'secondary-inspiration', :'twitter', :'buddies', :'private-comments', :'explain-theme',
+    :'agree-to-core-philosophy', :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
+    :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'party-bus-interest', :'party-bus-seats'
   ]
 
   def show
