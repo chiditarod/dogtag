@@ -24,7 +24,7 @@ class UsersController < ApplicationController
     @user = User.new user_params
 
     if @user.save
-      UserMailer.welcome_email(@user).deliver
+      UserMailer.welcome_email(@user).deliver_now
       flash[:notice] = I18n.t('create_success_user')
       redirect_back_or_default user_url(@user.id)
     else

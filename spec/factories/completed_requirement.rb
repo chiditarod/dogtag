@@ -6,7 +6,7 @@ FactoryGirl.define do
   end
 
   trait :with_metadata do
-    ignore do
+    transient do
       hash {{ 'foo'=>'bar' }}
     end
     metadata { JSON.generate(hash) }

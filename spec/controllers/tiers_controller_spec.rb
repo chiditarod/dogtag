@@ -2,11 +2,6 @@ require 'spec_helper'
 
 describe TiersController do
 
-  before do
-    @req = FactoryGirl.create :payment_requirement
-    @tier = FactoryGirl.create :tier
-    @req.tiers << @tier
-  end
 
   context '[logged out]' do
     describe '#new' do
@@ -23,19 +18,26 @@ describe TiersController do
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1
+        get :edit, :id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1
+        patch :update, :id => -1
         expect(response).to redirect_to(new_user_session_path)
       end
     end
   end
 
   context '[logged in]' do
+
+    # Todo: move to let
+    before do
+      @req = FactoryGirl.create :payment_requirement
+      @tier = FactoryGirl.create :tier
+      @req.tiers << @tier
+    end
 
     let (:valid_tier_hash) { FactoryGirl.attributes_for :tier2 }
 
@@ -99,7 +101,7 @@ describe TiersController do
     describe '#edit' do
       context 'with invalid id' do
         before do
-          get :edit, :id => 99
+          get :edit, :id => -1
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -110,14 +112,10 @@ describe TiersController do
         before do
           get :edit, :id => @tier.id
         end
-        it 'sets the @tier object' do
+        it 'sets @requirement and @tier objects, returns 200' do
           expect(assigns(:tier)).to eq(@tier)
-        end
-        it 'returns 200' do
-          expect(response).to be_success
-        end
-        it 'sets @requirement' do
           expect(assigns(:requirement)).to eq(@tier.requirement)
+          expect(response.status).to eq(200)
         end
       end
     end
@@ -133,7 +131,7 @@ describe TiersController do
       context 'upon success' do
         before do
           @tier_stub = Tier.new
-          Tier.stub(:new).and_return @tier_stub
+          allow(Tier).to receive(:new).and_return @tier_stub
           get :new, :requirement_id => @req.id
         end
 
@@ -150,7 +148,7 @@ describe TiersController do
 
       context 'without valid tier param' do
         it 'returns 400' do
-          post :create, :requirement_id => @req.id
+          post :create
           expect(response.status).to eq(400)
         end
       end

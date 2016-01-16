@@ -177,7 +177,7 @@ describe RacesController do
 
       it 'returns 400 if the race parameter is not passed' do
         post :create
-        response.status.should == 400
+        expect(response.status).to eq(400)
       end
 
       it 'returns 200 and sets flash[:error] when required params are missing' do
@@ -186,9 +186,9 @@ describe RacesController do
           bad_payload = valid_race_hash.dup
           bad_payload.delete param
           post :create, :race => bad_payload
-          response.status.should == 200
-          flash[:error].should_not be_nil
-          flash[:error].detect { |val| val.is_a? Hash }.should include param
+          expect(response.status).to eq(200)
+          expect(flash[:error]).not_to be_nil
+          expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
         end
       end
 
@@ -227,7 +227,7 @@ describe RacesController do
     describe '#new' do
       let(:race) { double "race" }
       before do
-        Race.stub(:new).and_return(race)
+        allow(Race).to receive(:new).and_return(race)
         get :new
       end
 

@@ -20,17 +20,17 @@ describe PaymentRequirement do
 
   describe '#enabled?' do
     it 'returns false when no tiers are assigned' do
-      expect(req.enabled?).to be_false
+      expect(req.enabled?).to be false
     end
 
     it 'returns true when there are tiers' do
       req.tiers << tier1
-      expect(req.enabled?).to be_true
+      expect(req.enabled?).to be true
     end
 
     it 'return false when all tiers are in the future' do
       req.tiers << tier3
-      expect(req.enabled?).to be_false
+      expect(req.enabled?).to be false
     end
   end
 
@@ -57,7 +57,7 @@ describe PaymentRequirement do
   describe '#active_tier' do
 
     it 'returns false if no tiers are defined' do
-      expect(req.active_tier).to be_false
+      expect(req.active_tier).to be false
     end
 
     it 'returns the tier if only 1 tier is defined' do
@@ -77,7 +77,7 @@ describe PaymentRequirement do
 
     it 'returns false if all tiers are in the future' do
       req.tiers << tier3
-      expect(req.active_tier).to eq(false)
+      expect(req.active_tier).to be false
     end
   end
 end

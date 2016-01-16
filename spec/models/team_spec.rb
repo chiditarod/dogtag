@@ -57,7 +57,7 @@ describe Team do
   describe '.finalize' do
 
     context 'not yet finalized and meets all requirements' do
-      let(:mock_mailer) { double("mailer", deliver: true) }
+      let(:mock_mailer) { double("mailer", deliver_now: true) }
       let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
 
       it 'sets finalized flat and notified_at in the db' do
@@ -65,7 +65,7 @@ describe Team do
           team.finalize
           record = Team.find(team.id)
           expect(record.notified_at.to_datetime).to eq(THE_TIME.to_datetime)
-          expect(record.finalized).to be_true
+          expect(record.finalized).to be_truthy
         end
       end
 
@@ -91,7 +91,7 @@ describe Team do
             t = FactoryGirl.create :finalized_team, race: team.race
             t.unfinalize
             t.reload
-            expect(t.finalized).to be_false
+            expect(t.finalized).to be_falsey
 
             team.finalize
             team.reload
@@ -140,12 +140,12 @@ describe Team do
   describe '.unfinalized' do
     it 'returns true when team is unfinalized 'do
       team = FactoryGirl.create :team
-      expect(team.unfinalized).to be_true
+      expect(team.unfinalized).to be_truthy
     end
 
     it 'returns false when team is finalized 'do
       team = FactoryGirl.create :finalized_team
-      expect(team.unfinalized).to be_false
+      expect(team.unfinalized).to be_falsey
     end
   end
 
@@ -258,12 +258,12 @@ describe Team do
     let(:reg) { FactoryGirl.create :team, :with_people, :race => race, :people_count => (race.people_per_team - 1) }
 
     it 'returns true if there are less than race.people_per_team people' do
-      expect(reg.needs_people?).to be_true
+      expect(reg.needs_people?).to be_truthy
     end
 
     it 'returns false if there are race.people_per_team people' do
       reg.people << FactoryGirl.create(:person)
-      expect(reg.needs_people?).to be_false
+      expect(reg.needs_people?).to be_falsey
     end
   end
 
@@ -274,7 +274,7 @@ describe Team do
   describe '#is_full?' do
     it 'should be the opposite of #needs_people?' do
       reg = FactoryGirl.create :team
-      reg.stub(:needs_people?).and_return false
+      allow(reg).to receive(:needs_people?).and_return false
       expect(reg.is_full?).to eq(true)
     end
   end
@@ -285,27 +285,27 @@ describe Team do
     end
 
     it "returns true if it doesn't need people, and all requirements are met" do
-      @reg.stub(:completed_all_requirements?).and_return true
-      @reg.stub(:is_full?).and_return true
-      expect(@reg.meets_finalization_requirements?).to be_true
+      allow(@reg).to receive(:completed_all_requirements?).and_return true
+      allow(@reg).to receive(:is_full?).and_return true
+      expect(@reg.meets_finalization_requirements?).to be_truthy
     end
 
     it "returns false if it needs people, and all requirements are met" do
-      @reg.stub(:completed_all_requirements?).and_return true
-      @reg.stub(:is_full?).and_return false
-      expect(@reg.meets_finalization_requirements?).to be_false
+      allow(@reg).to receive(:completed_all_requirements?).and_return true
+      allow(@reg).to receive(:is_full?).and_return false
+      expect(@reg.meets_finalization_requirements?).to be_falsey
     end
 
     it "returns false if it doesn't need people, and all requirements are NOT met" do
-      @reg.stub(:completed_all_requirements?).and_return false
-      @reg.stub(:is_full?).and_return true
-      expect(@reg.meets_finalization_requirements?).to be_false
+      allow(@reg).to receive(:completed_all_requirements?).and_return false
+      allow(@reg).to receive(:is_full?).and_return true
+      expect(@reg.meets_finalization_requirements?).to be_falsey
     end
 
     it "returns false if it needs people, and all requirements are NOT met" do
-      @reg.stub(:completed_all_requirements?).and_return false
-      @reg.stub(:is_full?).and_return false
-      expect(@reg.meets_finalization_requirements?).to be_false
+      allow(@reg).to receive(:completed_all_requirements?).and_return false
+      allow(@reg).to receive(:is_full?).and_return false
+      expect(@reg.meets_finalization_requirements?).to be_falsey
     end
   end
 

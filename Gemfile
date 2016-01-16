@@ -17,7 +17,8 @@ end
 # BEGIN dogtag gems
 
 gem 'authlogic',  '~> 3.4.6'   # authentication
-gem 'cancan',     '~> 1.6.10'  # authorization
+#gem 'cancan',     '~> 1.6.10'  # authorization
+gem 'cancancan', '~> 1.10'
 gem 'role_model', '~> 0.8.2'   # roles
 
 # payments
@@ -33,7 +34,9 @@ gem 'rack-tracker'
 # END dogtag gems
 # -------------------------------------------------------
 
-gem 'rails', '~> 4.0.2'
+gem 'transpec'
+gem 'rails'#, '~> 4.1.0'
+gem 'responders' # responds_to support
 #gem 'rails', '4.1.6'
 
 # Use SCSS for stylesheets
@@ -65,7 +68,7 @@ gem 'jbuilder', '~> 1.2'
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
-  gem 'guard-rspec', require: false
+  gem 'web-console', '~> 3.0'
 end
 
 group :test do
@@ -78,9 +81,9 @@ end
 
 group :test, :development do
   gem 'test-unit'
-  gem 'rspec', '~> 2.14.0'
+  gem 'rspec'
   gem 'rspec-rails'
-  gem 'factory_girl_rails', '4.3.0'
+  gem 'factory_girl_rails'
 end
 
 group :doc do

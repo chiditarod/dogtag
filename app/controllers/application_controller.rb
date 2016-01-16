@@ -23,8 +23,9 @@ class ApplicationController < ActionController::Base
     rescue_from ActionController::UnknownController, :with => :render_not_found
     rescue_from CanCan::AccessDenied, :with => :render_access_denied
   end
-  # we always want a 404 redirect (including during tests)
+  # we always want these (including during tests)
   rescue_from ActiveRecord::RecordNotFound, :with => :render_not_found
+  rescue_from ActionController::ParameterMissing, :with => :render_400
 
   def should_run_update_checker
     return false if params['controller'] == 'users' && %w(edit update).include?(params['action'])
@@ -41,6 +42,11 @@ class ApplicationController < ActionController::Base
   def render_not_found(ex)
     log_error(ex)
     render template: "/error/404.html.erb", status: 404
+  end
+
+  def render_400(ex)
+    log_error(ex)
+    render template: "/error/400.html.erb", status: 400
   end
 
   def render_access_denied(ex)

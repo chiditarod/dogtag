@@ -50,7 +50,7 @@ class Team < ActiveRecord::Base
 
     if self.save
       # todo: move mailer to async process
-      UserMailer.team_finalized_email(self.user, self).deliver
+      UserMailer.team_finalized_email(self.user, self).deliver_now
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
     else

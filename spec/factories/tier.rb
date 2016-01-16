@@ -1,6 +1,6 @@
 FactoryGirl.define do
   factory :tier do
-    ignore do
+    transient do
       thetime { Timecop.freeze(THE_TIME) { Time.now } }
     end
 
