@@ -109,18 +109,12 @@ describe Race do
   end
 
   describe '#finalized_teams' do
-    before do
-      @race = FactoryGirl.create :race
-      @team = FactoryGirl.create :finalized_team, race: @race
-    end
+    let(:team)        { FactoryGirl.create :finalized_team }
+    let(:race)        { team.race }
+    let(:unfinalized) { FactoryGirl.create :team, race: race }
 
-    it 'returns finalized teams' do
-      expect(@race.finalized_teams).to eq [@team]
-    end
-
-    it 'does not return non-finalized teams' do
-      FactoryGirl.create :team, race: @race
-      expect(@race.finalized_teams).to eq [@team]
+    it 'returns finalized teams, not unfinalized teams' do
+      expect(race.finalized_teams).to eq [team]
     end
   end
 
@@ -267,29 +261,28 @@ describe Race do
   end
 
   describe '#waitlist_count' do
-    before do
-      @race = FactoryGirl.create :race
-      (@race.max_teams - 1).times do
-        FactoryGirl.create :finalized_team, race: @race
-      end
-    end
+    let(:race) { FactoryGirl.create :race }
 
     it 'returns 0 if the race is not full' do
-      expect(@race.waitlist_count).to eq(0)
+      expect(race.waitlist_count).to eq(0)
     end
 
-    describe 'when full? == true' do
+    context 'when the race is full' do
       before do
-        FactoryGirl.create :finalized_team, race: @race
+        race.max_teams.times { FactoryGirl.create :finalized_team, race: race }
       end
 
-      it 'returns 0 if total teams = finalized_teams' do
-        expect(@race.waitlist_count).to eq(0)
+      context "and total teams = max teams" do
+        it "returns 0" do
+          expect(race.waitlist_count).to eq(0)
+        end
       end
 
-      it 'returns the delta between total teams and finalized_teams' do
-        FactoryGirl.create :team, race: @race
-        expect(@race.waitlist_count).to eq(1)
+      context "and total teams > max teams" do
+        it 'returns the delta between total teams and max teams' do
+          FactoryGirl.create :team, race: race
+          expect(race.waitlist_count).to eq(1)
+        end
       end
     end
   end
