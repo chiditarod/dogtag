@@ -32,12 +32,10 @@ describe 'validation' do
     expect(FactoryGirl.build(:person, :experience => -10)).to be_invalid
   end
 
-  it 'fails on bad email address' do
-    expect(FactoryGirl.build(:person, :email => 'bad@email')).to be_invalid
-    expect(FactoryGirl.build(:person, :email => 'bad@email.')).to be_invalid
-    expect(FactoryGirl.build(:person, :email => 'bademail.com')).to be_invalid
-    expect(FactoryGirl.build(:person, :email => '@bademail.com')).to be_invalid
-    expect(FactoryGirl.build(:person, :email => 'bad@email.a')).to be_invalid
+  ['bad@email', 'bad@email.', 'bademail.com', '@bademail.com', 'bad@email.a'].each do |email|
+    it "fails on bad email address: #{email}" do
+      expect(FactoryGirl.build(:person, email: email)).to be_invalid
+    end
   end
 
   it 'passes when twitter starts with an @ sign' do
@@ -56,5 +54,4 @@ describe 'validation' do
     expect(person).to be_invalid
     expect(person.errors.messages[:maximum]).to eq(['people already added to this team'])
   end
-
 end
