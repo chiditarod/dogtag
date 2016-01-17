@@ -77,6 +77,17 @@ describe PeopleController do
           expect(response).to redirect_to(team_url :id => team.id)
         end
       end
+
+      context "if destroy fails" do
+        before do
+          expect_any_instance_of(Person).to receive(:destroy).and_return(false)
+          delete :destroy, :team_id => team.id, :id => person.id
+        end
+
+        it "sets flash" do
+          expect(flash[:error]).to eq(I18n.t('destroy_failed'))
+        end
+      end
     end
 
     describe '#update' do
@@ -97,6 +108,19 @@ describe PeopleController do
           expect(assigns(:team)).to eq(team)
           expect(flash[:notice]).to eq(I18n.t 'update_success')
           expect(response).to redirect_to(team_url :id => team.id)
+        end
+      end
+
+      context "if update fails" do
+        before do
+          expect_any_instance_of(Person).to receive(:update_attributes).and_return(false)
+          patch :update, :id => person.id, :team_id => team.id,
+            :person => {:last_name => 'foo'}
+        end
+
+        it "sets flash" do
+          result = [I18n.t('update_failed'), {}]
+          expect(flash.now[:error]).to match_array(result)
         end
       end
     end
