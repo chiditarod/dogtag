@@ -19,14 +19,14 @@ describe UserSessionsController do
       end
 
       it 'should not run the user_update_checker' do
-        expect(controller.should_run_update_checker).to be_false
+        expect(controller.should_run_update_checker).to be_falsey
       end
     end
 
     describe '#new' do
       it 'returns http success and calls UserSession.new' do
         session_stub = UserSession.new
-        UserSession.should_receive(:new).at_least(1).times.and_return session_stub
+        expect(UserSession).to receive(:new).at_least(1).times.and_return session_stub
         get :new
         expect(response).to be_success
       end
@@ -45,7 +45,7 @@ describe UserSessionsController do
       context 'on successful save of the user_session' do
         before do
           mock = UserSession.new(user_session_hash)
-          mock.stub(:save) { true }
+          allow(mock).to receive(:save) { true }
           allow(UserSession).to receive(:new).and_return(mock)
         end
 
@@ -80,8 +80,8 @@ describe UserSessionsController do
       context 'on failure to save the user_session' do
         before do
           session_stub = UserSession.new
-          session_stub.should_receive(:valid?).and_return false
-          UserSession.should_receive(:new).at_least(1).times.and_return session_stub
+          expect(session_stub).to receive(:valid?).and_return false
+          expect(UserSession).to receive(:new).at_least(1).times.and_return session_stub
           post :create, :user_session => user_session_hash
         end
 

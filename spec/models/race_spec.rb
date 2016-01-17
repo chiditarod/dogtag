@@ -10,14 +10,14 @@ describe Race do
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
-      FactoryGirl.create(:race).should be_valid
+      expect(FactoryGirl.create(:race)).to be_valid
     end
 
     it 'fails without valid datetimes' do
       valid_race_hash = FactoryGirl.attributes_for :race
       dates = [:race_datetime, :registration_open, :registration_close]
       dates.each do |d|
-        Race.create(valid_race_hash.merge d => 'abc').should_not be_valid
+        expect(Race.create(valid_race_hash.merge d => 'abc')).not_to be_valid
       end
     end
 
@@ -130,17 +130,17 @@ describe Race do
     end
 
     it "returns false if now < registration_open" do
-      Time.should_receive(:now).and_return @race.registration_open - 1.day
+      expect(Time).to receive(:now).and_return @race.registration_open - 1.day
       expect(@race.open_for_registration?).to eq(false)
     end
 
     it "returns false if registration_close < now" do
-      Time.should_receive(:now).and_return @race.registration_close + 1.day
+      expect(Time).to receive(:now).and_return @race.registration_close + 1.day
       expect(@race.open_for_registration?).to eq(false)
     end
 
     it "returns true if open_for_registration? date < today < close date" do
-      Time.should_receive(:now).and_return @race.registration_close - 1.day
+      expect(Time).to receive(:now).and_return @race.registration_close - 1.day
       expect(@race.open_for_registration?).to eq(true)
     end
   end
@@ -167,19 +167,19 @@ describe Race do
     end
 
     it 'returns false if races has less than the maximum finalized teams' do
-      expect(@race.full?).to be_false
+      expect(@race.full?).to be false
     end
 
     it 'returns false if teams are >= the maximum but some are not finalized' do
       @race.teams << FactoryGirl.create(:team)
-      expect(@race.full?).to be_false
+      expect(@race.full?).to be false
       @race.teams << FactoryGirl.create(:team)
-      expect(@race.full?).to be_false
+      expect(@race.full?).to be false
     end
 
     it 'returns true if the race has the maximum finalized teams' do
       FactoryGirl.create :finalized_team, race: @race
-      expect(@race.full?).to be_true
+      expect(@race.full?).to be true
     end
   end
 
@@ -207,36 +207,36 @@ describe Race do
     end
 
     it 'returns true if race is open and not full' do
-      @race.stub(:open_for_registration?).and_return(true)
-      @race.stub(:full?).and_return(false)
+      allow(@race).to receive(:open_for_registration?).and_return(true)
+      allow(@race).to receive(:full?).and_return(false)
       expect(@race.registerable?).to eq(true)
     end
 
     it 'returns false if race is closed and not full' do
-      @race.stub(:open_for_registration?).and_return(false)
-      @race.stub(:full?).and_return(false)
+      allow(@race).to receive(:open_for_registration?).and_return(false)
+      allow(@race).to receive(:full?).and_return(false)
       expect(@race.registerable?).to eq(false)
     end
 
     it 'returns false if race is open and full' do
-      @race.stub(:open_for_registration?).and_return(true)
-      @race.stub(:full?).and_return(true)
+      allow(@race).to receive(:open_for_registration?).and_return(true)
+      allow(@race).to receive(:full?).and_return(true)
       expect(@race.registerable?).to eq(false)
     end
 
     it 'returns false if race is closed and full' do
-      @race.stub(:open_for_registration?).and_return(false)
-      @race.stub(:full?).and_return(true)
+      allow(@race).to receive(:open_for_registration?).and_return(false)
+      allow(@race).to receive(:full?).and_return(true)
     end
   end
 
   describe '#self.find_registerable_races' do
     it 'returns races where registerable? == true' do
       closed_race = FactoryGirl.create :race
-      closed_race.stub(:registerable?).and_return(false)
+      allow(closed_race).to receive(:registerable?).and_return(false)
       open_race = FactoryGirl.create :race
-      open_race.stub(:registerable?).and_return(true)
-      Race.should_receive(:all).and_return [closed_race, open_race]
+      allow(open_race).to receive(:registerable?).and_return(true)
+      expect(Race).to receive(:all).and_return [closed_race, open_race]
       expect(Race.find_registerable_races).to eq([open_race])
     end
   end
@@ -258,10 +258,10 @@ describe Race do
   describe 'self#find_open_races' do
     it "returns races who's registration window is open" do
       closed_race = FactoryGirl.create :race
-      closed_race.stub(:open_for_registration?).and_return(false)
+      allow(closed_race).to receive(:open_for_registration?).and_return(false)
       open_race = FactoryGirl.create :race
-      open_race.stub(:open_for_registration?).and_return(true)
-      Race.should_receive(:all).and_return [closed_race, open_race]
+      allow(open_race).to receive(:open_for_registration?).and_return(true)
+      expect(Race).to receive(:all).and_return [closed_race, open_race]
       expect(Race.find_registerable_races).to eq([open_race])
     end
   end

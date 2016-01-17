@@ -33,7 +33,7 @@ describe UsersController do
     describe '#new' do
       before do
         @user_stub = User.new
-        User.stub(:new).and_return @user_stub
+        allow(User).to receive(:new).and_return @user_stub
         get :new
       end
 
@@ -50,7 +50,7 @@ describe UsersController do
 
       it 'returns 400 if the user parameter is not passed' do
         post :create
-        response.status.should == 400
+        expect(response.status).to eq(400)
       end
 
       %i(first_name last_name email phone password password_confirmation).each do |param|
@@ -61,8 +61,8 @@ describe UsersController do
             bad_payload = valid_user_hash.dup
             bad_payload.delete param
             post :create, :user => bad_payload
-            response.status.should == 200
-            flash[:error].detect { |val| val.is_a? Hash }.should include param
+            expect(response.status).to eq(200)
+            expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
           end
         end
       end
@@ -100,7 +100,7 @@ describe UsersController do
 
     describe '#new' do
       before do
-        User.stub(:new).and_return(new_user)
+        allow(User).to receive(:new).and_return(new_user)
         get :new
       end
 
@@ -125,7 +125,7 @@ describe UsersController do
 
         it 'runs the user_update_checker and returns 404' do
           get :show, :id => -1
-          expect(controller.should_run_update_checker).to be_true
+          expect(controller.should_run_update_checker).to be true
           expect(response.status).to eq(404)
         end
       end
@@ -135,7 +135,7 @@ describe UsersController do
         it 'sets the @user, runs the user_update_checker, returns 200' do
           get :show, :id => some_user.id
           expect(assigns(:user)).to eq(some_user)
-          expect(controller.should_run_update_checker).to be_true
+          expect(controller.should_run_update_checker).to be true
           expect(response).to be_success
         end
       end
@@ -147,7 +147,7 @@ describe UsersController do
 
         it 'does not run user_update_checker and returns 404' do
           get :edit, :id => -1
-          expect(controller.should_run_update_checker).to be_false
+          expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
       end
@@ -158,7 +158,7 @@ describe UsersController do
           get :edit, :id => some_user.id
           expect(assigns(:user)).to eq(some_user)
           expect(response).to be_success
-          expect(controller.should_run_update_checker).to be_false
+          expect(controller.should_run_update_checker).to be false
         end
       end
     end
@@ -169,7 +169,7 @@ describe UsersController do
 
         it 'does not run user_update_checker and returns 404' do
           put :update, :id => -1
-          expect(controller.should_run_update_checker).to be_false
+          expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
       end
@@ -179,7 +179,7 @@ describe UsersController do
         it 'updates the user, does not run user_update_checker, sets flash, and redirects to user#show' do
           patch :update, :id => some_user.id, :user => {:phone => '000-000-0000'}
           expect(some_user.reload.phone).to eq('000-000-0000')
-          expect(controller.should_run_update_checker).to be_false
+          expect(controller.should_run_update_checker).to be false
           expect(flash[:info]).to eq(I18n.t 'users.update.update_success')
           expect(response).to redirect_to(some_user)
         end

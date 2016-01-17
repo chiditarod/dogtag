@@ -20,7 +20,7 @@ FactoryGirl.define do
   end
 
   trait :with_people do
-    ignore do
+    transient do
       people_count 4
     end
     after(:create) do |team, evaluator|

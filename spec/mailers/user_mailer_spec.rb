@@ -20,7 +20,7 @@ describe UserMailer do
   describe '#welcome_email' do
     let(:user) { FactoryGirl.build(:user) }
     before do
-      UserMailer.welcome_email(user).deliver
+      UserMailer.welcome_email(user).deliver_now
     end
 
     it 'sets the subject' do
@@ -33,7 +33,7 @@ describe UserMailer do
     let(:team) { FactoryGirl.create(:team) }
     let(:user) { team.user }
     before do
-      UserMailer.team_finalized_email(user, team).deliver
+      UserMailer.team_finalized_email(user, team).deliver_now
     end
 
     it 'sets the subject' do
@@ -46,7 +46,7 @@ describe UserMailer do
     let(:team) { FactoryGirl.create(:team) }
     let(:user) { team.user }
     before do
-      UserMailer.team_waitlisted_email(user, team).deliver
+      UserMailer.team_waitlisted_email(user, team).deliver_now
     end
 
     it 'sets the subject' do
@@ -59,7 +59,7 @@ describe UserMailer do
   describe '#password_reset_instructions' do
     let(:user) { FactoryGirl.create(:user) }
     before do
-      UserMailer.password_reset_instructions(user, '80').deliver
+      UserMailer.password_reset_instructions(user, '80').deliver_now
     end
 
     it 'sets the subject' do

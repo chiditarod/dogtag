@@ -9,9 +9,12 @@ class CompletedRequirement < ActiveRecord::Base
   validates_uniqueness_of :team, :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.'
   validates_uniqueness_of :requirement, :scope => [:team], :allow_nil => true, :message => 'has already been completed for that team'
 
+  # todo: use postgres native json field type, here.
+  serialize :metadata, JSON
+
   def metadata
     m = read_attribute :metadata
     return m if m.is_a?(Hash)
-    return JSON.load m
+    return JSON.load(m)
   end
 end

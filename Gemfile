@@ -8,8 +8,7 @@ gem 'bootstrap-sass'
 gem 'bootswatch-rails'
 
 group :production do
-  # 12 factor support for rails (http://12factor.net/)
-  gem 'rails_12factor'
+  gem 'rails_12factor' # 12 factor support for rails (http://12factor.net/)
   gem 'newrelic_rpm'
 end
 
@@ -17,11 +16,10 @@ end
 # BEGIN dogtag gems
 
 gem 'authlogic',  '~> 3.4.6'   # authentication
-gem 'cancan',     '~> 1.6.10'  # authorization
+gem 'cancancan', '~> 1.10'     # authorization, w/ Rails 4.2 support
 gem 'role_model', '~> 0.8.2'   # roles
 
 # payments
-#gem 'stripe', :git => 'https://github.com/stripe/stripe-ruby'
 gem 'stripe', '~> 1.31.0'
 
 gem 'pg', '~> 0.18.4'           # postgres for heroku
@@ -33,8 +31,8 @@ gem 'rack-tracker'
 # END dogtag gems
 # -------------------------------------------------------
 
-gem 'rails', '~> 4.0.2'
-#gem 'rails', '4.1.6'
+gem 'rails', '~> 4.2.5'
+gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
 gem 'sass-rails', '~> 4.0.3'
@@ -65,7 +63,7 @@ gem 'jbuilder', '~> 1.2'
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
-  gem 'guard-rspec', require: false
+  gem 'web-console', '~> 3.0'
 end
 
 group :test do
@@ -78,9 +76,9 @@ end
 
 group :test, :development do
   gem 'test-unit'
-  gem 'rspec', '~> 2.14.0'
+  gem 'rspec'
   gem 'rspec-rails'
-  gem 'factory_girl_rails', '4.3.0'
+  gem 'factory_girl_rails'
 end
 
 group :doc do

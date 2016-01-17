@@ -1,19 +1,29 @@
 language: ruby
 
+sudo: false # explicitly use container-based architecture
+
 branches:
   only:
     - master
 
-#script:
-  #- bundle exec rspec spec/models/tier_spec.rb
+cache: bundler
+bundler_args: --without development # --path=~/.bundle
 
-#services:
-  #- postgresql
-#addons:
-  #postgresql: "9.4"
-#before_script:
-  #- psql -c 'create database dogtag_test;' -U postgres
-  #- cp config/database.yml.travis config/database.yml
+before_install:
+  - "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc" # skip installing docs for gems
+
+services:
+  - postgresql
+
+addons:
+  postgresql: "9.4"
+
+before_script:
+  - "psql -c 'create database dogtag_test;' -U postgres"
+  - "bin/rake db:migrate RAILS_ENV=test"
+
+#after_script:
+  #- bundle_cache # pack "~/.bundle" folder and upload to AWS S3
 
 addons:
   code_climate:

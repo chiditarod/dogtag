@@ -7,13 +7,13 @@ describe DateHelper do
 
   describe '#human_readable', :type => :helper do
     it 'returns human-readable datetime' do
-      (human_readable datetime).should == "February 15, 2013 at 12:00 AM"
+      expect(human_readable datetime).to eq("February 15, 2013 at 12:00 AM")
     end
   end
 
   describe '#human_readable_small', :type => :helper do
     it 'returns short human-readable datetime' do
-      (human_readable_short date).should == "Feb 15, 12:00 AM"
+      expect(human_readable_short date).to eq("Feb 15, 12:00 AM")
     end
   end
 

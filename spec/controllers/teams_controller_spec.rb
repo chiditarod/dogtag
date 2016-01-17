@@ -132,7 +132,7 @@ describe TeamsController do
         end
 
         context '[unknown race_id]' do
-          before { get :index, :race_id => 99 }
+          before { get :index, :race_id => -1 }
           it "does not assign @race" do
             expect(assigns(:race)).to be_nil
           end
@@ -186,7 +186,7 @@ describe TeamsController do
         end
 
         context '[unknown race_id]' do
-          before { get :index, :race_id => 99 }
+          before { get :index, :race_id => -1 }
           include_examples 'no_race'
           it "assigns @myteams to the user's teams" do
             expect(assigns(:myteams)).to eq([valid_team])
@@ -274,7 +274,7 @@ describe TeamsController do
       let (:valid_team) { FactoryGirl.create :team }
 
       context 'on invalid id' do
-        before { put :update, :id => 99 }
+        before { put :update, :id => -1 }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -368,7 +368,7 @@ describe TeamsController do
       let(:the_user) { valid_user }
 
       context 'on invalid id' do
-        before { delete :destroy, :id => 99 }
+        before { delete :destroy, :id => -1 }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
