@@ -58,7 +58,7 @@ class QuestionsController < ApplicationController
   def get_answer_params
     params
       .slice(*HACK_PARAMS)
-      .reject{ |k,v| v.blank? }
+      .reject{ |_k,v| v.blank? }
   end
 
   def add_saved_answers(jsonform)
