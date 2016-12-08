@@ -1,10 +1,8 @@
-# CodeClimate coverage
-require "codeclimate-test-reporter"
-CodeClimate::TestReporter.start
-
 # Generates code coverage report in /coverage/ when specs are run
 require 'simplecov'
-SimpleCov.start 'rails'
+SimpleCov.start 'rails' do
+ add_filter "/vendor/"
+end
 
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV["RAILS_ENV"] ||= 'test'
