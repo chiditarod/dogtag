@@ -1,17 +1,19 @@
-dogTag
+dogtag
 ======
+
+*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed more than $50,000 in registration money.*
 
 ![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
 [![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
 
-[chiditarod.org](http://chiditarod.org) registration and racer management system
-
 Developer Setup
 ---------------
-*Assumes an OSX environment. If you do it in Windows, please send us instructions and we will include them.*
+*Assumes an OSX environment. If you do it in Windows or Linux, please send us instructions and we will include them.*
 
 1. Setup your Ruby environment by installing [Homebrew](https://github.com/Homebrew/homebrew) and [rbenv](https://github.com/rbenv/rbenv).
+
+1. Install the Ruby version specified in `.ruby-version`
 
 1. Install the bundle
 
@@ -23,16 +25,15 @@ Developer Setup
         export SECRET_KEY=<bar>
         export RAILS_SECRET_TOKEN=<baz>
 
-1. Run local daemons/servers
+1. Run local daemons
 
         postgres -D /usr/local/var/postgres
         bundle exec mailcatcher
         bundle exec rails s
 
-1. Run test suite
+1. Run the test suite
 
         bundle exec rspec
-
 
 Basic Deploy Plan
 -----------------

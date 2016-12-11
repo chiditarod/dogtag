@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.3.0"
+ruby "2.3.1"
 
 # -------------------------------------------------------
 # rails-skeleton
@@ -31,7 +31,7 @@ gem 'rack-tracker'
 # END dogtag gems
 # -------------------------------------------------------
 
-gem 'rails', '~> 4.2.5'
+gem 'rails', '~> 4.2'
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
