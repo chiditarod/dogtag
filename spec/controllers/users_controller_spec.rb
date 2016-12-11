@@ -180,7 +180,7 @@ describe UsersController do
           patch :update, :id => some_user.id, :user => {:phone => '000-000-0000'}
           expect(some_user.reload.phone).to eq('000-000-0000')
           expect(controller.should_run_update_checker).to be false
-          expect(flash[:info]).to eq(I18n.t 'users.update.update_success')
+          expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
           expect(response).to redirect_to(some_user)
         end
       end

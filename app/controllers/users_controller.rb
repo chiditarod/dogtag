@@ -35,13 +35,7 @@ class UsersController < ApplicationController
 
   def update
     @user = User.find(params[:id])
-    if @user.update_attributes user_params
-      flash[:info] = I18n.t('users.update.update_success')
-      redirect_to user_url(@user)
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << @user.errors.messages
-    end
+    try_to_update(@user, user_params, user_url(@user), 'users.update.update_success')
   end
 
   def destroy
