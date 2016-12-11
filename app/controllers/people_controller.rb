@@ -16,14 +16,7 @@ class PeopleController < ApplicationController
   def update
     @person = Person.includes(:team).find(params[:id])
     @team = @person.team
-
-    if @person.update_attributes person_params
-      flash[:notice] = I18n.t('update_success')
-      redirect_to team_url :id => @person.team.id
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << @person.errors.messages
-    end
+    try_to_update(@person, person_params, team_url(@person.team.id))
   end
 
   def edit
