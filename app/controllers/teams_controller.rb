@@ -62,14 +62,7 @@ class TeamsController < ApplicationController
   def update
     @team = Team.find params[:id]
     @race = @team.race
-
-    if @team.update_attributes team_params
-      flash[:notice] = I18n.t('update_success')
-      return redirect_to team_questions_path(@team)
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << @team.errors.messages
-    end
+    try_to_update(@team, team_params, team_questions_path(@team))
   end
 
   # TODO: only allow delete if no payments

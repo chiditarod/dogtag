@@ -10,14 +10,7 @@ class TiersController < ApplicationController
 
   def update
     @tier = Tier.find(params[:id])
-
-    if @tier.update_attributes(tier_params)
-      flash[:notice] = I18n.t('update_success')
-      redirect_to edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << @tier.errors.messages
-    end
+    try_to_update(@tier, tier_params, edit_race_requirement_url(race_id: @tier.requirement.race.id, id: @tier.requirement.id))
   end
 
   def edit

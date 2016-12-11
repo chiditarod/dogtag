@@ -61,14 +61,7 @@ class RacesController < ApplicationController
 
   def update
     @race = Race.find params[:id]
-
-    if @race.update_attributes(prepare_for_save(race_params))
-      flash[:notice] = t('update_success')
-      return redirect_to edit_race_url(@race)
-    else
-      flash[:error] = [t('update_failed')]
-      flash[:error] << @race.errors.messages
-    end
+    try_to_update(@race, prepare_for_save(race_params), edit_race_url(@race))
   end
 
   def destroy

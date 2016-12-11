@@ -65,21 +65,21 @@ class ApplicationController < ActionController::Base
 
   ## common functions used in controllers ------
 
-  def try_to_update(obj_to_update, attributes_to_apply, redirect_to_url)
+  def try_to_update(obj_to_update, attributes_to_apply, redirect_to_url, success_msg='update_success')
     if obj_to_update.update_attributes(attributes_to_apply)
-      flash[:notice] = I18n.t('update_success')
+      flash[:notice] = I18n.t(success_msg)
       redirect_to(redirect_to_url)
     else
-      flash.now[:error] = [t('update_failed')]
+      flash.now[:error] = [I18n.t('update_failed')]
       flash.now[:error] << obj_to_update.errors.messages
     end
   end
 
   def try_to_delete(obj, redirect_url)
     if obj.destroy
-      flash[:notice] = t 'delete_success'
+      flash[:notice] = I18n.t('delete_success')
     else
-      flash[:error] = t 'destroy_failed'
+      flash[:error] = I18n.t('destroy_failed')
     end
     redirect_to(redirect_url)
   end
