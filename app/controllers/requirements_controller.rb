@@ -17,16 +17,8 @@ class RequirementsController < ApplicationController
 
   def update
     @requirement = Requirement.find(params[:id])
-
     @race = @requirement.race
-
-    if @requirement.update_attributes requirement_params
-      flash[:notice] = I18n.t('update_success')
-      redirect_to edit_race_url :id => @requirement.race.id
-    else
-      flash.now[:error] = [t('update_failed')]
-      flash.now[:error] << @requirement.errors.messages
-    end
+    try_to_update(@requirement, requirement_params, edit_race_url(@requirement.race.id))
   end
 
   def edit
