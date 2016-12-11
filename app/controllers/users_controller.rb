@@ -46,13 +46,7 @@ class UsersController < ApplicationController
 
   def destroy
     @user = User.find params[:id]
-
-    if @user.destroy
-      flash[:notice] = t('delete_success')
-    else
-      flash[:error] = t('delete_failed')
-    end
-    redirect_to users_path
+    try_to_delete(@user, users_path)
   end
 
   private

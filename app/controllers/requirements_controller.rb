@@ -6,13 +6,7 @@ class RequirementsController < ApplicationController
 
   def destroy
     @requirement = Requirement.find params[:id]
-
-    if @requirement.destroy
-      flash[:notice] = t 'delete_success'
-    else
-      flash[:error] = t 'destroy_failed'
-    end
-    redirect_to race_url :id => @requirement.race.id
+    try_to_delete(@requirement, race_url(id: @requirement.race.id))
   end
 
   def update

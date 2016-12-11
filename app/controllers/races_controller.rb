@@ -73,13 +73,7 @@ class RacesController < ApplicationController
 
   def destroy
     @race = Race.find params[:id]
-
-    if @race.destroy
-      flash[:notice] = t '.delete_success'
-    else
-      flash[:error] = t '.destroy_failed'
-    end
-    redirect_to races_path
+    try_to_delete(@race, races_path)
   end
 
   private

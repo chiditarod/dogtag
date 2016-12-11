@@ -75,6 +75,15 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def try_to_delete(obj, redirect_url)
+    if obj.destroy
+      flash[:notice] = t 'delete_success'
+    else
+      flash[:error] = t 'destroy_failed'
+    end
+    redirect_to(redirect_url)
+  end
+
   ## user/session stuff -----------------------------------------
 
   def current_user_session

@@ -4,13 +4,8 @@ class TiersController < ApplicationController
 
   def destroy
     @tier = Tier.find(params[:id])
-
-    if @tier.destroy
-      flash[:notice] = t 'delete_success'
-    else
-      flash[:error] = t 'destroy_failed'
-    end
-    redirect_to edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id
+    redirect_url = edit_race_requirement_url(race_id: @tier.requirement.race.id, id: @tier.requirement.id)
+    try_to_delete(@tier, redirect_url)
   end
 
   def update

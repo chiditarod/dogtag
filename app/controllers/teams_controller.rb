@@ -75,13 +75,7 @@ class TeamsController < ApplicationController
   # TODO: only allow delete if no payments
   def destroy
     @team = Team.find params[:id]
-
-    if @team.destroy
-      flash[:notice] = t 'delete_success'
-      redirect_to teams_path
-    else
-      flash[:error] = t '.delete_failed'
-    end
+    try_to_delete(@team, teams_path)
   end
 
   private

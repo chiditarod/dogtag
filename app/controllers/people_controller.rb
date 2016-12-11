@@ -4,13 +4,7 @@ class PeopleController < ApplicationController
 
   def destroy
     @person = Person.find params[:id]
-
-    if @person.destroy
-      flash[:notice] = t 'delete_success'
-    else
-      flash[:error] = t 'destroy_failed'
-    end
-    redirect_to team_url :id => @person.team.id
+    try_to_delete(@person, team_url(id: @person.team.id))
   end
 
   def update
