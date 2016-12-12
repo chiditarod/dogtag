@@ -13,6 +13,14 @@ describe Tier do
 
   let(:tier) { req.reload.tiers.first }
 
+  describe 'to_s' do
+    let(:tier) { FactoryGirl.build :tier }
+
+    it "displays the price" do
+      expect(tier.to_s).to eq(tier.price.to_s)
+    end
+  end
+
   describe 'validation' do
     it 'fails when price is not above 0' do
       expect(FactoryGirl.build :tier, :price => -1).to be_invalid

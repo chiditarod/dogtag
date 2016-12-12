@@ -40,5 +40,4 @@ class Requirement < ActiveRecord::Base
     return cr if cr.save
     false
   end
-
 end

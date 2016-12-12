@@ -6,6 +6,6 @@ class Tier < ActiveRecord::Base
   belongs_to :requirement
 
   def to_s
-    price
+    "#{price}"
   end
 end
