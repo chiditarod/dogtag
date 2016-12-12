@@ -2,7 +2,6 @@ require 'spec_helper'
 
 describe TiersController do
 
-
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
@@ -159,6 +158,25 @@ describe TiersController do
         end.to change(Tier, :count).by 1
       end
 
+      context 'when saving fails' do
+        let(:errors) {{ "foo" => "bar" }}
+        let(:mock_tier) do
+          _t = Tier.new
+          allow(_t).to receive(:save).and_return(false)
+          allow(_t).to receive_message_chain(:errors, :messages).and_return(errors)
+          _t
+        end
+
+        before do
+          allow(Tier).to receive(:new).and_return(mock_tier)
+          post :create, tier: valid_tier_hash.merge(requirement_id: @req.id)
+        end
+
+        it 'sets a flash error' do
+          expect(flash[:error]).to eq([I18n.t('create_failed'), errors])
+        end
+      end
+
       context 'upon success' do
         before do
           post :create, :tier => valid_tier_hash.merge(:requirement_id => @req.id)
@@ -178,6 +196,5 @@ describe TiersController do
         end
       end
     end
-
   end
 end

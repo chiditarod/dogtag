@@ -6,6 +6,12 @@ describe Requirement do
   let (:team) { FactoryGirl.create :team }
   let (:user) { FactoryGirl.create :user }
 
+  describe '#allowed_types' do
+    it "outputs the ALLOWED_TYPES constant" do
+      expect(Requirement.allowed_types).to eq(Requirement::ALLOWED_TYPES)
+    end
+  end
+
   describe '#enabled?' do
     it "raises an error since it's an abstract method" do
       expect { requirement.enabled? }.to raise_error(StandardError)
