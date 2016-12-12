@@ -27,4 +27,16 @@ FactoryGirl.define do
       create_list(:person, evaluator.people_count, team: team)
     end
   end
+
+  # TODO: put real jsonform data into here instead of faking it, then enable team.save
+  trait :with_jsonform_data do
+    transient do
+      jsonform_data({ "foo" => "bar" })
+    end
+
+    after(:create) do |team, evaluator|
+      team.jsonform = evaluator.jsonform_data.to_json
+      #team.save
+    end
+  end
 end
