@@ -10,5 +10,4 @@ describe FlashHelper do
       expect(flash_to_bootstrap(:alert)).to eq('warning')
     end
   end
-
 end
