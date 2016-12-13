@@ -29,14 +29,27 @@ describe QuestionsController do
     end
 
     describe '#show' do
+
+      let(:team) { FactoryGirl.create :team, race: race }
+
+      context 'when the team is not found' do
+        let(:race) { FactoryGirl.create :race }
+        before do
+          get :show, team_id: team.id + 1
+        end
+
+        it 'returns 404' do
+          expect(response.status).to eq(404)
+        end
+      end
+
       context 'when race has no jsonform data' do
         let(:race) { FactoryGirl.create :race }
-        let(:team) { FactoryGirl.create :team, race: race }
         before do
           get :show, team_id: team.id
         end
 
-        it 'sets flash message' do
+        it 'sets flash info' do
           expect(flash[:info]).to eq(I18n.t('questions.none_defined'))
         end
         it 'redirects to team#show' do
@@ -50,7 +63,6 @@ describe QuestionsController do
 
       context 'when race has jsonform data' do
         let(:race) { FactoryGirl.create :race, :with_jsonform }
-        let(:team) { FactoryGirl.create :team, race: race }
         before do
           get :show, team_id: team.id
         end

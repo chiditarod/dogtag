@@ -268,6 +268,5 @@ describe RacesController do
         end
       end
     end
-
   end
 end
