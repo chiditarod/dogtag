@@ -13,14 +13,10 @@ class QuestionsController < ApplicationController
     :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'party-bus-interest', :'party-bus-seats'
   ]
 
+  # this method loads the jsonform data from the race this team is associated with.
   def show
     authorize! :show, :questions
     @team = Team.find params[:team_id]
-
-    unless @team
-      flash[:error] = I18n.t('team_not_found')
-      return redirect_to home_path
-    end
 
     unless @team.race.jsonform.present?
       flash[:info] = I18n.t('questions.none_defined')
@@ -34,6 +30,7 @@ class QuestionsController < ApplicationController
     @questions = jsonform.to_json
   end
 
+  # this saves the team's jsonform response data
   def create
     authorize! :create, :questions
     @team = Team.find params[:team_id]
@@ -43,7 +40,7 @@ class QuestionsController < ApplicationController
     @team.jsonform = get_answer_params.to_json
 
     # save to team record
-    if @team.valid? && @team.save
+    if @team.save
       flash[:info] = I18n.t('questions.updated')
       redirect_to team_path(@team)
     else

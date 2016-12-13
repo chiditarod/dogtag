@@ -17,9 +17,6 @@ class RacesController < ApplicationController
         @stats = Race.load_stats(@race.id)
       end
     end
-  rescue ActiveRecord::RecordNotFound
-    flash[:error] = t('not_found')
-    redirect_to races_path
   end
 
   alias edit show
@@ -48,7 +45,7 @@ class RacesController < ApplicationController
   def create
     return render :status => 400 if params[:race].blank?
 
-    @race = Race.new(prepare_for_save(race_params))
+    @race = Race.new(prepare_params(race_params))
 
     if @race.save
       flash[:notice] = I18n.t('create_success')
@@ -61,7 +58,7 @@ class RacesController < ApplicationController
 
   def update
     @race = Race.find params[:id]
-    try_to_update(@race, prepare_for_save(race_params), edit_race_url(@race))
+    try_to_update(@race, prepare_params(race_params), edit_race_url(@race))
   end
 
   def destroy
@@ -71,12 +68,11 @@ class RacesController < ApplicationController
 
   private
 
-  def prepare_for_save(hash)
-    prepared = hash
+  def prepare_params(hash)
     if hash[:filter_field].present?
-      prepared[:filter_field] = hash[:filter_field].reject{|f| f.empty?}.join(',')
+      hash[:filter_field] = hash[:filter_field].reject{|f| f.empty?}.join(',')
     end
-    prepared
+    hash
   end
 
   def race_params
