@@ -17,6 +17,11 @@ FactoryGirl.define do
         end
       end
     end
+
+    factory :team_with_jsonform do
+      jsonform File.read(Rails.root.to_s + '/spec/fixtures/files/valid_team_jsonform.json')
+      race factory: :race_with_jsonform
+    end
   end
 
   trait :with_people do
@@ -25,18 +30,6 @@ FactoryGirl.define do
     end
     after(:create) do |team, evaluator|
       create_list(:person, evaluator.people_count, team: team)
-    end
-  end
-
-  # TODO: put real jsonform data into here instead of faking it, then enable team.save
-  trait :with_jsonform_data do
-    transient do
-      jsonform_data({ "foo" => "bar" })
-    end
-
-    after(:create) do |team, evaluator|
-      team.jsonform = evaluator.jsonform_data.to_json
-      #team.save
     end
   end
 end
