@@ -167,7 +167,7 @@ describe Team do
   end
 
   describe '.jsonform_value' do
-    let(:key) { "foo" }
+    let(:key) { "racer-type" }
 
     context 'when team has no jsonform data' do
       let(:team) { FactoryGirl.create :team }
@@ -176,17 +176,17 @@ describe Team do
       end
     end
 
-    context 'when team has jsonform data' do
-      let(:team) { FactoryGirl.create :team, :with_jsonform_data }
-      it 'returns nil' do
-        expect(team.jsonform_value(key)).to eq("bar")
+    context "when team's jsonform has the value" do
+      let(:team) { FactoryGirl.create :team_with_jsonform }
+      it 'returns the value' do
+        expect(team.jsonform_value(key)).to eq("Racer")
       end
     end
 
     context 'when team does not have jsonform data for a certain key' do
-      let(:team) { FactoryGirl.create :team, :with_jsonform_data, jsonform_data: { "mario" => "luigi" } }
+      let(:team) { FactoryGirl.create :team_with_jsonform }
       it 'returns nil' do
-        expect(team.jsonform_value(key)).to be_nil
+        expect(team.jsonform_value("foo")).to be_nil
       end
     end
   end
@@ -202,10 +202,9 @@ describe Team do
     end
 
     context 'race has a jsonform' do
-      let(:race) { FactoryGirl.create :race, :with_jsonform }
 
       context 'team has jsonform data' do
-        let(:team) { FactoryGirl.create :team, :with_jsonform_data, race: race }
+        let(:team) { FactoryGirl.create :team_with_jsonform }
 
         it "returns true" do
           expect(team.completed_questions?).to be true
@@ -213,6 +212,7 @@ describe Team do
       end
 
       context 'team has no jsonform data' do
+        let(:race) { FactoryGirl.create :race_with_jsonform }
         let(:team) { FactoryGirl.create :team, race: race }
 
         it "returns false" do

@@ -62,7 +62,7 @@ describe QuestionsController do
       end
 
       context 'when race has jsonform data' do
-        let(:race) { FactoryGirl.create :race, :with_jsonform }
+        let(:race) { FactoryGirl.create :race_with_jsonform }
         before do
           get :show, team_id: team.id
         end
