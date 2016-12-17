@@ -25,8 +25,8 @@ class QuestionsController < ApplicationController
 
     # manipulate the jsonform
     jsonform = JSON.parse(@team.race.jsonform)
-    jsonform = add_csrf(jsonform)
-    jsonform = add_saved_answers(jsonform)
+    jsonform = JsonForm.add_csrf(jsonform, form_authenticity_token)
+    jsonform = JsonForm.add_saved_answers(@team, jsonform, form_authenticity_token)
     @questions = jsonform.to_json
   end
 
@@ -60,38 +60,6 @@ class QuestionsController < ApplicationController
     params
       .slice(*HACK_PARAM_WHITELIST)
       .reject{ |_k,v| v.blank? }
-  end
-
-  def add_saved_answers(jsonform)
-    return jsonform unless @team.has_saved_answers?
-
-    # since 'value' will overwrite all form values, we have to include the authentication_token
-    # see: https://github.com/joshfire/jsonform/wiki#using-previously-submitted-values-to-initialize-a-form
-    auth_hash = { 'authenticity_token' => form_authenticity_token }
-    jsonform.merge!(
-      { 'value' => JSON.parse(@team.jsonform).merge(auth_hash) }
-    )
-  end
-
-  # Add csrf to JSON schema, which gets passed to the form
-  def add_csrf(jsonform)
-
-    form_addition = {
-      'type' => 'hidden',
-      'key' => 'authenticity_token'
-    }
-    auth = {
-      'type' => 'string',
-      'default' => form_authenticity_token
-    }
-
-    # add to schema object
-    schema = jsonform['schema']['properties']
-    schema['authenticity_token'] = auth
-    jsonform['schema']['properties'] = schema
-    # add to form object
-    jsonform['form'] << form_addition
-    jsonform
   end
 
   def question_params

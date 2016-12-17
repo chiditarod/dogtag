@@ -136,37 +136,9 @@ describe QuestionsController do
           get :show, team_id: team.id
         end
 
-        let(:json) { JSON.parse(assigns(:questions)) }
-
-        let(:expected_schema) {{
-          "type" => "string",
-          "default" => 'fake_token'
-        }}
-        let(:expected_form) {{
-          "type" => "hidden",
-          "key" => 'authenticity_token'
-        }}
-
-        it 'sets the appropriate csrf data onto the jsonform' do
-          expect(json['schema']['properties']['authenticity_token']).to eq(expected_schema)
-          expect(json['form'].detect{|item| item['key'] == 'authenticity_token'}).to eq(expected_form)
-        end
-
-        it 'renders 200' do
+        it 'renders 200 and assigns @questions' do
           expect(response.status).to eq(200)
-        end
-
-        context 'team has saved answers already' do
-          let(:team) { FactoryGirl.create :team_with_jsonform, race: race }
-          let(:auth_hash) {{ 'authenticity_token' => 'fake_token' }}
-
-          it "merges the saved answers into the 'value' key and includes the authenticity_token" do
-            expect(json['value']).to eq(JSON.parse(team.jsonform).merge(auth_hash))
-          end
-
-          it 'renders 200' do
-            expect(response.status).to eq(200)
-          end
+          expect(assigns(:questions)).to_not be_nil
         end
       end
     end
