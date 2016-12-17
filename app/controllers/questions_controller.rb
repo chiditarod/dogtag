@@ -6,14 +6,14 @@ class QuestionsController < ApplicationController
 
   # This is a hack to get around strong parameters.
   # These are the names of the parameter keys in the Race's jsonschema.
-  # todo: figure out how to calculate this dynamically.
-  HACK_PARAMS = [
+  # TODO: figure out how to calculate this dynamically.
+  HACK_PARAM_WHITELIST = [
     :'racer-type', :'primary-inspiration', :'secondary-inspiration', :'twitter', :'buddies', :'private-comments', :'explain-theme',
     :'agree-to-core-philosophy', :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
     :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'party-bus-interest', :'party-bus-seats'
   ]
 
-  # this method loads the jsonform data from the race this team is associated with.
+  # this method loads the jsonform data from the team's race
   def show
     authorize! :show, :questions
     @team = Team.find params[:team_id]
@@ -33,13 +33,15 @@ class QuestionsController < ApplicationController
   # this saves the team's jsonform response data
   def create
     authorize! :create, :questions
-    @team = Team.find params[:team_id]
-    return render :status => 400 unless @team.present?
-    return render :status => 304 unless @team.race.open_for_registration?
+    @team = Team.find(params[:team_id])
 
-    @team.jsonform = get_answer_params.to_json
+    unless @team.race.open_for_registration?
+      flash[:error] = I18n.t('questions.cannot_modify')
+      return redirect_to team_path(@team)
+    end
 
-    # save to team record
+    @team.jsonform = filter_the_params.to_json
+
     if @team.save
       flash[:info] = I18n.t('questions.updated')
       redirect_to team_path(@team)
@@ -52,23 +54,23 @@ class QuestionsController < ApplicationController
 
   private
 
-  def get_answer_params
+  # filter the params by the whitelist and remove any with blank values
+  # TODO: change this to slice! and reject! after spec'ing
+  def filter_the_params
     params
-      .slice(*HACK_PARAMS)
+      .slice(*HACK_PARAM_WHITELIST)
       .reject{ |_k,v| v.blank? }
   end
 
   def add_saved_answers(jsonform)
-    # since 'value' will overwrite all defaults, we have to pass csrf here
-    auth = {
-      'authenticity_token' => form_authenticity_token
-    }
-    if @team.has_saved_answers?
-      jsonform.merge!({
-        'value' => JSON.parse(@team.jsonform).merge(auth)
-      })
-    end
-    jsonform
+    return jsonform unless @team.has_saved_answers?
+
+    # since 'value' will overwrite all form values, we have to include the authentication_token
+    # see: https://github.com/joshfire/jsonform/wiki#using-previously-submitted-values-to-initialize-a-form
+    auth_hash = { 'authenticity_token' => form_authenticity_token }
+    jsonform.merge!(
+      { 'value' => JSON.parse(@team.jsonform).merge(auth_hash) }
+    )
   end
 
   # Add csrf to JSON schema, which gets passed to the form
@@ -95,6 +97,6 @@ class QuestionsController < ApplicationController
   def question_params
     params
       .require(:team_id)
-      .permit(HACK_PARAMS)
+      .permit(HACK_PARAM_WHITELIST)
   end
 end

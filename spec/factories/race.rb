@@ -8,12 +8,12 @@ FactoryGirl.define do
     max_teams 3
     people_per_team 5
 
-    factory :closed_race do
-      registration_close (Time.now - 1.week)
-    end
-
     factory :race_with_jsonform do
       jsonform File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
+    end
+
+    trait :registration_closed do
+      registration_close (Time.now - 1.week)
     end
   end
 end

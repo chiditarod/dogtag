@@ -141,7 +141,7 @@ describe Race do
 
   describe '#days_before_close' do
     it 'returns false if registration_close is in the past' do
-      closed_race = FactoryGirl.create :closed_race
+      closed_race = FactoryGirl.create :race, :registration_closed
       expect(closed_race.days_before_close).to eq(false)
     end
 

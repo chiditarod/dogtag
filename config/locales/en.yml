@@ -89,6 +89,7 @@ en:
     none_defined: Find and complete the Sad Faces to complete your team registration.
     updated: Your details have been updated.
     could_not_save: There was an issue saving your questions.
+    cannot_modify: Cannot modify questions as race registration is closed and no more updates are allowed.
 
   users:
     review_your_info: |
