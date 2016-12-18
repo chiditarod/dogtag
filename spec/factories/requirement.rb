@@ -17,7 +17,7 @@ FactoryGirl.define do
     factory :payment_requirement_with_tier, :aliases => [:enabled_payment_requirement] do
       name 'Payment Requirement w/ tier'
       after(:create) do |pay_req, evaluator|
-        create_list(:tier, 1, requirement: pay_req)
+        create_list(:tier, 1, requirement_id: pay_req.id)
       end
     end
   end

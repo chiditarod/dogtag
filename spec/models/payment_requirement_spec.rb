@@ -7,16 +7,30 @@ describe PaymentRequirement do
   let (:tier2) { FactoryGirl.create :tier2 }
   let (:tier3) { FactoryGirl.create :tier3 }
 
-  describe '#stripe_params' do
-    it 'sets the description to the name of the payment requirement'
-    it 'stores the requirement_id and team_id in the metadata'
-    it 'sets the amount of the active_tier'
-    it 'sets an image'
-    it 'sets the company name to the race name'
-  end
-
   before { Timecop.freeze(THE_TIME) }
   after  { Timecop.return }
+
+  describe '#stripe_params' do
+    let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
+    let(:team) { FactoryGirl.create :team, race: req.race }
+
+    let(:expected) {{
+      description: "#{req.name} for #{team.name} | #{team.race.name}",
+      metadata: JSON.generate(
+        'race_name' => team.race.name,
+        'team_name' => team.name,
+        'requirement_id' => req.id,
+        'team_id' => team.id
+      ),
+      amount: req.active_tier.price,
+      image: '/images/patch_ring.jpg',
+      name: team.race.name
+    }}
+
+    it 'creates a hash of data for submission to stripe' do
+      expect(req.stripe_params(team)).to eq(expected)
+    end
+  end
 
   describe '#enabled?' do
     it 'returns false when no tiers are assigned' do

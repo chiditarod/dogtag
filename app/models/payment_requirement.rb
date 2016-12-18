@@ -18,17 +18,6 @@ class PaymentRequirement < Requirement
     }
   end
 
-  def charge_data(reg)
-    metadata = metadata_for(reg)
-    return false if metadata.blank?
-    return metadata['charge'] if metadata['charge'].present?
-    false
-
-    # todo: after specing replace with this
-    #return false unless (metadata.present? && metadata['charge'].present?)
-    #return metadata['charge']
-  end
-
   def enabled?
     active_tier.present?
   end

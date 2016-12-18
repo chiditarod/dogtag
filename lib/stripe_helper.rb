@@ -4,8 +4,10 @@ class StripeHelper
     def safely_call_stripe
       begin
         yield
+        [true, nil]
+
       rescue Stripe::CardError => e
-        # Stripe::C`ardError will be caught if card is declined.
+        # Stripe::CardError will be caught if card is declined.
 
         Rails.logger.error e.class
         Rails.logger.error "HTTP status: #{e.http_status}"
@@ -17,42 +19,29 @@ class StripeHelper
           Rails.logger.error "param: #{err[:param]}"
           Rails.logger.error "message: #{err[:message]}"
         end
-      rescue Stripe::InvalidRequestError => e
-        # Invalid parameters were supplied to Stripe's API
-        log_error e
-      rescue Stripe::AuthenticationError => e
-        # Authentication with Stripe's API failed
-        # (maybe you changed API keys recently)
-        log_error e
-      rescue Stripe::APIConnectionError => e
-        # Network communication with Stripe failed
-        log_error e
-      rescue Stripe::StripeError => e
-        # Display a very generic error to the user, and maybe send
-        # yourself an email
-        log_error e
 
-      #TODO: change to StandardError
-      rescue => e
-        # Something else happened, completely unrelated to Stripe
-        log_error e, 'Non-Stripe Error'
+      rescue Stripe::AuthenticationError, Stripe::APIConnectionError,
+        Stripe::StripeError, Stripe::InvalidRequestError => ex
+
+        log_and_return_error(ex)
+
+      #TODO: change to StandardError, consider deleting altogether
+      rescue => ex
+        log_and_return_error(ex)
       end
-    end
-
-    def log_charge_error(ex)
-      Rails.logger.error exception_to_hash(ex).to_json
-    rescue => ex
-      Rails.logger.error "Error logging stripe error: #{ex}"
     end
 
     def exception_to_hash(ex)
-      hash = { reason: ex.message }
+      hash = {
+        class: ex.class.to_s,
+        reason: ex.message
+      }
 
-      if ex.http_status
+      if ex.respond_to?(:http_status) && ex.http_status
         hash[:http_status] = ex.http_status
       end
 
-      if ex.json_body.present? && ex.json_body[:error].present?
+      if ex.respond_to?(:json_body) && ex.json_body.present? && ex.json_body[:error].present?
         json = ex.json_body[:error]
         hash.merge!(
           {
@@ -69,10 +58,9 @@ class StripeHelper
 
     private
 
-    def log_error(ex, msg = nil)
-      text = ex.class.to_s
-      text << ": #{msg}" if msg.present?
-      Rails.logger.error(text)
+    def log_and_return_error(ex)
+      Rails.logger.error(exception_to_hash(ex).to_json)
+      [false, ex]
     end
   end
 end

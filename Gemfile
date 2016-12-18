@@ -70,7 +70,7 @@ group :test do
   gem 'timecop'
   gem 'webmock'
   gem 'simplecov'
-  gem 'stripe-ruby-mock', '~> 2.2.1'
+  gem 'stripe-ruby-mock', '~> 2.3.1'
   gem 'codeclimate-test-reporter'
 end
 
