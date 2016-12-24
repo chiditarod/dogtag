@@ -14,7 +14,7 @@ class RacesController < ApplicationController
     if current_user
       @my_race_teams = @race.teams.where(:id => current_user.team_ids)
       if current_user.is_any_of?(:admin, :operator)
-        @stats = Race.load_stats(@race.id)
+        @stats = @race.stats
       end
     end
   end

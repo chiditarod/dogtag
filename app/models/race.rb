@@ -51,7 +51,7 @@ class Race < ActiveRecord::Base
   end
 
   def over?
-    return true if race_datetime < Time.now
+    race_datetime < Time.now
   end
 
   def full?
@@ -83,22 +83,21 @@ class Race < ActiveRecord::Base
     (registration_close - t).ceil
   end
 
-  class << self
-
-    def load_stats(race_id)
-      race = Race.find race_id
-      money_raised = race.teams.reduce(0) { |memo, t| memo + t.money_paid_in_cents }
-      {
-        'money_raised' => money_raised
-      }
+  def stats
+    money_raised = teams.reduce(0) do |memo, team|
+      memo + team.money_paid_in_cents
     end
 
-    def find_registerable_races
-      Race.all.select(&:registerable?)
-    end
+    {
+      'money_raised' => money_raised
+    }
+  end
 
-    def find_open_races
-      Race.all.select(&:open_for_registration?)
-    end
+  def self.find_registerable_races
+    Race.all.select(&:registerable?)
+  end
+
+  def self.find_open_races
+    Race.all.select(&:open_for_registration?)
   end
 end
