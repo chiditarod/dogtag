@@ -36,7 +36,7 @@ class Ability
     can [:show, :create], :questions
 
     # Stripe charges
-    can [:create, :refund], :charges
+    can [:create], :charges
 
     #todo implement at some point
     #can [:destroy], Team do |team|
@@ -62,13 +62,14 @@ class Ability
 
     if user.is? :refunder
       can [:index], User
+      can [:refund], :charges
     end
 
     if user.is? :operator
       can [:export], Race
-      can [:read, :update], Team
-      can [:read, :update], Person
+      can [:read, :update], [Team, Person]
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
+      can [:refund], :charges
     end
   end
 end

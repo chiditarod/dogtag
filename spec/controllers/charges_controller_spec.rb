@@ -3,6 +3,8 @@ require 'stripe_mock'
 
 describe ChargesController do
 
+  let(:stripe_helper) { StripeMock.create_test_helper }
+
   context '[logged out]' do
     shared_examples 'redirects to login' do
       it 'redirects to login' do
@@ -22,6 +24,7 @@ describe ChargesController do
   end
 
   context '[logged in]' do
+
     shared_examples "redirects to prior url" do
       it 'redirects to the prior url' do
         expect(response).to redirect_to('/prior_url/')
@@ -35,6 +38,15 @@ describe ChargesController do
     end
 
     describe '#create' do
+
+      context 'when session[:prior_url] is not set' do
+        let(:error_json) {{ errors: "The calling controller should set session[:prior_url] so this method knows where to return to. e.g. session[:prior_url] = request.original_url"}.to_json}
+        it "renders 400 with json message" do
+          post :create, amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz}
+          expect(response.status).to eq(400)
+          expect(response.body).to eq(error_json)
+        end
+      end
 
       context 'when stripe cannot find or create a customer' do
         before do
@@ -50,37 +62,32 @@ describe ChargesController do
         include_examples "redirects to prior url"
       end
 
+      let(:valid_params) {{
+        'amount' => 10,
+        'stripeToken' => 'foo',
+        'stripeEmail' => 'bar',
+        'description' => 'hi',
+        'metadata' => {
+          'bat' => 'baz'
+        }
+      }}
+
       ChargesController::STRIPE_PARAMS.each do |param|
-        let(:valid_params) do
-          {
-            'amount' => 10,
-            'stripeToken' => 'foo',
-            'stripeEmail' => 'bar',
-            'description' => 'hi',
-            'metadata' => {
-              'bat' => 'baz'
-            }
-          }
-        end
 
         context "when params['#{param}'] is missing from request" do
           before do
             post :create, valid_params.except(param)
           end
 
-          it "render a json error" do
+          it "render a json error and returns bad request" do
+            expect(response.status).to eq(400)
             json = JSON.parse(response.body)
             expect(json['errors']).to eq("Missing required stripe parameter(s): #{param}")
-          end
-          it "returns bad request" do
-            expect(response.status).to eq(400)
           end
         end
       end
 
       context "when Charge is successful" do
-        let(:stripe_helper) { StripeMock.create_test_helper }
-
         let(:requirement) { FactoryGirl.create :payment_requirement }
         let(:team) { FactoryGirl.create :team, race: requirement.race }
 
@@ -109,8 +116,9 @@ describe ChargesController do
           })
         end
 
+        let(:amount) { '7000' }
+
         before do
-          Stripe.api_key = 'abc123' # hack, see: https://github.com/rebelidealist/stripe-ruby-mock/issues/209
           StripeMock.start
           expect(Customer).to receive(:get).and_return(customer)
           expect(Stripe::Charge).to receive(:create).and_return(charge)
@@ -118,7 +126,7 @@ describe ChargesController do
 
           expect(CompletedRequirement.count).to eq(0)
 
-          post :create, amount: '7000', stripeToken: 'foo',
+          post :create, amount: amount, stripeToken: 'foo',
             stripeEmail: customer.email, description: 'hi',
             metadata: {
               team_id: team.id,
@@ -127,11 +135,11 @@ describe ChargesController do
         end
         after { StripeMock.stop }
 
-        it 'assigns cr_metadata' do
+        it 'stores the charge details in cr_metadata' do
           cr_metadata = {
             'customer_id' => customer.id,
             'charge_id' => charge.id,
-            'amount' => '7000'
+            'amount' => amount
           }
           expect(assigns(:cr_metadata)).to eq(cr_metadata)
         end
@@ -141,13 +149,6 @@ describe ChargesController do
           expect(CompletedRequirement.count).to eq(1)
         end
 
-        it 'stores the charge details in cr_metadata' do
-          data = assigns(:cr_metadata)
-          expect(data['customer_id']).to eq(customer.id)
-          expect(data['charge_id']).to eq(charge.id)
-          expect(data['amount']).to eq('7000')
-        end
-
         it 'renders flash notice' do
           expect(flash[:notice]).to eq('Your card has been charged successfully.')
         end
@@ -155,19 +156,20 @@ describe ChargesController do
         include_examples "redirects to prior url"
       end
 
-      shared_examples 'logs an error' do
-        before do
-          expect(StripeHelper).to receive(:log_charge_error)
+      shared_examples 'sets_flash_error' do
+        it 'renders appropriate flash error' do
+          expect(flash[:error]).to match(expected_flash_error)
         end
       end
 
       context "Stripe Errors" do
-        let(:stripe_helper) { StripeMock.create_test_helper }
         before do
-          Stripe.api_key = 'blablabla' # hack, see: https://github.com/rebelidealist/stripe-ruby-mock/issues/209
           StripeMock.start
+          expect(Customer).to receive(:get).and_return(customer)
+          expect(StripeHelper).to receive(:log_charge_error)
+          session[:prior_url] = '/prior_url/'
         end
-        after  { StripeMock.stop }
+        after { StripeMock.stop }
 
         let(:customer) do
           Stripe::Customer.create({
@@ -180,67 +182,42 @@ describe ChargesController do
         end
 
         context "Stripe returns invalid request" do
-          include_examples 'logs an error'
-
           before do
-            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::InvalidRequestError.new(I18n.t("foo"), :foo))
-            session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
           end
 
-          it 'renders flash error' do
-            expect(flash[:error]).to match(/Invalid parameters supplied to Stripe API/)
-          end
-
+          let(:expected_flash_error) { /Invalid parameters supplied to Stripe API/ }
           include_examples "redirects to prior url"
         end
 
         context "Stripe returns API connection error" do
-          include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("foo", :foo))
-            session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
           end
 
-          it 'renders flash error' do
-            expect(flash[:error]).to match(/There is an issue connecting to the Stripe API/)
-          end
-
+          let(:expected_flash_error) { /There is an issue connecting to the Stripe API/ }
           include_examples "redirects to prior url"
         end
 
         context "Stripe returns generic StripeError" do
-          include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::StripeError.new("foo", :foo))
-            session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
           end
 
-          it 'renders flash error' do
-            expect(flash[:error]).to eq('An error occured connecting to Stripe. Please email dogtag@chiditarod.org.')
-          end
-
+          let(:expected_flash_error) { "An error occured connecting to Stripe. Please email dogtag@chiditarod.org." }
           include_examples "redirects to prior url"
         end
 
         context "Something raises an uncaught error" do
-          include_examples 'logs an error'
           before do
-            expect(Customer).to receive(:get).and_return(customer)
             expect(Stripe::Charge).to receive(:create).and_raise
-            session[:prior_url] = '/prior_url/'
             post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
           end
 
-          it 'renders flash error' do
-            expect(flash[:error]).to eq('An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org.')
-          end
-
+          let(:expected_flash_error) { "An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org." }
           include_examples "redirects to prior url"
         end
 
@@ -250,11 +227,8 @@ describe ChargesController do
         ]
         ERRORS.each do |e|
           context "when Stripe::CardError #{e}" do
-            include_examples 'logs an error'
             before do
               StripeMock.prepare_card_error(e)
-              expect(Customer).to receive(:get).and_return(customer)
-              session[:prior_url] = '/prior_url/'
               post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
             end
 
@@ -262,10 +236,7 @@ describe ChargesController do
               expect(assigns(:customer)).to eq(customer)
             end
 
-            it 'renders flash error' do
-              expect(flash[:error]).to eq(I18n.t "charges.#{e}")
-            end
-
+            let(:expected_flash_error) { I18n.t "charges.#{e}" }
             include_examples "redirects to prior url"
           end
         end
@@ -273,12 +244,91 @@ describe ChargesController do
     end
 
     describe '#refund' do
-      it 'calls stripe refund successfully'
-      it 'redirects to prior_url'
-      it 'sets refunded on charge object'
-      it 'returns 404 if the charge_id cannot be found'
-      it 'returns 400 if the charge_id is already refunded'
-      it 'destroys the associated completed_requirement'
+
+      let(:valid_user) { FactoryGirl.create :refunder_user }
+
+
+      let(:cr)   { FactoryGirl.create :completed_requirement }
+      let(:req)  { cr.requirement }
+      let(:team) { cr.team }
+
+      let(:customer) do
+        Stripe::Customer.create({
+          card: stripe_helper.generate_card_token,
+          email: team.user.email,
+          metadata: {
+            user_id: team.user.id
+          }
+        })
+      end
+
+      let(:charge) do
+        Stripe::Charge.create({
+          customer:    customer.id,
+          amount:      7000,
+          currency:    'usd',
+          description: 'Registration Fee for Arizona Quints | Chiditarod X',
+          metadata: {
+            race_name: team.race.name,
+            team_name: team.name,
+            requirement_id: req.id,
+            team_id: team.id
+          }
+        })
+      end
+
+      before do
+        session[:prior_url] = '/prior_url/'
+        StripeMock.start
+      end
+      after { StripeMock.stop }
+
+      context 'when session[:prior_url] is not set' do
+        let(:error_json) {{ errors: "The calling controller should set session[:prior_url] so this method knows where to return to. e.g. session[:prior_url] = request.original_url"}.to_json}
+        it "renders 400 with json message" do
+          session.delete(:prior_url)
+          post :refund, charge_id: charge.id
+          expect(response.status).to eq(400)
+          expect(response.body).to eq(error_json)
+        end
+      end
+
+      context 'when the charge is not found' do
+        it 'renders 404' do
+          post :refund, charge_id: 0
+          expect(response.status).to eq(404)
+        end
+      end
+
+      context 'when charge is found and already refunded' do
+        let(:error_json) {{ error: "Charge ID #{charge.id} is already refunded" }.to_json}
+        it 'renders 400 with json message' do
+          charge.refund
+          post :refund, charge_id: charge.id
+          expect(response.status).to eq(400)
+          expect(response.body).to eq(error_json)
+        end
+      end
+
+      context 'when the charge tries to be refunded but fails' do
+        let(:error_json) {{ error: "Charge ID: #{charge.id} could not be refunded. No action taken." }.to_json}
+        it 'renders 500 with json message' do
+          expect(charge).to receive(:refund).and_raise(StandardError)
+          expect(Stripe::Charge).to receive(:retrieve).with(charge.id).and_return(charge)
+          post :refund, charge_id: charge.id
+          expect(response.status).to eq(500)
+          expect(response.body).to eq(error_json)
+        end
+      end
+
+      context 'when the refund is successful' do
+        it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do
+          expect(CompletedRequirement).to receive(:delete).with(cr)
+          post :refund, charge_id: charge.id
+          expect(flash[:notice]).to eq("The refund has processed successfully.")
+          expect(response).to redirect_to('/prior_url/')
+        end
+      end
     end
   end
 end

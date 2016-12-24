@@ -54,6 +54,9 @@ class TeamsController < ApplicationController
     process_if_newly_finalized
 
     @race = @team.race
+
+    # currently required by charges controller to know where to redirect
+    # the user after performing an action
     session[:prior_url] = request.original_url
   end
 

@@ -10,12 +10,13 @@ describe StripeHelper do
 
     context "error conditions" do
 
-      shared_examples "rescues and logs" do
+      shared_examples "rescues, logs, returns" do
         before do
           expect(Rails.logger).to receive(:error).with(expected)
         end
-        it "rescues and logs the exception" do
-          StripeHelper.safely_call_stripe { raise error }
+
+        it "rescues, logs the exception, and returns false w/ exception" do
+          expect(StripeHelper.safely_call_stripe { raise error }).to eq([false, error])
         end
       end
 
@@ -51,35 +52,37 @@ describe StripeHelper do
         end
       end
 
+      let(:error_msg) { 'some message' }
+
       context "Stripe::InvalidRequestError" do
-        let(:error)    { Stripe::InvalidRequestError.new("some message", "some_param") }
-        let(:expected) { "#{error.class}" }
-        include_examples "rescues and logs"
+        let(:error)    { Stripe::InvalidRequestError.new(error_msg, "some_param") }
+        let(:expected) { {class: error.class.to_s, reason: error_msg}.to_json }
+        include_examples "rescues, logs, returns"
       end
 
       context "Stripe::AuthenticationError" do
-        let(:error)    { Stripe::AuthenticationError }
-        let(:expected) { error.to_s }
-        include_examples "rescues and logs"
+        let(:error)    { Stripe::AuthenticationError.new(error_msg) }
+        let(:expected) { {class: error.class.to_s, reason: error_msg}.to_json }
+        include_examples "rescues, logs, returns"
       end
 
       context "Stripe::APIConnectionError" do
-        let(:error)    { Stripe::APIConnectionError }
-        let(:expected) { error.to_s }
-        include_examples "rescues and logs"
+        let(:error)    { Stripe::APIConnectionError.new(error_msg) }
+        let(:expected) { {class: error.class.to_s, reason: error_msg}.to_json }
+        include_examples "rescues, logs, returns"
       end
 
       context "Stripe::StripeError" do
-        let(:error)    { Stripe::StripeError }
-        let(:expected) { error.to_s }
-        include_examples "rescues and logs"
+        let(:error)    { Stripe::StripeError.new(error_msg) }
+        let(:expected) { {class: error.class.to_s, reason: error_msg}.to_json }
+        include_examples "rescues, logs, returns"
       end
 
       #TODO: change to StandardError?
       context "Any other exception" do
-        let(:error)    { StandardError }
-        let(:expected) { "#{error}: Non-Stripe Error" }
-        include_examples "rescues and logs"
+        let(:error)    { StandardError.new(error_msg) }
+        let(:expected) { {class: error.class.to_s, reason: error_msg}.to_json }
+        include_examples "rescues, logs, returns"
       end
     end
   end
@@ -88,6 +91,7 @@ describe StripeHelper do
     let(:mock_exception) { double(StandardError, message: "omg!", http_status: nil, json_body: nil) }
 
     let(:thehash) {{
+      class: mock_exception.class.to_s,
       reason: mock_exception.message
     }}
 
@@ -108,6 +112,7 @@ describe StripeHelper do
       let(:mock_exception) { double(StandardError, message: "omg!", http_status: nil, json_body: json_body) }
       let(:thehash) do
         {
+          class: mock_exception.class.to_s,
           reason: mock_exception.message
         }.merge!(json_body[:error])
       end
@@ -120,33 +125,13 @@ describe StripeHelper do
     context "if exception has http status" do
       let(:mock_exception) { double(StandardError, message: "omg!", http_status: 200, json_body: nil) }
       let(:thehash) {{
+        class: mock_exception.class.to_s,
         reason: mock_exception.message,
         http_status: 200
       }}
 
       it "includes the http status" do
         expect(StripeHelper.exception_to_hash(mock_exception)).to eq(thehash)
-      end
-    end
-  end
-
-  describe "#log_charge_error" do
-    let(:thehash) {{
-      a: 1,
-      b: 2
-    }}
-
-    it "calls rails logger" do
-      expect(StripeHelper).to receive(:exception_to_hash).and_return(thehash)
-      expect(Rails.logger).to receive(:error).with(thehash.to_json)
-      StripeHelper.log_charge_error(nil)
-    end
-
-    context "when an exception is raised" do
-      it "logs the exception to rails logger" do
-        expect(StripeHelper).to receive(:exception_to_hash).and_raise(StandardError, "omg!")
-        expect(Rails.logger).to receive(:error).with("Error logging stripe error: omg!")
-        StripeHelper.log_charge_error(nil)
       end
     end
   end
