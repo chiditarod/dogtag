@@ -5,6 +5,7 @@ class ChargesController < ApplicationController
 
   STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
 
+  # TODO: add safely_call_stripe into this method.
   def create
     authorize! :create, :charges
 

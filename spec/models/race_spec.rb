@@ -46,13 +46,31 @@ describe Race do
 
   describe '#question_fields' do
     context 'when there is no jsonform data' do
-      it 'returns empty array'
+      let(:race) { FactoryGirl.build :race }
+
+      it 'returns empty array' do
+        expect(race.question_fields).to eq([])
+      end
     end
+
     context 'when there is jsonform data' do
-      it 'returns an unumerable of the json schema keys'
+      let(:race) { FactoryGirl.build :race_with_jsonform }
+      let(:keys) do
+        file = File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
+        JSON.parse(file)['schema']['properties'].keys
+      end
+
+      it 'returns an enumerable of the keys stored in the jsonform schema' do
+        expect(race.question_fields).to eq(keys)
+      end
     end
+
     context 'when json is malformed' do
-      it 'returns empty array'
+      let(:race) { FactoryGirl.build :race_with_jsonform, json_data: '{' }
+
+      it 'returns empty array' do
+        expect(race.question_fields).to eq([])
+      end
     end
   end
 
@@ -82,13 +100,22 @@ describe Race do
 
   describe '#registration_over?' do
     context 'registration close is in the future' do
-      it 'returns false'
+      let(:race) { FactoryGirl.create :race }
+      it 'returns false' do
+        expect(race.registration_over?).to be false
+      end
     end
     context 'registration close is right now' do
-      it 'returns true'
+      let(:race) { FactoryGirl.create :race, :registration_closing_now }
+      it 'returns true' do
+        expect(race.registration_over?).to be true
+      end
     end
     context 'registration close is in the past' do
-      it 'returns true'
+      let(:race) { FactoryGirl.create :race, :registration_closed }
+      it 'returns true' do
+        expect(race.registration_over?).to be true
+      end
     end
   end
 
@@ -119,23 +146,41 @@ describe Race do
   end
 
   describe '#open_for_registration?' do
-    before do
-      @race = FactoryGirl.create :race
+    context "race is not yet open" do
+      let(:race) { FactoryGirl.create :race, :registration_opens_tomorrow }
+      it "returns false" do
+        expect(race.open_for_registration?).to eq(false)
+      end
     end
 
-    it "returns false if now < registration_open" do
-      expect(Time).to receive(:now).and_return @race.registration_open - 1.day
-      expect(@race.open_for_registration?).to eq(false)
+    context "race registration is closed" do
+      let(:race) { FactoryGirl.create :race, :registration_closed }
+      it "returns false" do
+        expect(race.open_for_registration?).to eq(false)
+      end
     end
 
-    it "returns false if registration_close < now" do
-      expect(Time).to receive(:now).and_return @race.registration_close + 1.day
-      expect(@race.open_for_registration?).to eq(false)
+    context "race registration is open" do
+      let(:race) { FactoryGirl.create :race }
+      it "returns true" do
+        expect(race.open_for_registration?).to eq(true)
+      end
+    end
+  end
+
+  describe "over?" do
+    context "when the race date is in the past" do
+      let(:race) { FactoryGirl.create :ended_race }
+      it "returns false" do
+        expect(race.over?).to be true
+      end
     end
 
-    it "returns true if open_for_registration? date < today < close date" do
-      expect(Time).to receive(:now).and_return @race.registration_close - 1.day
-      expect(@race.open_for_registration?).to eq(true)
+    context "when the race date is in the future" do
+      let(:race) { FactoryGirl.create :race }
+      it "returns false" do
+        expect(race.over?).to be false
+      end
     end
   end
 
@@ -224,14 +269,20 @@ describe Race do
     end
   end
 
-  describe '#self.find_registerable_races' do
-    it 'returns races where registerable? == true' do
-      closed_race = FactoryGirl.create :race
-      allow(closed_race).to receive(:registerable?).and_return(false)
+  describe 'self#find_registerable_races' do
+    it 'returns races that are open and have spaces left' do
+      FactoryGirl.create :race, :registration_closed
+      FactoryGirl.create :full_race
       open_race = FactoryGirl.create :race
-      allow(open_race).to receive(:registerable?).and_return(true)
-      expect(Race).to receive(:all).and_return [closed_race, open_race]
       expect(Race.find_registerable_races).to eq([open_race])
+    end
+  end
+
+  describe 'self#find_open_races' do
+    it "only returns races where registration is open" do
+      FactoryGirl.create :race, :registration_closed
+      open_race = FactoryGirl.create :race
+      expect(Race.find_open_races).to eq([open_race])
     end
   end
 
@@ -240,23 +291,20 @@ describe Race do
     it 'returns them oldest first'
   end
 
-  describe 'self#load_stats' do
-    context 'with invalid race' do
-      it 'returns empty hash'
-    end
-    context 'with valid race' do
-      it 'returns metadata statistics'
-    end
-  end
+  describe '#stats' do
 
-  describe 'self#find_open_races' do
-    it "returns races who's registration window is open" do
-      closed_race = FactoryGirl.create :race
-      allow(closed_race).to receive(:open_for_registration?).and_return(false)
-      open_race = FactoryGirl.create :race
-      allow(open_race).to receive(:open_for_registration?).and_return(true)
-      expect(Race).to receive(:all).and_return [closed_race, open_race]
-      expect(Race.find_registerable_races).to eq([open_race])
+    context 'when race has no registered teams' do
+      let(:race) { FactoryGirl.create :race }
+      it 'returns hash showing zero' do
+        expect(race.stats).to eq({"money_raised" => 0})
+      end
+    end
+
+    context 'when race has teams that paid money' do
+      let(:cr) { FactoryGirl.create :completed_requirement, :with_metadata }
+      it 'returns hash showing zero' do
+        expect(cr.team.race.stats).to eq({"money_raised" => 7000})
+      end
     end
   end
 
