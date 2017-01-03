@@ -112,6 +112,7 @@ GEM
       ruby_parser (~> 3.5)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
+    httpclient (2.8.3)
     i18n (0.7.0)
     jbuilder (1.5.3)
       activesupport (>= 3.0.0)
@@ -313,6 +314,7 @@ DEPENDENCIES
   factory_girl_rails
   haml
   haml-rails
+  httpclient
   jbuilder (~> 1.2)
   jquery-rails
   json-schema

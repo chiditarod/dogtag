@@ -24,8 +24,10 @@ vendor/bundle
 /coverage/
 .env
 
-PostgreSQL dumps
+# PostgreSQL dumps
 *.dump
 
 # OSX stuff
 .DS_Store
+
+dump.rdb
