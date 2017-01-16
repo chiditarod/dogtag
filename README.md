@@ -27,7 +27,9 @@ Developer Setup
 
 1. Run local daemons
 
+        redis-server
         postgres -D /usr/local/var/postgres
+        bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
         bundle exec mailcatcher
         bundle exec rails s
 

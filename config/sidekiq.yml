@@ -1,0 +1,12 @@
+---
+:concurrency: 2
+:pidfile: /tmp/sidekiq_svc_proc.pid
+staging:
+  :concurrency: 5
+  :pidfile: tmp/pids/sidekiq.pid
+production:
+  :concurrency: 20
+  :pidfile: tmp/pids/sidekiq.pid
+:queues:
+- [critical, 2]
+- default

@@ -61,6 +61,11 @@ gem 'jquery-rails'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 1.2'
 
+# workers
+gem 'sidekiq'
+gem 'sidekiq-failures'
+gem 'redis-namespace'
+
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'

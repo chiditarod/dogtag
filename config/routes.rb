@@ -29,6 +29,9 @@ RailsSkeleton::Application.routes.draw do
   # password reset
   resources :password_resets, :only => [:new, :create, :edit, :update]
 
+  # sidekiq
+  mount Sidekiq::Web => '/sidekiq'
+
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
 
   # The priority is based upon order of creation: first created -> highest priority.
