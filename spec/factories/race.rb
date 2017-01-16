@@ -19,6 +19,10 @@ FactoryGirl.define do
         json_data File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
       end
       jsonform { json_data }
+
+      factory :race_with_jsonform_and_filter_field do
+        filter_field { JSON.parse(jsonform)["schema"]["properties"].keys.first(3).join(",") }
+      end
     end
 
     factory :ended_race do

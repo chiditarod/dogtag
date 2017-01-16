@@ -7,6 +7,14 @@ dogtag
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
 [![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
 
+Requirements
+------------
+
+- App Server like Heroku
+- Redis
+- PostgreSQL
+- SMTP Server
+
 Developer Setup
 ---------------
 *Assumes an OSX environment. If you do it in Windows or Linux, please send us instructions and we will include them.*
@@ -21,17 +29,15 @@ Developer Setup
 
 1. Export required environment vars
 
-        export PUBLISHABLE_KEY=<...>      # stripe api
-        export SECRET_KEY=<...>           # stripe api
-        export RAILS_SECRET_TOKEN=<...>   # rails
+        export STRIPE_PUBLISHABLE_KEY=<...>   # stripe api
+        export STRIPE_SECRET_KEY=<...>        # stripe api
+        export RAILS_SECRET_TOKEN=<...>       # rails
 
 1. Export optional environment vars
 
-        CLASSY_CLIENT_ID=<...>            # if you are using classy
-        CLASSY_CLIENT_SECRET=<...>        # if you are using classy
-        REDIS_HOST=<...>                  # default: 127.0.0.1
-        REDIS_PORT=<...>                  # default: 6379
-
+        REDIS_URL=<...>                       # default: redis://127.0.0.1:6379
+        CLASSY_CLIENT_ID=<...>                # if you are using classy
+        CLASSY_CLIENT_SECRET=<...>            # if you are using classy
 
 1. Run local daemons
 
@@ -44,6 +50,7 @@ Developer Setup
 1. Run the test suite
 
         bundle exec rspec
+
 
 Basic Deploy Plan
 -----------------

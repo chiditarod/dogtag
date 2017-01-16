@@ -5,7 +5,7 @@ class ChargesController < ApplicationController
 
   STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
 
-  # TODO: add safely_call_stripe into this method.
+  # TODO: add safely_call_stripe into this method and rip out all the rescue stuff.
   def create
     authorize! :create, :charges
 
@@ -44,7 +44,6 @@ class ChargesController < ApplicationController
     url = session.delete(:prior_url)
     redirect_to url
 
-  # TODO: figure out how to consolidate this logic with the logic from stripe_helper
   rescue Stripe::CardError => e
     flash[:error] = e.message
     log_and_redirect(e)
