@@ -18,7 +18,7 @@ describe Person do
       person = reg.people.first
       person.email = 'unknown@gmail.com'
       person.save
-      expect(Person.registered_for_race(reg.race_id).count).to eq(4)
+      expect(Person.registered_for_race(reg.race_id).count).to eq((reg.race.people_per_team - 1))
     end
   end
 end

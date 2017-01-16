@@ -161,7 +161,7 @@ describe Team do
     context "when there are people on the team" do
       let(:team) { FactoryGirl.create :team, :with_people }
       it "sums their total experience" do
-        expect(team.person_experience).to eq(12)
+        expect(team.person_experience).to eq(6)
       end
     end
   end
@@ -250,7 +250,7 @@ describe Team do
       end
 
       it "returns correct percentage" do
-        expect(@team.percent_complete).to eq(16)
+        expect(@team.percent_complete).to eq(25)
       end
     end
 
@@ -259,7 +259,7 @@ describe Team do
       let(:team) { FactoryGirl.create :team, :with_people, race: req.race }
 
       it "returns correct percentage" do
-        expect(team.percent_complete).to eq(66)
+        expect(team.percent_complete).to eq(50)
       end
     end
 
@@ -269,7 +269,7 @@ describe Team do
       let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
       it "returns correct percentage" do
-        expect(team.percent_complete).to eq(80)
+        expect(team.percent_complete).to eq(66)
       end
     end
 

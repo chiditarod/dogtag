@@ -12,7 +12,7 @@ FactoryGirl.define do
     factory :finalized_team do
       after(:create) do |team|
         Timecop.freeze(THE_TIME) do
-          create_list(:person, 5, team: team)
+          create_list(:person, team.race.people_per_team, team: team)
           team.finalize
         end
       end
@@ -34,8 +34,8 @@ FactoryGirl.define do
   end
 
   trait :with_enough_people do
-    after(:create) do |team, evaluator|
-      create_list(:person, evaluator.race.people_per_team, team: team)
+    after(:create) do |team|
+      create_list(:person, team.race.people_per_team, team: team)
     end
   end
 end
