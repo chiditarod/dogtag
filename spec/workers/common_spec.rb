@@ -46,27 +46,9 @@ describe Workers::Common do
       errors.each do |error|
         it "for #{error}, logs useful information and reraises error to let sidekiq manage the retries" do
           my_error = error.new("testing plumbing")
+          expect(worker).to receive(:log).with("received", {job: job})
           expect(worker).to receive(:run).and_raise(my_error)
-
-          log = {
-            event: "received",
-            worker: worker.class.to_s,
-            jid: nil,
-            data: {
-              job: job
-            }
-          }
-          expect(Rails.logger).to receive(:info).with(log)
-
-          log_w_exception = {
-            event: "error",
-            worker: worker.class.to_s,
-            jid: nil,
-            exception: error.as_json,
-            data: {}
-          }
-          expect(Rails.logger).to receive(:error).with(log_w_exception)
-
+          expect(worker).to receive(:log).with("error", {}, :error, my_error)
           expect do
             worker.perform(job)
           end.to raise_error(my_error)
@@ -117,9 +99,14 @@ describe Workers::Common do
 
     context "when log level is customized and exception is passed" do
       let(:exception) { StandardError.new("omg!") }
+      let(:ex_hash) {{
+        klass: exception.class,
+        message: exception.message,
+        backtrace: exception.backtrace
+      }}
 
       it "passes them along" do
-        expect(Rails.logger).to receive(:send).with(:error, log.merge({exception: exception.as_json}))
+        expect(Rails.logger).to receive(:send).with(:error, log.merge({exception: ex_hash}))
         worker.log('foo', data, :error, exception)
       end
     end

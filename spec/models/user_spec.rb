@@ -2,20 +2,18 @@ require 'spec_helper'
 
 describe User do
 
-  describe '#deliver_password_reset_instructions!' do
-    before { mock_emailer! }
-    after  { reset_mailer! }
-    let(:user) { FactoryGirl.build(:user) }
+  describe '#reset_password!' do
+    let(:user) { FactoryGirl.create(:user) }
 
     it "changes the user's perishible token" do
       original = user.perishable_token
-      user.deliver_password_reset_instructions!('80')
+      user.reset_password!('80')
       expect(user.perishable_token).to_not eq(original)
     end
 
-    it "sends an email" do
-      user.deliver_password_reset_instructions!('80')
-      expect(ActionMailer::Base.deliveries.count).to eq(1)
+    it "queues an email to be sent" do
+      expect(Workers::PasswordResetEmail).to receive(:perform_async).with({user_id: user.id, host: '80'})
+      user.reset_password!('80')
     end
   end
 

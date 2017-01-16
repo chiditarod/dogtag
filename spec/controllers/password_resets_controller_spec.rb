@@ -156,7 +156,7 @@ describe PasswordResetsController do
         end
 
         it 'delivers instructions' do
-          expect(user).to have_recieved(:deliver_password_reset_instructions!)
+          expect(user).to have_recieved(:reset_password!)
         end
         it 'sets flash notice' do
           expect(flash[:notice]).to eq("Instructions to reset your password have been emailed to you")

@@ -3,7 +3,7 @@ module Workers
     include Sidekiq::Worker
     include Workers::Common
 
-    sidekiq_options queue: :default, retry: true, backtrace: true
+    sidekiq_options queue: :important, retry: true, backtrace: true
     sidekiq_options failures: true
 
     # create a new classy fundraising team and associate dogtag team with it

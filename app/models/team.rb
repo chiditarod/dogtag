@@ -42,6 +42,7 @@ class Team < ActiveRecord::Base
 
   # sets the finalization bits and triggers follow-up actions
   def finalize
+
     return nil if finalized
     return nil unless meets_finalization_requirements?
     # finalize
@@ -50,8 +51,7 @@ class Team < ActiveRecord::Base
     self.finalized = true
 
     if self.save
-      # todo: move mailer to async process
-      UserMailer.team_finalized_email(self.user, self).deliver_now
+      Workers::TeamFinalizedEmail.perform_async({team_id: self.id})
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
     else

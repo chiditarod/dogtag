@@ -57,7 +57,7 @@ describe Team do
   describe '.finalize' do
 
     context 'not yet finalized and meets all requirements' do
-      let(:mock_mailer) { double("mailer", deliver_now: true) }
+
       let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
 
       it 'sets finalized flat and notified_at in the db' do
@@ -100,9 +100,9 @@ describe Team do
         end
       end
 
-      it 'emails the user and logs' do
+      it 'Queues up an email to the user and logs status' do
         expect(Rails.logger).to receive(:info).with("Finalized Team: #{team.name} (id: #{team.id})")
-        expect(UserMailer).to receive(:team_finalized_email).with(team.user, team).and_return(mock_mailer)
+        expect(Workers::TeamFinalizedEmail).to receive(:perform_async).with({team_id: team.id})
         team.finalize
       end
     end

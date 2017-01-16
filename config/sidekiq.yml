@@ -8,5 +8,5 @@ production:
   :concurrency: 20
   :pidfile: tmp/pids/sidekiq.pid
 :queues:
-- [critical, 2]
+- [important, 2]
 - default

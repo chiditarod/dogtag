@@ -40,6 +40,10 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = "random"
 
+  config.before do
+    ActionMailer::Base.deliveries.clear
+  end
+
   # stub Time.now for all specs
   #config.before(:each) do
     #@now_stub = Time.parse("01/01/2010 10:00")
@@ -67,14 +71,4 @@ def mock_login!(user)
   session = UserSession.create!(user, false)
   expect(session).to be_valid
   session.save
-end
-
-def mock_emailer!
-  ActionMailer::Base.delivery_method = :test
-  ActionMailer::Base.perform_deliveries = true
-  ActionMailer::Base.deliveries = []
-end
-
-def reset_mailer!
-  ActionMailer::Base.deliveries.clear
 end

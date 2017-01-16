@@ -14,10 +14,6 @@ module Workers
       run(job, log)
 
     rescue StandardError, EOFError, SystemCallError, SocketError => ex
-      log = {
-        event: "error",
-        exception: ex.as_json
-      }
       log("error", {}, :error, ex)
       raise ex
     end

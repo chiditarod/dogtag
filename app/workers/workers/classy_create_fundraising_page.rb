@@ -3,7 +3,7 @@ module Workers
     include Sidekiq::Worker
     include Workers::Common
 
-    sidekiq_options queue: :default, retry: true, backtrace: true
+    sidekiq_options queue: :important, retry: true, backtrace: true
     sidekiq_options failures: true
 
     # Create a new fundraiser page, owned by 'user', associated with the 'team'

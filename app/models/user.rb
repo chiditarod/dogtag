@@ -38,8 +38,8 @@ class User < ActiveRecord::Base
     "#{first_name} #{last_name}"
   end
 
-  def deliver_password_reset_instructions!(host)
+  def reset_password!(host)
     reset_perishable_token!
-    UserMailer.password_reset_instructions(self, host).deliver_now
+    Workers::PasswordResetEmail.perform_async({user_id: self.id, host: host})
   end
 end

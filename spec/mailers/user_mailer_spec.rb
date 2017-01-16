@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe UserMailer do
   let(:deliveries) { ActionMailer::Base.deliveries }
-  before { mock_emailer! }
-  after  { reset_mailer! }
 
   shared_examples "common tests" do
     it "sends an email" do
