@@ -32,7 +32,8 @@ class Team < ActiveRecord::Base
     "8th year elite",
     "9th year elders",
     "10th year anniversary",
-    "11th year OGs"
+    "11th year OGs",
+    "12th year sages"
   ]
 
   def unfinalized

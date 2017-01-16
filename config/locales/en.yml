@@ -277,6 +277,8 @@ en:
       max_teams: Maximum teams
       people_per_team: People per team
       manage_race: Manage Race
+      classy_campaign_id: Classy Campaign ID
+      classy_default_goal: Classy default goal in whole dollars
     show:
       race_datetime: Race begins on
       max_teams: Maximum Teams

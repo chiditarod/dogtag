@@ -53,6 +53,18 @@
       = f.select :filter_field, options_for_select(@race.question_fields, @race.filter_field_array), {}, {multiple: true, class: 'form-control'}
 
   .form-group
+    .col-sm-4.control-label
+      = label_tag :classy_campaign_id, t('.classy_campaign_id')
+    .col-xs-2
+      = f.text_field :classy_campaign_id, :class => 'form-control'
+
+  .form-group
+    .col-sm-4.control-label
+      = label_tag :classy_default_goal, t('.classy_default_goal')
+    .col-xs-2
+      = f.text_field :classy_default_goal, :class => 'form-control'
+
+  .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
 

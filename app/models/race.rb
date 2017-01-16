@@ -5,6 +5,11 @@ class Race < ActiveRecord::Base
     :only_integer => true,
     :greater_than => 0
   }
+  validates :classy_campaign_id, :classy_default_goal, numericality: {
+    only_integer: true,
+    greater_than: 0,
+    allow_nil: true
+  }
   validates_uniqueness_of :name
   validates_with RaceValidator
 

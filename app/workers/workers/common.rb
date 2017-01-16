@@ -33,7 +33,13 @@ module Workers
         jid: self.jid,
         data: data
       }
-      log[:exception] = exception.as_json if exception.present?
+      if exception.present?
+        log[:exception] = {
+          klass: exception.class,
+          message: exception.message,
+          backtrace: exception.backtrace
+        }
+      end
       Rails.logger.send(level, log)
     end
   end

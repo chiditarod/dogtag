@@ -21,9 +21,17 @@ Developer Setup
 
 1. Export required environment vars
 
-        export PUBLISHABLE_KEY=<foo>
-        export SECRET_KEY=<bar>
-        export RAILS_SECRET_TOKEN=<baz>
+        export PUBLISHABLE_KEY=<...>      # stripe api
+        export SECRET_KEY=<...>           # stripe api
+        export RAILS_SECRET_TOKEN=<...>   # rails
+
+1. Export optional environment vars
+
+        CLASSY_CLIENT_ID=<...>            # if you are using classy
+        CLASSY_CLIENT_SECRET=<...>        # if you are using classy
+        REDIS_HOST=<...>                  # default: 127.0.0.1
+        REDIS_PORT=<...>                  # default: 6379
+
 
 1. Run local daemons
 
