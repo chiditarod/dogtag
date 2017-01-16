@@ -47,6 +47,7 @@ gem 'haml'
 gem 'haml-rails'
 
 gem 'awesome_print'
+gem 'httpclient'
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
 # gem 'therubyracer', platforms: :ruby
