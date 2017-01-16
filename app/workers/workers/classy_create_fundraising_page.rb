@@ -31,15 +31,15 @@ module Workers
       end
 
       cc = ClassyClient.new
-      name = "#{team.name} fundraiser for #{race.name}"
+      name = "#{race.name} Fundraiser: #{team.name}"
       result = cc.create_fundraising_page(team.classy_id, user.classy_id, name, race.classy_default_goal)
       team.classy_fundraiser_page_id = result['id']
       team.save!
+      UserMailer.classy_is_ready(user, team).deliver_now
+
       log[:response] = result
       log[:message] = "Success adding a classy fundraising page for team id: #{team.id}"
       log("complete", log)
-
-      # todo: trigger an email with instructions
     end
   end
 end

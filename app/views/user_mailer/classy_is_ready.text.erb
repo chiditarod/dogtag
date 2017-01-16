@@ -1,0 +1,41 @@
+:::::::::::
+dogtag  :::  Chiditarod fundraising bot
+:::::::::::
+
+Good news! Your team fundraising page has been successfully created!
+
+We are partnering with Classy.org this year to take advantage of their awesome fundraising platform.
+If you are new to Classy.org, you should see a "Claim Your Account" email from Classy in your inbox.
+Please open that email and follow the instructions to setup your Classy account. If you were
+already a Classy user, simply go to http://classy.org and login.
+
+http://classy.org
+
+Once you have logged in, you should see 2 entries on your profile page:
+
+1. Team: <%= @team.name %>
+
+This is your Team fundraising profile. There are many ways to customize your team profile:
+
+Main Page: https://www.classy.org/team/<%= @team.classy_id %>
+Customize: https://www.classy.org/team/<%= @team.classy_id %>/dashboard/overview
+
+You can (and probably should) invite them to join your team and help fundraise! All they need
+to do is click the main page link and click Join Team. Your team page will calculate how much
+your team has raised in total. Complete with your fellow teams for Most Epic Fundraiser and
+show the world via the leaderboard!
+
+2. Fundraiser: <%= @team.name %>
+
+Main Page: https://www.classy.org/fundraiser/<%= @team.classy_fundraiser_page_id %>
+Customize: https://www.classy.org/fundraiser/<%= @team.classy_fundraiser_page_id %>/dashboard/overview
+
+This is the fundraising page we created for your personal user account, and is associated with your
+team fundraiser (#1, above). There are also many ways to customize your fundraiser page to tell your
+story. It's easy! After customizing your page, it is very easy to share it!
+
+Please try claiming your Classy account and rock that fundraiser! If you have issues, questions,
+or concerns, we are here to help.. please email us at fundraising@chiditarod.org
+
+xoxo,
+dogtag bot

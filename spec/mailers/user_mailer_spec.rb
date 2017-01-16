@@ -15,6 +15,19 @@ describe UserMailer do
     end
   end
 
+  describe '#classy_is_ready' do
+    let(:team) { FactoryGirl.create(:team) }
+    let(:user) { team.user }
+    before do
+      UserMailer.classy_is_ready(user, team).deliver_now
+    end
+
+    it 'sets the subject' do
+      expect(deliveries.first.subject).to eq("#{team.race.name}: Fundraising is ready for #{team.name}")
+    end
+    include_examples "common tests"
+  end
+
   describe '#welcome_email' do
     let(:user) { FactoryGirl.build(:user) }
     before do
