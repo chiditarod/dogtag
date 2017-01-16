@@ -58,7 +58,7 @@ describe Team do
 
     context 'not yet finalized and meets all requirements' do
 
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
 
       it 'sets finalized flat and notified_at in the db' do
         Timecop.freeze(THE_TIME) do
@@ -111,7 +111,7 @@ describe Team do
   describe '.unfinalize' do
 
     context 'called on a unfinalized team' do
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
 
       it 'returns nil' do
         expect(team.unfinalize).to be_nil
@@ -274,7 +274,7 @@ describe Team do
     end
 
     context "when all people have been added and payment requirements are satisfied" do
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
       let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
       let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
@@ -291,7 +291,7 @@ describe Team do
 
   describe '#needs_people?' do
     let(:race) { FactoryGirl.create :race }
-    let(:reg) { FactoryGirl.create :team, :with_people, :race => race, :people_count => (race.people_per_team - 1) }
+    let(:reg) { FactoryGirl.create :team, :with_people, :race => race }
 
     it 'returns true if there are less than race.people_per_team people' do
       expect(reg.needs_people?).to be_truthy

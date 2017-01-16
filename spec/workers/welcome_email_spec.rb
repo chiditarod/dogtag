@@ -9,10 +9,9 @@ describe Workers::WelcomeEmail do
     let(:job)    {{ 'user_id' => user.id }}
 
     it "calls the UserMailer and logs 'complete'" do
-      expect(worker).to receive(:log).with("received", {job: job})
       expect(worker).to receive(:log).with("complete")
       expect(ActionMailer::Base.deliveries.count).to eq(0)
-      worker.perform(job)
+      worker.run(job)
       expect(ActionMailer::Base.deliveries.count).to eq(1)
     end
   end

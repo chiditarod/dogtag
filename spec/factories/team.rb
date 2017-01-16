@@ -26,10 +26,16 @@ FactoryGirl.define do
 
   trait :with_people do
     transient do
-      people_count 4
+      people_count 2
     end
     after(:create) do |team, evaluator|
       create_list(:person, evaluator.people_count, team: team)
+    end
+  end
+
+  trait :with_enough_people do
+    after(:create) do |team, evaluator|
+      create_list(:person, evaluator.race.people_per_team, team: team)
     end
   end
 end
