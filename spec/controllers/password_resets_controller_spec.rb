@@ -127,41 +127,27 @@ describe PasswordResetsController do
 
     describe '#create' do
 
+      let(:user) { FactoryGirl.create :user }
+
       context 'when user is not found' do
-        let(:user) { double('user', email: 'foo').as_null_object }
-        before do
+
+        it 'does not assign user, sets flash error, responds, 400, and renders #new' do
           expect(User).to receive(:find_by_email).and_return(nil)
           post :create, email: user.email
-        end
-
-        it 'does not assign user' do
+          expect(flash[:error]).to eq("No user was found with email address: #{user.email}")
           expect(assigns(:user)).to be_nil
-        end
-        it 'sets flash error' do
-          expect(flash[:error]).to eq("No user was found with email address: foo")
-        end
-        it 'responds 400' do
           expect(response.code).to eq('400')
-        end
-        it 'renders #new' do
           expect(request).to render_template(:new)
         end
       end
 
       context 'when user is found' do
-        let(:user) { double('user', email: 'foo@bar.com').as_null_object }
-        before do
-          expect(User).to receive(:find_by_email).and_return(user)
-          post :create, email: user.email
-        end
 
-        it 'delivers instructions' do
-          expect(user).to have_recieved(:reset_password!)
-        end
-        it 'sets flash notice' do
+        it 'calls the reset operation, sets flash notice, and redirects to home' do
+          expect(User).to receive(:find_by_email).with(user.email).and_return(user)
+          expect(user).to receive(:reset_password!)
+          post :create, email: user.email
           expect(flash[:notice]).to eq("Instructions to reset your password have been emailed to you")
-        end
-        it 'redirects to home' do
           expect(response).to redirect_to(home_url)
         end
       end
