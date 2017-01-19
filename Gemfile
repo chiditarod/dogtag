@@ -7,6 +7,7 @@ gem 'bootswatch-rails'
 group :production do
   gem 'rails_12factor' # 12 factor support for rails (http://12factor.net/)
   gem 'newrelic_rpm'
+  gem 'honeybadger'
 end
 
 # -------------------------------------------------------
