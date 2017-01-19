@@ -24,6 +24,10 @@ FactoryGirl.define do
     end
   end
 
+  trait :with_classy_id do
+    classy_id 123456
+  end
+
   trait :with_people do
     transient do
       people_count 2

@@ -6,7 +6,7 @@ module Workers
     sidekiq_options queue: :important, retry: true, backtrace: true
     sidekiq_options failures: true
 
-    # create a new classy fundraising team and associate dogtag team with it
+    # create a new classy fundraising team and associate it with a dogtag team
     # idempotent; will not re-create if there's already a classy team
     def run(job, log={})
       team = Team.includes(:user).includes(:race).find(job['team_id'])

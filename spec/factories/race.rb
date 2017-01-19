@@ -25,6 +25,11 @@ FactoryGirl.define do
       end
     end
 
+    factory :race_with_classy_data do
+      classy_campaign_id 12345
+      classy_default_goal 2000
+    end
+
     factory :ended_race do
       registration_close (Time.now - 1.week)
       race_datetime (Time.now - 1.day)
