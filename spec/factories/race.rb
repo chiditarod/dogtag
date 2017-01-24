@@ -6,7 +6,7 @@ FactoryGirl.define do
     registration_close (Time.now + 2.weeks)
     race_datetime (Time.now + 4.weeks)
     max_teams 3
-    people_per_team 5
+    people_per_team 3
 
     factory :full_race do
       after(:create) do |race, evaluator|
@@ -19,6 +19,15 @@ FactoryGirl.define do
         json_data File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
       end
       jsonform { json_data }
+
+      factory :race_with_jsonform_and_filter_field do
+        filter_field { JSON.parse(jsonform)["schema"]["properties"].keys.first(3).join(",") }
+      end
+    end
+
+    factory :race_with_classy_data do
+      classy_campaign_id 12345
+      classy_default_goal 2000
     end
 
     factory :ended_race do

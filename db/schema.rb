@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160115052426) do
+ActiveRecord::Schema.define(version: 20170116085249) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -51,6 +51,8 @@ ActiveRecord::Schema.define(version: 20160115052426) do
     t.datetime "updated_at"
     t.text     "jsonform"
     t.string   "filter_field"
+    t.integer  "classy_campaign_id"
+    t.integer  "classy_default_goal"
   end
 
   create_table "requirements", force: :cascade do |t|
@@ -77,6 +79,8 @@ ActiveRecord::Schema.define(version: 20160115052426) do
     t.text     "jsonform"
     t.boolean  "finalized"
     t.integer  "assigned_team_number"
+    t.integer  "classy_id"
+    t.integer  "classy_fundraiser_page_id"
   end
 
   add_index "teams", ["race_id"], name: "index_teams_on_race_id", using: :btree
@@ -110,6 +114,7 @@ ActiveRecord::Schema.define(version: 20160115052426) do
     t.string   "last_login_ip"
     t.string   "stripe_customer_id"
     t.integer  "roles_mask"
+    t.integer  "classy_id"
   end
 
 end

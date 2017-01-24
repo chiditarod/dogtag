@@ -4,11 +4,12 @@ SimpleCov.start 'rails' do
  add_filter "/vendor/"
 end
 
-# This file is copied to spec/ when you run 'rails generate rspec:install'
 ENV["RAILS_ENV"] ||= 'test'
+
 require File.expand_path("../../config/environment", __FILE__)
 require 'webmock/rspec'
 require 'rspec/rails'
+require 'sidekiq/testing'
 
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
@@ -40,11 +41,10 @@ RSpec.configure do |config|
   #     --seed 1234
   config.order = "random"
 
-  # stub Time.now for all specs
-  #config.before(:each) do
-    #@now_stub = Time.parse("01/01/2010 10:00")
-    #allow(Time).to receive(:now).and_return(@now_stub)
-  #end
+  config.before do
+    ActionMailer::Base.deliveries.clear
+    Sidekiq::Worker.clear_all
+  end
 
   # whitelist codeclimate.com so test coverage can be reported
   config.after(:suite) do
@@ -67,14 +67,4 @@ def mock_login!(user)
   session = UserSession.create!(user, false)
   expect(session).to be_valid
   session.save
-end
-
-def mock_emailer!
-  ActionMailer::Base.delivery_method = :test
-  ActionMailer::Base.perform_deliveries = true
-  ActionMailer::Base.deliveries = []
-end
-
-def reset_mailer!
-  ActionMailer::Base.deliveries.clear
 end

@@ -70,22 +70,18 @@ describe UsersController do
       it 'adds a record' do
         expect do
           post :create, :user => valid_user_hash
-        end.to change(User, :count).by 1
+        end.to change(User, :count).by(1)
       end
 
-      context 'upon success' do
-        before do
+      context 'when user save is successful' do
+        it 'sends a welcome email, sets a flash notice, and redirects to user#show' do
+          expect(Workers::WelcomeEmail).to receive(:perform_async)
           post :create, :user => valid_user_hash
-        end
-        it 'sets a flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'create_success_user')
-        end
-        it 'redirects to race#show' do
           expect(response).to redirect_to assigns(:user)
         end
       end
     end
-
   end
 
   context '[logged in]' do

@@ -57,8 +57,8 @@ describe Team do
   describe '.finalize' do
 
     context 'not yet finalized and meets all requirements' do
-      let(:mock_mailer) { double("mailer", deliver_now: true) }
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
 
       it 'sets finalized flat and notified_at in the db' do
         Timecop.freeze(THE_TIME) do
@@ -100,9 +100,9 @@ describe Team do
         end
       end
 
-      it 'emails the user and logs' do
+      it 'Queues up an email to the user and logs status' do
         expect(Rails.logger).to receive(:info).with("Finalized Team: #{team.name} (id: #{team.id})")
-        expect(UserMailer).to receive(:team_finalized_email).with(team.user, team).and_return(mock_mailer)
+        expect(Workers::TeamFinalizer).to receive(:perform_async).with({team_id: team.id})
         team.finalize
       end
     end
@@ -111,7 +111,7 @@ describe Team do
   describe '.unfinalize' do
 
     context 'called on a unfinalized team' do
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
 
       it 'returns nil' do
         expect(team.unfinalize).to be_nil
@@ -161,7 +161,7 @@ describe Team do
     context "when there are people on the team" do
       let(:team) { FactoryGirl.create :team, :with_people }
       it "sums their total experience" do
-        expect(team.person_experience).to eq(12)
+        expect(team.person_experience).to eq(6)
       end
     end
   end
@@ -250,7 +250,7 @@ describe Team do
       end
 
       it "returns correct percentage" do
-        expect(@team.percent_complete).to eq(16)
+        expect(@team.percent_complete).to eq(25)
       end
     end
 
@@ -259,7 +259,7 @@ describe Team do
       let(:team) { FactoryGirl.create :team, :with_people, race: req.race }
 
       it "returns correct percentage" do
-        expect(team.percent_complete).to eq(66)
+        expect(team.percent_complete).to eq(50)
       end
     end
 
@@ -269,12 +269,12 @@ describe Team do
       let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
       it "returns correct percentage" do
-        expect(team.percent_complete).to eq(80)
+        expect(team.percent_complete).to eq(66)
       end
     end
 
     context "when all people have been added and payment requirements are satisfied" do
-      let(:team) { FactoryGirl.create :team, :with_people, people_count: 5 }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
       let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
       let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
@@ -291,7 +291,7 @@ describe Team do
 
   describe '#needs_people?' do
     let(:race) { FactoryGirl.create :race }
-    let(:reg) { FactoryGirl.create :team, :with_people, :race => race, :people_count => (race.people_per_team - 1) }
+    let(:reg) { FactoryGirl.create :team, :with_people, :race => race }
 
     it 'returns true if there are less than race.people_per_team people' do
       expect(reg.needs_people?).to be_truthy

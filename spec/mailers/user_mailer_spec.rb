@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe UserMailer do
   let(:deliveries) { ActionMailer::Base.deliveries }
-  before { mock_emailer! }
-  after  { reset_mailer! }
 
   shared_examples "common tests" do
     it "sends an email" do
@@ -15,6 +13,19 @@ describe UserMailer do
     it 'sets reciever email' do
       expect(deliveries.first.to).to eq([user.email])
     end
+  end
+
+  describe '#classy_is_ready' do
+    let(:team) { FactoryGirl.create(:team) }
+    let(:user) { team.user }
+    before do
+      UserMailer.classy_is_ready(user, team).deliver_now
+    end
+
+    it 'sets the subject' do
+      expect(deliveries.first.subject).to eq("#{team.race.name}: Fundraising is ready for #{team.name}")
+    end
+    include_examples "common tests"
   end
 
   describe '#welcome_email' do

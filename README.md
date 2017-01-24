@@ -1,11 +1,19 @@
 dogtag
 ======
 
-*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed more than $50,000 in registration money.*
+*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed m ore than $75,000.*
 
 ![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
 [![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
+
+Requirements
+------------
+
+- App Server like Heroku
+- Redis
+- PostgreSQL
+- SMTP Server
 
 Developer Setup
 ---------------
@@ -21,19 +29,28 @@ Developer Setup
 
 1. Export required environment vars
 
-        export PUBLISHABLE_KEY=<foo>
-        export SECRET_KEY=<bar>
-        export RAILS_SECRET_TOKEN=<baz>
+        export STRIPE_PUBLISHABLE_KEY=<...>   # stripe api
+        export STRIPE_SECRET_KEY=<...>        # stripe api
+        export RAILS_SECRET_TOKEN=<...>       # rails
+
+1. Export optional environment vars
+
+        REDIS_URL=<...>                       # default: redis://127.0.0.1:6379
+        CLASSY_CLIENT_ID=<...>                # if you are using classy
+        CLASSY_CLIENT_SECRET=<...>            # if you are using classy
 
 1. Run local daemons
 
+        redis-server
         postgres -D /usr/local/var/postgres
+        bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
         bundle exec mailcatcher
         bundle exec rails s
 
 1. Run the test suite
 
         bundle exec rspec
+
 
 Basic Deploy Plan
 -----------------

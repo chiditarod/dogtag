@@ -17,14 +17,13 @@ class ClassyClient
     get("/campaigns/#{id}")
   end
 
-  # todo: before creating the user, see if they already exist
-  # https://developers.classy.org/api-docs/v2/index.html#member-member-get
-  #
   def get_member(id_or_email)
     get("/members/#{id_or_email}")
+  #rescue TransientError
+    #nil
   end
 
-  def create_member(campaign_id, first, last, email)
+  def create_member(organization_id, first, last, email)
     # only the required things
     body = {
       "first_name" => first,
@@ -33,7 +32,13 @@ class ClassyClient
       "date_of_birth" => "",
       "gender" => ""
     }
-    post("/organizations/#{campaign_id}/members", body)
+    post("/organizations/#{organization_id}/members", body)
+  end
+
+  def get_fundraising_team(team_id)
+    get("/fundraising-teams/#{team_id}")
+  rescue TransientError
+    nil
   end
 
   def create_fundraising_team(campaign_id, name, description, team_lead_id, goal)
@@ -50,6 +55,12 @@ class ClassyClient
 
   def update_fundraising_team(team_id, body)
     put("/fundraising-teams/{team_id}", body)
+  end
+
+  def get_fundraising_page(page_id)
+    get("/fundraising-pages/#{page_id}")
+  rescue TransientError
+    nil
   end
 
   def create_fundraising_page(team_id, member_id, title, goal)
@@ -135,8 +146,5 @@ class ClassyClient
     end
 
     JSON.parse(response.body)
-    # res.status
-    # res.contenttype
-    # res.header['X-Custom']
   end
 end

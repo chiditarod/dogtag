@@ -32,7 +32,8 @@ class Team < ActiveRecord::Base
     "8th year elite",
     "9th year elders",
     "10th year anniversary",
-    "11th year OGs"
+    "11th year OGs",
+    "12th year sages"
   ]
 
   def unfinalized
@@ -41,6 +42,7 @@ class Team < ActiveRecord::Base
 
   # sets the finalization bits and triggers follow-up actions
   def finalize
+
     return nil if finalized
     return nil unless meets_finalization_requirements?
     # finalize
@@ -49,8 +51,7 @@ class Team < ActiveRecord::Base
     self.finalized = true
 
     if self.save
-      # todo: move mailer to async process
-      UserMailer.team_finalized_email(self.user, self).deliver_now
+      Workers::TeamFinalizer.perform_async({team_id: self.id})
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
     else

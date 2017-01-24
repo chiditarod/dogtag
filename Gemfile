@@ -1,15 +1,13 @@
 source 'https://rubygems.org'
 ruby "2.3.1"
 
-# -------------------------------------------------------
-# rails-skeleton
-
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
 
 group :production do
   gem 'rails_12factor' # 12 factor support for rails (http://12factor.net/)
   gem 'newrelic_rpm'
+  gem 'honeybadger'
 end
 
 # -------------------------------------------------------
@@ -61,6 +59,11 @@ gem 'jquery-rails'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder', '~> 1.2'
 
+# workers
+gem 'sidekiq'
+gem 'sidekiq-failures'
+gem 'redis-namespace'
+
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
@@ -91,8 +94,7 @@ end
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
 # Use unicorn as the app server (heroku)
-#gem 'unicorn', '4.8.0'
-gem 'unicorn', '5.0.1'
+gem 'unicorn', '~> 5.2'
 
 # Use debugger
 # gem 'debugger', group: [:development, :test]

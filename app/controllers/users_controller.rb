@@ -24,7 +24,8 @@ class UsersController < ApplicationController
     @user = User.new user_params
 
     if @user.save
-      UserMailer.welcome_email(@user).deliver_now
+      # todo: move this to an after_create method in the model
+      Workers::WelcomeEmail.perform_async({user_id: @user.id})
       flash[:notice] = I18n.t('create_success_user')
       redirect_back_or_default user_url(@user.id)
     else
