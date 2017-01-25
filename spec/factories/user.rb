@@ -26,9 +26,13 @@ FactoryGirl.define do
       last_name 'Anderson'
       email 'mr@anderson.com'
     end
-  end
 
-  trait :with_stripe_account do
-    sequence(:stripe_customer_id) { |n| "stripe_customer_#{n}" }
+    trait :with_classy_id do
+      classy_id 123456
+    end
+
+    trait :with_stripe_account do
+      sequence(:stripe_customer_id) { |n| "stripe_customer_#{n}" }
+    end
   end
 end

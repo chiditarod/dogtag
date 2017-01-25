@@ -6,6 +6,19 @@ describe Workers::ClassyCreateFundraisingTeam do
 
   let(:worker) { Workers::ClassyCreateFundraisingTeam.new }
 
+  # this stubs out an authenticated classy client
+  let(:valid_cc) do
+    ENV['CLASSY_CLIENT_ID'] = 'some_id'
+    ENV['CLASSY_CLIENT_SECRET'] = 'some_secret'
+    valid_auth = {
+      'access_token' => 'abc123',
+      'token_type' => 'bearer',
+      'expires_in' => 3600
+    }
+    stub_request(:post, ClassyClient::AUTH_ENDPOINT).to_return(status: 200, body: valid_auth.to_json)
+    ClassyClient.new
+  end
+
   describe "#run" do
 
     before do
@@ -88,36 +101,23 @@ describe Workers::ClassyCreateFundraisingTeam do
       end
     end
 
-    # this stubs out an authenticated classy client
+
     context 'when the fundraising team creation is successful' do
       let(:race) { FactoryGirl.create :race_with_classy_data }
       let(:team) { FactoryGirl.create :team, race: race }
       let(:resp) { File.read("#{Rails.root}/spec/fixtures/classy/create_campaign_team_response.json") }
       let(:json) { JSON.parse(resp) }
-      let!(:cc) do
-        ENV['CLASSY_CLIENT_ID'] = 'some_id'
-        ENV['CLASSY_CLIENT_SECRET'] = 'some_secret'
-        valid_auth = {
-          'access_token' => 'abc123',
-          'token_type' => 'bearer',
-          'expires_in' => 3600
-        }
-        stub_request(:post, ClassyClient::AUTH_ENDPOINT).to_return(status: 200, body: valid_auth.to_json)
-        ClassyClient.new
-      end
 
       before do
-        expect(ClassyClient).to receive(:new).and_return(cc)
+        expect(ClassyClient).to receive(:new).and_return(valid_cc)
         expect(ClassyUser).to receive(:link_user_to_classy!).and_return(true)
-        expect(cc).to receive(:create_fundraising_team).and_return(json)
+        expect(valid_cc).to receive(:create_fundraising_team).and_return(json)
       end
 
       it 'saves the classy_id to the team, saves the team, logs complete, and enqueues a ClassyCreateFundraisingPage job' do
         expect(worker).to receive(:log).with("complete", any_args)
         expect(Workers::ClassyCreateFundraisingPage).to receive(:perform_async)
-
         worker.perform({'team_id' => team.id})
-
         expect(team.reload.classy_id).to eq(json['id'])
       end
     end
