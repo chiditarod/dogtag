@@ -159,7 +159,7 @@ describe Team do
     end
 
     context "when there are people on the team" do
-      let(:team) { FactoryGirl.create :team, :with_people }
+      let(:team) { FactoryGirl.create :team, :with_enough_people }
       it "sums their total experience" do
         expect(team.person_experience).to eq(6)
       end
@@ -233,54 +233,52 @@ describe Team do
 
   describe '#percent_complete' do
 
+    let(:answer) do
+      possible = team.race.people_per_team + team.race.requirements.size
+      ((team.people.size + team.completed_requirements.size) * 100 ) / possible
+    end
+    shared_examples "returns correct percentage" do
+      it "returns correct percentage" do
+        expect(team.percent_complete).to eq(answer)
+      end
+    end
+
     context "when no people have been added and payment requirements are not satisfied" do
-      let(:req) { FactoryGirl.create :payment_requirement }
+      let(:req)  { FactoryGirl.create :payment_requirement }
       let(:team) { FactoryGirl.create :team, race: req.race}
 
-      it "returns 0" do
-        expect(team.percent_complete).to eq(0)
-      end
+      include_examples "returns correct percentage"
     end
 
     context "when no people have been added and payment requirements are satisfied" do
-      before do
-        req = FactoryGirl.create :payment_requirement_with_tier
-        @team = FactoryGirl.create :team, race: req.race
-        FactoryGirl.create :completed_requirement, requirement: req, team: @team
-      end
+      let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
+      let(:team) { FactoryGirl.create :team, race: req.race }
+      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
-      it "returns correct percentage" do
-        expect(@team.percent_complete).to eq(25)
-      end
+      include_examples "returns correct percentage"
     end
 
     context "when some people have been added and payment requirements are not satisfied" do
-      let(:req) { FactoryGirl.create :payment_requirement_with_tier }
+      let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
       let(:team) { FactoryGirl.create :team, :with_people, race: req.race }
 
-      it "returns correct percentage" do
-        expect(team.percent_complete).to eq(50)
-      end
+      include_examples "returns correct percentage"
     end
 
     context "when some people have been added and payment requirements are satisfied" do
       let(:team) { FactoryGirl.create :team, :with_people }
-      let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
-      let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+      let(:req)  { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
+      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
-      it "returns correct percentage" do
-        expect(team.percent_complete).to eq(66)
-      end
+      include_examples "returns correct percentage"
     end
 
     context "when all people have been added and payment requirements are satisfied" do
       let(:team) { FactoryGirl.create :team, :with_enough_people }
-      let(:req) { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
-      let(:cr) { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+      let(:req)  { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
+      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
 
-      it "returns 100 percent" do
-        expect(team.percent_complete).to eq(100)
-      end
+      include_examples "returns correct percentage"
     end
 
     context 'when race has some jsonschema' do
@@ -291,15 +289,15 @@ describe Team do
 
   describe '#needs_people?' do
     let(:race) { FactoryGirl.create :race }
-    let(:reg) { FactoryGirl.create :team, :with_people, :race => race }
+    let(:reg)  { FactoryGirl.create :team, :with_people, :race => race }
 
     it 'returns true if there are less than race.people_per_team people' do
-      expect(reg.needs_people?).to be_truthy
+      expect(reg.needs_people?).to be true
     end
 
     it 'returns false if there are race.people_per_team people' do
       reg.people << FactoryGirl.create(:person)
-      expect(reg.needs_people?).to be_falsey
+      expect(reg.needs_people?).to be false
     end
   end
 

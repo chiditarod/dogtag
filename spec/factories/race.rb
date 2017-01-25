@@ -6,7 +6,7 @@ FactoryGirl.define do
     registration_close (Time.now + 2.weeks)
     race_datetime (Time.now + 4.weeks)
     max_teams 3
-    people_per_team 3
+    people_per_team 2
 
     factory :full_race do
       after(:create) do |race, evaluator|

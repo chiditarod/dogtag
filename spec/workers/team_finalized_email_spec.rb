@@ -5,7 +5,7 @@ describe Workers::TeamFinalizedEmail do
   let(:worker) { Workers::TeamFinalizedEmail.new }
 
   describe "#run" do
-    let!(:team)  { FactoryGirl.create :team, :with_people, people_count: 1 }
+    let!(:team)  { FactoryGirl.create :team, :with_people }
     let(:job)    {{ 'team_id' => team.id }}
     let(:mailer) { double("mailer", deliver_now: true) }
 
