@@ -19,8 +19,16 @@ class ClassyClient
 
   def get_member(id_or_email)
     get("/members/#{id_or_email}")
-  #rescue TransientError
-    #nil
+  rescue TransientError
+    nil
+  end
+
+  # configure a campaign how we like it
+  def configure_campaign(campaign_id)
+    body = {
+      "allow_duplicate_fundraisers" => true
+    }
+    put("/campaigns/#{campaign_id}", body)
   end
 
   def create_member(organization_id, first, last, email)
@@ -51,10 +59,6 @@ class ClassyClient
       "goal" => goal
     }
     post("/campaigns/#{campaign_id}/fundraising-teams", body)
-  end
-
-  def update_fundraising_team(team_id, body)
-    put("/fundraising-teams/{team_id}", body)
   end
 
   def get_fundraising_page(page_id)
@@ -107,21 +111,21 @@ class ClassyClient
 
   def get(uri, query={})
     with_token do |args|
-      args[:query] = query if query
+      args[:query] = query if query.present?
       wrapper(:get, "/#{API_VERSION}#{uri}", args)
     end
   end
 
   def post(uri, body=nil)
     with_token do |args|
-      args[:body] = body.to_json if body
+      args[:body] = body.to_json if body.present?
       wrapper(:post, "/#{API_VERSION}#{uri}", args)
     end
   end
 
   def put(uri, body={})
     with_token do |args|
-      args[:body] = body if body
+      args[:body] = body.to_json if body.present?
       wrapper(:put, "/#{API_VERSION}#{uri}", args)
     end
   end

@@ -34,9 +34,7 @@ describe ClassyClient do
         end
 
         it "raises an error" do
-          expect do
-            ClassyClient.new
-          end.to raise_error(ArgumentError)
+          expect { ClassyClient.new }.to raise_error(ArgumentError)
         end
       end
     end
@@ -72,12 +70,11 @@ describe ClassyClient do
         end
       end
 
-      # this test will be very similar for the other verbs.  DRY it up
       context "when authentication token has expired" do
         let(:future)     { 3601 }
         let(:new_expiry) { THE_TIME + future.seconds + 3600.seconds }
 
-        it "re-authenticates and updates the expiry`" do
+        it "re-authenticates and updates the expiry" do
           cc = ClassyClient.new
           Timecop.travel(future) do
             stub_request(verb, "#{classy_url}/foo").to_return(status: 200, body: {'foo' => 'bar'}.to_json)
