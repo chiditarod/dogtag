@@ -17,18 +17,14 @@
     %h2
       = link_to race.name, race_path(race)
 
-    %small
+    = link_to race_registrations_url(:race_id => race.id) do
       = race.finalized_teams.size
-      of
-      = race.max_teams
-      = link_to t('.teams_registered'), race_registrations_url(:race_id => race.id)
+      = t('.teams_registered')
 
-      %br
-
+    %br
       - if race.over?
         = t('.race_complete')
       - elsif race.open_for_registration?
-        = t('.registration_open')
         = render 'races/race_metadata', :race => race
       - else
         = t('.registration_closed')

@@ -1,7 +1,8 @@
 %p
   - if race.registerable?
-    = distance_of_time_in_words race.days_before_close
-    = t('.left_to_register')
+    = t('.registration_closes_at')
+    = race.registration_close.strftime("%B %e, %Y, %l:%M:%S %P %Z")
+
     %br
 
   - if Time.now < race.registration_open
@@ -10,7 +11,6 @@
     = t('.and_closes_on')
     = race.registration_close.strftime("%B %e, %Y")
 
-%p
   = race.spots_remaining
   = t '.spots_remaining'
 

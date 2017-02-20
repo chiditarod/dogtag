@@ -257,7 +257,7 @@ en:
       no_races: No races present in the system.
       create_race: Create one now!
     race_metadata:
-      left_to_register: left to register.
+      registration_closes_at: Registration closes
       race_is_full: Race is full.
       spots_remaining: spots remaining.
       registration_opens_on: Registration opens on
@@ -266,9 +266,9 @@ en:
       team: team
     race_item:
       team: team
-      teams_registered: teams fully registered
-      register_now: Register
-      register_waitlist: Register for Waitlist
+      teams_registered: teams registered
+      register_now: Register!
+      register_waitlist: Waitlist!
     form:
       name: This race is called
       race_datetime: Race start time
