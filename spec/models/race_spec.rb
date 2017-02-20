@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Race do
-  let(:today) { Time.now.utc }
+  let(:today) { Time.zone.now }
 
   describe 'scopes' do
     describe 'past'
@@ -193,7 +193,7 @@ describe Race do
     end
 
     it 'returns the time between now and registration_close' do
-      double(Time.now) { today }
+      double(Time.zone.now) { today }
       race = FactoryGirl.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
       expect(race.days_before_close).to eq(2.weeks.to_i)
     end

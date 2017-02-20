@@ -29,7 +29,7 @@ OUTPUT = :html
 TERSER = true
 
 # hack - we should get the race time as the first column in the csv
-RACE_START = Time.strptime("12:30:09 PM UTC", "%I:%M:%S %p %Z")
+RACE_START = Time.strptime("12:30:09 PM UTC", "%I:%M:%S %p %Z").in_time_zone
 
 namespace :chiscore do
 
@@ -53,7 +53,7 @@ namespace :chiscore do
 
     row.each_with_index do |cell, i|
       begin
-        time = Time.strptime(cell + " UTC", "%I:%M:%S %p %Z")
+        time = Time.strptime(cell + " UTC", "%I:%M:%S %p %Z").in_time_zone
         #first_time ||= time # this is what we want
         first_time = RACE_START # hack for now
         last_time = time

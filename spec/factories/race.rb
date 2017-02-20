@@ -2,9 +2,9 @@ FactoryGirl.define do
 
   factory :race do
     sequence(:name) { |n| "Race #{n}" }
-    registration_open (Time.now - 2.weeks)
-    registration_close (Time.now + 2.weeks)
-    race_datetime (Time.now + 4.weeks)
+    registration_open (Time.zone.now - 2.weeks)
+    registration_close (Time.zone.now + 2.weeks)
+    race_datetime (Time.zone.now + 4.weeks)
     max_teams 3
     people_per_team 2
 
@@ -31,20 +31,20 @@ FactoryGirl.define do
     end
 
     factory :ended_race do
-      registration_close (Time.now - 1.week)
-      race_datetime (Time.now - 1.day)
+      registration_close (Time.zone.now - 1.week)
+      race_datetime (Time.zone.now - 1.day)
     end
 
     trait :registration_closed do
-      registration_close (Time.now - 1.week)
+      registration_close (Time.zone.now - 1.week)
     end
 
     trait :registration_opens_tomorrow do
-      registration_open (Time.now + 1.day)
+      registration_open (Time.zone.now + 1.day)
     end
 
     trait :registration_closing_now do
-      registration_close Time.now
+      registration_close Time.zone.now
     end
   end
 end

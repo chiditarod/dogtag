@@ -14,19 +14,22 @@
     .col-sm-4.control-label
       = label_tag :registration_open, t('.registration_open')
     .col-sm-8
-      = f.datetime_select :registration_open, :class => 'form-control'
+      = f.datetime_select :registration_open, :include_seconds => true, :class => 'form-control'
+      = Time.zone
 
   .form-group
     .col-sm-4.control-label
       = label_tag :registration_close, t('.registration_close')
     .col-sm-8
-      = f.datetime_select :registration_close, :class => 'form-control'
+      = f.datetime_select :registration_close, :include_seconds => true, :class => 'form-control'
+      = Time.zone
 
   .form-group
     .col-sm-4.control-label
       = label_tag :race_datetime, t('.race_datetime')
     .col-sm-8
       = f.datetime_select :race_datetime, :class => 'form-control'
+      = Time.zone
 
   .form-group
     .col-sm-4.control-label

@@ -37,7 +37,7 @@ describe Tier do
     end
 
     it 'fails when another tier has the same "price" value' do
-      tier2 = FactoryGirl.build :tier, :begin_at => (Time.now - 4.weeks)
+      tier2 = FactoryGirl.build :tier, :begin_at => (Time.zone.now - 4.weeks)
       req.tiers << tier2
       expect(tier2).to be_invalid
     end

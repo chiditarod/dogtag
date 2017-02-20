@@ -5,7 +5,7 @@
 
     %br
 
-  - if Time.now < race.registration_open
+  - if Time.zone.now < race.registration_open
     = t('.registration_opens_on')
     = race.registration_open.strftime("%B %e, %Y")
     = t('.and_closes_on')
