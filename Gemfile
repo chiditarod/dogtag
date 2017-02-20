@@ -76,6 +76,7 @@ group :test do
   gem 'simplecov'
   gem 'stripe-ruby-mock', '~> 2.3.1'
   gem 'codeclimate-test-reporter'
+  gem 'zonebie'
 end
 
 group :test, :development do

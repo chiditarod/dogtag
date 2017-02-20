@@ -15,8 +15,8 @@ class Race < ActiveRecord::Base
 
   # todo: validate filter_field based on contents of jsonform schema
 
-  scope :past,    -> { where("race_datetime < ?", Time.now) }
-  scope :current, -> { where("race_datetime > ?", Time.now) }
+  scope :past,    -> { where("race_datetime < ?", Time.zone.now) }
+  scope :current, -> { where("race_datetime > ?", Time.zone.now) }
 
   has_many :teams
   MAX_TEAMS_PER_RACE = 4096 # arbitrary number of maximum teams per race.
@@ -56,7 +56,7 @@ class Race < ActiveRecord::Base
   end
 
   def over?
-    race_datetime < Time.now
+    race_datetime < Time.zone.now
   end
 
   def full?
@@ -68,14 +68,14 @@ class Race < ActiveRecord::Base
   end
 
   def open_for_registration?
-    now = Time.now
+    now = Time.zone.now
     return false if now < registration_open
     return false if registration_close < now
     true
   end
 
   def registration_over?
-    registration_close < Time.now
+    registration_close < Time.zone.now
   end
 
   def registerable?
@@ -83,7 +83,7 @@ class Race < ActiveRecord::Base
   end
 
   def days_before_close
-    t = Time.now
+    t = Time.zone.now
     return false if registration_close < t
     (registration_close - t).ceil
   end

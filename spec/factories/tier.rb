@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :tier do
     transient do
-      thetime { Timecop.freeze(THE_TIME) { Time.now } }
+      thetime { Timecop.freeze(THE_TIME) { Time.zone.now } }
     end
 
     price 5000

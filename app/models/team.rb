@@ -46,7 +46,7 @@ class Team < ActiveRecord::Base
     return nil if finalized
     return nil unless meets_finalization_requirements?
     # finalize
-    self.notified_at = Time.now
+    self.notified_at = Time.zone.now
     self.assigned_team_number = self.assigned_team_number || next_available_team_num
     self.finalized = true
 

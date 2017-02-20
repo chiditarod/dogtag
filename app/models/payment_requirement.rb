@@ -24,13 +24,13 @@ class PaymentRequirement < Requirement
 
   def active_tier
     chronological_tiers.select do |tier|
-      tier.begin_at < Time.now
+      tier.begin_at < Time.zone.now
     end.last || false
   end
 
   def next_tiers
     chronological_tiers.select do |tier|
-      tier.begin_at >= Time.now
+      tier.begin_at >= Time.zone.now
     end || []
   end
 
