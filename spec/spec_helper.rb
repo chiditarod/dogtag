@@ -8,6 +8,7 @@ ENV["RAILS_ENV"] ||= 'test'
 
 require File.expand_path("../../config/environment", __FILE__)
 require 'webmock/rspec'
+require "zonebie/rspec"
 require 'rspec/rails'
 require 'sidekiq/testing'
 
