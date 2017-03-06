@@ -65,6 +65,14 @@ en:
       races: Races
       users: Users
       my_teams: My Teams
+      register: Register
+      login: Login
+      forgot_password: Forgot Password?
+      edit_profile: Edit Profile
+      logout: Logout
+      email_us: Email us
+      report_a_bug: Report a Bug
+      having_problems: Having Problems?
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.

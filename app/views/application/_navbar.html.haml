@@ -56,15 +56,16 @@
                 = link_to edit_user_path(current_user) do
                   %i.fa.fa-edit.fa-fw
                   Edit Profile
+                  =t '.edit_profile'
               %li
                 = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
                   %i.fa.fa-sign-out.fa-fw
-                  Logout
+                  =t '.logout'
       - else
         %li.dropdown
           %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
             %i.fa.fa-sign-in.fa-2x
-            Login
+            =t '.login'
             %b.caret
             %ul.dropdown-menu
               %li
@@ -87,14 +88,14 @@
           %b.caret
           %ul.dropdown-menu
             %li.dropdown-header
-              Having Problems?
+              =t '.having_problems'
             %li
               = link_to "mailto:dogtag@chiditarod.org?subject=dogtag help" do
                 %i.fa.fa-envelope-o.fa-fw
-                Email us
+                =t '.email_us'
             %li
               = link_to "https://github.com/chiditarod/dogtag/issues/new" do
                 %i.fa.fa-fw.fa-github
-                File a Bug
+                =t '.report_a_bug'
 
 = render 'store'
