@@ -56,8 +56,6 @@ class StripeHelper
       hash
     end
 
-    private
-
     def log_and_return_error(ex)
       Rails.logger.error(exception_to_hash(ex).to_json)
       [false, ex]

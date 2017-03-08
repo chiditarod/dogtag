@@ -49,6 +49,7 @@ en:
   list: List
   back: Back
   refund: Refund
+  refund_and_invalidate: Refund & Remove
   at: at
   or: or
   of: of

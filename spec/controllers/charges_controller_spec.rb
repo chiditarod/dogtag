@@ -32,9 +32,10 @@ describe ChargesController do
     end
 
     let(:valid_user) { FactoryGirl.create :user }
+    let(:the_user)   { valid_user }
     before do
       activate_authlogic
-      mock_login! valid_user
+      mock_login! the_user
     end
 
     describe '#create' do
@@ -166,7 +167,7 @@ describe ChargesController do
         before do
           StripeMock.start
           expect(Customer).to receive(:get).and_return(customer)
-          expect(StripeHelper).to receive(:log_charge_error)
+          expect(StripeHelper).to receive(:log_and_return_error)
           session[:prior_url] = '/prior_url/'
         end
         after { StripeMock.stop }
@@ -247,7 +248,6 @@ describe ChargesController do
 
       let(:valid_user) { FactoryGirl.create :refunder_user }
 
-
       let(:cr)   { FactoryGirl.create :completed_requirement }
       let(:req)  { cr.requirement }
       let(:team) { cr.team }
@@ -322,11 +322,39 @@ describe ChargesController do
       end
 
       context 'when the refund is successful' do
-        it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do
-          expect(CompletedRequirement).to receive(:delete).with(cr)
+        let(:flash_msg) { "The refund has processed successfully" }
+
+        it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
+          expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
           post :refund, charge_id: charge.id
-          expect(flash[:notice]).to eq("The refund has processed successfully.")
+          expect(flash[:notice]).to eq(flash_msg)
           expect(response).to redirect_to('/prior_url/')
+        end
+
+        context 'when delete_completed_requirement is passed' do
+
+          context 'and the user is an admin' do
+            let(:the_user)  { FactoryGirl.create :admin_user }
+            let(:flash_msg) { "The refund has processed successfully, and the completed requirement was deleted" }
+
+            it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do
+              expect(CompletedRequirement).to receive(:delete_by_charge)
+              post :refund, charge_id: charge.id, delete_completed_requirement: true
+              expect(flash[:notice]).to eq(flash_msg)
+              expect(response).to redirect_to('/prior_url/')
+            end
+          end
+
+          context 'when the user is not an admin' do
+            let(:flash_msg) { "The refund has processed successfully, but the completed requirement was not deleted because you do not have the appropriate permissions" }
+
+            it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
+              expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
+              post :refund, charge_id: charge.id, delete_completed_requirement: true
+              expect(flash[:notice]).to eq(flash_msg)
+              expect(response).to redirect_to('/prior_url/')
+            end
+          end
         end
       end
     end

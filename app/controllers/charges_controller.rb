@@ -1,6 +1,7 @@
 class ChargesController < ApplicationController
   before_filter :require_user
   before_filter :require_stripe_params, only: [:create]
+  before_filter :require_charge_object, only: [:refund]
   before_filter :require_prior_url
 
   STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
@@ -65,15 +66,7 @@ class ChargesController < ApplicationController
 
   def refund
     authorize! :refund, :charges
-
     Rails.logger.info "Refund requested for charge: #{params[:charge_id]}"
-
-    success, ex = StripeHelper.safely_call_stripe do
-      @charge = Stripe::Charge.retrieve(params[:charge_id])
-    end
-
-    return render status: 404, json: {error: ex.message} unless success
-    return render status: 400, json: {error: "Charge ID #{@charge.id} is already refunded"} if @charge.refunded
 
     StripeHelper.safely_call_stripe do
       @charge = @charge.refund
@@ -86,30 +79,26 @@ class ChargesController < ApplicationController
       return render status: 500, json: {error: str}
     end
 
-    req_id = @charge['metadata']['requirement_id']
-    # we used to have a registration table that linked a team (to be used more than once) to a race. we later
-    # removed the registration table in favor of a single-use team object that registers for a single race.
-    # We used to store the registration_id in stripe, and later changed to a team_id but kept support for
-    # loading registration_id for older datasets.
-    team_id = @charge['metadata']['team_id'] || @charge['metadata']['registration_id']
+    msg = "The refund has processed successfully"
 
-    # TODO: Do we want to delete the completed requirement, or change its status to
-    # indicate it is no longer completed, but keep the object there to show the history?
-    # Introduce papertrail on completed requirement to track when the requirement is deleted
-    # and by whom.  YES!
-    cr = CompletedRequirement.where(:requirement_id => req_id, :team_id => team_id).first
-    CompletedRequirement.delete(cr)
+    if params.fetch(:delete_completed_requirement, false)
+      if current_user.is?(:admin)
+        CompletedRequirement.delete_by_charge(@charge)
+        msg = "#{msg}, and the completed requirement was deleted"
+      else
+        msg = "#{msg}, but the completed requirement was not deleted because you do not have the appropriate permissions"
+      end
+    end
 
-    # finally, redirect
-    flash[:notice] = "The refund has processed successfully."
+    flash[:notice] = msg
     url = session.delete(:prior_url)
-    redirect_to url
+    redirect_to(url)
   end
 
   private
 
-  def log_and_redirect(e)
-    StripeHelper.log_charge_error(e)
+  def log_and_redirect(ex)
+    StripeHelper.log_and_return_error(ex)
     url = session.delete :prior_url
     redirect_to url
   end
@@ -138,5 +127,14 @@ class ChargesController < ApplicationController
         }
       )
     end
+  end
+
+  def require_charge_object
+    success, ex = StripeHelper.safely_call_stripe do
+      @charge = Stripe::Charge.retrieve(params[:charge_id])
+    end
+
+    return render status: 404, json: {error: ex.message} unless success
+    return render status: 400, json: {error: "Charge ID #{@charge.id} is already refunded"} if @charge.refunded
   end
 end
