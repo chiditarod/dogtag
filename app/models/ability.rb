@@ -2,7 +2,7 @@ class Ability
   include CanCan::Ability
 
   # See the wiki for details:
-  # https://github.com/ryanb/cancan/wiki/Defining-Abilities
+  # https://github.com/CanCanCommunity/cancancan/wiki/Defining-Abilities
   def initialize(user)
 
     alias_action :new, :to => :create
@@ -11,10 +11,6 @@ class Ability
     alias_action :create, :read, :update, :destroy, :to => :crud
 
     user ||= User.new
-
-    if user.is? :admin
-      can :manage, :all
-    end
 
     # guest-only stuff
     unless user.id
@@ -62,6 +58,7 @@ class Ability
 
     if user.is? :refunder
       can [:index], User
+      can [:read], Team
       can [:refund], :charges
     end
 
@@ -70,6 +67,10 @@ class Ability
       can [:read, :update], [Team, Person]
       can [:read, :create, :update], [Race, PaymentRequirement, Tier]
       can [:refund], :charges
+    end
+
+    if user.is? :admin
+      can :manage, :all
     end
   end
 end

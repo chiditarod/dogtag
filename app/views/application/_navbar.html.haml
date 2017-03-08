@@ -55,7 +55,6 @@
               %li
                 = link_to edit_user_path(current_user) do
                   %i.fa.fa-edit.fa-fw
-                  Edit Profile
                   =t '.edit_profile'
               %li
                 = link_to user_session_path, :method => :delete, :data => {:confirm => 'Are you sure?'} do
