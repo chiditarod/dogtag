@@ -1,15 +1,19 @@
 dogtag
 ======
 
-*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed m ore than $75,000.*
+*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed more than $75,000.*
 
 ![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
 [![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
 
+Features
+--------
+- Payments/Refunds with Stripe API
+- Classy API integration to auto-setup a team's fundrasier campaigns.
+
 Requirements
 ------------
-
 - App Server like Heroku
 - Redis
 - PostgreSQL
