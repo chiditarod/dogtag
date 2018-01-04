@@ -61,7 +61,7 @@ describe UsersController do
     end
 
     describe '#create' do
-      let(:valid_user_hash) { FactoryGirl.attributes_for :user }
+      let(:valid_user_hash) { FactoryBot.attributes_for :user }
 
       it 'returns 400 if the user parameter is not passed' do
         post :create
@@ -100,8 +100,8 @@ describe UsersController do
   end
 
   context '[logged in]' do
-    let(:valid_user) { FactoryGirl.create :admin_user }
-    let(:some_user)  { FactoryGirl.create :user }
+    let(:valid_user) { FactoryBot.create :admin_user }
+    let(:some_user)  { FactoryBot.create :user }
     let(:new_user)   { User.new }
 
     before do
@@ -211,7 +211,7 @@ describe UsersController do
       context 'with valid id' do
 
         it 'destroys the user' do
-          some_user = FactoryGirl.create :user
+          some_user = FactoryBot.create :user
           expect do
             delete :destroy, :id => some_user.id
           end.to change(User, :count).by(-1)

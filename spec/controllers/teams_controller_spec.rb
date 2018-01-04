@@ -57,10 +57,10 @@ describe TeamsController do
 
   context '[logged in]' do
     # todo: change unprivileged calls to use normal_user instead of admin_user
-    let (:valid_user)     { FactoryGirl.create :admin_user }
-    let (:admin_user)     { FactoryGirl.create :admin_user }
-    let (:operator_user)  { FactoryGirl.create :admin_user }
-    let (:normal_user)    { FactoryGirl.create :user } # unused for now ^^
+    let (:valid_user)     { FactoryBot.create :admin_user }
+    let (:admin_user)     { FactoryBot.create :admin_user }
+    let (:operator_user)  { FactoryBot.create :admin_user }
+    let (:normal_user)    { FactoryBot.create :user } # unused for now ^^
 
     before do
       activate_authlogic
@@ -83,7 +83,7 @@ describe TeamsController do
 
       context 'with :race_id param' do
         let(:team) { Team.new }
-        let(:race) { FactoryGirl.create :race }
+        let(:race) { FactoryBot.create :race }
 
         before do
           allow(Team).to receive(:new).and_return team
@@ -127,7 +127,7 @@ describe TeamsController do
       end
 
       context 'when user has no teams' do
-        let (:valid_team) { FactoryGirl.create :team }
+        let (:valid_team) { FactoryBot.create :team }
 
         context '[no race_id]' do
           before { get :index }
@@ -157,7 +157,7 @@ describe TeamsController do
       end
 
       context 'when user has teams' do
-        let (:valid_team) { FactoryGirl.create :team, :user => valid_user }
+        let (:valid_team) { FactoryBot.create :team, :user => valid_user }
         before do
           valid_team.user = valid_user
           valid_team.save
@@ -188,7 +188,7 @@ describe TeamsController do
           end
 
           context "not matching user's teams" do
-            let(:team_different_race) { FactoryGirl.create :team }
+            let(:team_different_race) { FactoryBot.create :team }
             before do
               get :index, :race_id => team_different_race.race.id
             end
@@ -227,9 +227,9 @@ describe TeamsController do
     describe '#create' do
       let(:the_user) { valid_user }
 
-      let(:race) { FactoryGirl.create :race }
+      let(:race) { FactoryBot.create :race }
       let(:valid_team_hash) do
-        _t = FactoryGirl.attributes_for :team
+        _t = FactoryBot.attributes_for :team
         _t.merge(:race_id => race.id)
       end
 
@@ -286,7 +286,7 @@ describe TeamsController do
 
     describe '#update' do
       let(:the_user) { valid_user }
-      let (:valid_team) { FactoryGirl.create :team }
+      let (:valid_team) { FactoryBot.create :team }
 
       context 'on invalid id' do
         before { put :update, :id => -1 }
@@ -326,7 +326,7 @@ describe TeamsController do
 
       context 'with valid id' do
         let(:the_user) { valid_user }
-        let(:valid_team) { FactoryGirl.create :team }
+        let(:valid_team) { FactoryBot.create :team }
         before do
           get :show, :id => valid_team.id
         end
@@ -348,7 +348,7 @@ describe TeamsController do
       end
 
       context 'team is ready for finalization' do
-        let(:team) { FactoryGirl.create :team, :with_enough_people }
+        let(:team) { FactoryBot.create :team, :with_enough_people }
 
         context "admin user" do
           let(:the_user) { admin_user }
@@ -367,7 +367,7 @@ describe TeamsController do
       end
 
       context 'newly unfinalized (!meets_finalization_requirements? && finalized)' do
-        let(:team) { FactoryGirl.create :team, :with_people, finalized: true }
+        let(:team) { FactoryBot.create :team, :with_people, finalized: true }
         let(:the_user) { team.user }
 
         it 'calls team.unfinalize' do
@@ -390,12 +390,12 @@ describe TeamsController do
       end
 
       it 'destroys the team' do
-        @team = FactoryGirl.create :team
+        @team = FactoryBot.create :team
         expect { delete :destroy, :id => @team.id }.to change(Team, :count).by(-1)
       end
 
       context 'with valid id' do
-        let(:valid_team) { FactoryGirl.create :team }
+        let(:valid_team) { FactoryBot.create :team }
         before do
           delete :destroy, :id => valid_team.id
         end

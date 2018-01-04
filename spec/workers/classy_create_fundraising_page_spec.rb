@@ -39,7 +39,7 @@ describe Workers::ClassyCreateFundraisingPage do
     end
 
     context 'when team already has a classy fundraiser page id' do
-      let(:team) { FactoryGirl.create :team, :with_classy_fundraising_page }
+      let(:team) { FactoryBot.create :team, :with_classy_fundraising_page }
       let(:log) do
         {
           job: {'team_id' => team.id},
@@ -54,7 +54,7 @@ describe Workers::ClassyCreateFundraisingPage do
     end
 
     context 'when team has no classy id' do
-      let(:team) { FactoryGirl.create :team }
+      let(:team) { FactoryBot.create :team }
       let(:log) do
         {
           message: "Team id: #{team.id} does not have a classy ID. Set that first"
@@ -68,7 +68,7 @@ describe Workers::ClassyCreateFundraisingPage do
     end
 
     context 'when user has no classy id' do
-      let(:team) { FactoryGirl.create :team, :with_classy_id }
+      let(:team) { FactoryBot.create :team, :with_classy_id }
       let(:log) do
         {
           message: "User id: #{team.user.id} does not have a classy ID. Set that first"
@@ -82,9 +82,9 @@ describe Workers::ClassyCreateFundraisingPage do
     end
 
     context 'when classy client errors' do
-      let(:race) { FactoryGirl.create :race_with_classy_data }
-      let(:user) { FactoryGirl.create :user, :with_classy_id }
-      let(:team) { FactoryGirl.create :team, :with_classy_id, race: race, user: user }
+      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:user) { FactoryBot.create :user, :with_classy_id }
+      let(:team) { FactoryBot.create :team, :with_classy_id, race: race, user: user }
       let(:ex)   { StandardError.new("omg") }
       before do
         ENV['CLASSY_CLIENT_ID'] = 'some_id'
@@ -102,9 +102,9 @@ describe Workers::ClassyCreateFundraisingPage do
 
 
     context 'when the fundraising page creation is successful' do
-      let(:race) { FactoryGirl.create :race_with_classy_data }
-      let(:user) { FactoryGirl.create :user, :with_classy_id }
-      let(:team) { FactoryGirl.create :team, :with_classy_id, race: race, user: user }
+      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:user) { FactoryBot.create :user, :with_classy_id }
+      let(:team) { FactoryBot.create :team, :with_classy_id, race: race, user: user }
       let(:resp) { File.read("#{Rails.root}/spec/fixtures/classy/create_fundraising_page_response.json") }
       let(:json) { JSON.parse(resp) }
 

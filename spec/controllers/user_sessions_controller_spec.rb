@@ -22,7 +22,7 @@ describe UserSessionsController do
       activate_authlogic
     end
 
-    let(:user_session_hash) { FactoryGirl.attributes_for :user_session }
+    let(:user_session_hash) { FactoryBot.attributes_for :user_session }
 
     describe '#destroy' do
       before do
@@ -114,7 +114,7 @@ describe UserSessionsController do
 
   context '[logged in]' do
     before do
-      @valid_user = FactoryGirl.create :user
+      @valid_user = FactoryBot.create :user
       activate_authlogic
       mock_login! @valid_user
     end

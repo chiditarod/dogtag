@@ -17,7 +17,7 @@ require 'spec_helper'
 
 describe JsonForm do
 
-  let(:race) { FactoryGirl.create :race_with_jsonform }
+  let(:race) { FactoryBot.create :race_with_jsonform }
   let(:auth_token) { 'fake_token' }
 
   describe "add_csrf" do
@@ -44,7 +44,7 @@ describe JsonForm do
     let(:result)     { JsonForm.add_saved_answers(team, JSON.parse(race.jsonform), auth_token) }
 
     context 'team has saved answers already' do
-      let(:team) { FactoryGirl.create :team_with_jsonform, race: race }
+      let(:team) { FactoryBot.create :team_with_jsonform, race: race }
 
       it "merges the saved answers into the 'value' key and includes the authenticity_token" do
         auth_hash = { 'authenticity_token' => auth_token }
@@ -53,7 +53,7 @@ describe JsonForm do
     end
 
     context 'team has no saved answers' do
-      let(:team){ FactoryGirl.create :team, race: race }
+      let(:team){ FactoryBot.create :team, race: race }
 
       it "returns the exact same jsonform" do
         expect(result).to eq(JSON.parse(race.jsonform))

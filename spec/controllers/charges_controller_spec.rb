@@ -46,7 +46,7 @@ describe ChargesController do
       end
     end
 
-    let(:valid_user) { FactoryGirl.create :user }
+    let(:valid_user) { FactoryBot.create :user }
     let(:the_user)   { valid_user }
     before do
       activate_authlogic
@@ -104,8 +104,8 @@ describe ChargesController do
       end
 
       context "when Charge is successful" do
-        let(:requirement) { FactoryGirl.create :payment_requirement }
-        let(:team) { FactoryGirl.create :team, race: requirement.race }
+        let(:requirement) { FactoryBot.create :payment_requirement }
+        let(:team) { FactoryBot.create :team, race: requirement.race }
 
         let(:customer) do
           Stripe::Customer.create({
@@ -261,9 +261,9 @@ describe ChargesController do
 
     describe '#refund' do
 
-      let(:valid_user) { FactoryGirl.create :refunder_user }
+      let(:valid_user) { FactoryBot.create :refunder_user }
 
-      let(:cr)   { FactoryGirl.create :completed_requirement }
+      let(:cr)   { FactoryBot.create :completed_requirement }
       let(:req)  { cr.requirement }
       let(:team) { cr.team }
 
@@ -349,7 +349,7 @@ describe ChargesController do
         context 'when delete_completed_requirement is passed' do
 
           context 'and the user is an admin' do
-            let(:the_user)  { FactoryGirl.create :admin_user }
+            let(:the_user)  { FactoryBot.create :admin_user }
             let(:flash_msg) { "The refund has processed successfully, and the completed requirement was deleted" }
 
             it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do

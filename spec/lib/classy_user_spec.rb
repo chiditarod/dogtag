@@ -19,11 +19,11 @@ describe ClassyUser do
 
   describe "#link_user_to_classy!" do
 
-    let(:race)   { FactoryGirl.create :race }
+    let(:race)   { FactoryBot.create :race }
     let(:result) { ClassyUser.link_user_to_classy!(user, race) }
 
     context "when user already has a classy id in db" do
-      let(:user) { FactoryGirl.create :user, :with_classy_id }
+      let(:user) { FactoryBot.create :user, :with_classy_id }
 
       it "returns the user object" do
         expect(result).to eq(user)
@@ -32,7 +32,7 @@ describe ClassyUser do
 
     context "when user has no classy id" do
 
-      let(:user) { FactoryGirl.create :user }
+      let(:user) { FactoryBot.create :user }
       let(:cc)   { double(ClassyClient) }
 
       before do

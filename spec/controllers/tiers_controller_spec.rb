@@ -48,15 +48,15 @@ describe TiersController do
 
     # Todo: move to let
     before do
-      @req = FactoryGirl.create :payment_requirement
-      @tier = FactoryGirl.create :tier
+      @req = FactoryBot.create :payment_requirement
+      @tier = FactoryBot.create :tier
       @req.tiers << @tier
     end
 
-    let (:valid_tier_hash) { FactoryGirl.attributes_for :tier2 }
+    let (:valid_tier_hash) { FactoryBot.attributes_for :tier2 }
 
     before do
-      @valid_user = FactoryGirl.create :admin_user
+      @valid_user = FactoryBot.create :admin_user
       activate_authlogic
       mock_login! @valid_user
     end

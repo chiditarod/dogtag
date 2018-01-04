@@ -17,9 +17,9 @@ require 'spec_helper'
 
 describe Requirement do
 
-  let (:requirement) { FactoryGirl.create :requirement }
-  let (:team) { FactoryGirl.create :team }
-  let (:user) { FactoryGirl.create :user }
+  let (:requirement) { FactoryBot.create :requirement }
+  let (:team) { FactoryBot.create :team }
+  let (:user) { FactoryBot.create :user }
 
   describe '#allowed_types' do
     it "outputs the ALLOWED_TYPES constant" do

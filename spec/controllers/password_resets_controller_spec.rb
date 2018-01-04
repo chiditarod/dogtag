@@ -91,7 +91,7 @@ describe PasswordResetsController do
         end
 
         context 'when new password and confirmation are blank' do
-          let(:user) { FactoryGirl.create :user }
+          let(:user) { FactoryBot.create :user }
           let(:endpoint) { lambda { patch :update, id: user.id, password: '', password_confirmation: '' } }
 
           it 'sets flash error' do
@@ -142,7 +142,7 @@ describe PasswordResetsController do
 
     describe '#create' do
 
-      let(:user) { FactoryGirl.create :user }
+      let(:user) { FactoryBot.create :user }
 
       context 'when user is not found' do
 
@@ -171,7 +171,7 @@ describe PasswordResetsController do
 
   context '[logged in]' do
     before do
-      @valid_user = FactoryGirl.create :user
+      @valid_user = FactoryBot.create :user
       activate_authlogic
       mock_login! @valid_user
     end

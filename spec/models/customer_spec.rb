@@ -29,7 +29,7 @@ describe Customer do
     after { StripeMock.stop }
 
     context 'when stripe cannot create a new customer' do
-      let(:user) { FactoryGirl.create :user }
+      let(:user) { FactoryBot.create :user }
       before do
         expect(Stripe::Customer).to receive(:create).and_return(nil)
       end
@@ -46,7 +46,7 @@ describe Customer do
           email: 'email@foo.com'
         })
       end
-      let(:user) { FactoryGirl.create :user, stripe_customer_id: customer.id }
+      let(:user) { FactoryBot.create :user, stripe_customer_id: customer.id }
       before do
         expect(Stripe::Customer).to receive(:retrieve).and_return(nil)
       end
@@ -63,7 +63,7 @@ describe Customer do
           email: 'email@foo.com'
         })
       end
-      let(:user) { FactoryGirl.create :user }
+      let(:user) { FactoryBot.create :user }
 
       it 'creates a stripe customer, saves it to the user, and returns the customer' do
         expect(Stripe::Customer).to receive(:create).and_return(customer)
@@ -80,7 +80,7 @@ describe Customer do
           email: 'email@foo.com'
         })
       end
-      let(:user) { FactoryGirl.create :user, stripe_customer_id: customer.id }
+      let(:user) { FactoryBot.create :user, stripe_customer_id: customer.id }
 
       it 'updates customer with new token, saves, and returns the customer' do
         expect(Stripe::Customer).to receive(:retrieve).with(user.stripe_customer_id).and_return(customer)

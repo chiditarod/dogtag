@@ -31,7 +31,7 @@ describe UserMailer do
   end
 
   describe '#classy_is_ready' do
-    let(:team) { FactoryGirl.create(:team) }
+    let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }
     before do
       UserMailer.classy_is_ready(user, team).deliver_now
@@ -44,7 +44,7 @@ describe UserMailer do
   end
 
   describe '#welcome_email' do
-    let(:user) { FactoryGirl.build(:user) }
+    let(:user) { FactoryBot.build(:user) }
     before do
       UserMailer.welcome_email(user).deliver_now
     end
@@ -56,7 +56,7 @@ describe UserMailer do
   end
 
   describe '#team_finalized_email' do
-    let(:team) { FactoryGirl.create(:team) }
+    let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }
     before do
       UserMailer.team_finalized_email(user, team).deliver_now
@@ -69,7 +69,7 @@ describe UserMailer do
   end
 
   describe '#team_finalized_email' do
-    let(:team) { FactoryGirl.create(:team) }
+    let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }
     before do
       UserMailer.team_waitlisted_email(user, team).deliver_now
@@ -83,7 +83,7 @@ describe UserMailer do
 
 
   describe '#password_reset_instructions' do
-    let(:user) { FactoryGirl.create(:user) }
+    let(:user) { FactoryBot.create(:user) }
     before do
       UserMailer.password_reset_instructions(user, '80').deliver_now
     end

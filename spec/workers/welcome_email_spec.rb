@@ -20,7 +20,7 @@ describe Workers::WelcomeEmail do
   let(:worker) { Workers::WelcomeEmail.new }
 
   describe "#run" do
-    let!(:user)  { FactoryGirl.create :user }
+    let!(:user)  { FactoryBot.create :user }
     let(:job)    {{ 'user_id' => user.id }}
 
     it "calls the UserMailer and logs 'complete'" do
