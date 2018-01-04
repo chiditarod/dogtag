@@ -49,10 +49,13 @@ RailsSkeleton::Application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.default_options = {from: 'dogtag@chiditarod.org'}
 
+  # Whitelist the docker-compose network
+  config.web_console.whitelisted_ips = '0.0.0.0/0'
+
   # Send to local mailcatcher gem
   config.action_mailer.smtp_settings = {
-    address:              '127.0.0.1',
-    port:                 '1025',
+    address:              ENV['SMTP_HOST'] || '127.0.0.1',
+    port:                 ENV['SMTP_PORT'] || '1025',
     enable_starttls_auto: true
   }
 end

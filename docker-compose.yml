@@ -1,0 +1,72 @@
+version: "3.3"
+services:
+  web:
+    build: .
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env-development
+      - .env
+    networks:
+      - web
+    volumes:
+      - bundle_cache:/bundle_cache
+      - .:/app
+    ports:
+      - "3000:3000"
+
+  worker:
+    build: .
+    command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env-development
+      - .env
+    networks:
+      - web
+    volumes:
+      - bundle_cache:/bundle_cache
+
+  db:
+    image: postgres:9.4
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=123abc
+    networks:
+      - web
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data/pgdata
+
+  redis:
+    image: redis:3-alpine
+    command: redis-server --appendonly yes
+    networks:
+      - web
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_cache:/data
+
+  mailcatcher:
+    build: .
+    command: bundle exec mailcatcher --foreground --ip=0.0.0.0
+    networks:
+      - web
+    volumes:
+      - bundle_cache:/bundle_cache
+    ports:
+      - "1025"
+      - "1080:1080"
+
+networks:
+  web:
+
+volumes:
+  bundle_cache:
+  redis_cache:
+  pgdata:

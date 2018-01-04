@@ -19,6 +19,40 @@ Requirements
 - PostgreSQL
 - SMTP Server
 
+Docker Developer Setup
+----------------------
+
+### Create your local .env file
+
+Ensure it has the following variables.
+
+    STRIPE_PUBLISHABLE_KEY=pk_test_....
+    STRIPE_SECRET_KEY=sk_test_....
+
+### Build and run all containers
+
+    docker-compose up -d
+    
+### Empty Database Setup
+
+    docker-compose exec web bundle exec rake db:create db:migrate
+    docker-compose exec web sh -c 'RAILS_ENV=test bundle exec rake db:create db:migrate'
+    
+### Connect to postgres inside container
+
+    docker-compose exec db psql -U postgres
+
+### Run the test suite
+
+    docker-compose exec app bundle exec rspec
+
+### Restore postgres db from a dump file
+
+```bash
+docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
+docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
+```
+
 Developer Setup
 ---------------
 *Assumes an OSX environment. If you do it in Windows or Linux, please send us instructions and we will include them.*
