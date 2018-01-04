@@ -51,8 +51,8 @@ RailsSkeleton::Application.configure do
 
   # Send to local mailcatcher gem
   config.action_mailer.smtp_settings = {
-    address:              '127.0.0.1',
-    port:                 '1025',
+    address:              ENV['SMTP_HOST'] || '127.0.0.1',
+    port:                 ENV['SMTP_PORT'] || '1025',
     enable_starttls_auto: true
   }
 end
