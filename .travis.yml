@@ -1,5 +1,5 @@
 language: ruby
-
+dist: trusty
 sudo: false # explicitly use container-based architecture
 
 branches:
