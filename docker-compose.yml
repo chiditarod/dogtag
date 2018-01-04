@@ -1,21 +1,27 @@
 version: "3.3"
 services:
-  app:
+  web:
     build: .
+    depends_on:
+      - redis
+      - db
     env_file:
       - .env-development
       - .env
     networks:
       - web
     volumes:
-      - .:/app
       - bundle_cache:/bundle_cache
+      - .:/app
     ports:
       - "3000:3000"
 
   worker:
     build: .
     command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
+    depends_on:
+      - redis
+      - db
     env_file:
       - .env-development
       - .env
