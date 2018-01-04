@@ -51,7 +51,9 @@ class Requirement < ActiveRecord::Base
       :requirement_id => id,
       :team_id => team_id,
       :user => user,
-      :metadata => JSON.generate(metadata))
+      :metadata => JSON.generate(metadata)
+    )
+    cr.subscribe(CompletedRequirementAuditor.new)
     return cr if cr.save
     false
   end

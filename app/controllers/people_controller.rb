@@ -19,12 +19,14 @@ class PeopleController < ApplicationController
 
   def destroy
     @person = Person.find params[:id]
+    @person.subscribe(PersonAuditor.new)
     try_to_delete(@person, team_url(id: @person.team.id))
   end
 
   def update
     @person = Person.includes(:team).find(params[:id])
     @team = @person.team
+    @person.subscribe(PersonAuditor.new)
     try_to_update(@person, person_params, team_url(@person.team.id))
   end
 
@@ -42,7 +44,8 @@ class PeopleController < ApplicationController
     return render :status => 400 if params[:person].blank?
 
     @team = Team.find params[:team_id]
-    @person = Person.new person_params
+    @person = Person.new(person_params)
+    @person.subscribe(PersonAuditor.new)
     @person.team = @team
 
     if @person.save

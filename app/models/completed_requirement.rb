@@ -16,6 +16,9 @@
 # Intermediate model between a Team and Requirement
 # User indicates which user made the association
 class CompletedRequirement < ActiveRecord::Base
+
+  include Wisper.model
+
   belongs_to :team
   belongs_to :requirement
   belongs_to :user
@@ -44,9 +47,10 @@ class CompletedRequirement < ActiveRecord::Base
     # loading registration_id for older datasets.
     team_id = charge['metadata']['team_id'] || charge['metadata']['registration_id']
 
-    # Introduce papertrail on completed requirement to track when the requirement is deleted
-    # and by whom.  YES!
-    cr = CompletedRequirement.where(requirement_id: req_id, team_id: team_id).first
-    CompletedRequirement.destroy(cr)
+    # TODO: Introduce papertrail on completed requirement to track when the requirement is deleted and by whom
+    if cr = CompletedRequirement.where(requirement_id: req_id, team_id: team_id).first
+      cr.subscribe(CompletedRequirementAuditor.new)
+      cr.destroy
+    end
   end
 end

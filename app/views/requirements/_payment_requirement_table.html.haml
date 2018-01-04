@@ -1,11 +1,14 @@
 .page-header
+
   %h1
+    = link_to new_tier_url(:requirement_id => @requirement.id) do
+      %i.fa.fa-plus
     = t('.payment_tiers')
-    %small
-      = @requirement.tiers.count
-      = t('configured')
-      = link_to new_tier_url(:requirement_id => @requirement.id) do
-        %i.fa.fa-plus
+    - if @requirement.tiers.present?
+      %small
+        \-
+        = @requirement.tiers.count
+
 
 - if @requirement.tiers.blank?
   = t ('.no_tiers_added')

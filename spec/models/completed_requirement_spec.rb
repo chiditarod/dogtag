@@ -59,7 +59,7 @@ describe CompletedRequirement do
 
   describe '#delete_by_charge' do
 
-    let(:cr)   { FactoryBot.create :completed_requirement }
+    let!(:cr)  { FactoryBot.create :completed_requirement }
     let(:req)  { cr.requirement }
     let(:team) { cr.team }
 
@@ -93,8 +93,15 @@ describe CompletedRequirement do
 
     context 'when the completed requirement is found' do
       it 'is destroyed' do
-        expect(CompletedRequirement).to receive(:destroy).with(cr)
-        CompletedRequirement.delete_by_charge(charge)
+        expect do
+          CompletedRequirement.delete_by_charge(charge)
+        end.to change(CompletedRequirement, :count).by -1
+      end
+
+      it 'broadcasts when destroying' do
+        expect do
+          CompletedRequirement.delete_by_charge(charge)
+        end.to broadcast(:destroy_completed_requirement_successful)
       end
     end
 
@@ -116,8 +123,9 @@ describe CompletedRequirement do
       end
 
       it 'is not destroyed' do
-        expect(CompletedRequirement).to_not receive(:destroy).with(cr)
-        CompletedRequirement.delete_by_charge(charge)
+        expect do
+          CompletedRequirement.delete_by_charge(charge)
+        end.to change(CompletedRequirement, :count).by 0
       end
     end
   end

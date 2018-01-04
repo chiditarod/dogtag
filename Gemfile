@@ -10,9 +10,6 @@ group :production do
   gem 'honeybadger'
 end
 
-# -------------------------------------------------------
-# BEGIN dogtag gems
-
 gem 'authlogic',  '~> 3.4.6'   # authentication
 gem 'cancancan', '~> 1.10'     # authorization, w/ Rails 4.2 support
 gem 'role_model', '~> 0.8.2'   # roles
@@ -26,8 +23,8 @@ gem 'json-schema'               # validate incoming jsonform
 # google analytics
 gem 'rack-tracker'
 
-# END dogtag gems
-# -------------------------------------------------------
+# pub/sub
+gem 'wisper-activerecord'
 
 gem 'nokogiri', '~> 1.8.1'
 
@@ -85,6 +82,8 @@ group :test, :development do
   gem 'test-unit'
   gem 'rspec'
   gem 'rspec-rails'
+  gem 'wisper-rspec'
+  gem 'test_after_commit' # required to test wisper pub/sub until rails 5+
   gem 'factory_bot_rails'
 end
 

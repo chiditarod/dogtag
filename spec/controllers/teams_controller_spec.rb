@@ -68,7 +68,7 @@ describe TeamsController do
     end
 
     describe '#new' do
-      let(:the_user) { valid_user }
+      let!(:the_user) { valid_user }
 
       context 'without :race_id param' do
         before { get :new }
@@ -247,6 +247,12 @@ describe TeamsController do
           end.to change(Team, :count).by 1
         end
 
+        it 'broadcasts when creating the record' do
+          expect do
+            post :create, :team => valid_team_hash
+          end.to broadcast(:create_team_successful)
+        end
+
         context 'upon success' do
           before do
             post :create, :team => valid_team_hash
@@ -286,7 +292,7 @@ describe TeamsController do
 
     describe '#update' do
       let(:the_user) { valid_user }
-      let (:valid_team) { FactoryBot.create :team }
+      let(:valid_team) { FactoryBot.create :team }
 
       context 'on invalid id' do
         before { put :update, :id => -1 }
@@ -296,27 +302,29 @@ describe TeamsController do
       end
 
       context 'with valid patch data' do
-        before do
+        it 'updates the team, sets flash notice, and redirects to team#questions' do
           patch :update,
             :id => valid_team.id,
             :team => {:description => 'New Description'}
+          expect(valid_team.reload.description).to eq('New Description')
+          expect(flash[:notice]).to eq(I18n.t 'update_success')
+          expect(response).to redirect_to(team_questions_url valid_team.id)
         end
 
-        it 'updates the team' do
-          expect(valid_team.reload.description).to eq('New Description')
-        end
-        it 'sets flash notice' do
-          expect(flash[:notice]).to eq(I18n.t 'update_success')
-        end
-        it 'redirects to team#questions' do
-          expect(response).to redirect_to(team_questions_url valid_team.id)
+        it 'broadcasts when updating the record' do
+          expect do
+            patch :update,
+              :id => valid_team.id,
+              :team => {:description => 'New Description'}
+          end.to broadcast(:update_team_successful)
         end
       end
     end
 
     describe '#show' do
-      context 'invalid id' do
-        let(:the_user) { valid_user }
+      let(:the_user) { valid_user }
+
+      context 'using invalid team id' do
         before { get :show, :id => 100 }
 
         it 'renders 404' do
@@ -324,62 +332,37 @@ describe TeamsController do
         end
       end
 
-      context 'with valid id' do
-        let(:the_user) { valid_user }
-        let(:valid_team) { FactoryBot.create :team }
-        before do
-          get :show, :id => valid_team.id
-        end
+      context 'using valid team id' do
+        let(:team) { FactoryBot.create :team }
 
         it 'assigns team, assigns race, returns 200' do
-          expect(assigns(:team)).to eq(valid_team)
-          expect(assigns(:race)).to eq(valid_team.race)
+          get :show, :id => team.id
+          expect(assigns(:team)).to eq(team)
+          expect(assigns(:race)).to eq(team.race)
           expect(response).to be_success
         end
-      end
 
-      shared_examples "finalizes" do
-        it "calls team.finalize and displays a message to user" do
-          allow(Team).to receive(:find).and_return(team)
-          expect(team).to receive(:finalize).and_return(true)
-          get :show, id: team.id
-          expect(assigns(:display_notification)).to eq(:notify_now_complete)
-        end
-      end
+        context "if the team is finalized" do
+          let(:team) { FactoryBot.create :finalized_team }
 
-      context 'team is ready for finalization' do
-        let(:team) { FactoryBot.create :team, :with_enough_people }
+          it "does not display finalization banner since user is not the team captain" do
+            get :show, :id => team.id
+            expect(assigns(:display_notification)).to be_nil
+          end
 
-        context "admin user" do
-          let(:the_user) { admin_user }
-          include_examples "finalizes"
-        end
+          context "and is being viewed by the team captain" do
+            let(:the_user) { team.user }
 
-        context "operator user" do
-          let(:the_user) { operator_user }
-          include_examples "finalizes"
-        end
-
-        context "when web user is the team's user" do
-          let(:the_user) { team.user }
-          include_examples "finalizes"
-        end
-      end
-
-      context 'newly unfinalized (!meets_finalization_requirements? && finalized)' do
-        let(:team) { FactoryBot.create :team, :with_people, finalized: true }
-        let(:the_user) { team.user }
-
-        it 'calls team.unfinalize' do
-          allow(Team).to receive(:find).and_return(team)
-          expect(team).to receive(:unfinalize)
-          get :show, :id => team.id
+            it "displays a banner on the page" do
+              get :show, :id => team.id
+              expect(assigns(:display_notification)).to eq(:notify_now_complete)
+            end
+          end
         end
       end
     end
 
     describe '#destroy' do
-
       let(:the_user) { valid_user }
 
       context 'on invalid id' do
@@ -389,9 +372,18 @@ describe TeamsController do
         end
       end
 
-      it 'destroys the team' do
-        @team = FactoryBot.create :team
-        expect { delete :destroy, :id => @team.id }.to change(Team, :count).by(-1)
+      it 'destroys the record' do
+        team = FactoryBot.create :team
+        expect do
+          delete :destroy, :id => team.id
+        end.to change(Team, :count).by(-1)
+      end
+
+      it 'broadcasts when destroying the record' do
+        team = FactoryBot.create :team
+        expect do
+          delete :destroy, :id => team.id
+        end.to broadcast(:destroy_team_successful)
       end
 
       context 'with valid id' do
@@ -400,11 +392,9 @@ describe TeamsController do
           delete :destroy, :id => valid_team.id
         end
 
-        it 'sets the flash notice' do
+        it 'sets the flash notice and redirects to the team index' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
-        end
-        it 'redirects to the team index' do
-          expect(response).to redirect_to teams_path
+          expect(response).to redirect_to(teams_path)
         end
       end
 
