@@ -29,6 +29,8 @@ gem 'rack-tracker'
 # END dogtag gems
 # -------------------------------------------------------
 
+gem 'nokogiri', '~> 1.8.1'
+
 gem 'rails', '~> 4.2'
 gem 'responders' # responds_to support
 
