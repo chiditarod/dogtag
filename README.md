@@ -35,11 +35,8 @@ Ensure it has the following variables.
     
 ### Empty Database Setup
 
-    docker-compose exec app bundle exec rake db:create
-    docker-compose exec app bundle exec rake db:migrate
-    
-    docker-compose exec app sh -c 'RAILS_ENV=test bundle exec rake db:create'
-    docker-compose exec app sh -c 'RAILS_ENV=test bundle exec rake db:migrate'
+    docker-compose exec web bundle exec rake db:create db:migrate
+    docker-compose exec web sh -c 'RAILS_ENV=test bundle exec rake db:create db:migrate'
     
 ### Connect to postgres inside container
 

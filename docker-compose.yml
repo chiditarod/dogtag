@@ -44,10 +44,13 @@ services:
 
   redis:
     image: redis:3-alpine
+    command: redis-server --appendonly yes
     networks:
       - web
     ports:
       - "6379:6379"
+    volumes:
+      - redis_cache:/data
 
   mailcatcher:
     build: .
@@ -65,4 +68,5 @@ networks:
 
 volumes:
   bundle_cache:
+  redis_cache:
   pgdata:
