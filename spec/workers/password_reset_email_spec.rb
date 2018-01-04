@@ -20,7 +20,7 @@ describe Workers::PasswordResetEmail do
   let(:worker) { Workers::PasswordResetEmail.new }
 
   describe "#run" do
-    let!(:user)  { FactoryGirl.create :user }
+    let!(:user)  { FactoryBot.create :user }
     let(:job)    {{ 'user_id' => user.id, 'host' => 'http://foo' }}
 
     it "calls the UserMailer and logs 'complete'" do

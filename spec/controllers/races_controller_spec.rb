@@ -59,7 +59,7 @@ describe RacesController do
   context '[logged in]' do
     before do
       activate_authlogic
-      user = FactoryGirl.create :admin_user
+      user = FactoryBot.create :admin_user
       mock_login! user
     end
 
@@ -84,7 +84,7 @@ describe RacesController do
       end
 
       context "with no teams" do
-        let(:race) { FactoryGirl.create :race }
+        let(:race) { FactoryBot.create :race }
         before { get :registrations, :race_id => race.id }
 
         include_examples 'empty_finalized_teams'
@@ -92,7 +92,7 @@ describe RacesController do
       end
 
       context "with a finalized team" do
-        let(:team) { FactoryGirl.create :finalized_team }
+        let(:team) { FactoryBot.create :finalized_team }
         before { get :registrations, :race_id => team.race.id }
 
         it 'assigns finalized_teams' do
@@ -102,7 +102,7 @@ describe RacesController do
       end
 
       context "with a non-finalized team" do
-        let(:team) { FactoryGirl.create :team }
+        let(:team) { FactoryBot.create :team }
         before { get :registrations, :race_id => team.race.id }
 
         it 'assigns waitlisted_teams' do
@@ -126,7 +126,7 @@ describe RacesController do
 
       context 'with valid id' do
         before do
-          @team = FactoryGirl.create :finalized_team
+          @team = FactoryBot.create :finalized_team
           get :show, :id => @team.race.id
         end
 
@@ -148,7 +148,7 @@ describe RacesController do
 
       context 'with valid id' do
         before do
-          @race = FactoryGirl.create :race
+          @race = FactoryBot.create :race
           get :show, :id => @race.id
         end
         it 'sets the @race object' do
@@ -174,7 +174,7 @@ describe RacesController do
       end
 
       context 'with valid patch data' do
-        let(:race) { FactoryGirl.create :race }
+        let(:race) { FactoryBot.create :race }
         before do
           patch :update, :id => race.id, :race => {:max_teams => 200}
         end
@@ -188,7 +188,7 @@ describe RacesController do
     end
 
     describe '#create' do
-      let (:valid_race_hash) { FactoryGirl.attributes_for :race }
+      let (:valid_race_hash) { FactoryBot.attributes_for :race }
 
       it 'returns 400 if the race parameter is not passed' do
         post :create
@@ -231,8 +231,8 @@ describe RacesController do
 
     describe '#index' do
       it 'returns http success, sets @races to all races' do
-        race1 = FactoryGirl.create :race
-        race2 = FactoryGirl.create :race
+        race1 = FactoryBot.create :race
+        race2 = FactoryBot.create :race
         get :index
         expect(response).to be_success
         expect(assigns(:races)).to eq([race1, race2])
@@ -262,7 +262,7 @@ describe RacesController do
 
       context 'on valid id' do
         before do
-          @race = FactoryGirl.create :race
+          @race = FactoryBot.create :race
         end
 
         it 'destroys the race' do

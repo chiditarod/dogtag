@@ -51,11 +51,11 @@ describe PeopleController do
   end
 
   context '[logged in]' do
-    let(:team)   { FactoryGirl.create :team, :with_people }
+    let(:team)   { FactoryBot.create :team, :with_people }
     let(:person) { team.people.first }
 
     before do
-      @valid_user = FactoryGirl.create :admin_user
+      @valid_user = FactoryBot.create :admin_user
       activate_authlogic
       mock_login! @valid_user
     end
@@ -70,7 +70,7 @@ describe PeopleController do
       end
 
       it 'destroys a record correctly' do
-        team = FactoryGirl.create :team, :with_people
+        team = FactoryBot.create :team, :with_people
         expect do
           delete :destroy, :team_id => team.id, :id => team.people.first.id
         end.to change(Person, :count).by(-1)
@@ -176,8 +176,8 @@ describe PeopleController do
     end
 
     describe '#create' do
-      let (:team_no_people) { FactoryGirl.create :team }
-      let (:new_person_hash) { FactoryGirl.attributes_for :person, :first_name => 'Dan', :last_name => 'Akroyd' }
+      let (:team_no_people) { FactoryBot.create :team }
+      let (:new_person_hash) { FactoryBot.attributes_for :person, :first_name => 'Dan', :last_name => 'Akroyd' }
 
       context 'without person param' do
         it 'returns 400' do

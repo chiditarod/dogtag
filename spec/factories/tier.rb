@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-FactoryGirl.define do
+FactoryBot.define do
   factory :tier do
     transient do
       thetime { Timecop.freeze(THE_TIME) { Time.zone.now } }

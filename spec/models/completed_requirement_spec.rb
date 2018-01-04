@@ -22,7 +22,7 @@ describe CompletedRequirement do
 
   describe '#metadata' do
     let (:hash) {{ 'foo' => 'bar' }}
-    let (:cr) { FactoryGirl.create :completed_requirement }
+    let (:cr) { FactoryBot.create :completed_requirement }
 
     it 'returns a hash of JSON data' do
       cr.metadata = JSON.generate hash
@@ -42,16 +42,16 @@ describe CompletedRequirement do
 
   describe 'validation' do
     describe 'fails' do
-      let (:rr) { FactoryGirl.create :completed_requirement }
+      let (:rr) { FactoryBot.create :completed_requirement }
       it 'when team/requirement pair exists (with same user)' do
-        expect(FactoryGirl.build :cr, :team => rr.team,
+        expect(FactoryBot.build :cr, :team => rr.team,
                :requirement => rr.requirement, :user => rr.user)
         .to be_invalid
       end
 
       it 'when team/requirement pair exists (with different user)' do
-        expect(FactoryGirl.build :cr, :team => rr.team,
-               :requirement => rr.requirement, :user => FactoryGirl.create(:user2))
+        expect(FactoryBot.build :cr, :team => rr.team,
+               :requirement => rr.requirement, :user => FactoryBot.create(:user2))
         .to be_invalid
       end
     end
@@ -59,7 +59,7 @@ describe CompletedRequirement do
 
   describe '#delete_by_charge' do
 
-    let(:cr)   { FactoryGirl.create :completed_requirement }
+    let(:cr)   { FactoryBot.create :completed_requirement }
     let(:req)  { cr.requirement }
     let(:team) { cr.team }
 

@@ -17,17 +17,17 @@ require 'spec_helper'
 
 describe PaymentRequirement do
 
-  let (:req)   { FactoryGirl.create :payment_requirement }
-  let (:tier1) { FactoryGirl.create :tier }
-  let (:tier2) { FactoryGirl.create :tier2 }
-  let (:tier3) { FactoryGirl.create :tier3 }
+  let (:req)   { FactoryBot.create :payment_requirement }
+  let (:tier1) { FactoryBot.create :tier }
+  let (:tier2) { FactoryBot.create :tier2 }
+  let (:tier3) { FactoryBot.create :tier3 }
 
   before { Timecop.freeze(THE_TIME) }
   after  { Timecop.return }
 
   describe '#stripe_params' do
-    let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
-    let(:team) { FactoryGirl.create :team, race: req.race }
+    let(:req)  { FactoryBot.create :payment_requirement_with_tier }
+    let(:team) { FactoryBot.create :team, race: req.race }
 
     let(:expected) {{
       description: "#{req.name} for #{team.name} | #{team.race.name}",

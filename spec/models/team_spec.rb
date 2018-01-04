@@ -20,8 +20,8 @@ describe Team do
   describe 'scopes' do
     describe 'all_finalized' do
       before do
-        @finalized = FactoryGirl.create :finalized_team
-        FactoryGirl.create :team
+        @finalized = FactoryBot.create :finalized_team
+        FactoryBot.create :team
       end
 
       it 'returns only finalized teams' do
@@ -31,8 +31,8 @@ describe Team do
 
     describe 'all_unfinalized' do
       before do
-        FactoryGirl.create :finalized_team
-        @unfinalized = FactoryGirl.create :team
+        FactoryBot.create :finalized_team
+        @unfinalized = FactoryBot.create :team
       end
 
       it 'returns only finalized teams' do
@@ -42,8 +42,8 @@ describe Team do
   end
 
   describe 'validation' do
-    let(:race) { FactoryGirl.create :race }
-    let(:team) { FactoryGirl.create :team }
+    let(:race) { FactoryBot.create :race }
+    let(:team) { FactoryBot.create :team }
 
     context 'succeeds' do
       it 'when all required parameters are present' do
@@ -51,21 +51,21 @@ describe Team do
       end
 
       it 'when a race is open' do
-        expect(FactoryGirl.build :team, race: race).to be_valid
+        expect(FactoryBot.build :team, race: race).to be_valid
       end
     end
 
     context 'fails' do
       it 'when the same team name registers for a race more than once' do
-        expect(FactoryGirl.create :team, name: 'mushfaces', race: race).to be_valid
-        expect(FactoryGirl.build :team, name: 'mushfaces', race: race).to be_invalid
+        expect(FactoryBot.create :team, name: 'mushfaces', race: race).to be_valid
+        expect(FactoryBot.build :team, name: 'mushfaces', race: race).to be_invalid
       end
     end
 
     it 'a team can be named the same in different races' do
-      race2 = FactoryGirl.create :race
-      expect(FactoryGirl.create :team, name: 'mushfaces', race: race).to be_valid
-      expect(FactoryGirl.build :team, name: 'mushfaces', race: race2).to be_valid
+      race2 = FactoryBot.create :race
+      expect(FactoryBot.create :team, name: 'mushfaces', race: race).to be_valid
+      expect(FactoryBot.build :team, name: 'mushfaces', race: race2).to be_valid
     end
   end
 
@@ -73,7 +73,7 @@ describe Team do
 
     context 'not yet finalized and meets all requirements' do
 
-      let(:team) { FactoryGirl.create :team, :with_enough_people }
+      let(:team) { FactoryBot.create :team, :with_enough_people }
 
       it 'sets finalized flat and notified_at in the db' do
         Timecop.freeze(THE_TIME) do
@@ -103,7 +103,7 @@ describe Team do
 
         context 'when there are teams that used to be finalized and now are not' do
           it 'skips over the formerly assigned team number to a new one' do
-            t = FactoryGirl.create :finalized_team, race: team.race
+            t = FactoryBot.create :finalized_team, race: team.race
             t.unfinalize
             t.reload
             expect(t.finalized).to be_falsey
@@ -126,7 +126,7 @@ describe Team do
   describe '.unfinalize' do
 
     context 'called on a unfinalized team' do
-      let(:team) { FactoryGirl.create :team, :with_enough_people }
+      let(:team) { FactoryBot.create :team, :with_enough_people }
 
       it 'returns nil' do
         expect(team.unfinalize).to be_nil
@@ -134,7 +134,7 @@ describe Team do
     end
 
     context 'called on a finalized team' do
-      let(:team) { FactoryGirl.create :finalized_team }
+      let(:team) { FactoryBot.create :finalized_team }
 
       it 'unsets finalized flat and notified_at in the db' do
         team.unfinalize
@@ -154,12 +154,12 @@ describe Team do
 
   describe '.unfinalized' do
     it 'returns true when team is unfinalized 'do
-      team = FactoryGirl.create :team
+      team = FactoryBot.create :team
       expect(team.unfinalized).to be_truthy
     end
 
     it 'returns false when team is finalized 'do
-      team = FactoryGirl.create :finalized_team
+      team = FactoryBot.create :finalized_team
       expect(team.unfinalized).to be_falsey
     end
   end
@@ -167,14 +167,14 @@ describe Team do
   describe '.person_experience' do
 
     context "when there are no people on the team" do
-      let(:team) { FactoryGirl.create :team }
+      let(:team) { FactoryBot.create :team }
       it "returns 0" do
         expect(team.person_experience).to eq(0)
       end
     end
 
     context "when there are people on the team" do
-      let(:team) { FactoryGirl.create :team, :with_enough_people }
+      let(:team) { FactoryBot.create :team, :with_enough_people }
       it "sums their total experience" do
         expect(team.person_experience).to eq(6)
       end
@@ -185,21 +185,21 @@ describe Team do
     let(:key) { "racer-type" }
 
     context 'when team has no jsonform data' do
-      let(:team) { FactoryGirl.create :team }
+      let(:team) { FactoryBot.create :team }
       it 'returns nil' do
         expect(team.jsonform_value(key)).to be_nil
       end
     end
 
     context "when team's jsonform has the value" do
-      let(:team) { FactoryGirl.create :team_with_jsonform }
+      let(:team) { FactoryBot.create :team_with_jsonform }
       it 'returns the value' do
         expect(team.jsonform_value(key)).to eq("Racer")
       end
     end
 
     context 'when team does not have jsonform data for a certain key' do
-      let(:team) { FactoryGirl.create :team_with_jsonform }
+      let(:team) { FactoryBot.create :team_with_jsonform }
       it 'returns nil' do
         expect(team.jsonform_value("foo")).to be_nil
       end
@@ -209,8 +209,8 @@ describe Team do
   describe '#completed_questions?' do
 
     context 'race has no jsonform' do
-      let(:race) { FactoryGirl.create :race }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race }
+      let(:team) { FactoryBot.create :team, race: race }
       it "returns true" do
         expect(team.completed_questions?).to be true
       end
@@ -219,7 +219,7 @@ describe Team do
     context 'race has a jsonform' do
 
       context 'team has jsonform data' do
-        let(:team) { FactoryGirl.create :team_with_jsonform }
+        let(:team) { FactoryBot.create :team_with_jsonform }
 
         it "returns true" do
           expect(team.completed_questions?).to be true
@@ -227,8 +227,8 @@ describe Team do
       end
 
       context 'team has no jsonform data' do
-        let(:race) { FactoryGirl.create :race_with_jsonform }
-        let(:team) { FactoryGirl.create :team, race: race }
+        let(:race) { FactoryBot.create :race_with_jsonform }
+        let(:team) { FactoryBot.create :team, race: race }
 
         it "returns false" do
           expect(team.completed_questions?).to be false
@@ -259,39 +259,39 @@ describe Team do
     end
 
     context "when no people have been added and payment requirements are not satisfied" do
-      let(:req)  { FactoryGirl.create :payment_requirement }
-      let(:team) { FactoryGirl.create :team, race: req.race}
+      let(:req)  { FactoryBot.create :payment_requirement }
+      let(:team) { FactoryBot.create :team, race: req.race}
 
       include_examples "returns correct percentage"
     end
 
     context "when no people have been added and payment requirements are satisfied" do
-      let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
-      let(:team) { FactoryGirl.create :team, race: req.race }
-      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+      let(:req)  { FactoryBot.create :payment_requirement_with_tier }
+      let(:team) { FactoryBot.create :team, race: req.race }
+      let!(:cr)  { FactoryBot.create :completed_requirement, requirement: req, team: team }
 
       include_examples "returns correct percentage"
     end
 
     context "when some people have been added and payment requirements are not satisfied" do
-      let(:req)  { FactoryGirl.create :payment_requirement_with_tier }
-      let(:team) { FactoryGirl.create :team, :with_people, race: req.race }
+      let(:req)  { FactoryBot.create :payment_requirement_with_tier }
+      let(:team) { FactoryBot.create :team, :with_people, race: req.race }
 
       include_examples "returns correct percentage"
     end
 
     context "when some people have been added and payment requirements are satisfied" do
-      let(:team) { FactoryGirl.create :team, :with_people }
-      let(:req)  { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
-      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+      let(:team) { FactoryBot.create :team, :with_people }
+      let(:req)  { FactoryBot.create :payment_requirement_with_tier, race: team.race }
+      let!(:cr)  { FactoryBot.create :completed_requirement, requirement: req, team: team }
 
       include_examples "returns correct percentage"
     end
 
     context "when all people have been added and payment requirements are satisfied" do
-      let(:team) { FactoryGirl.create :team, :with_enough_people }
-      let(:req)  { FactoryGirl.create :payment_requirement_with_tier, race: team.race }
-      let!(:cr)  { FactoryGirl.create :completed_requirement, requirement: req, team: team }
+      let(:team) { FactoryBot.create :team, :with_enough_people }
+      let(:req)  { FactoryBot.create :payment_requirement_with_tier, race: team.race }
+      let!(:cr)  { FactoryBot.create :completed_requirement, requirement: req, team: team }
 
       include_examples "returns correct percentage"
     end
@@ -303,15 +303,15 @@ describe Team do
   end
 
   describe '#needs_people?' do
-    let(:race) { FactoryGirl.create :race }
-    let(:reg)  { FactoryGirl.create :team, :with_people, :race => race }
+    let(:race) { FactoryBot.create :race }
+    let(:reg)  { FactoryBot.create :team, :with_people, :race => race }
 
     it 'returns true if there are less than race.people_per_team people' do
       expect(reg.needs_people?).to be true
     end
 
     it 'returns false if there are race.people_per_team people' do
-      reg.people << FactoryGirl.create(:person)
+      reg.people << FactoryBot.create(:person)
       expect(reg.needs_people?).to be false
     end
   end
@@ -322,7 +322,7 @@ describe Team do
 
   describe '#is_full?' do
     it 'should be the opposite of #needs_people?' do
-      reg = FactoryGirl.create :team
+      reg = FactoryBot.create :team
       allow(reg).to receive(:needs_people?).and_return false
       expect(reg.is_full?).to eq(true)
     end
@@ -330,7 +330,7 @@ describe Team do
 
   describe '#meets_finalization_requirements?' do
     before do
-      @reg = FactoryGirl.create :team
+      @reg = FactoryBot.create :team
     end
 
     it "returns true if it doesn't need people, and all requirements are met" do
@@ -360,14 +360,14 @@ describe Team do
 
   describe '#completed_all_requirements?' do
     before do
-      @reg = FactoryGirl.create :team
+      @reg = FactoryBot.create :team
       @race = @reg.race
-      req = FactoryGirl.create :enabled_payment_requirement, :race => @race
-      FactoryGirl.create :completed_requirement, :requirement => req, :team => @reg
+      req = FactoryBot.create :enabled_payment_requirement, :race => @race
+      FactoryBot.create :completed_requirement, :requirement => req, :team => @reg
     end
 
     it 'returns true when a race has no requirements' do
-      reg = FactoryGirl.create :team
+      reg = FactoryBot.create :team
       expect(reg.completed_all_requirements?).to eq(true)
     end
 
@@ -376,12 +376,12 @@ describe Team do
     end
 
     it 'return false if any enabled requirements are not completed' do
-      FactoryGirl.create :enabled_payment_requirement, :race => @race
+      FactoryBot.create :enabled_payment_requirement, :race => @race
       expect(@reg.completed_all_requirements?).to eq(false)
     end
 
     it "ignores a race's requirement when requirement.enabled? == false" do
-      FactoryGirl.create :payment_requirement, :race => @race
+      FactoryBot.create :payment_requirement, :race => @race
       expect(@reg.completed_all_requirements?).to eq(true)
     end
   end

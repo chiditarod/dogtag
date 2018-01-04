@@ -85,7 +85,7 @@ group :test, :development do
   gem 'test-unit'
   gem 'rspec'
   gem 'rspec-rails'
-  gem 'factory_girl_rails'
+  gem 'factory_bot_rails'
 end
 
 group :doc do

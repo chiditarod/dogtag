@@ -18,7 +18,7 @@ require 'spec_helper'
 describe User do
 
   describe '#reset_password!' do
-    let(:user) { FactoryGirl.create(:user) }
+    let(:user) { FactoryBot.create(:user) }
 
     it "changes the user's perishible token" do
       original = user.perishable_token
@@ -39,18 +39,18 @@ describe User do
 
   describe '#gets_admin_menu?' do
     it 'true if user.roles contains :admin' do
-      expect(FactoryGirl.build(:admin_user).gets_admin_menu?).to be true
+      expect(FactoryBot.build(:admin_user).gets_admin_menu?).to be true
     end
     it 'true if user.roles contains :operator' do
-      expect(FactoryGirl.build(:operator_user).gets_admin_menu?).to be true
+      expect(FactoryBot.build(:operator_user).gets_admin_menu?).to be true
     end
     it 'false if normal user' do
-      expect(FactoryGirl.build(:user).gets_admin_menu?).to be false
+      expect(FactoryBot.build(:user).gets_admin_menu?).to be false
     end
   end
 
   describe '#fullname' do
-    before { @user = FactoryGirl.create :user }
+    before { @user = FactoryBot.create :user }
     it 'combines the first and last names' do
       expect(@user.fullname).to eq("#{@user.first_name} #{@user.last_name}")
     end

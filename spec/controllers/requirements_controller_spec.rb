@@ -45,9 +45,9 @@ describe RequirementsController do
   end
 
   context '[logged in]' do
-    let(:req)        { FactoryGirl.create :requirement }
+    let(:req)        { FactoryBot.create :requirement }
     # todo: change this from admin.
-    let(:valid_user) { FactoryGirl.create :admin_user }
+    let(:valid_user) { FactoryBot.create :admin_user }
 
     before do
       activate_authlogic
@@ -160,7 +160,7 @@ describe RequirementsController do
     end
 
     describe '#create' do
-      let (:valid_req_hash) { FactoryGirl.attributes_for :requirement2 }
+      let (:valid_req_hash) { FactoryBot.attributes_for :requirement2 }
 
       context 'without valid race' do
         it 'returns 404' do

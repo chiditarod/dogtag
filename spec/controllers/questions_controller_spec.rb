@@ -37,15 +37,15 @@ describe QuestionsController do
 
   context '[logged in]' do
 
-    let (:valid_user) { FactoryGirl.create :admin_user }
+    let (:valid_user) { FactoryBot.create :admin_user }
     before do
       activate_authlogic
       mock_login! valid_user
     end
 
     describe '#create' do
-      let(:race) { FactoryGirl.create :race_with_jsonform }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race_with_jsonform }
+      let(:team) { FactoryBot.create :team, race: race }
 
       let(:thedata) {{
         'team_id' => team.id,
@@ -60,7 +60,7 @@ describe QuestionsController do
       end
 
       context 'when race is not open for registration' do
-        let(:race) { FactoryGirl.create :race_with_jsonform, :registration_closed }
+        let(:race) { FactoryBot.create :race_with_jsonform, :registration_closed }
 
         it 'sets a flash info and redirects to team path' do
           post :create, team_id: team.id
@@ -116,10 +116,10 @@ describe QuestionsController do
     end
 
     describe '#show' do
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:team) { FactoryBot.create :team, race: race }
 
       context 'the team is not found' do
-        let(:race) { FactoryGirl.create :race }
+        let(:race) { FactoryBot.create :race }
         before do
           get :show, team_id: team.id + 1
         end
@@ -130,7 +130,7 @@ describe QuestionsController do
       end
 
       context 'race has no jsonform data' do
-        let(:race) { FactoryGirl.create :race }
+        let(:race) { FactoryBot.create :race }
         before do
           get :show, team_id: team.id
         end
@@ -144,7 +144,7 @@ describe QuestionsController do
       end
 
       context 'race has jsonform data' do
-        let(:race) { FactoryGirl.create :race_with_jsonform }
+        let(:race) { FactoryBot.create :race_with_jsonform }
 
         before do
           allow(controller).to receive(:form_authenticity_token).and_return('fake_token')

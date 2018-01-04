@@ -25,11 +25,11 @@ describe Race do
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
-      expect(FactoryGirl.create(:race)).to be_valid
+      expect(FactoryBot.create(:race)).to be_valid
     end
 
     it 'fails without valid datetimes' do
-      valid_race_hash = FactoryGirl.attributes_for :race
+      valid_race_hash = FactoryBot.attributes_for :race
       dates = [:race_datetime, :registration_open, :registration_close]
       dates.each do |d|
         expect(Race.create(valid_race_hash.merge d => 'abc')).not_to be_valid
@@ -37,21 +37,21 @@ describe Race do
     end
 
     it 'fails when registration close and open dates are the same' do
-      race = FactoryGirl.build :race, :race_datetime => today,
+      race = FactoryBot.build :race, :race_datetime => today,
         :registration_open => (today - 1.week), :registration_close => (today - 1.week)
       expect(race).to be_invalid
       expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
     end
 
     it 'fails when registration close date is before registration open date' do
-      race = FactoryGirl.build :race, :race_datetime => today,
+      race = FactoryBot.build :race, :race_datetime => today,
         :registration_open => (today - 1.week), :registration_close => (today - 2.weeks)
       expect(race).to be_invalid
       expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
     end
 
     it 'fails when registration open and close dates are not before the race_datetime' do
-      race = FactoryGirl.build :race, :race_datetime => today,
+      race = FactoryBot.build :race, :race_datetime => today,
         :registration_open => (today + 1.week), :registration_close => (today + 2.weeks)
       expect(race).to be_invalid
       expect(race.errors.messages[:registration_open]).to include 'must come before race_datetime'
@@ -61,7 +61,7 @@ describe Race do
 
   describe '#question_fields' do
     context 'when there is no jsonform data' do
-      let(:race) { FactoryGirl.build :race }
+      let(:race) { FactoryBot.build :race }
 
       it 'returns empty array' do
         expect(race.question_fields).to eq([])
@@ -69,7 +69,7 @@ describe Race do
     end
 
     context 'when there is jsonform data' do
-      let(:race) { FactoryGirl.build :race_with_jsonform }
+      let(:race) { FactoryBot.build :race_with_jsonform }
       let(:keys) do
         file = File.read(Rails.root.to_s + '/spec/fixtures/files/valid_jsonform.json')
         JSON.parse(file)['schema']['properties'].keys
@@ -81,7 +81,7 @@ describe Race do
     end
 
     context 'when json is malformed' do
-      let(:race) { FactoryGirl.build :race_with_jsonform, json_data: '{' }
+      let(:race) { FactoryBot.build :race_with_jsonform, json_data: '{' }
 
       it 'returns empty array' do
         expect(race.question_fields).to eq([])
@@ -117,19 +117,19 @@ describe Race do
 
   describe '#registration_over?' do
     context 'registration close is in the future' do
-      let(:race) { FactoryGirl.create :race }
+      let(:race) { FactoryBot.create :race }
       it 'returns false' do
         expect(race.registration_over?).to be false
       end
     end
     context 'registration close is right now' do
-      let(:race) { FactoryGirl.create :race, :registration_closing_now }
+      let(:race) { FactoryBot.create :race, :registration_closing_now }
       it 'returns true' do
         expect(race.registration_over?).to be true
       end
     end
     context 'registration close is in the past' do
-      let(:race) { FactoryGirl.create :race, :registration_closed }
+      let(:race) { FactoryBot.create :race, :registration_closed }
       it 'returns true' do
         expect(race.registration_over?).to be true
       end
@@ -138,8 +138,8 @@ describe Race do
 
   describe '#enabled_requirements' do
     before do
-      @race = FactoryGirl.create :race
-      @req = FactoryGirl.create :enabled_payment_requirement, :race => @race
+      @race = FactoryBot.create :race
+      @req = FactoryBot.create :enabled_payment_requirement, :race => @race
     end
 
     it 'returns requirements where enabled? == true' do
@@ -147,15 +147,15 @@ describe Race do
     end
 
     it 'does not return disabled requirements' do
-      FactoryGirl.create :payment_requirement, :race => @race
+      FactoryBot.create :payment_requirement, :race => @race
       expect(@race.enabled_requirements).to eq [@req]
     end
   end
 
   describe '#finalized_teams' do
-    let(:team)        { FactoryGirl.create :finalized_team }
+    let(:team)        { FactoryBot.create :finalized_team }
     let(:race)        { team.race }
-    let(:unfinalized) { FactoryGirl.create :team, race: race }
+    let(:unfinalized) { FactoryBot.create :team, race: race }
 
     it 'returns finalized teams, not unfinalized teams' do
       expect(race.finalized_teams).to eq [team]
@@ -164,21 +164,21 @@ describe Race do
 
   describe '#open_for_registration?' do
     context "race is not yet open" do
-      let(:race) { FactoryGirl.create :race, :registration_opens_tomorrow }
+      let(:race) { FactoryBot.create :race, :registration_opens_tomorrow }
       it "returns false" do
         expect(race.open_for_registration?).to eq(false)
       end
     end
 
     context "race registration is closed" do
-      let(:race) { FactoryGirl.create :race, :registration_closed }
+      let(:race) { FactoryBot.create :race, :registration_closed }
       it "returns false" do
         expect(race.open_for_registration?).to eq(false)
       end
     end
 
     context "race registration is open" do
-      let(:race) { FactoryGirl.create :race }
+      let(:race) { FactoryBot.create :race }
       it "returns true" do
         expect(race.open_for_registration?).to eq(true)
       end
@@ -187,14 +187,14 @@ describe Race do
 
   describe "over?" do
     context "when the race date is in the past" do
-      let(:race) { FactoryGirl.create :ended_race }
+      let(:race) { FactoryBot.create :ended_race }
       it "returns false" do
         expect(race.over?).to be true
       end
     end
 
     context "when the race date is in the future" do
-      let(:race) { FactoryGirl.create :race }
+      let(:race) { FactoryBot.create :race }
       it "returns false" do
         expect(race.over?).to be false
       end
@@ -203,22 +203,22 @@ describe Race do
 
   describe '#days_before_close' do
     it 'returns false if registration_close is in the past' do
-      closed_race = FactoryGirl.create :race, :registration_closed
+      closed_race = FactoryBot.create :race, :registration_closed
       expect(closed_race.days_before_close).to eq(false)
     end
 
     it 'returns the time between now and registration_close' do
       double(Time.zone.now) { today }
-      race = FactoryGirl.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
+      race = FactoryBot.create :race, :race_datetime => (today + 4.weeks), :registration_open => (today - 2.weeks), :registration_close => (today + 2.weeks)
       expect(race.days_before_close).to eq(2.weeks.to_i)
     end
   end
 
   describe '#full?' do
     before do
-      @race = FactoryGirl.create :race
+      @race = FactoryBot.create :race
       (@race.max_teams - 1).times do
-        FactoryGirl.create :finalized_team, race: @race
+        FactoryBot.create :finalized_team, race: @race
       end
     end
 
@@ -227,23 +227,23 @@ describe Race do
     end
 
     it 'returns false if teams are >= the maximum but some are not finalized' do
-      @race.teams << FactoryGirl.create(:team)
+      @race.teams << FactoryBot.create(:team)
       expect(@race.full?).to be false
-      @race.teams << FactoryGirl.create(:team)
+      @race.teams << FactoryBot.create(:team)
       expect(@race.full?).to be false
     end
 
     it 'returns true if the race has the maximum finalized teams' do
-      FactoryGirl.create :finalized_team, race: @race
+      FactoryBot.create :finalized_team, race: @race
       expect(@race.full?).to be true
     end
   end
 
   describe '#spots_remaining' do
     before do
-      @race = FactoryGirl.create :race
+      @race = FactoryBot.create :race
       (@race.max_teams - 1).times do
-        FactoryGirl.create :finalized_team, race: @race
+        FactoryBot.create :finalized_team, race: @race
       end
     end
 
@@ -252,14 +252,14 @@ describe Race do
     end
 
     it 'returns 0 if there are no spots remaining' do
-      FactoryGirl.create :finalized_team, race: @race
+      FactoryBot.create :finalized_team, race: @race
       expect(@race.spots_remaining).to eq 0
     end
   end
 
   describe '#registerable?' do
     before do
-      @race = FactoryGirl.create :race
+      @race = FactoryBot.create :race
     end
 
     it 'returns true if race is open and not full' do
@@ -288,17 +288,17 @@ describe Race do
 
   describe 'self#find_registerable_races' do
     it 'returns races that are open and have spaces left' do
-      FactoryGirl.create :race, :registration_closed
-      FactoryGirl.create :full_race
-      open_race = FactoryGirl.create :race
+      FactoryBot.create :race, :registration_closed
+      FactoryBot.create :full_race
+      open_race = FactoryBot.create :race
       expect(Race.find_registerable_races).to eq([open_race])
     end
   end
 
   describe 'self#find_open_races' do
     it "only returns races where registration is open" do
-      FactoryGirl.create :race, :registration_closed
-      open_race = FactoryGirl.create :race
+      FactoryBot.create :race, :registration_closed
+      open_race = FactoryBot.create :race
       expect(Race.find_open_races).to eq([open_race])
     end
   end
@@ -311,14 +311,14 @@ describe Race do
   describe '#stats' do
 
     context 'when race has no registered teams' do
-      let(:race) { FactoryGirl.create :race }
+      let(:race) { FactoryBot.create :race }
       it 'returns hash showing zero' do
         expect(race.stats).to eq({"money_raised" => 0})
       end
     end
 
     context 'when race has teams that paid money' do
-      let(:cr) { FactoryGirl.create :completed_requirement, :with_metadata }
+      let(:cr) { FactoryBot.create :completed_requirement, :with_metadata }
       it 'returns hash showing zero' do
         expect(cr.team.race.stats).to eq({"money_raised" => 7000})
       end
@@ -326,7 +326,7 @@ describe Race do
   end
 
   describe '#waitlist_count' do
-    let(:race) { FactoryGirl.create :race }
+    let(:race) { FactoryBot.create :race }
 
     it 'returns 0 if the race is not full' do
       expect(race.waitlist_count).to eq(0)
@@ -334,7 +334,7 @@ describe Race do
 
     context 'when the race is full' do
       before do
-        race.max_teams.times { FactoryGirl.create :finalized_team, race: race }
+        race.max_teams.times { FactoryBot.create :finalized_team, race: race }
       end
 
       context "and total teams = max teams" do
@@ -345,7 +345,7 @@ describe Race do
 
       context "and total teams > max teams" do
         it 'returns the delta between total teams and max teams' do
-          FactoryGirl.create :team, race: race
+          FactoryBot.create :team, race: race
           expect(race.waitlist_count).to eq(1)
         end
       end

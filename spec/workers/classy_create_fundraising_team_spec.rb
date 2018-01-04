@@ -41,7 +41,7 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when team already has a classy id' do
-      let(:team) { FactoryGirl.create :team, :with_classy_id }
+      let(:team) { FactoryBot.create :team, :with_classy_id }
       let(:log) do
         {
           job: {'team_id' => team.id},
@@ -56,7 +56,7 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when race has no classy campaign id' do
-      let(:team) { FactoryGirl.create :team }
+      let(:team) { FactoryBot.create :team }
       let(:log) do
         {
           message: "No classy campaign id set for race id: #{team.race.id}, therefore we cannot create a fundraising team"
@@ -70,8 +70,8 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when race has no classy default goal' do
-      let(:race) { FactoryGirl.create :race, classy_campaign_id: 12345 }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race, classy_campaign_id: 12345 }
+      let(:team) { FactoryBot.create :team, race: race }
       let(:log) do
         {
           message: "No classy default fundraising goal set for race id: #{race.id}, therefore we cannot create a fundraising team"
@@ -85,8 +85,8 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when user who owns the team cannot be linked to classy' do
-      let(:race) { FactoryGirl.create :race_with_classy_data }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:team) { FactoryBot.create :team, race: race }
       let(:ex)   { StandardError.new("omg") }
 
       it 'logs the error and re-raises' do
@@ -99,8 +99,8 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when classy client errors' do
-      let(:race) { FactoryGirl.create :race_with_classy_data }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:team) { FactoryBot.create :team, race: race }
       let(:ex)   { StandardError.new("omg") }
       before do
         ENV['CLASSY_CLIENT_ID'] = 'some_id'
@@ -118,8 +118,8 @@ describe Workers::ClassyCreateFundraisingTeam do
 
 
     context 'when the fundraising team creation is successful' do
-      let(:race) { FactoryGirl.create :race_with_classy_data }
-      let(:team) { FactoryGirl.create :team, race: race }
+      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:team) { FactoryBot.create :team, race: race }
       let(:resp) { File.read("#{Rails.root}/spec/fixtures/classy/create_campaign_team_response.json") }
       let(:json) { JSON.parse(resp) }
 
