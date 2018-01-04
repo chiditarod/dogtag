@@ -32,19 +32,22 @@ Ensure it has the following variables.
 ### Build and run all containers
 
     docker-compose up -d
-    
-### Empty Database Setup
+
+### Create and Migrate Databases
 
     docker-compose exec web bundle exec rake db:create db:migrate
     docker-compose exec web sh -c 'RAILS_ENV=test bundle exec rake db:create db:migrate'
-    
+
 ### Connect to postgres inside container
 
     docker-compose exec db psql -U postgres
 
 ### Run the test suite
 
-    docker-compose exec app bundle exec rspec
+_Both assume a postgres container is running._
+
+    docker-compose exec web bundle exec rspec  # from within the web container
+    bundle exec rspec                          # from the console
 
 ### Restore postgres db from a dump file
 
