@@ -46,6 +46,13 @@ Ensure it has the following variables.
 
     docker-compose exec app bundle exec rspec
 
+### Restore postgres db from a dump file
+
+```bash
+docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
+docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
+```
+
 Developer Setup
 ---------------
 *Assumes an OSX environment. If you do it in Windows or Linux, please send us instructions and we will include them.*
