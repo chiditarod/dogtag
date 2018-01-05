@@ -1,16 +1,19 @@
-language: ruby
-dist: trusty
-sudo: false # explicitly use container-based architecture
+#language: ruby
+#dist: trusty
+#sudo: false # explicitly use container-based architecture
+sudo: required
+services:
+  - docker
 
 branches:
   only:
     - master
 
-cache: bundler
-bundler_args: --without development # --path=~/.bundle
+#cache: bundler
+#bundler_args: --without development # --path=~/.bundle
 
-before_install:
-  - "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc" # skip installing docs for gems
+#before_install:
+  #- "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc" # skip installing docs for gems
 
 services:
   - postgresql
@@ -18,9 +21,39 @@ services:
 addons:
   postgresql: "9.4"
 
+env:
+  COMPOSE_VERSION: 1.14.0
+
+before_install:
+ - curl -L https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+ - chmod +x docker-compose
+ - sudo mv docker-compose /usr/local/bin
+
 before_script:
-  - "psql -c 'create database dogtag_test;' -U postgres"
-  - "bin/rake db:migrate RAILS_ENV=test"
+  #- "psql -c 'create database dogtag_test;' -U postgres"
+  #- "bin/rake db:migrate RAILS_ENV=test"
+  - "docker-compose exec test RAILS_ENV=test rake db:create db:migrate"
+
+script:
+  - docker-compose build
+  - docker-compose start db
+  - docker-compose run test
 
 after_success:
   - bundle exec codeclimate-test-reporter
+
+notifications:
+  email:
+    - chiditarod+dogtag@gmail.com
+  #email: false
+  #irc:
+    #channels:
+      #- "irc.freenode.org#inasafe"
+    #use_notice: true
+  #hipchat:
+    #template:
+      #- '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}
+        #(<a href="%{build_url}">Details</a> | <a href="%{compare_url}">Change view</a>)'
+    #format: html
+    #rooms:
+    #- secure: "PR3OjYP6aML3f/v9xonW8oASpaU2DGD0LDT/8keH2/PV66gY9MB8Vt6gTMpmEa/XctD5mMn7GCviSjrrZ/abp6NFPembWgAMf/RvBpvBNml8jzRFvzitcwNWwqyZFM9rM2uqJU1SHrPfB2tTKznthAgOZXMc6N0xDa4apK3fR+0="
