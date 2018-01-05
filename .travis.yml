@@ -1,13 +1,13 @@
-#language: ruby
+language: ruby
 #dist: trusty
 #sudo: false # explicitly use container-based architecture
 sudo: required
 services:
   - docker
 
-branches:
-  only:
-    - master
+#branches:
+  #only:
+    #- master
 
 #cache: bundler
 #bundler_args: --without development # --path=~/.bundle
