@@ -52,6 +52,12 @@ describe Requirement do
         requirement.complete team.id, user
       end.to change(CompletedRequirement, :count).by 1
     end
+
+    it 'broadcasts when creating' do
+      expect do
+        requirement.complete team.id, user
+      end.to broadcast(:create_completed_requirement_successful)
+    end
   end
 
   describe '#completed?' do

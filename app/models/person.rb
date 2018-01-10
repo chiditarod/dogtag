@@ -22,6 +22,8 @@ class Person < ActiveRecord::Base
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_with PersonValidator, :on => :create
 
+  include Wisper.model
+
   belongs_to :team
 
   def self.registered_for_race(race_id)

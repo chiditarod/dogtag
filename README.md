@@ -7,27 +7,20 @@ dogtag
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
 [![Code Climate](https://codeclimate.com/github/chiditarod/dogtag.png)](https://codeclimate.com/github/chiditarod/dogtag)
 
-Features
+Integrations
 --------
-- Payments/Refunds with Stripe API
-- Classy API integration to auto-setup a team's fundrasier campaigns.
+- Payments/Refunds via the Stripe API
+- Fundraising campaign automation via the Classy API
 
 Requirements
 ------------
 - App Server like Heroku
-- Redis
-- PostgreSQL
+- Redis (3.2)
+- PostgreSQL (9.4)
 - SMTP Server
 
 Docker Developer Setup
 ----------------------
-
-### Create your local .env file
-
-Ensure it has the following variables.
-
-    STRIPE_PUBLISHABLE_KEY=pk_test_....
-    STRIPE_SECRET_KEY=sk_test_....
 
 ### Build and run all containers
 
@@ -44,8 +37,7 @@ Ensure it has the following variables.
 
 ### Run the test suite
 
-_Both assume a postgres container is running._
-
+    docker-compose start db
     docker-compose exec web bundle exec rspec  # from within the web container
     bundle exec rspec                          # from the console
 
@@ -56,9 +48,23 @@ docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
 docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
 ```
 
+### Boot local rails server/console
+
+    CLASSY_CLIENT_* environment variables are optional.
+
+```bash
+docker-compose start db redis mailcatcher
+CLASSY_CLIENT_ID=abc123 \
+CLASSY_CLIENT_SECRET=abc123 \
+DATABASE_URL=postgres://postgres:123abc@localhost:5432 \
+STRIPE_PUBLISHABLE_KEY=pk_test_abc123 \
+STRIPE_SECRET_KEY=sk_test_abc123 \
+bundle exec rails [s|c]
+```
+
 Developer Setup
 ---------------
-*Assumes an OSX environment. If you do it in Windows or Linux, please send us instructions and we will include them.*
+Tested on an OSX environment. If you do it in Windows or Linux and send us instructions, we will add them here.*
 
 1. Setup your Ruby environment by installing [Homebrew](https://github.com/Homebrew/homebrew) and [rbenv](https://github.com/rbenv/rbenv).
 
@@ -80,12 +86,17 @@ Developer Setup
         CLASSY_CLIENT_ID=<...>                # if you are using classy
         CLASSY_CLIENT_SECRET=<...>            # if you are using classy
 
-1. Run local daemons
+1. Run back-end services
+
+	*Docker makes it considerably easier to use these back-end services in local development.  Consult the Docker section above vs. installing them manually onto your workstation.*
 
         redis-server
         postgres -D /usr/local/var/postgres
-        bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
         bundle exec mailcatcher
+
+1. Run dogtag deamons
+
+        bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
         bundle exec rails s
 
 1. Run the test suite

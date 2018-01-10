@@ -21,6 +21,8 @@ class Team < ActiveRecord::Base
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_with TeamValidator
 
+  include Wisper.model
+
   belongs_to :user
   belongs_to :race
   validates_presence_of :user, :race
@@ -48,7 +50,8 @@ class Team < ActiveRecord::Base
     "9th year elders",
     "10th year anniversary",
     "11th year OGs",
-    "12th year sages"
+    "12th year sages",
+    "13th year fingers crossed"
   ]
 
   def unfinalized
@@ -56,11 +59,11 @@ class Team < ActiveRecord::Base
   end
 
   # sets the finalization bits and triggers follow-up actions
+  # return nil if the team is not a candidate for finalization
   def finalize
-
     return nil if finalized
     return nil unless meets_finalization_requirements?
-    # finalize
+
     self.notified_at = Time.zone.now
     self.assigned_team_number = self.assigned_team_number || next_available_team_num
     self.finalized = true
@@ -77,8 +80,13 @@ class Team < ActiveRecord::Base
   end
 
   # remove the finalization bits from the team
-  def unfinalize
-    return nil unless finalized
+  # return nil if the team is not a candidate for unfinalization
+  def unfinalize(force=false)
+    unless force
+      return nil unless finalized
+      return nil if meets_finalization_requirements?
+    end
+
     # unset the notification field so they can be again notified in the future.
     self.notified_at = nil
     self.finalized = nil
@@ -131,7 +139,7 @@ class Team < ActiveRecord::Base
   end
 
   def meets_finalization_requirements?
-    completed_all_requirements? && is_full? && completed_questions?
+    completed_questions? && is_full? && completed_all_requirements?
   end
 
   # todo spec

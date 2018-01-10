@@ -76,6 +76,12 @@ describe PeopleController do
         end.to change(Person, :count).by(-1)
       end
 
+      it 'broadcasts when destroying the record' do
+        expect do
+          delete :destroy, :team_id => team.id, :id => team.people.first.id
+        end.to broadcast(:destroy_person_successful)
+      end
+
       # we don't want to remove a person record once we reach the correct number, as
       # it would cause the team to no longer be complete
       context 'when team requirements are all met' do
@@ -190,6 +196,12 @@ describe PeopleController do
         expect do
           post :create, :team_id => team_no_people.id, :person => new_person_hash
         end.to change(Person, :count).by 1
+      end
+
+      it 'broadcasts when creating the record' do
+        expect do
+          post :create, :team_id => team_no_people.id, :person => new_person_hash
+        end.to broadcast(:create_person_successful)
       end
 
       context 'upon success' do

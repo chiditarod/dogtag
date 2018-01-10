@@ -71,11 +71,27 @@ describe Team do
 
   describe '.finalize' do
 
+    context 'called on a finalized team' do
+      let(:team) { FactoryBot.create :finalized_team }
+
+      it 'returns nil' do
+        expect(team.finalize).to be_nil
+      end
+    end
+
+    context 'called on an unfinalized team that does not meet requirements' do
+      let(:team) { FactoryBot.create :team, :with_people }
+
+      it 'returns nil' do
+        expect(team.finalize).to be_nil
+      end
+    end
+
     context 'not yet finalized and meets all requirements' do
 
       let(:team) { FactoryBot.create :team, :with_enough_people }
 
-      it 'sets finalized flat and notified_at in the db' do
+      it 'sets finalized boolean and notified_at in the db' do
         Timecop.freeze(THE_TIME) do
           team.finalize
           record = Team.find(team.id)
@@ -94,7 +110,7 @@ describe Team do
         context 'if the team already has an assigned team number' do
           it 'uses the same number' do
             team.finalize
-            team.unfinalize
+            team.unfinalize(true)
             team.finalize
             team.reload
             expect(team.assigned_team_number).to eq(1)
@@ -104,7 +120,7 @@ describe Team do
         context 'when there are teams that used to be finalized and now are not' do
           it 'skips over the formerly assigned team number to a new one' do
             t = FactoryBot.create :finalized_team, race: team.race
-            t.unfinalize
+            t.unfinalize(true)
             t.reload
             expect(t.finalized).to be_falsey
 
@@ -125,18 +141,38 @@ describe Team do
 
   describe '.unfinalize' do
 
+    context 'when passed force=true with a finalized team' do
+      let(:team) { FactoryBot.create :finalized_team }
+      it 'unfinalizes the team' do
+        team.unfinalize(true)
+        record = Team.find(team.id)
+        expect(record.notified_at).to be_nil
+        expect(record.finalized).to be_nil
+      end
+    end
+
     context 'called on a unfinalized team' do
       let(:team) { FactoryBot.create :team, :with_enough_people }
-
       it 'returns nil' do
         expect(team.unfinalize).to be_nil
       end
     end
 
-    context 'called on a finalized team' do
+    context 'called on a finalized team that meets requirements' do
       let(:team) { FactoryBot.create :finalized_team }
+      it 'returns nil' do
+        expect(team.unfinalize).to be_nil
+      end
+    end
 
-      it 'unsets finalized flat and notified_at in the db' do
+    context 'called on a finalized team that no longer meets requirements' do
+      let(:team) do
+        _t = FactoryBot.create :finalized_team
+        Person.delete(_t.people.first.id)
+        _t
+      end
+
+      it 'unsets finalized and notified_at in the db' do
         team.unfinalize
         record = Team.find(team.id)
         expect(record.notified_at).to be_nil
@@ -161,6 +197,18 @@ describe Team do
     it 'returns false when team is finalized 'do
       team = FactoryBot.create :finalized_team
       expect(team.unfinalized).to be_falsey
+    end
+  end
+
+  describe '.finalized' do
+    it 'returns true when team is finalized 'do
+      team = FactoryBot.create :finalized_team
+      expect(team.finalized).to be_truthy
+    end
+
+    it 'returns false when team is unfinalized 'do
+      team = FactoryBot.create :team
+      expect(team.finalized).to be_falsey
     end
   end
 

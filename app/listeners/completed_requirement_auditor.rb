@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Devin Breen
+# Copyright (C) 2018 Devin Breen
 # This file is part of dogtag <https://github.com/chiditarod/dogtag>.
 #
 # dogtag is free software: you can redistribute it and/or modify
@@ -13,24 +13,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-module Workers
-  # Run post-finalization tasks
-  class TeamFinalizer
-    include Sidekiq::Worker
-    include Workers::Common
 
-    sidekiq_options queue: :important, retry: true, backtrace: true
-    sidekiq_options failures: true
+class CompletedRequirementAuditor
+  def create_completed_requirement_successful(cr)
+    refresh(cr.team)
+  end
 
-    def run(job, data={})
-      job_email = Workers::TeamFinalizedEmail.perform_async({team_id: job['team_id']})
-      job_classy = Workers::ClassyCreateFundraisingTeam.perform_async({team_id: job['team_id']})
+  def destroy_completed_requirement_successful(cr)
+    refresh(cr.team)
+  end
 
-      data[:child_job_ids] = {
-        team_finalized_email: job_email,
-        classy_create_fundraising_team: job_classy
-      }
-      log("complete", data)
-    end
+  private
+
+  def refresh(team)
+    team.reload
+    team.finalize || team.unfinalize
   end
 end

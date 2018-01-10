@@ -24,7 +24,6 @@ services:
       - db
     env_file:
       - .env-development
-      - .env
     networks:
       - web
     volumes:
@@ -60,7 +59,7 @@ services:
     volumes:
       - bundle_cache:/bundle_cache
     ports:
-      - "1025"
+      - "1025:1025"
       - "1080:1080"
 
 networks:
