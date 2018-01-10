@@ -17,11 +17,13 @@
     %h2
       = link_to race.name, race_path(race)
 
-    = link_to race_registrations_url(:race_id => race.id) do
-      = race.finalized_teams.size
-      = t('.teams_registered')
+    - unless terse
+      = link_to race_registrations_url(:race_id => race.id) do
+        = race.finalized_teams.size
+        = t('.teams_registered')
 
-    %br
+        %br
+
       - if race.over?
         = t('.race_complete')
       - elsif race.open_for_registration?

@@ -74,6 +74,11 @@ en:
       report_a_bug: Report a Bug
       having_problems: Having Problems?
 
+  homepages:
+    index:
+      chiditarod_registration_system: chiditarod registration system
+      get_started: Get Started
+
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
   must_select_team: You must select a team to register.
