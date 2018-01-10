@@ -23,3 +23,14 @@ end
 Sidekiq.configure_client do |config|
   config.redis = { url: redis_url }
 end
+
+# password-protect the /sidekiq route
+
+if ENV['SIDEKIQ_USER'] && ENV['SIDEKIQ_PASS']
+  require 'sidekiq'
+  require 'sidekiq/web'
+
+  Sidekiq::Web.use(Rack::Auth::Basic) do |user, password|
+    [user, password] == [ENV['SIDEKIQ_USER'], ENV['SIDEKIQ_PASS']]
+  end
+end

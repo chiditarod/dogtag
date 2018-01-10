@@ -85,6 +85,8 @@ Tested on an OSX environment. If you do it in Windows or Linux and send us instr
         REDIS_URL=<...>                       # default: redis://127.0.0.1:6379
         CLASSY_CLIENT_ID=<...>                # if you are using classy
         CLASSY_CLIENT_SECRET=<...>            # if you are using classy
+        SIDEKIQ_USER=<...>                    # include to protect /sidekiq route behind http basic auth
+        SIDEKIQ_PASS=<...>                    # include to protect /sidekiq route behind http basic auth
 
 1. Run back-end services
 
