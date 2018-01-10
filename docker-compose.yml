@@ -7,7 +7,6 @@ services:
       - db
     env_file:
       - .env-development
-      - .env
     networks:
       - web
     volumes:
@@ -30,7 +29,7 @@ services:
       - bundle_cache:/bundle_cache
 
   db:
-    image: postgres:9.4
+    image: postgres:9.4-alpine
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_PASSWORD=123abc
