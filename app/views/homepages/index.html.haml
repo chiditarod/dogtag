@@ -8,9 +8,13 @@
   %i.fa.fa-shopping-cart.fa-5x.pull-left.fa-flip-horizontal
   %h1 dogtag
   %p
-    chiditarod registration system
+    = t('.chiditarod_registration_system')
+
+  = link_to t('.get_started'), races_url, :class => ['btn', 'btn-success']
+
 .row
   .col-md-6
+    %h4 Overview
     %p
       Welcome to dogtag. It allows your team to sign up for the race,
       manage your team information, and pay your registration fee and cart deposit.  All from the comfort of home.
@@ -27,15 +31,11 @@
       automatically put onto the waitlist. First come, first served. Teams on the waitlist will be contacted at the
       close of race registration to determine if there is an open spot or not.
 
-    %p
-      Now, please click MUSH ON to begin.
-
     -#%p
       %a{:"href" => '#shopify-store'}
         %i.fa.fa-diamond.fa-3x.pull-left
         %h2
           New Online Merch Depot!
-
 
   .col-md-6
     %h4 Racer Management
@@ -68,6 +68,9 @@
         report bugs
       if you encounter any and we'll get right on them.
 
+
+
 .row
-  .col-md-12
-    = link_to t('mush_on'), races_url, :class => ['btn', 'btn-success']
+  .col-xs-12
+  %h2
+  = render 'store/main'

@@ -1,5 +1,5 @@
 .row
-  .col-xs-4
+  .col-xs-4.col-sm-3
     .btn
       = link_to race_path(race.id) do
         %i.fa.fa-shopping-cart.fa-4x
@@ -13,15 +13,17 @@
           .btn.btn-success
             = t('.register_now')
 
-  .col-xs-8
+  .col-xs-8.col-sm-9
     %h2
       = link_to race.name, race_path(race)
 
-    = link_to race_registrations_url(:race_id => race.id) do
-      = race.finalized_teams.size
-      = t('.teams_registered')
+    - unless terse
+      = link_to race_registrations_url(:race_id => race.id) do
+        = race.finalized_teams.size
+        = t('.teams_registered')
 
-    %br
+        %br
+
       - if race.over?
         = t('.race_complete')
       - elsif race.open_for_registration?

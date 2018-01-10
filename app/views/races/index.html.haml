@@ -12,10 +12,10 @@
 - else
   .row.well
     - @current_races.each do |race|
-      .col-xs-12.col-sm-6.col-md-6.col-lg-4.pull-left
-        .panel.panel-default
+      .col-xs-12.col-md-6.pull-left
+        .panelpanel-default
           .panel-body
-            = render 'race_item', :race => race
+            = render 'race_item', :race => race, :terse => false
 .clearfix
 
 %h3= t('.past_races')
@@ -24,7 +24,7 @@
 - else
   .row.well
     - @past_races.each do |race|
-      .col-xs-12.col-sm-6.col-md-6.col-lg-4.pull-left
+      .col-xs-12.col-md-6.pull-left
         .panel.panel-default
           .panel-body
-            = render 'race_item', :race => race
+            = render 'race_item', :race => race, :terse => true

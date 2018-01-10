@@ -74,6 +74,11 @@ en:
       report_a_bug: Report a Bug
       having_problems: Having Problems?
 
+  homepages:
+    index:
+      chiditarod_registration_system: chiditarod registration system
+      get_started: Get Started
+
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
   must_select_team: You must select a team to register.
@@ -265,12 +270,11 @@ en:
       no_races: No races present in the system.
       create_race: Create one now!
     race_metadata:
-      registration_closes_at: Registration closes
-      race_is_full: Race is full.
-      spots_remaining: spots remaining.
-      registration_opens_on: Registration opens on
-      on_waitlist: on the waitlist.
-      and_closes_on: and closes on
+      race_is_full: Race is full
+      spots_remaining: spots remaining
+      registration_opens: Registration opens
+      on_waitlist: on the waitlist
+      registration_closes: Registration closes
       team: team
     race_item:
       team: team

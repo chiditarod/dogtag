@@ -1,15 +1,18 @@
 %p
   - if race.registerable?
-    = t('.registration_closes_at')
+    = t('.registration_closes')
     = race.registration_close.strftime("%B %e, %Y, %l:%M:%S %P %Z")
 
-    %br
+  %br
 
   - if Time.zone.now < race.registration_open
-    = t('.registration_opens_on')
+    = t('.registration_opens')
     = race.registration_open.strftime("%B %e, %Y")
-    = t('.and_closes_on')
+    %br
+    = t('.registration_closes')
     = race.registration_close.strftime("%B %e, %Y")
+
+  %br
 
   = race.spots_remaining
   = t '.spots_remaining'
