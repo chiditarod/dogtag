@@ -57,18 +57,16 @@ docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
 docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
 ```
 
-### Boot local rails server/console
+Environment Variables
+---------------------
 
-    CLASSY_CLIENT_* environment variables are optional.
-
-```bash
-docker-compose start db redis mailcatcher
-CLASSY_CLIENT_ID=abc123 \
-CLASSY_CLIENT_SECRET=abc123 \
-DATABASE_URL=postgres://postgres:123abc@localhost:5432 \
-STRIPE_PUBLISHABLE_KEY=pk_test_abc123 \
-STRIPE_SECRET_KEY=sk_test_abc123 \
-bundle exec rails [s|c]
+```
+DATABASE_URL=postgres://postgres:123abc@localhost:5432
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+CLASSY_CLIENT_ID=...           # optional
+CLASSY_CLIENT_SECRET=...       # optional
+ROLLBAR_ACCESS_TOKEN=...       # optional
 ```
 
 Developer Setup
