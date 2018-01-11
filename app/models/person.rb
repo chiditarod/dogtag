@@ -26,6 +26,11 @@ class Person < ActiveRecord::Base
 
   belongs_to :team
 
+  include ActionView::Helpers::NumberHelper
+  def phone=(val)
+    super(number_to_phone(val, area_code: false, delimiter: '-'))
+  end
+
   def self.registered_for_race(race_id)
     race = Race.find race_id
     race.finalized_teams.inject([]) do |total, reg|
