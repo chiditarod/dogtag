@@ -58,8 +58,25 @@ describe 'validation' do
     expect(FactoryBot.build(:person, :twitter => '@good')).to be_valid
   end
 
-  it 'fails with poorly formed zipcode'
-  it 'fails with poorly formed phone number'
+  it 'converts phone numbers into the right format' do
+    person = FactoryBot.build(:person)
+    [1111111111, "1111111111"].each do |num|
+      person.phone = num
+      expect(person).to be_valid
+    end
+  end
+
+  it 'fails with poorly formed zipcode' do
+    person = FactoryBot.build(:person)
+    person.zipcode = "a"
+    expect(person).to be_invalid
+  end
+
+  it 'fails with poorly formed phone number' do
+    person = FactoryBot.build(:person)
+    person.phone = "abc123"
+    expect(person).to be_invalid
+  end
 
   it 'fails if associated with a team with race.people_per_team people already assigned' do
     person_hash = FactoryBot.attributes_for :person

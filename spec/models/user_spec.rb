@@ -33,7 +33,22 @@ describe User do
   end
 
   describe 'validations' do
-    describe 'phone'
+    describe 'phone' do
+      let(:user) { FactoryBot.build(:user) }
+
+      it 'converts phone numbers into the right format' do
+        [1111111111, "1111111111"].each do |num|
+          user.phone = num
+          expect(user).to be_valid
+        end
+      end
+
+      it 'fails with poorly formed phone number' do
+        user.phone = "abc123"
+        expect(user).to be_invalid
+      end
+    end
+
     describe 'email'
   end
 
