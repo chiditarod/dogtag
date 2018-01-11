@@ -81,6 +81,10 @@ GEM
     docile (1.1.5)
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
+    dotenv (2.2.1)
+    dotenv-rails (2.2.1)
+      dotenv (= 2.2.1)
+      railties (>= 3.2, < 5.2)
     erubis (2.7.0)
     eventmachine (1.0.9.1)
     execjs (2.7.0)
@@ -106,7 +110,6 @@ GEM
       railties (>= 4.0.1)
     hashdiff (0.3.7)
     hike (1.2.3)
-    honeybadger (3.2.0)
     html2haml (2.2.0)
       erubis (~> 2.7.0)
       haml (>= 4.0, < 6)
@@ -154,6 +157,7 @@ GEM
     newrelic_rpm (4.7.1.340)
     nokogiri (1.8.1)
       mini_portile2 (~> 2.3.0)
+    oj (3.3.10)
     pg (0.18.4)
     power_assert (1.1.1)
     public_suffix (3.0.1)
@@ -212,6 +216,8 @@ GEM
       mime-types (>= 1.16, < 3.0)
       netrc (~> 0.7)
     role_model (0.8.2)
+    rollbar (2.15.5)
+      multi_json
     rspec (3.7.0)
       rspec-core (~> 3.7.0)
       rspec-expectations (~> 3.7.0)
@@ -341,10 +347,10 @@ DEPENDENCIES
   capistrano
   codeclimate-test-reporter
   coffee-rails (~> 4.0.1)
+  dotenv-rails
   factory_bot_rails
   haml
   haml-rails
-  honeybadger
   httpclient
   jbuilder (~> 1.2)
   jquery-rails
@@ -352,6 +358,7 @@ DEPENDENCIES
   mailcatcher
   newrelic_rpm
   nokogiri (~> 1.8.1)
+  oj
   pg (~> 0.18.4)
   rack-tracker
   rails (~> 4.2)
@@ -359,6 +366,7 @@ DEPENDENCIES
   redis-namespace
   responders
   role_model (~> 0.8.2)
+  rollbar
   rspec
   rspec-rails
   sass-rails (~> 4.0.3)

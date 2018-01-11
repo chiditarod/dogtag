@@ -7,7 +7,7 @@ gem 'bootswatch-rails'
 group :production do
   gem 'rails_12factor' # 12 factor support for rails (http://12factor.net/)
   gem 'newrelic_rpm'
-  gem 'honeybadger'
+  gem 'rollbar'
 end
 
 gem 'authlogic',  '~> 3.4.6'   # authentication
@@ -27,6 +27,7 @@ gem 'rack-tracker'
 gem 'wisper-activerecord'
 
 gem 'nokogiri', '~> 1.8.1'
+gem 'oj'
 
 gem 'rails', '~> 4.2'
 gem 'responders' # responds_to support
@@ -85,6 +86,7 @@ group :test, :development do
   gem 'wisper-rspec'
   gem 'test_after_commit' # required to test wisper pub/sub until rails 5+
   gem 'factory_bot_rails'
+  gem 'dotenv-rails'
 end
 
 group :doc do
