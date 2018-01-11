@@ -9,19 +9,19 @@
 
   .panel-body
     .row
-      .col-xs-3.col-sm-2.col-md-3.col-lg-2
+      .col-xs-3
         - if team.finalized
           .pull-left.fa.fa-smile-o.fa-3x.text-success
         - else
           - if team.race.over?
-            .pull-left.fa.fa-frown-o.fa-3x.text-muted
+            .pull-left.fa.fa-frown-o.fa-3x.text-danger
           - elsif team.race.registration_over?
-            .pull-left.fa.fa-frown-o.fa-3x.text-muted
+            .pull-left.fa.fa-frown-o.fa-3x.text-danger
           - else
             .pull-left.fa.fa-frown-o.fa-3x.text-danger
 
 
-      .col-xs-9.col-sm-10.col-md-9.col-lg-10
+      .col-xs-9
         - if team.finalized
           = link_to t('.registered_for', race: team.race.name), team_path(team)
         - else
@@ -30,8 +30,10 @@
         %br
         %small
           - if team.finalized
+
             = link_to t('fully_registered'), team_path(:id => team.id), :class => 'text-success'
             %p= t('.youre_in')
+
           - else
             - if team.race.over?
               = link_to t('.team_is_dead'), team_path(:id => team.id), :class => 'text-muted'
@@ -43,6 +45,4 @@
 
             - else
               = link_to t('team_needs_attention'), team_path(:id => team.id), :class => 'text-danger'
-              %p
-                =t '.fix_it'
     %hr

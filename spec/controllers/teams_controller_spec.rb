@@ -292,7 +292,6 @@ describe TeamsController do
 
     describe '#update' do
       let(:the_user) { valid_user }
-      let(:valid_team) { FactoryBot.create :team }
 
       context 'on invalid id' do
         before { put :update, :id => -1 }
@@ -302,19 +301,41 @@ describe TeamsController do
       end
 
       context 'with valid patch data' do
-        it 'updates the team, sets flash notice, and redirects to team#questions' do
+        let(:team) { FactoryBot.create :team }
+
+        before do
           patch :update,
-            :id => valid_team.id,
+            :id => team.id,
             :team => {:description => 'New Description'}
-          expect(valid_team.reload.description).to eq('New Description')
-          expect(flash[:notice]).to eq(I18n.t 'update_success')
-          expect(response).to redirect_to(team_questions_url valid_team.id)
+        end
+
+        it 'updates the team' do
+          expect(team.reload.description).to eq('New Description')
+        end
+
+        context 'team has answered questions already' do
+          let(:team) { FactoryBot.create :team_with_jsonform }
+
+          it 'sets flash notice and redirects to team#show' do
+            expect(response).to redirect_to(team_url(team.id))
+            expect(flash[:notice]).to eq(I18n.t 'update_success')
+          end
+        end
+
+        context 'team has not answered questions and questions exist' do
+          let(:race) { FactoryBot.create :race_with_jsonform }
+          let(:team) { FactoryBot.create :team, race: race }
+
+          it 'sets flash notice and redirects to team#questions' do
+            expect(response).to redirect_to(team_questions_url(team.id))
+            expect(flash[:notice]).to eq(I18n.t 'teams.update.success_fill_out_questions')
+          end
         end
 
         it 'broadcasts when updating the record' do
           expect do
             patch :update,
-              :id => valid_team.id,
+              :id => team.id,
               :team => {:description => 'New Description'}
           end.to broadcast(:update_team_successful)
         end
