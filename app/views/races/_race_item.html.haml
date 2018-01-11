@@ -28,5 +28,7 @@
         = t('.race_complete')
       - elsif race.open_for_registration?
         = render 'races/race_metadata', :race => race
+      - elsif race.not_yet_open?
+        = t('.not_time_yet')
       - else
         = t('.registration_closed')

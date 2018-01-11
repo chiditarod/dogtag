@@ -162,6 +162,22 @@ describe Race do
     end
   end
 
+  describe '#not_yet_open?' do
+    context "registration opens in the future" do
+      let(:race) { FactoryBot.create :race, :registration_opens_tomorrow }
+      it "returns true" do
+        expect(race.not_yet_open?).to be true
+      end
+    end
+
+    context "registration opens in present or past" do
+      let(:race) { FactoryBot.create :race, :registration_closed }
+      it "returns false" do
+        expect(race.not_yet_open?).to be false
+      end
+    end
+  end
+
   describe '#open_for_registration?' do
     context "race is not yet open" do
       let(:race) { FactoryBot.create :race, :registration_opens_tomorrow }
@@ -283,23 +299,6 @@ describe Race do
     it 'returns false if race is closed and full' do
       allow(@race).to receive(:open_for_registration?).and_return(false)
       allow(@race).to receive(:full?).and_return(true)
-    end
-  end
-
-  describe 'self#find_registerable_races' do
-    it 'returns races that are open and have spaces left' do
-      FactoryBot.create :race, :registration_closed
-      FactoryBot.create :full_race
-      open_race = FactoryBot.create :race
-      expect(Race.find_registerable_races).to eq([open_race])
-    end
-  end
-
-  describe 'self#find_open_races' do
-    it "only returns races where registration is open" do
-      FactoryBot.create :race, :registration_closed
-      open_race = FactoryBot.create :race
-      expect(Race.find_open_races).to eq([open_race])
     end
   end
 

@@ -283,6 +283,7 @@ en:
       teams_registered: teams registered
       register_now: Register!
       register_waitlist: Waitlist!
+      not_time_yet: Registration not yet open
     form:
       name: This race is called
       race_datetime: Race start time
