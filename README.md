@@ -28,8 +28,17 @@ Docker Developer Setup
 
 ### Create and Migrate Databases
 
+Via docker:
+
     docker-compose exec web bundle exec rake db:create db:migrate
     docker-compose exec web sh -c 'RAILS_ENV=test bundle exec rake db:create db:migrate'
+
+Or via the command line:
+
+    bundle exec rake db:create db:migrate
+    RAILS_ENV=test bundle exec rake db:create db:migrate'
+
+#### Command-Line
 
 ### Connect to postgres inside container
 

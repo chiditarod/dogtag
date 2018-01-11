@@ -184,6 +184,8 @@ en:
       race_not_found: Race not found.
       teams_for: "Teams for %{name}"
       register_for: "Register for %{name}"
+    update:
+      success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     create:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
@@ -209,7 +211,6 @@ en:
     team_item:
       already_registered_for: "Registered for %{race_name}"
       youre_in: "You're in, buddy."
-      fix_it: "Fix it before we sellout."
       registered_for: "Registered for %{race}"
       registering_for: "Registering for %{race}"
       register_waitlist: Register for Waitlist
@@ -237,7 +238,7 @@ en:
         since we will be sending pre-race updates to each email address and day-of announcements to racer
         cell-phones via SMS. If you do not add all the racers, YOU ARE NOT REGISTERED!
         To add a racer, click the sign next to the Racer symbol.
-      no_complete_when_closed: Cannot pay when closed.
+
     notify_now_complete:
       congratulations: Congratulations!
       complete_instructions_html: "Your team is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
@@ -253,6 +254,7 @@ en:
   requirements:
     payment_requirement:
       no_pay_waitlist: You are on the waitlist. Payment is not available.
+      no_complete_when_closed: Cannot pay when closed.
     table:
       tiers: tiers
 
@@ -301,6 +303,7 @@ en:
       no_requirements_added: No requirements added yet
       registration_closed: Registration is closed
       your_teams: Your Teams
+      not_time_yet: Registration not yet open
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.

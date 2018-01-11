@@ -2,15 +2,18 @@
   %head
     %meta{"http-equiv" => "Content-Type", :content => "text/html; charset=utf-8"}
   %body
-    %h1 dogtag  :::  Chiditarod registration bot
+    %h1 dogtag
     %h4
-      Good news!  Your team fundraising page has been successfully created!
+      Good news!  Your team fundraising page has been successfully created and pre-populated with
+      your team details on the Classy fundraising platform. While fundraising is not required to participate in CHIditarod, it's the
+      epicness of our teams and their fundraising powers that give CHIditarod such a powerful impact
+      fighting hunger in Chicago.  We hope you will join us on this quest!
 
     %p
-      We are partnering with Classy.org this year to take advantage of their awesome fundraising platform.
-      If you are new to Classy.org, you should see a "Claim Your Account" email from Classy in your inbox. Please open that
-      email and follow the instructions to setup your Classy account.  If you were already a Classy
-      user, simply go to
+      If you don't have a Classy account yet, you should see a
+      "Claim Your Account" email from Classy in your inbox. Please open that email and follow the instructions
+      to setup your Classy account, which will give you access to your fundraising page.
+      If you were already a Classy user, simply go to
       %a{:href=>"http://classy.org"}
         http://classy.org
       and login.
@@ -40,7 +43,7 @@
           %ul
             %li
               %a{:href=>"https://www.classy.org/team/#{@team.classy_id}"}
-                Main Page
+                Your Team Page
             %li
               %a{:href=>"https://www.classy.org/team/#{@team.classy_id}/dashboard/overview"}
                 Customize
@@ -53,7 +56,8 @@
             Fundraiser:
             = @team.name
           %p
-            This is the fundraising page we created for your personal user account, and is associated with your team fundraiser (above).
+            This is the personal fundraising page we created for your Classy user account. We then linked it with your team fundraiser (#1 above).
+            To get you started we added a suggested fundraising goal that you can modify.
             There are also many ways to
             %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}/dashboard/overview"}
               customize
@@ -63,7 +67,7 @@
           %ul
             %li
               %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}"}
-                Main Page
+                Your Personal Page
             %li
               %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}/dashboard/overview"}
                 Customize

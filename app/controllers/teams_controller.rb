@@ -81,13 +81,20 @@ class TeamsController < ApplicationController
     @race = @team.race
 
     @team.on(:update_team_successful) do |team|
-      flash[:notice] = I18n.t('update_success')
-      redirect_to(team_questions_path(team))
+      if team.completed_questions?
+        flash[:notice] = I18n.t('update_success')
+        redirect_to(team_path(team))
+      else
+        flash[:notice] = I18n.t('teams.update.success_fill_out_questions')
+        redirect_to(team_questions_path(team))
+      end
     end
+
     @team.on(:update_team_failed) do |team|
       flash.now[:error] = [I18n.t('update_failed')]
       flash.now[:error] << team.errors.messages
     end
+
     @team.update_attributes(team_params)
   end
 

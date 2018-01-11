@@ -123,8 +123,7 @@ class Team < ActiveRecord::Base
   end
 
   def completed_questions?
-    return true if race.jsonform.blank?
-    jsonform.present?
+    jsonform.present? || race.jsonform.blank?
   end
 
   def jsonform_value(key)
