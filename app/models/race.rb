@@ -82,6 +82,10 @@ class Race < ActiveRecord::Base
     !full?
   end
 
+  def not_yet_open?
+    Time.zone.now < registration_open
+  end
+
   def open_for_registration?
     now = Time.zone.now
     return false if now < registration_open
@@ -111,13 +115,5 @@ class Race < ActiveRecord::Base
     {
       'money_raised' => money_raised
     }
-  end
-
-  def self.find_registerable_races
-    Race.all.select(&:registerable?)
-  end
-
-  def self.find_open_races
-    Race.all.select(&:open_for_registration?)
   end
 end
