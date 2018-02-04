@@ -268,7 +268,6 @@ en:
       no_teams: No teams match.
     index:
       title: Races
-      instructions: Get started by choosing a race.  In order to register you'll need an account. You can create one during the next step, if needed.
       no_races: No races present in the system.
       create_race: Create one now!
     race_metadata:
