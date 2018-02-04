@@ -11,6 +11,10 @@ Rollbar.configure do |config|
     config.enabled = false
   end
 
+
+
+
+
   # By default, Rollbar will try to call the `current_user` controller method
   # to fetch the logged-in user object, and then call that object's `id`,
   # `username`, and `email` methods to fetch those properties. To customize:
@@ -33,6 +37,8 @@ Rollbar.configure do |config|
   #
   # You can also specify a callable, which will be called with the exception instance.
   # config.exception_level_filters.merge!('MyCriticalException' => lambda { |e| 'critical' })
+
+  config.exception_level_filters.merge!('ActionController::RoutingError' => 'ignore')
 
   # Enable asynchronous reporting (uses girl_friday or Threading if girl_friday
   # is not installed)
