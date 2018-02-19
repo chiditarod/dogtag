@@ -15,7 +15,17 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class PersonValidator < ActiveModel::Validator
   def validate(record)
-    validate_person_count record
+    ensure_editing_is_ok(record)
+    validate_person_count(record)
+  end
+
+  def ensure_editing_is_ok(record)
+    if record.team.present? && record.team.race.present?
+      race = record.team.race
+      if !(race.open_for_registration? || race.in_final_edits_window?)
+        record.errors[:generic] << "cannot edit this information after the final edit date"
+      end
+    end
   end
 
   def validate_person_count(record)

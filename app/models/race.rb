@@ -89,12 +89,19 @@ class Race < ActiveRecord::Base
   def open_for_registration?
     now = Time.zone.now
     return false if now < registration_open
-    return false if registration_close < now
+    return false if now > registration_close
     true
   end
 
   def registration_over?
     registration_close < Time.zone.now
+  end
+
+  def in_final_edits_window?
+    now = Time.zone.now
+    return false if now < registration_close
+    return false if now > final_edits_close
+    true
   end
 
   def registerable?

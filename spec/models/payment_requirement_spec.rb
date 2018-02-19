@@ -22,9 +22,6 @@ describe PaymentRequirement do
   let (:tier2) { FactoryBot.create :tier2 }
   let (:tier3) { FactoryBot.create :tier3 }
 
-  before { Timecop.freeze(THE_TIME) }
-  after  { Timecop.return }
-
   describe '#stripe_params' do
     let(:req)  { FactoryBot.create :payment_requirement_with_tier }
     let(:team) { FactoryBot.create :team, race: req.race }

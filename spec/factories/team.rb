@@ -26,10 +26,8 @@ FactoryBot.define do
 
     factory :finalized_team do
       after(:create) do |team|
-        Timecop.freeze(THE_TIME) do
-          create_list(:person, team.race.people_per_team, team: team)
-          team.finalize
-        end
+        create_list(:person, team.race.people_per_team, team: team)
+        team.finalize
       end
     end
 

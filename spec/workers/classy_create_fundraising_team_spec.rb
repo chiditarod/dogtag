@@ -85,7 +85,7 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when user who owns the team cannot be linked to classy' do
-      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
       let(:team) { FactoryBot.create :team, race: race }
       let(:ex)   { StandardError.new("omg") }
 
@@ -99,7 +99,7 @@ describe Workers::ClassyCreateFundraisingTeam do
     end
 
     context 'when classy client errors' do
-      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
       let(:team) { FactoryBot.create :team, race: race }
       let(:ex)   { StandardError.new("omg") }
       before do
@@ -118,7 +118,7 @@ describe Workers::ClassyCreateFundraisingTeam do
 
 
     context 'when the fundraising team creation is successful' do
-      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
       let(:team) { FactoryBot.create :team, race: race }
       let(:resp) { File.read("#{Rails.root}/spec/fixtures/classy/create_campaign_team_response.json") }
       let(:json) { JSON.parse(resp) }

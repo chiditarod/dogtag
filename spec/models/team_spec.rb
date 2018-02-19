@@ -92,12 +92,10 @@ describe Team do
       let(:team) { FactoryBot.create :team, :with_enough_people }
 
       it 'sets finalized boolean and notified_at in the db' do
-        Timecop.freeze(THE_TIME) do
-          team.finalize
-          record = Team.find(team.id)
-          expect(record.notified_at.to_datetime).to eq(THE_TIME.to_datetime)
-          expect(record.finalized).to be_truthy
-        end
+        team.finalize
+        record = Team.find(team.id)
+        expect(record.notified_at).to_not be_nil
+        expect(record.finalized).to be true
       end
 
       context 'team number assignments' do

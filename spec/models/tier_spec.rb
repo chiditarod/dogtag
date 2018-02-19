@@ -17,13 +17,8 @@ require 'spec_helper'
 
 describe Tier do
 
-  before { Timecop.freeze(THE_TIME) }
-  after  { Timecop.return }
-
   let!(:req) do
-    Timecop.freeze(THE_TIME) do
-      FactoryBot.create :payment_requirement_with_tier
-    end
+    FactoryBot.create :payment_requirement_with_tier
   end
 
   let(:tier) { req.reload.tiers.first }
@@ -46,7 +41,7 @@ describe Tier do
     end
 
     it 'fails when another tier has the same "begin_at" value' do
-      tier2 = FactoryBot.build :tier, :price => 6000
+      tier2 = FactoryBot.build :tier, price: 6000, begin_at: tier.begin_at
       req.tiers << tier2
       expect(tier2).to be_invalid
     end

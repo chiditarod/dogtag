@@ -25,37 +25,51 @@ describe Race do
 
   describe 'validation' do
     it 'succeeds when all required parameters are present' do
-      expect(FactoryBot.create(:race)).to be_valid
+      expect(FactoryBot.build(:race)).to be_valid
     end
 
     it 'fails without valid datetimes' do
       valid_race_hash = FactoryBot.attributes_for :race
-      dates = [:race_datetime, :registration_open, :registration_close]
+      dates = [:race_datetime, :registration_open, :registration_close, :final_edits_close]
       dates.each do |d|
         expect(Race.create(valid_race_hash.merge d => 'abc')).not_to be_valid
       end
     end
 
-    it 'fails when registration close and open dates are the same' do
-      race = FactoryBot.build :race, :race_datetime => today,
-        :registration_open => (today - 1.week), :registration_close => (today - 1.week)
-      expect(race).to be_invalid
-      expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
+    context 'registration_open is after registration_close' do
+      let(:race) do
+        FactoryBot.build :race, race_datetime: today + 4.weeks,
+          registration_open: (today + 3.week), registration_close: (today + 1.weeks), final_edits_close: (today + 3.weeks)
+      end
+
+      it 'fails validation' do
+        expect(race).to be_invalid
+        expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
+      end
     end
 
-    it 'fails when registration close date is before registration open date' do
-      race = FactoryBot.build :race, :race_datetime => today,
-        :registration_open => (today - 1.week), :registration_close => (today - 2.weeks)
-      expect(race).to be_invalid
-      expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
+    context 'final_edits_close is after race_datetime' do
+      let(:race) do
+        FactoryBot.build :race, race_datetime: today + 4.weeks,
+          registration_open: (today + 1.week), registration_close: (today + 2.weeks), final_edits_close: (today + 5.weeks)
+      end
+
+      it 'fails validation' do
+        expect(race).to be_invalid
+        expect(race.errors.messages[:final_edits_close]).to include 'must come before race_datetime'
+      end
     end
 
-    it 'fails when registration open and close dates are not before the race_datetime' do
-      race = FactoryBot.build :race, :race_datetime => today,
-        :registration_open => (today + 1.week), :registration_close => (today + 2.weeks)
-      expect(race).to be_invalid
-      expect(race.errors.messages[:registration_open]).to include 'must come before race_datetime'
-      expect(race.errors.messages[:registration_close]).to include 'must come before race_datetime'
+    context 'registration_close is after final_edits_close' do
+      let(:race) do
+        FactoryBot.build :race, race_datetime: today + 4.weeks,
+          registration_open: (today + 1.week), registration_close: (today + 3.weeks), final_edits_close: (today + 2.weeks)
+      end
+
+      it 'fails validation' do
+        expect(race).to be_invalid
+        expect(race.errors.messages[:registration_close]).to include 'must come before final_edits_close'
+      end
     end
   end
 
@@ -103,33 +117,38 @@ describe Race do
     end
   end
 
-  describe '#over?' do
-    context 'race is in the future' do
-      it 'returns false'
+
+  describe '#in_final_edits_window?' do
+    context "registration is closed and final edit window close is in the future" do
+      let(:race) { FactoryBot.build :race, :in_final_edits_window }
+      it "returns true" do
+        expect(race.in_final_edits_window?).to be true
+      end
     end
-    context 'race is right now' do
-      it 'returns false'
-    end
-    context 'race is in the past' do
-      it 'returns true'
+
+    context "registration is still open" do
+      let(:race) { FactoryBot.build :race }
+      it "returns false" do
+        expect(race.in_final_edits_window?).to be false
+      end
     end
   end
 
   describe '#registration_over?' do
     context 'registration close is in the future' do
-      let(:race) { FactoryBot.create :race }
+      let(:race) { FactoryBot.build :race }
       it 'returns false' do
         expect(race.registration_over?).to be false
       end
     end
     context 'registration close is right now' do
-      let(:race) { FactoryBot.create :race, :registration_closing_now }
+      let(:race) { FactoryBot.build :race, :registration_closing_now }
       it 'returns true' do
         expect(race.registration_over?).to be true
       end
     end
     context 'registration close is in the past' do
-      let(:race) { FactoryBot.create :race, :registration_closed }
+      let(:race) { FactoryBot.build :race, :registration_closed }
       it 'returns true' do
         expect(race.registration_over?).to be true
       end
@@ -164,14 +183,14 @@ describe Race do
 
   describe '#not_yet_open?' do
     context "registration opens in the future" do
-      let(:race) { FactoryBot.create :race, :registration_opens_tomorrow }
+      let(:race) { FactoryBot.build :race, :registration_opens_tomorrow }
       it "returns true" do
         expect(race.not_yet_open?).to be true
       end
     end
 
     context "registration opens in present or past" do
-      let(:race) { FactoryBot.create :race, :registration_closed }
+      let(:race) { FactoryBot.build :race, :registration_closed }
       it "returns false" do
         expect(race.not_yet_open?).to be false
       end
@@ -180,21 +199,21 @@ describe Race do
 
   describe '#open_for_registration?' do
     context "race is not yet open" do
-      let(:race) { FactoryBot.create :race, :registration_opens_tomorrow }
+      let(:race) { FactoryBot.build :race, :registration_opens_tomorrow }
       it "returns false" do
         expect(race.open_for_registration?).to eq(false)
       end
     end
 
     context "race registration is closed" do
-      let(:race) { FactoryBot.create :race, :registration_closed }
+      let(:race) { FactoryBot.build :race, :registration_closed }
       it "returns false" do
         expect(race.open_for_registration?).to eq(false)
       end
     end
 
     context "race registration is open" do
-      let(:race) { FactoryBot.create :race }
+      let(:race) { FactoryBot.build :race }
       it "returns true" do
         expect(race.open_for_registration?).to eq(true)
       end
@@ -203,7 +222,12 @@ describe Race do
 
   describe "over?" do
     context "when the race date is in the past" do
-      let(:race) { FactoryBot.create :ended_race }
+      let(:now) { Time.zone.now }
+      let(:race) do
+        FactoryBot.build :race, race_datetime: (now - 1.day),
+          final_edits_close: (now - 2.days), registration_close: (now - 3.days)
+      end
+
       it "returns false" do
         expect(race.over?).to be true
       end
@@ -214,6 +238,10 @@ describe Race do
       it "returns false" do
         expect(race.over?).to be false
       end
+    end
+
+    context 'race is right now' do
+      it 'returns false'
     end
   end
 

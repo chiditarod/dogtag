@@ -19,6 +19,7 @@ FactoryBot.define do
     sequence(:name) { |n| "Race #{n}" }
     registration_open (Time.zone.now - 2.weeks)
     registration_close (Time.zone.now + 2.weeks)
+    final_edits_close (Time.zone.now + 3.weeks)
     race_datetime (Time.zone.now + 4.weeks)
     max_teams 3
     people_per_team 2
@@ -40,14 +41,9 @@ FactoryBot.define do
       end
     end
 
-    factory :race_with_classy_data do
+    trait :with_classy_data do
       classy_campaign_id 12345
       classy_default_goal 2000
-    end
-
-    factory :ended_race do
-      registration_close (Time.zone.now - 1.week)
-      race_datetime (Time.zone.now - 1.day)
     end
 
     trait :registration_closed do
@@ -60,6 +56,16 @@ FactoryBot.define do
 
     trait :registration_closing_now do
       registration_close Time.zone.now
+    end
+
+    trait :in_final_edits_window do
+      registration_close (Time.zone.now - 1.day)
+      final_edits_close (Time.zone.now + 1.day)
+    end
+
+    trait :after_final_edits_window do
+      registration_close (Time.zone.now - 2.days)
+      final_edits_close (Time.zone.now - 1.day)
     end
   end
 end
