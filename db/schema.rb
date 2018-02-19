@@ -1,18 +1,3 @@
-# Copyright (C) 2013 Devin Breen
-# This file is part of dogtag <https://github.com/chiditarod/dogtag>.
-#
-# dogtag is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# dogtag is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # encoding: UTF-8
 # This file is auto-generated from the current state of the database. Instead
 # of editing this file, please use the migrations feature of Active Record to
@@ -26,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170116085249) do
+ActiveRecord::Schema.define(version: 20180219041406) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -69,6 +54,7 @@ ActiveRecord::Schema.define(version: 20170116085249) do
     t.string   "filter_field",        limit: 255
     t.integer  "classy_campaign_id"
     t.integer  "classy_default_goal"
+    t.datetime "final_edits_close",               null: false
   end
 
   create_table "requirements", force: :cascade do |t|
