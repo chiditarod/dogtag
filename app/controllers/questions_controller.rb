@@ -39,7 +39,6 @@ class QuestionsController < ApplicationController
       return redirect_to team_path(@team)
     end
 
-    # manipulate the jsonform
     jsonform = JSON.parse(@team.race.jsonform)
     jsonform = JsonForm.add_csrf(jsonform, form_authenticity_token)
     jsonform = JsonForm.add_saved_answers(@team, jsonform, form_authenticity_token)
@@ -51,6 +50,7 @@ class QuestionsController < ApplicationController
     authorize! :create, :questions
     @team = Team.find(params[:team_id])
 
+    # todo: move this validation logic into model
     unless @team.race.open_for_registration?
       flash[:error] = I18n.t('questions.cannot_modify')
       return redirect_to team_path(@team)

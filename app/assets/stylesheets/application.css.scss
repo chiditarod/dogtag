@@ -1,11 +1,11 @@
 // First import theme variables
-@import "bootswatch/superhero/variables";
+@import "bootswatch/lumen/variables";
 
 // Then bootstrap
 @import "bootstrap";
 
 // And finally bootswatch style
-@import "bootswatch/superhero/bootswatch";
+@import "bootswatch/lumen/bootswatch";
 
 @import "tablesorter.theme.bootstrap";
 
@@ -20,20 +20,6 @@
   /*@extend .control-group;*/
   @extend .error;
 }
-
-select {
-  color: black;
-}
-
-input {
-  color: black;
-  background: #bbb;
-}
-
-button {
-  color: black;
-}
-
 
 .jsonform-errortext {
   color: red;
@@ -57,7 +43,6 @@ li.select2-results__option {
 
   .help-block {
     font-size: 115%;
-    background: #233241;
     padding: .3em;
   }
 }
@@ -68,4 +53,8 @@ label.control-label {
 .help-inline {
   font-size:85%;
   margin-left: 1em;
+}
+
+table.table {
+  font-size: 1.1em;
 }

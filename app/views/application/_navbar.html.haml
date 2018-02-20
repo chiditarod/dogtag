@@ -1,16 +1,16 @@
 / Static navbar
 / view-source:http://getbootstrap.com/examples/navbar-static-top/
-.navbar.navbar-default{role: "navigation"}
-  .navbar-header
+.navbar.navbar-default
 
-    %button.navbar-toggle{"data-target" => ".navbar-collapse", "data-toggle" => "collapse", type: "button"}
+  .navbar-header
+    %button.navbar-toggle{"data-target" => "#navbarColor01", "data-toggle" => "collapse", type: "button"}
       %span.sr-only Toggle navigation
       %span.icon-bar
       %span.icon-bar
       %span.icon-bar
     = link_to(I18n.t('website_title'), home_url, :class => 'navbar-brand')
 
-  .navbar-collapse.collapse
+  .navbar-collapse.collapse#navbarColor01
     %ul.nav.navbar-nav
       %li
         = link_to races_path do
@@ -18,7 +18,6 @@
           = t('.races')
 
       - if current_user
-
         - if current_user.team_ids.present?
           %li
             = link_to teams_path do
@@ -36,11 +35,6 @@
               %li= link_to t('list'), users_path
               %li= link_to t('new'), new_user_path
               %li.divider
-
-      -#%li
-        %a{:"href" => '#shopify-store'}
-          %i.fa.fa-diamond.fa-2x
-          =t 'shop'
 
     %ul.nav.navbar-nav.navbar-right
       - if current_user

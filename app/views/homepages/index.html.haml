@@ -1,72 +1,68 @@
 = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/marked/0.2.9/marked.min.js"
 
-.jumbotron
-
-  .pull-right
-    %img{src: '/images/doge_circle_web.png'}
-
-  %i.fa.fa-shopping-cart.fa-5x.pull-left.fa-flip-horizontal
-  %h1 dogtag
-  %p
-    = t('.chiditarod_registration_system')
-
-  = link_to t('.get_started'), races_url, :class => ['btn', 'btn-success']
-
 .row
-  .col-md-6
-    %h4 Overview
-    %p
-      Welcome to dogtag. It allows your team to sign up for the race,
-      manage your team information, and pay your registration fee and cart deposit.  All from the comfort of home.
+  .col-xs-12
+    .text-center
+      %img{src: '/images/doge_circle_web.png'}
+      %h1
+        dogtag
+        .lead
+          = t('.chiditarod_registration_system')
+      = link_to t('.get_started'), races_url, :class => ['btn', 'btn-success']
+      %br
+      %br
 
-    %p
-      Once registered, you have until the close of registration to login and update and/or change this information.
-      Just visit
-      %a{:href=>'http://dogtag.chiditarod.org'} dogtag.chiditarod.org.
+.jumbotron
+  .row
+    .col-md-6
+      %p
+        %h4 Overview
+        Use dogtag to register for CHIditarod. Create an account, signup for the race, complete all of the requirements, receive confirmation
+        emails, prepare thyself, mush!
 
-    %p
-      Teams that fully complete their registration will be considered official racers. Partially-completed teams
-      (missing required details, people, or payments) are not considered official. We sell out every year, so make sure to
-      complete your team registration in-full, early.  Once all spots are filled, any remaining incomplete teams are
-      automatically put onto the waitlist. First come, first served. Teams on the waitlist will be contacted at the
-      close of race registration to determine if there is an open spot or not.
+        %br
+        %br
+        Teams that fully complete their registration will be considered official racers. Teams that do not fully complete
+        their registration and receive confirmation via the web and email are not allowed to race. Ensure you complete
+        all basics, details, payments and add the correct number of racers. Once registered, you have until the close of
+        registration to login and update and/or change this information.
 
-    -#%p
-      %a{:"href" => '#shopify-store'}
-        %i.fa.fa-diamond.fa-3x.pull-left
-        %h2
-          New Online Merch Depot!
+        %br
+        %br
+        Once all spots are filled, any remaining incomplete teams are automatically put onto the waitlist. First come,
+        first served. Teams on the waitlist will be contacted at the close of race registration to determine if there is an open spot or not.
 
-  .col-md-6
-    %h4 Racer Management
-    %p
-      You will need to sign up all 5 racers to complete your team. If you do not have all 5 racers yet, please
-      write
-      %b
-        unknown
-      into the fields of your missing racers.  If you have to take a racer out and put a new racer in
-      you just login and make the change.  Please do so BEFORE registration closes, and make it accurate.
-      We use all the email addresses to send important race information, and we will use text messaging on the day-of
-      for any critical details.
+    .col-md-6
+      %p
+        %h4 Racer Management
+        You will need to sign up all 5 racers to complete your team. If you do not have all 5 racers yet, please
+        write
+        %b
+          unknown
+        into the fields of your missing racers.  If you have to take a racer out and put a new racer in
+        you just login and make the change.  Please do so BEFORE registration closes, and make it accurate.
+        We use all the email addresses to send important race information, and we will use text messaging on the day-of
+        for any critical details.
 
-    %h4 System Requirements
-    %p
-      Please use Chrome or Firefox, and you
-      %strong
-        %u
-          must have JavaScript enabled.
-    %h4 Emails
-    %p
-      Also be aware that Heroku (the service that hosts dogtag) sends emails slowly, so it may take
-      up to 10 minutes to receive confirmation or password reset emails. We are working with them to
-      make this faster.
+      %p
+        %h4 System Requirements
+        Please use Chrome or Firefox, and you
+        %strong
+          %u
+            must have JavaScript enabled.
 
-    %p
-      %h4 Bugs?
-      We think we've ironed out any kinks from last year, but please help
-      %a{:href=>"http://github.com/chiditarod/dogtag/issues/new/"}
-        report bugs
-      if you encounter any and we'll get right on them.
+      %p
+        %h4 Emails
+        Also be aware that Heroku (the service that hosts dogtag) sends emails slowly, so it may take
+        up to 10 minutes to receive confirmation or password reset emails. We are working with them to
+        make this faster.
+
+      %p
+        %h4 Bugs?
+        We think we've ironed out any kinks from last year, but please help
+        %a{:href=>"http://github.com/chiditarod/dogtag/issues/new/"}
+          report bugs
+        if you encounter any and we'll get right on them.
 
 
 
