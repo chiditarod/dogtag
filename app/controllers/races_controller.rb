@@ -94,7 +94,7 @@ class RacesController < ApplicationController
     params.
       require(:race).
       permit(:name, :max_teams, :people_per_team,
-             :race_datetime, :registration_open, :registration_close,
+             :race_datetime, :registration_open, :registration_close, :final_edits_close,
              :classy_campaign_id, :classy_default_goal,
              :jsonform, {filter_field: []}
       )
