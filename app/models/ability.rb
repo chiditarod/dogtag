@@ -20,25 +20,19 @@ class Ability
   # https://github.com/CanCanCommunity/cancancan/wiki/Defining-Abilities
   def initialize(user)
 
-    alias_action :new, :to => :create
-    alias_action :index, :show, :to => :read
-    alias_action :edit, :to => :update
-    alias_action :create, :read, :update, :destroy, :to => :crud
+    # anonymous
+    can [:create], User
 
-    user ||= User.new
+    return unless user.present?
 
-    # guest-only stuff
-    unless user.id
-      # only show user creation form to guest users
-      can [:create], User
-    end
+    # logged-in user
 
-    # User can create and manage themself
-    can [:show, :update], User, :id => user.id
+    # User can create and manage itself
+    can [:show, :edit, :update], User, :id => user.id
 
     # Team
     can [:index, :create], Team
-    can [:read], Team, user_id: user.id
+    can [:index, :show, :edit], Team, user_id: user.id
     can [:update], Team do |team|
       team.user_id == user.id && team.race.open_for_registration?
     end
@@ -57,12 +51,12 @@ class Ability
     # Races
     # /races/
     # /races/:race_id/registrations
-    can [:read, :registrations], Race
+    can [:index, :show, :registrations], Race
 
     # People
     can [:create], Person
-    can [:show, :update], Person do |person|
-      user.team_ids.include?(person.team.id) && person.team.race.open_for_registration?
+    can [:show, :edit, :update], Person do |person|
+      user.team_ids.include?(person.team.id) && (person.team.race.open_for_registration? || person.team.race.in_final_edits_window?)
     end
 
     # Requirement
@@ -73,14 +67,14 @@ class Ability
 
     if user.is? :refunder
       can [:index], User
-      can [:read], Team
+      can [:index, :show], Team
       can [:refund], :charges
     end
 
     if user.is? :operator
       can [:export], Race
-      can [:read, :update], [Team, Person]
-      can [:read, :create, :update], [Race, PaymentRequirement, Tier]
+      can [:index, :show, :edit, :update], [Team, Person]
+      can [:index, :show, :edit, :update, :create], [Race, PaymentRequirement, Tier]
       can [:refund], :charges
     end
 
