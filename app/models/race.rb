@@ -15,7 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Race < ActiveRecord::Base
   validates_presence_of :name, :max_teams, :people_per_team
-  validates_presence_of :race_datetime, :registration_open, :registration_close
+  validates_presence_of :race_datetime, :registration_open, :registration_close, :final_edits_close
   validates :max_teams, :people_per_team, :numericality => {
     :only_integer => true,
     :greater_than => 0
@@ -89,12 +89,19 @@ class Race < ActiveRecord::Base
   def open_for_registration?
     now = Time.zone.now
     return false if now < registration_open
-    return false if registration_close < now
+    return false if now > registration_close
     true
   end
 
   def registration_over?
     registration_close < Time.zone.now
+  end
+
+  def in_final_edits_window?
+    now = Time.zone.now
+    return false if now < registration_close
+    return false if now > final_edits_close
+    true
   end
 
   def registerable?

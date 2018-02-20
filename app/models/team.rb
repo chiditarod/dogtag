@@ -36,6 +36,7 @@ class Team < ActiveRecord::Base
 
   scope :all_finalized,   -> { where('teams.finalized = ?', true) }
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
+  scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
 
   EXPERIENCE_LEVELS = [
     "Zero. Fresh meat",
@@ -79,15 +80,14 @@ class Team < ActiveRecord::Base
     end
   end
 
-  # remove the finalization bits from the team
+  # this removes the finalization bits from the team
   # return nil if the team is not a candidate for unfinalization
   def unfinalize(force=false)
-    unless force
+    if ! force
       return nil unless finalized
       return nil if meets_finalization_requirements?
     end
 
-    # unset the notification field so they can be again notified in the future.
     self.notified_at = nil
     self.finalized = nil
     self.save

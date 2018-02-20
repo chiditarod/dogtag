@@ -300,6 +300,8 @@ describe TeamsController do
         end
       end
 
+      context 'when validation fails on update'
+
       context 'with valid patch data' do
         let(:team) { FactoryBot.create :team }
 

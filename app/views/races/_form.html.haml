@@ -26,6 +26,13 @@
 
   .form-group
     .col-sm-4.control-label
+      = label_tag :final_edits_close, t('.final_edits_close')
+    .col-sm-8
+      = f.datetime_select :final_edits_close, :include_seconds => true, :class => 'form-control'
+      = Time.zone
+
+  .form-group
+    .col-sm-4.control-label
       = label_tag :race_datetime, t('.race_datetime')
     .col-sm-8
       = f.datetime_select :race_datetime, :class => 'form-control'
@@ -70,4 +77,3 @@
   .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
-

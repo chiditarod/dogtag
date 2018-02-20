@@ -1,8 +1,0 @@
-.page-header
-  %h1
-    = t('.title')
-
-- if @people.blank?
-  = t ('.no_people_added')
-- else
-  = render 'table', :people => @people

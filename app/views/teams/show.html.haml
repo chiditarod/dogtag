@@ -26,17 +26,9 @@
     .row
       %h1
         = @team.name
-        - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-          %small
-            = link_to edit_team_path(@team.id) do
-              .fa.fa-edit
-              = t('.edit')
 
       %h4
-        - if @team.finalized
-          = t('.registered_for')
-        - else
-          = t('.registering_for')
+        = t('.race')
         = link_to @race.name, race_path(@race)
 
         - if @team.assigned_team_number && current_user.is_any_of?(:admin, :operator)
@@ -45,7 +37,11 @@
           = @team.assigned_team_number
 
       - if @team.race.open_for_registration?
-        = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+        %i.lead.text-success
+          = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+      - elsif @team.race.in_final_edits_window?
+        %i.lead.text-warning
+          = t('.final_edits_until', :date => @race.final_edits_close.strftime('%B %e, %Y'))
       - else
         %i.lead.text-danger
           = t('.registration_closed')
@@ -60,39 +56,47 @@
 %ul.nav.nav-tabs
   %li.active
     %a{"href" => "#people", "data-toggle" => "tab"}
-      =t('.people')
-
       - if @team.needs_people?
         .text-danger.fa.fa-frown-o
       - else
         %i.fa.fa-smile-o.text-success
+      =t('.people')
 
   %li
     %a{"href" => "#requirements", "data-toggle" => "tab"}
-      =t('.payments')
       - if @team.completed_all_requirements?
         .text-success.fa.fa-smile-o
       - else
         .text-danger.fa.fa-frown-o
+      = t('.payments')
 
   %li
-    = link_to t('.basics'), edit_team_path(@team)
+    - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+      = link_to edit_team_path(@team) do
+        %span.text-success.fa.fa-smile-o
+        = t('.basics')
+
+    - else
+      %a{:href => '#'}
+        %span.text-success.fa.fa-smile-o
+        = t('.basics')
 
   %li
     - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
       = link_to team_questions_path(@team) do
-        = t('.details')
         - if @team.race.jsonform.present? && @team.jsonform.blank?
           .text-danger.fa.fa-frown-o
         - else
           .text-success.fa.fa-smile-o
+        = t('.details')
+
     - else
       %a{:href => '#'}
-        =t('.details')
         - if @team.race.jsonform.present? && @team.jsonform.blank?
           .text-danger.fa.fa-frown-o
         - else
           .text-success.fa.fa-smile-o
+        =t('.details')
 
 .tab-content
 
@@ -101,6 +105,7 @@
 
   .tab-pane.active{:id => "people"}
 
+    -#todo: consider delete; can't see it render
     - if @team.needs_people?
       .pull-right
         .text-danger
@@ -119,29 +124,31 @@
       %br
       = @team.user.email
 
-    %h3
+    %h2
+      - if @team.needs_people?
+        - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+          = link_to new_team_person_url(@team.id) do
+            %i.fa.fa-plus.fa-2x
+      - else
+        %i.fa.fa-smile-o.text-success
+
       %i.fa.fa-user
       = t('.people')
       %small
+        [
         = @team.people.count
         = t('of')
         = @team.race.people_per_team
-
-        - if @team.needs_people?
-          - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-            = link_to new_team_person_url(@team.id) do
-              %i.fa.fa-plus
-        - else
-          %i.fa.fa-smile-o.text-success
-
-    = t('.people_instructions')
-    %br
+        ]
 
     - if @team.people.blank?
       %br
       .lead= t ('.no_people_added')
     - else
-      = render 'people/table', :people => @team.people
+      = render 'people/table', :people => @team.people, :race => @team.race
+
+    %br
+    = t('.people_instructions')
 
   -#-----------------------------------------------------------
   -# requirements  (consider partial

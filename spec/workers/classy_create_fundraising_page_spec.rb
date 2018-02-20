@@ -82,7 +82,7 @@ describe Workers::ClassyCreateFundraisingPage do
     end
 
     context 'when classy client errors' do
-      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
       let(:user) { FactoryBot.create :user, :with_classy_id }
       let(:team) { FactoryBot.create :team, :with_classy_id, race: race, user: user }
       let(:ex)   { StandardError.new("omg") }
@@ -102,7 +102,7 @@ describe Workers::ClassyCreateFundraisingPage do
 
 
     context 'when the fundraising page creation is successful' do
-      let(:race) { FactoryBot.create :race_with_classy_data }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
       let(:user) { FactoryBot.create :user, :with_classy_id }
       let(:team) { FactoryBot.create :team, :with_classy_id, race: race, user: user }
       let(:resp) { File.read("#{Rails.root}/spec/fixtures/classy/create_fundraising_page_response.json") }

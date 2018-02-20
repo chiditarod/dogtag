@@ -17,6 +17,33 @@ require 'spec_helper'
 
 describe Person do
 
+  context "when the time is after the final edits window" do
+    let(:race) { FactoryBot.create :race, :after_final_edits_window }
+    let(:team) { FactoryBot.create :team, :with_people, people_count: 1, race: race }
+    let(:person) { team.people.first }
+
+    it "prevents updating" do
+      expect do
+        name = "The Dude"
+        person.first_name = name
+        person.save
+      end.to raise_error(ActiveRecord::RecordInvalid)
+    end
+  end
+
+  context "when the time is in the final edits window" do
+    let(:race) { FactoryBot.create :race, :in_final_edits_window }
+    let(:team) { FactoryBot.create :team, :with_people, people_count: 1, race: race }
+    let(:person) { team.people.first }
+
+    it "allows updating" do
+      name = "The Dude"
+      person.first_name = name
+      person.save
+      expect(person.reload.first_name).to eq(name)
+    end
+  end
+
   describe '#registered_for_race' do
     it 'returns all the people on finalized teams in a race' do
       reg = FactoryBot.create :finalized_team
@@ -78,11 +105,9 @@ describe 'validation' do
     expect(person).to be_invalid
   end
 
-  it 'fails if associated with a team with race.people_per_team people already assigned' do
-    person_hash = FactoryBot.attributes_for :person
-    reg = FactoryBot.create :team
-    reg.race.people_per_team.times { |x| reg.people.create person_hash }
-    person = reg.people.new person_hash
+  it 'fails if the team is already full' do
+    team = FactoryBot.create :team, :with_enough_people
+    person = FactoryBot.build :person, team_id: team.id
     expect(person).to be_invalid
     expect(person.errors.messages[:maximum]).to eq(['people already added to this team'])
   end

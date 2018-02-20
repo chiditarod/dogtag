@@ -18,6 +18,7 @@ require 'spec_helper'
 describe ClassyClient do
 
   before do
+    # TODO: kill timecop with fire and paradoxes
     Timecop.freeze(THE_TIME)
     ENV['CLASSY_CLIENT_ID'] = 'some_id'
     ENV['CLASSY_CLIENT_SECRET'] = 'some_secret'

@@ -223,8 +223,11 @@ en:
       edit: edit
       requirements: Payments
       status: Team Status
+      race: "Race:"
       registered_for: Registered for
-      can_change_until: "You can update this information until registration closes on %{date}."
+      registration_closed: "Registration closed. No further updates are possible."
+      can_change_until: "Finish all registration steps by %{date}"
+      final_edits_until: "Registration closed. Racer details are editable until %{date}"
 
       description: "Your Mission:"
       people: Racers
@@ -254,7 +257,7 @@ en:
   requirements:
     payment_requirement:
       no_pay_waitlist: You are on the waitlist. Payment is not available.
-      no_complete_when_closed: Cannot pay when closed.
+      no_complete_when_closed: Registration closed
     table:
       tiers: tiers
 

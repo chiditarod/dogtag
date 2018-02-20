@@ -2,7 +2,6 @@
   .col-sm-12
     = render 'form'
 
-
 .page-header
   %h3
     = t('.race_requirements')
@@ -13,4 +12,4 @@
 - if @race.requirements.blank?
   = t ('.no_requirements_added')
 - else
-  = render 'requirements/table', :requirements => @race.requirements
+  = render 'requirements/table', :requirements => @race.requirements, :race_id => @race.id
