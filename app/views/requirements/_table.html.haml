@@ -6,19 +6,19 @@
       %th= t('enabled')
       %th= t('details')
       %th
-  - requirements.each do |requirement|
+  - requirements.each do |req|
     %tr
       %td
-        = link_to(edit_race_requirement_url :race_id => requirement.race.id, :id => requirement.id) do
+        = link_to(edit_race_requirement_url(:race_id => race_id, :id => req.id)) do
           %i.fa.fa-edit.fa-2x
-      %td= button_to t('delete'), race_requirement_url(:race_id => requirement.race.id, :id => requirement.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
-      %td= requirement.name
+      %td= button_to t('delete'), race_requirement_url(:race_id => race_id, :id => req.id), :method => :delete,  :data => { :confirm => 'Are you sure?' }
+      %td= req.name
       %td
-        - if requirement.enabled?
+        - if req.enabled?
           %i.fa.fa-check.fa-2x
         - else
-          = link_to t('action_required'), (edit_race_requirement_url :race_id => requirement.race.id, :id => requirement.id)
+          = link_to t('action_required'), (edit_race_requirement_url(:race_id => race_id, :id => req.id))
       %td
-        - if requirement.type == 'PaymentRequirement'
-          = requirement.tiers.count
+        - if req.type == 'PaymentRequirement'
+          = req.tiers.count
           = t '.tiers'

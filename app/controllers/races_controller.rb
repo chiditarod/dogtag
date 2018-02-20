@@ -27,7 +27,7 @@ class RacesController < ApplicationController
   def show
     @race = Race.find params[:id]
     if current_user
-      @my_race_teams = @race.teams.where(:id => current_user.team_ids)
+      @my_race_teams = Team.belonging_to(current_user.id).where(race_id: @race.id)
       if current_user.is_any_of?(:admin, :operator)
         @stats = @race.stats
       end

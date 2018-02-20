@@ -19,24 +19,32 @@ describe Team do
 
   describe 'scopes' do
     describe 'all_finalized' do
-      before do
-        @finalized = FactoryBot.create :finalized_team
-        FactoryBot.create :team
-      end
+      let!(:team) { FactoryBot.create :finalized_team }
 
       it 'returns only finalized teams' do
-        expect(Team.all_finalized).to eq([@finalized])
+        FactoryBot.create :team
+        expect(Team.all_finalized).to eq([team])
       end
     end
 
     describe 'all_unfinalized' do
-      before do
-        FactoryBot.create :finalized_team
-        @unfinalized = FactoryBot.create :team
+      let!(:team) { FactoryBot.create :finalized_team }
+
+      it 'returns only unfinalized teams' do
+        unfinalized = FactoryBot.create :team
+        expect(Team.all_unfinalized).to eq([unfinalized])
+      end
+    end
+
+    describe 'belonging_to' do
+      let!(:team) { FactoryBot.create :team }
+
+      it 'returns teams created by a specific user' do
+        expect(Team.belonging_to(team.user_id)).to eq([team])
       end
 
-      it 'returns only finalized teams' do
-        expect(Team.all_unfinalized).to eq([@unfinalized])
+      it 'returns empty if not a match' do
+        expect(Team.belonging_to(team.user_id + 1)).to be_empty
       end
     end
   end

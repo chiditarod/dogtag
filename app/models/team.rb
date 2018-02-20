@@ -36,6 +36,7 @@ class Team < ActiveRecord::Base
 
   scope :all_finalized,   -> { where('teams.finalized = ?', true) }
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
+  scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
 
   EXPERIENCE_LEVELS = [
     "Zero. Fresh meat",
