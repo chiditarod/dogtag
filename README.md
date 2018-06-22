@@ -19,6 +19,18 @@ Requirements
 - PostgreSQL (9.4)
 - SMTP Server
 
+Runtime Environment Variables
+-----------------------------
+
+```
+DATABASE_URL=postgres://postgres:123abc@localhost:5432
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+CLASSY_CLIENT_ID=...           # optional
+CLASSY_CLIENT_SECRET=...       # optional
+ROLLBAR_ACCESS_TOKEN=...       # optional
+```
+
 Docker Developer Setup
 ----------------------
 
@@ -30,25 +42,22 @@ Docker Developer Setup
 
 Via docker:
 
-    docker-compose exec web bundle exec rake db:create db:migrate
-    docker-compose exec web sh -c 'RAILS_ENV=test bundle exec rake db:create db:migrate'
+    docker-compose run web bundle exec rake db:create db:migrate
+    docker-compose run -e RAILS_ENV=test web bundle exec rake db:create db:migrate
 
 Or via the command line:
 
     bundle exec rake db:create db:migrate
     RAILS_ENV=test bundle exec rake db:create db:migrate'
 
-#### Command-Line
+### Run the test suite
+
+    docker-compose run web bundle exec rspec   # from within the container
+    bundle exec rspec                          # or from the console
 
 ### Connect to postgres inside container
 
     docker-compose exec db psql -U postgres
-
-### Run the test suite
-
-    docker-compose start db
-    docker-compose exec web bundle exec rspec  # from within the web container
-    bundle exec rspec                          # from the console
 
 ### Restore postgres db from a dump file
 
@@ -57,20 +66,9 @@ docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
 docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
 ```
 
-Environment Variables
----------------------
+Developer Setup (Deprecated)
+----------------------------
 
-```
-DATABASE_URL=postgres://postgres:123abc@localhost:5432
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
-CLASSY_CLIENT_ID=...           # optional
-CLASSY_CLIENT_SECRET=...       # optional
-ROLLBAR_ACCESS_TOKEN=...       # optional
-```
-
-Developer Setup
----------------
 Tested on an OSX environment. If you do it in Windows or Linux and send us instructions, we will add them here.*
 
 1. Setup your Ruby environment by installing [Homebrew](https://github.com/Homebrew/homebrew) and [rbenv](https://github.com/rbenv/rbenv).

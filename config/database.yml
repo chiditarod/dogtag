@@ -23,9 +23,6 @@ test:
   encoding: unicode
   database: dogtag_test
   pool: 5
-  user: postgres
-  password: 123abc
-  host: localhost
 
 production:
   adapter: postgresql
