@@ -19,8 +19,16 @@ addons:
   postgresql: "9.4"
 
 before_script:
+  # setup DB
   - "psql -c 'create database dogtag_test;' -U postgres"
-  - "bin/rake db:migrate RAILS_ENV=test"
+  - bin/rake db:migrate RAILS_ENV=test
+  # codeclimate test coverage reporter
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 
 after_success:
   - bundle exec codeclimate-test-reporter
