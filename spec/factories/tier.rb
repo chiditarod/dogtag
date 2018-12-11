@@ -19,16 +19,16 @@ FactoryBot.define do
       thetime { Time.zone.now }
     end
 
-    price 5000
+    price { 5000 }
     begin_at { thetime - 2.weeks }
 
     factory :tier2 do
-      price 6000
+      price { 6000 }
       begin_at { thetime - 2.days }
     end
 
     factory :tier3 do
-      price 7000
+      price { 7000 }
       begin_at { thetime + 2.weeks }
     end
   end

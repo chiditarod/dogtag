@@ -21,7 +21,7 @@ class CreateUsers < ActiveRecord::Migration
       t.string    :last_name
       t.string    :phone
 
-      t.timestamps
+      t.timestamps null: true
     end
   end
 

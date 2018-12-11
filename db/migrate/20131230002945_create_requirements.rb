@@ -20,7 +20,7 @@ class CreateRequirements < ActiveRecord::Migration
       t.belongs_to :race
       t.string :type
       t.string :name
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end

@@ -21,7 +21,7 @@ class CreatePeople < ActiveRecord::Migration
       t.string :email
       t.string :phone
       t.string :twitter
-      t.timestamps
+      t.timestamps null: true
 
       t.belongs_to :registration
     end

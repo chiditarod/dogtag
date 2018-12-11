@@ -19,7 +19,7 @@ FactoryBot.define do
     sequence(:name)    { |n| "Team #{n}" }
     description        { "omg! #{name} is the best team evar." }
     sequence(:twitter) { |n| "@twitter#{n}" }
-    experience 5
+    experience { 5 }
 
     user
     race
@@ -32,18 +32,18 @@ FactoryBot.define do
     end
 
     factory :team_with_jsonform do
-      jsonform File.read(Rails.root.to_s + '/spec/fixtures/files/valid_team_jsonform.json')
+      jsonform { File.read(Rails.root.to_s + '/spec/fixtures/files/valid_team_jsonform.json') }
       race factory: :race_with_jsonform
     end
 
     trait :with_classy_id do
-      classy_id 123456
+      classy_id { 123456 }
     end
 
     # classy_id is a prerequisite
     trait :with_classy_fundraising_page do
-      classy_id 123456
-      classy_fundraiser_page_id 42
+      classy_id { 123456 }
+      classy_fundraiser_page_id { 42 }
     end
 
     trait :with_people do

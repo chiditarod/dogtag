@@ -12,19 +12,21 @@
 # Configure Using Gemfile
 # gem 'pg'
 
-development:
+default: &default
   adapter: postgresql
   encoding: unicode
-  database: dogtag_development
+  host: localhost
+  user: postgres
   pool: 5
+
+development:
+  <<: *default
+  database: dogtag_development
 
 test:
-  adapter: postgresql
-  encoding: unicode
+  <<: *default
   database: dogtag_test
-  pool: 5
 
 production:
-  adapter: postgresql
-  encoding: unicode
+  <<: *default
   pool: 10

@@ -20,7 +20,7 @@ class CreateRegistrations < ActiveRecord::Migration
       t.string :description
       t.string :twitter
 
-      t.timestamps
+      t.timestamps null: true
       t.datetime :notified_at
 
       t.belongs_to :team
