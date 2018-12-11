@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.3.7"
+ruby "2.5.3"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -71,18 +71,16 @@ group :development do
 end
 
 group :test do
-  gem 'timecop'
+  gem 'test-unit'
+  gem 'rspec'
+  gem 'rspec-rails'
+  gem 'wisper-rspec'
   gem 'webmock'
   gem 'simplecov'
   gem 'stripe-ruby-mock', '~> 2.3.1'
   gem 'codeclimate-test-reporter'
   gem 'zonebie'
-
-  gem 'test-unit'
-  gem 'rspec'
-  gem 'rspec-rails'
-  gem 'wisper-rspec'
-  gem 'rubocop-rspec'
+  gem 'timecop'
 end
 
 group :test, :development do
