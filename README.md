@@ -1,7 +1,7 @@
 dogtag
 ======
 
-*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed more than $75,000.*
+*dogtag is a Ruby on Rails application that registers user and teams for the annual [CHIditarod](http://chiditarod.org) urban shopping cart race and epic mobile food drive.  The code is 100% open-source, runs on Heroku, and has processed more than $100,000.*
 
 ![Build Status](https://travis-ci.org/chiditarod/dogtag.svg?branch=master)
 [![Test Coverage](https://codeclimate.com/github/chiditarod/dogtag/badges/coverage.svg)](https://codeclimate.com/github/chiditarod/dogtag/coverage)
@@ -15,8 +15,8 @@ Integrations
 Requirements
 ------------
 - App Server like Heroku
-- Redis (3.2)
-- PostgreSQL (9.4)
+- Redis
+- PostgreSQL
 - SMTP Server
 
 Runtime Environment Variables
@@ -67,50 +67,6 @@ Or via the command line:
 docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
 docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
 ```
-
-Developer Setup (Deprecated)
-----------------------------
-
-Tested on an OSX environment. If you do it in Windows or Linux and send us instructions, we will add them here.*
-
-1. Setup your Ruby environment by installing [Homebrew](https://github.com/Homebrew/homebrew) and [rbenv](https://github.com/rbenv/rbenv).
-
-1. Install the Ruby version specified in `.ruby-version`
-
-1. Install the bundle
-
-        bundle install
-
-1. Export required environment vars
-
-        export STRIPE_PUBLISHABLE_KEY=<...>   # stripe api
-        export STRIPE_SECRET_KEY=<...>        # stripe api
-        export RAILS_SECRET_TOKEN=<...>       # rails
-
-1. Export optional environment vars
-
-        REDIS_URL=<...>                       # default: redis://127.0.0.1:6379
-        CLASSY_CLIENT_ID=<...>                # if you are using classy
-        CLASSY_CLIENT_SECRET=<...>            # if you are using classy
-        SIDEKIQ_USER=<...>                    # include to protect /sidekiq route behind http basic auth
-        SIDEKIQ_PASS=<...>                    # include to protect /sidekiq route behind http basic auth
-
-1. Run back-end services
-
-	*Docker makes it considerably easier to use these back-end services in local development.  Consult the Docker section above vs. installing them manually onto your workstation.*
-
-        redis-server
-        postgres -D /usr/local/var/postgres
-        bundle exec mailcatcher
-
-1. Run dogtag deamons
-
-        bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
-        bundle exec rails s
-
-1. Run the test suite
-
-        bundle exec rspec
 
 
 Basic Deploy Plan
