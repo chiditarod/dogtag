@@ -36,19 +36,21 @@ Docker Developer Setup
 
 ### Build and run all containers
 
+This will also create the `dogtag_test` and `dogtag_development` databases.
+
     docker-compose up -d
 
 ### Create and Migrate Databases
 
 Via docker:
 
-    docker-compose run web bundle exec rake db:create db:migrate
-    docker-compose run -e RAILS_ENV=test web bundle exec rake db:create db:migraten
+    docker-compose run web bundle exec rake db:migrate
+    docker-compose run -e RAILS_ENV=test web bundle exec rake db:migraten
 
 Or via the command line:
 
-    bundle exec rake db:create db:migrate
-    RAILS_ENV=test bundle exec rake db:create db:migrate'
+    bundle exec rake db:migrate
+    RAILS_ENV=test bundle exec rake db:migrate'
 
 ### Run the test suite
 

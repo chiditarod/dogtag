@@ -77,13 +77,15 @@ group :test do
   gem 'stripe-ruby-mock', '~> 2.3.1'
   gem 'codeclimate-test-reporter'
   gem 'zonebie'
-end
 
-group :test, :development do
   gem 'test-unit'
   gem 'rspec'
   gem 'rspec-rails'
   gem 'wisper-rspec'
+  gem 'rubocop-rspec'
+end
+
+group :test, :development do
   gem 'test_after_commit' # required to test wisper pub/sub until rails 5+
   gem 'factory_bot_rails'
   gem 'dotenv-rails'
