@@ -30,7 +30,7 @@ services:
       - .:/app
 
   db:
-    image: postgres:9.4-alpine
+    image: postgres:10.6-alpine
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_PASSWORD=123abc

@@ -43,7 +43,7 @@ Docker Developer Setup
 Via docker:
 
     docker-compose run web bundle exec rake db:create db:migrate
-    docker-compose run -e RAILS_ENV=test web bundle exec rake db:create db:migrate
+    docker-compose run -e RAILS_ENV=test web bundle exec rake db:create db:migraten
 
 Or via the command line:
 
