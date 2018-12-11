@@ -20,7 +20,7 @@ class CreateCompletedRequirementsJoinTable < ActiveRecord::Migration
       t.belongs_to :requirement
       t.belongs_to :user
       t.text :metadata
-      t.timestamps
+      t.timestamps null: true
     end
 
     add_index :completed_requirements, [:registration_id, :requirement_id],

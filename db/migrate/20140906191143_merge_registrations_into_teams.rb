@@ -62,7 +62,7 @@ class MergeRegistrationsIntoTeams < ActiveRecord::Migration
     create_table(:registrations) do |t|
       t.string "name"
       t.integer "team_id"
-      t.timestamps
+      t.timestamps null: true
     end
     add_columns :registrations
 

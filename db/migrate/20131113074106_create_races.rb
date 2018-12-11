@@ -22,7 +22,7 @@ class CreateRaces < ActiveRecord::Migration
       t.datetime :registration_close
       t.integer :max_teams
       t.integer :people_per_team
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end

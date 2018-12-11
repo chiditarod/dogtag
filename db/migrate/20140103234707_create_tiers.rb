@@ -19,7 +19,7 @@ class CreateTiers < ActiveRecord::Migration
       t.belongs_to :requirement
       t.datetime :begin_at
       t.integer :price
-      t.timestamps
+      t.timestamps null: true
     end
   end
 end
