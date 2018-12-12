@@ -4,6 +4,8 @@
     = link_to new_user_path do
       %i.fa.fa-plus
 
+= paginate(@users)
+
 %table#users.table.table-bordered.table-hover
   %thead
     %tr
