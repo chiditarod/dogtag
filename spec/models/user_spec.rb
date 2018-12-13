@@ -17,6 +17,14 @@ require 'spec_helper'
 
 describe User do
 
+  describe 'scopes' do
+    let!(:alpha) { FactoryBot.create(:user, last_name: "alpha") }
+    let!(:beta)  { FactoryBot.create(:user, last_name: "beta") }
+    it "orders by name" do
+      expect(User.all.to_a).to eq([alpha, beta])
+    end
+  end
+
   describe '#reset_password!' do
     let(:user) { FactoryBot.create(:user) }
 
