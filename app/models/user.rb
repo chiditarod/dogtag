@@ -22,6 +22,10 @@ class User < ActiveRecord::Base
   has_many :completed_requirements
   has_many :teams
 
+  default_scope ->{ order(:last_name) }
+
+  paginates_per 35
+
   # authlogic
   acts_as_authentic do |c|
     c.login_field = :email

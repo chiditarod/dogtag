@@ -43,6 +43,7 @@ gem 'coffee-rails', '~> 4.0.1'
 
 gem 'haml'
 gem 'haml-rails'
+gem 'kaminari'
 
 gem 'awesome_print'
 gem 'httpclient'
