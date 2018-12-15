@@ -52,7 +52,8 @@ class Team < ActiveRecord::Base
     "10th year anniversary",
     "11th year OGs",
     "12th year sages",
-    "13th year fingers crossed"
+    "13th year fingers crossed",
+    "14th year clumsy adolescents"
   ]
 
   def unfinalized
