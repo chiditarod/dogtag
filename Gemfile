@@ -15,7 +15,7 @@ gem 'cancancan', '~> 1.10'     # authorization, w/ Rails 4.2 support
 gem 'role_model', '~> 0.8.2'   # roles
 
 # payments
-gem 'stripe', '~> 1.31.0'
+gem 'stripe', '~> 1.58.0'
 
 gem 'pg', '~> 0.18.4'           # postgres for heroku
 gem 'json-schema'               # validate incoming jsonform
@@ -78,7 +78,7 @@ group :test do
   gem 'wisper-rspec'
   gem 'webmock'
   gem 'simplecov'
-  gem 'stripe-ruby-mock', '~> 2.3.1'
+  gem 'stripe-ruby-mock', '~> 2.4.1'
   gem 'codeclimate-test-reporter'
   gem 'zonebie'
   gem 'timecop'
