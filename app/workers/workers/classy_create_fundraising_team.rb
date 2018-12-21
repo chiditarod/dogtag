@@ -34,12 +34,12 @@ module Workers
         return
       end
 
-      unless campaign_id = race.classy_campaign_id
+      unless (campaign_id = race.classy_campaign_id)
         log("no-op", message: "No classy campaign id set for race id: #{race.id}, therefore we cannot create a fundraising team")
         return
       end
 
-      unless default_goal = race.classy_default_goal
+      unless (default_goal = race.classy_default_goal)
         log("no-op", message: "No classy default fundraising goal set for race id: #{race.id}, therefore we cannot create a fundraising team")
         return
       end
@@ -47,7 +47,7 @@ module Workers
       ClassyUser.link_user_to_classy!(user, race)
 
       cc = ClassyClient.new
-      result = cc.create_fundraising_team(campaign_id, "Team: #{team.name}", team.description, user.classy_id, default_goal)
+      result = cc.create_fundraising_team(campaign_id, team.name, team.description, user.classy_id, default_goal)
       team.classy_id = result['id']
       team.save!
       log[:response] = result
