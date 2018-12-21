@@ -31,14 +31,46 @@ CLASSY_CLIENT_SECRET=...       # optional
 ROLLBAR_ACCESS_TOKEN=...       # optional
 ```
 
-Docker Developer Setup
-----------------------
+## Developer Setup
+
+*Tested against MacOS Mojave (10.14.2)*
+
+### Prerequisites
+
+- [Xcode](https://itunes.apple.com/us/app/xcode/id497799835)
+- [Docker](https://docs.pie.apple.com/artifactory/docker.html)
+- [Homebrew](https://brew.sh/)
+
+### Install Ruby
+
+```bash
+brew install rbenv
+rbenv install $(cat .ruby-version)
+gem install bundler
+```
+
+### Install Gems
+
+```bash
+brew install libffi libpq
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libffi/lib/pkgconfig"
+bundle config --local build.ffi --with-ldflags="-L/usr/local/opt/libffi/lib"
+bundle config --local build.pg --with-opt-dir="/usr/local/opt/libpq"
+```
 
 ### Build and run all containers
 
 This will also create the `dogtag_test` and `dogtag_development` databases.
 
     docker-compose up -d
+
+### Create an `.env` file for local development
+
+This file is used when booting Rails outside of Docker.  Customize `.env` with `STRIPE_PUBLISHABLE_KEY` and `STRIPE_PUBLISHABLE_KEY` entries, which are currently required to boot the app.
+
+```bash
+cp .env.example .env
+```
 
 ### Create and Migrate Databases
 
@@ -50,12 +82,15 @@ Via docker:
 Or via the command line:
 
     bundle exec rake db:migrate
-    RAILS_ENV=test bundle exec rake db:migrate'
+    RAILS_ENV=test bundle exec rake db:migrate
 
 ### Run the test suite
 
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
+
+
+## Useful Commands
 
 ### Connect to postgres inside container
 

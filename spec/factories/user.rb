@@ -21,8 +21,8 @@ FactoryBot.define do
     sequence(:email)      { |n| "email#{n}@fake.com" }
 
     phone { '312-867-5309' }
-    password { '123456' }
-    password_confirmation { '123456' }
+    password { '12345678' }
+    password_confirmation { '12345678' }
 
     factory :admin_user do
       roles { [:admin] }

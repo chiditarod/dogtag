@@ -5,8 +5,10 @@ services:
     depends_on:
       - redis
       - db
-    env_file:
-      - .env-development
+    environment:
+      - DATABASE_URL=postgres://postgres@db:5432
+      - REDIS_URL=redis://redis:6379/0
+      - SMTP_HOST=mailcatcher
     networks:
       - web
     volumes:
@@ -21,8 +23,10 @@ services:
     depends_on:
       - redis
       - db
-    env_file:
-      - .env-development
+    environment:
+      - DATABASE_URL=postgres://postgres@db:5432
+      - REDIS_URL=redis://redis:6379/0
+      - SMTP_HOST=mailcatcher
     networks:
       - web
     volumes:
