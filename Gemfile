@@ -10,9 +10,9 @@ group :production do
   gem 'rollbar'
 end
 
-gem 'authlogic',  '~> 3.4.6'   # authentication
-gem 'cancancan', '~> 1.10'     # authorization, w/ Rails 4.2 support
-gem 'role_model', '~> 0.8.2'   # roles
+gem 'authlogic', '~> 4.4.2'  # authentication
+gem 'cancancan', '~> 2.3.0'  # authorization, w/ Rails 4.2 support
+gem 'role_model', '~> 0.8.2' # roles
 
 # payments
 gem 'stripe', '~> 1.58.0'
