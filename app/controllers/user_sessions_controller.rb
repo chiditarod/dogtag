@@ -22,7 +22,7 @@ class UserSessionsController < ApplicationController
   end
 
   def create
-    @user_session = UserSession.new(params[:user_session].to_h)
+    @user_session = UserSession.new(user_session_params.to_h)
     if @user_session.save
       flash[:notice] = t('login_success')
       redirect_back_or_default(account_url)
@@ -36,5 +36,12 @@ class UserSessionsController < ApplicationController
     current_user_session.destroy
     flash[:notice] = t('logout_success')
     redirect_back_or_default(home_url)
+  end
+
+  private
+
+  def user_session_params
+    # TODO: investigate require(:user_session)
+    params.permit(:user_session, :login, :password, :remember_me)
   end
 end
