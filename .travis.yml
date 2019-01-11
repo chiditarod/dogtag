@@ -1,28 +1,27 @@
 language: ruby
 
-sudo: false # explicitly use container-based architecture
+sudo: false
 
 branches:
   only:
     - master
 
 cache: bundler
-bundler_args: --without development # --path=~/.bundle
+
+bundler_args: '--without development'
 
 before_install:
-  - "echo 'gem: --no-ri --no-rdoc' > ~/.gemrc" # skip installing docs for gems
+  - 'echo "gem: --no-ri --no-rdoc" > ~/.gemrc'
 
 services:
   - postgresql
 
 addons:
-  postgresql: "9.4"
+  postgresql: '9.4'
 
 before_script:
-  # setup DB
-  - "psql -c 'create database dogtag_test;' -U postgres"
+  - psql -c 'create database dogtag_test;' -U postgres
   - bin/rake db:migrate RAILS_ENV=test
-  # codeclimate test coverage reporter
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
@@ -32,3 +31,12 @@ after_script:
 
 after_success:
   - bundle exec codeclimate-test-reporter
+
+deploy:
+  api_key:
+    secure: kNlxn+CZBCxoo816X6tXACkkpVHBaFbduOhW3CzenY3+NOmLXJnuHClWvIc4ZzQuAWsLWAG/wrRr0hhxtxyvyT4kU4vl6X9RsEDMKLT+W6tnoJcIUdymxYK4Iaz8bYkXHQw0iMg5N7NPiT9JXcWTPfVb1fKqfD82oln7r6arLGI=
+  app: dogtag-staging
+  on: master
+  run:
+    - 'sleep 30'
+    - 'rake db:migrate'
