@@ -124,3 +124,4 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed
 1. Upgrade Rails to pick up security fixes.
+
