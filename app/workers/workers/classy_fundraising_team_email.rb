@@ -1,3 +1,7 @@
+
+
+
+
 # Copyright (C) 2017 Devin Breen
 # This file is part of dogtag <https://github.com/chiditarod/dogtag>.
 #
@@ -14,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 module Workers
-  class TeamFinalizedEmail
+  class ClassyFundraisingTeamEmail
     include Sidekiq::Worker
     include Workers::Common
 
@@ -23,7 +27,7 @@ module Workers
 
     def run(job, data={})
       team = Team.includes(:user).includes(:race).find(job['team_id'])
-      UserMailer.team_finalized_email(team.user, team).deliver_now
+      UserMailer.classy_fundraising_team_created(team.user, team).deliver_now
       log("complete")
     end
   end

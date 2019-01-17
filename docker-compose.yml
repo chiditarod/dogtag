@@ -1,37 +1,30 @@
-version: "3.3"
+version: "3.4"
+
+x-default: &default
+  build: .
+  depends_on:
+    - redis
+    - db
+  environment:
+    - DATABASE_URL=postgres://postgres@db:5432
+    - REDIS_URL=redis://redis:6379/0
+    - SMTP_HOST=mailcatcher
+  networks:
+    - web
+  volumes:
+    - bundle_cache:/bundle_cache
+    - .:/app
+
 services:
+
   web:
-    build: .
-    depends_on:
-      - redis
-      - db
-    environment:
-      - DATABASE_URL=postgres://postgres@db:5432
-      - REDIS_URL=redis://redis:6379/0
-      - SMTP_HOST=mailcatcher
-    networks:
-      - web
-    volumes:
-      - bundle_cache:/bundle_cache
-      - .:/app
+    <<: *default
     ports:
       - "3000:3000"
 
   worker:
-    build: .
+    <<: *default
     command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
-    depends_on:
-      - redis
-      - db
-    environment:
-      - DATABASE_URL=postgres://postgres@db:5432
-      - REDIS_URL=redis://redis:6379/0
-      - SMTP_HOST=mailcatcher
-    networks:
-      - web
-    volumes:
-      - bundle_cache:/bundle_cache
-      - .:/app
 
   db:
     image: postgres:10.6-alpine

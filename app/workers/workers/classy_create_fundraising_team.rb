@@ -54,9 +54,7 @@ module Workers
       log[:message] = "Success adding a classy fundraising team for team id: #{team.id}"
       log("complete", log)
 
-      # create a fundraising page so this team can do something
-      new_job = { 'team_id' => team.id }
-      Workers::ClassyCreateFundraisingPage.perform_async(new_job)
+      Workers::ClassyFundraisingTeamEmail.perform_async( {'team_id' => team.id } )
     end
   end
 end

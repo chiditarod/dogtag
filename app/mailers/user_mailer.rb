@@ -34,7 +34,7 @@ class UserMailer < ActionMailer::Base
     mail(to: user.email, subject: 'dogTag Password Reset Instructions')
   end
 
-  def classy_is_ready(user, team)
+  def classy_fundraising_team_created(user, team)
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Fundraising is ready for #{team.name}")
   end
 
