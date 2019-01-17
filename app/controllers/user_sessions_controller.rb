@@ -33,7 +33,7 @@ class UserSessionsController < ApplicationController
   end
 
   def destroy
-    current_user_session.destroy
+    UserSession.find.destroy
     flash[:notice] = t('logout_success')
     redirect_back_or_default(home_url)
   end
@@ -41,6 +41,6 @@ class UserSessionsController < ApplicationController
   private
 
   def user_session_params
-    params.require(:user_session).permit(:login, :password, :remember_me)
+    params.require(:user_session).permit(:email, :password, :remember_me)
   end
 end

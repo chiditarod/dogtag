@@ -68,7 +68,7 @@ RSpec.configure do |config|
 
   # whitelist codeclimate.com so test coverage can be reported
   config.after(:suite) do
-    WebMock.disable_net_connect!(:allow => 'codeclimate.com')
+    WebMock.disable_net_connect!(allow: 'codeclimate.com')
   end
 end
 
@@ -82,7 +82,7 @@ require "cancan/matchers"
 # Global time constant for use with Timecop
 THE_TIME = Time.zone.local(1980, 9, 1, 12, 0, 0)
 
-def mock_login!(user)
+def login_user!(user)
   expect(user).to_not be_nil
   session = UserSession.create!(user, false)
   expect(session).to be_valid

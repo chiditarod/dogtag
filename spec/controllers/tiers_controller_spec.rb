@@ -58,7 +58,7 @@ describe TiersController do
     before do
       @valid_user = FactoryBot.create :admin_user
       activate_authlogic
-      mock_login! @valid_user
+      login_user! @valid_user
     end
 
     describe '#destroy' do

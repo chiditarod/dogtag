@@ -64,7 +64,7 @@ describe TeamsController do
 
     before do
       activate_authlogic
-      mock_login! the_user
+      login_user! the_user
     end
 
     describe '#new' do

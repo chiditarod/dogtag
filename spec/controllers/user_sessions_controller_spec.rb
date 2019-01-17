@@ -18,14 +18,9 @@ require 'spec_helper'
 describe UserSessionsController do
 
   context '[logged out]' do
-    before do
-      activate_authlogic
-    end
-
-    let(:user_session_hash) { FactoryBot.attributes_for :user_session }
-
     describe '#destroy' do
       before do
+        activate_authlogic
         delete :destroy
       end
 
@@ -39,30 +34,31 @@ describe UserSessionsController do
     end
 
     describe '#new' do
-      it 'returns http success and calls UserSession.new' do
-        session_stub = UserSession.new
-        expect(UserSession).to receive(:new).at_least(1).times.and_return session_stub
+      it 'returns http success' do
+        activate_authlogic
         get :new
         expect(response).to be_success
       end
     end
 
     describe '#create' do
+      let(:user) { FactoryBot.create(:user) }
+      let(:user_session_hash) do
+        {
+          email: user.email,
+          password: user.password,
+          remember_me: '1'
+        }
+      end
 
       context 'without user_session param' do
-        # todo: improve this to check for new_user_session_url w/o a redirect
         it 'returns http 400' do
           post :create
           expect(response.status).to eq(400)
         end
       end
 
-      context 'on successful save of the user_session' do
-        before do
-          mock = UserSession.new(user_session_hash)
-          allow(mock).to receive(:save) { true }
-          allow(UserSession).to receive(:new).and_return(mock)
-        end
+      context 'user_session saves successfully' do
 
         context 'with session[:return_to]' do
           before do
@@ -70,11 +66,9 @@ describe UserSessionsController do
             post :create, user_session: user_session_hash
           end
 
-          it 'redirects to session[:return_to]' do
-            expect(response).to redirect_to('http://somewhere')
-          end
-          it 'sets a flash notice' do
+          it 'sets flash and redirects to session[:return_to]' do
             expect(flash[:notice]).to eq(I18n.t 'login_success')
+            expect(response).to redirect_to('http://somewhere')
           end
         end
 
@@ -83,20 +77,22 @@ describe UserSessionsController do
             post :create, user_session: user_session_hash
           end
 
-          it 'redirects to account page' do
-            expect(response).to redirect_to(account_url)
-          end
-          it 'sets a flash notice' do
+          it 'sets flash and redirects to account page' do
             expect(flash[:notice]).to eq(I18n.t 'login_success')
+            expect(response).to redirect_to(account_url)
           end
         end
       end
 
       context 'on failure to save the user_session' do
+        let(:user_session_hash) do
+          {
+            email: user.email,
+            password: 'incorrect',
+            remember_me: '1'
+          }
+        end
         before do
-          session_stub = UserSession.new
-          expect(session_stub).to receive(:valid?).and_return false
-          expect(UserSession).to receive(:new).at_least(1).times.and_return session_stub
           post :create, :user_session => user_session_hash
         end
 
@@ -104,19 +100,19 @@ describe UserSessionsController do
           expect(flash[:error]).to eq(I18n.t 'login_failed')
         end
 
-        # todo: improve this to check for new_user_session_url w/o a redirect
         it 'renders user_session#new' do
           expect(response.status).to eq(200)
+          expect(response).to render_template(:new)
         end
       end
     end
   end
 
   context '[logged in]' do
+    let(:user) { FactoryBot.create :user }
     before do
-      @valid_user = FactoryBot.create :user
       activate_authlogic
-      mock_login! @valid_user
+      login_user! user
     end
 
     describe '#destroy' do
@@ -124,11 +120,8 @@ describe UserSessionsController do
         delete :destroy
       end
 
-      it 'sets flash notice' do
+      it 'sets flash notice and redirects to home' do
         expect(flash[:notice]).to eq(I18n.t 'logout_success')
-      end
-
-      it 'redirects to home' do
         expect(response).to redirect_to(home_url)
       end
     end
