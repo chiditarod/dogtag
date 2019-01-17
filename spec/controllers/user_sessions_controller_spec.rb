@@ -51,9 +51,9 @@ describe UserSessionsController do
 
       context 'without user_session param' do
         # todo: improve this to check for new_user_session_url w/o a redirect
-        it 'renders user_session#new' do
+        it 'returns http 400' do
           post :create
-          expect(response.status).to eq(200)
+          expect(response.status).to eq(400)
         end
       end
 
