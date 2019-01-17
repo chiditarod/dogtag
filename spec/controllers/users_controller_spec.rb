@@ -106,7 +106,7 @@ describe UsersController do
 
     before do
       activate_authlogic
-      mock_login! valid_user
+      login_user! valid_user
     end
 
     describe '#new' do

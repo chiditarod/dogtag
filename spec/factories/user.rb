@@ -24,6 +24,14 @@ FactoryBot.define do
     password { '12345678' }
     password_confirmation { '12345678' }
 
+    factory :authlogic_user do
+      password_salt { Authlogic::Random.hex_token }
+      crypted_password { Authlogic::CryptoProviders::SCrypt.encrypt(password + password_salt) }
+      persistence_token { Authlogic::Random.hex_token }
+      single_access_token { Authlogic::Random.friendly_token }
+      perishable_token { Authlogic::Random.friendly_token }
+    end
+
     factory :admin_user do
       roles { [:admin] }
     end

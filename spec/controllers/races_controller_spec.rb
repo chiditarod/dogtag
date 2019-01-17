@@ -60,7 +60,7 @@ describe RacesController do
     before do
       activate_authlogic
       user = FactoryBot.create :admin_user
-      mock_login! user
+      login_user! user
     end
 
     describe '#registrations' do

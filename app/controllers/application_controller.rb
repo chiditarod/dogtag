@@ -22,14 +22,7 @@ class ApplicationController < ActionController::Base
   force_ssl :if => :is_production?
 
   helper :all
-  helper_method :current_user_session, :current_user
-
-  # Fix for cancan and rails4
-  before_filter do
-    resource = controller_name.singularize.to_sym
-    method = "#{resource}_params"
-    params[resource] &&= send(method) if respond_to?(method, true)
-  end
+  helper_method :current_user
 
   # rescue_from ORDERING MATTERS.  Start generic first
   unless Rails.configuration.consider_all_requests_local
@@ -101,14 +94,9 @@ class ApplicationController < ActionController::Base
 
   ## user/session stuff -----------------------------------------
 
-  def current_user_session
-    return @current_user_session if defined? @current_user_session
-    @current_user_session = UserSession.find
-  end
-
   def current_user
     return @current_user if defined? @current_user
-    @current_user = current_user_session && current_user_session.record
+    @current_user = UserSession.find && UserSession.find.record
   end
 
   def require_user

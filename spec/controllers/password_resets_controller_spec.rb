@@ -173,7 +173,7 @@ describe PasswordResetsController do
     before do
       @valid_user = FactoryBot.create :user
       activate_authlogic
-      mock_login! @valid_user
+      login_user! @valid_user
     end
 
     shared_examples 'logged in behavior' do

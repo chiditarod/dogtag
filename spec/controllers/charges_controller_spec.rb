@@ -50,7 +50,7 @@ describe ChargesController do
     let(:the_user)   { valid_user }
     before do
       activate_authlogic
-      mock_login! the_user
+      login_user! the_user
     end
 
     describe '#create' do

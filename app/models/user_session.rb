@@ -14,4 +14,5 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UserSession < Authlogic::Session::Base
+  consecutive_failed_logins_limit 15
 end

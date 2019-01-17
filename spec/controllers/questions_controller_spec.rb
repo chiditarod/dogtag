@@ -40,7 +40,7 @@ describe QuestionsController do
     let (:valid_user) { FactoryBot.create :admin_user }
     before do
       activate_authlogic
-      mock_login! valid_user
+      login_user! valid_user
     end
 
     describe '#create' do
