@@ -33,10 +33,11 @@ after_success:
   - bundle exec codeclimate-test-reporter
 
 deploy:
-  api_key:
-    secure: kNlxn+CZBCxoo816X6tXACkkpVHBaFbduOhW3CzenY3+NOmLXJnuHClWvIc4ZzQuAWsLWAG/wrRr0hhxtxyvyT4kU4vl6X9RsEDMKLT+W6tnoJcIUdymxYK4Iaz8bYkXHQw0iMg5N7NPiT9JXcWTPfVb1fKqfD82oln7r6arLGI=
+  provider: heroku
   app: dogtag-staging
   on: master
+  api_key:
+    secure: kNlxn+CZBCxoo816X6tXACkkpVHBaFbduOhW3CzenY3+NOmLXJnuHClWvIc4ZzQuAWsLWAG/wrRr0hhxtxyvyT4kU4vl6X9RsEDMKLT+W6tnoJcIUdymxYK4Iaz8bYkXHQw0iMg5N7NPiT9JXcWTPfVb1fKqfD82oln7r6arLGI=
   run:
     - 'sleep 30'
     - 'rake db:migrate'
