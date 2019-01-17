@@ -4,8 +4,8 @@
 
 Good news!
 
-Your team fundraising page has been successfully created and pre-populated with
-your team details on the Classy fundraising platform. While fundraising is not
+Your fundraising team has been successfully created and pre-populated with
+your dogtag team details on the Classy fundraising platform. While fundraising is not
 required to participate in CHIditarod, it's the epicness of our teams and their
 fundraising powers that give CHIditarod such a powerful impact fighting hunger
 in Chicago.  We hope you will join us on this quest!
@@ -14,32 +14,32 @@ If you don't have a Classy account yet, you should see a "Claim Your Account"
 email from Classy in your inbox. Please open that email and follow the instructions
 to setup your Classy account. If you were already a Classy user, simply go to http://classy.org and login.
 
-Once you have logged in, you should see 2 entries on your profile page:
+Once you have logged in, you have 2 missions:
 
-1. Team: <%= @team.name %>
 
-This is your Team fundraising profile. There are many ways to customize your team profile:
+1. Create a Classy fundraising page.
 
-Team Fundraising Page: https://www.classy.org/team/<%= @team.classy_id %>
+This year we have an excellent set of PDF instructions to guide you in creating your
+Classy fundraising page(s).  Check it out!
+
+https://www.chiditarod.org/wp-content/uploads/2019/01/classy_fundraising_team_setup_instructions_chiditarod_2019.pdf
+
+
+2. Customize your Classy fundraising team.
+
+Your fundraising team is listed on your profile page. This is your Classy Team
+fundraising profile. There are many ways to customize your team profile:
+
+Team Fundraising Page: https://www.classy.org/team/<%= @team.classy_id %>?campaignId=<%= @team.race.classy_campaign_id %>
 Customize: https://www.classy.org/team/<%= @team.classy_id %>/dashboard/overview
 
-Tips and suggestions on how to manage your team:
+Tips and suggestions on how to manage your Classy fundraising team:
 https://support.classy.org/customer/en/portal/articles/2483368-how-to-manage-your-team-as-a-team-captain
 
 You can (and probably should) invite them to join your team and help fundraise with their own fundraising pages.
 All they need to do is click the main page link and click Join Team. Your team page will calculate how much
 your team has raised in total. Complete with your fellow teams for Most Epic Fundraiser and
 show the world via the leaderboard!
-
-2. Fundraiser: <%= @team.name %>
-
-Your Personal Page: https://www.classy.org/fundraiser/<%= @team.classy_fundraiser_page_id %>
-Customize: https://www.classy.org/fundraiser/<%= @team.classy_fundraiser_page_id %>/dashboard/overview
-
-This is the personal fundraising page we created for your Classy user account. We then linked it with your
-team fundraiser (#1, above). To get you started we added a suggested fundraising goal that you can modify.
-There are also many ways to customize your fundraiser page to tell your
-story. It's easy! After customizing your page, it is very easy to share it!
 
 Please try claiming your Classy account and rock that fundraiser! If you have issues, questions,
 or concerns, we are here to help.. please email us at fundraising@chiditarod.org

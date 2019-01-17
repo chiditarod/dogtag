@@ -30,11 +30,11 @@ describe UserMailer do
     end
   end
 
-  describe '#classy_is_ready' do
+  describe '#classy_fundraising_team_created' do
     let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }
     before do
-      UserMailer.classy_is_ready(user, team).deliver_now
+      UserMailer.classy_fundraising_team_created(user, team).deliver_now
     end
 
     it 'sets the subject' do

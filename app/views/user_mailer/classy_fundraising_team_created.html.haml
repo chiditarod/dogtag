@@ -19,15 +19,32 @@
       and login.
 
     %p
-      Once you have logged in, you should see 2 entries on your profile page:
+      Once you have logged in, you have 2 missions:
+
       %ol
 
         %li
           %h3
-            Team:
-            = @team.name
+            Create a Classy fundraising page
           %p
-            This is your Team fundraising profile.  There are many ways to
+            This year we have an excellent set of
+            %a{:href => "https://www.chiditarod.org/wp-content/uploads/2019/01/classy_fundraising_team_setup_instructions_chiditarod_2019.pdf"}
+              PDF instructions
+            to guide you in creating your
+            Classy fundraising page(s).
+            %a{:href => "https://www.chiditarod.org/wp-content/uploads/2019/01/classy_fundraising_team_setup_instructions_chiditarod_2019.pdf"}
+              Check it out!
+
+
+        %li
+          %h3
+            Customize your Classy fundraising team
+          %p
+            Your
+            %a{:href=>"https://www.classy.org/team/#{@team.classy_id}?campaignId=#{@team.race.classy_campaign_id}"}
+              fundraising team
+            is listed on your profile page.
+            This is your Classy Team fundraising profile.  There are many ways to
             %a{:href=>"https://www.classy.org/team/#{@team.classy_id}/dashboard/overview"}
               customize
             your team profile. Follow
@@ -35,7 +52,7 @@
               this link
             to get tips and suggestions on how to manage your team.
             You can (and probably should) invite your teammates to
-            %a{:href=>"https://www.classy.org/team/#{@team.classy_id}"}
+            %a{:href=>"https://www.classy.org/team/#{@team.classy_id}?campaignId=#{@team.race.classy_campaign_id}"}
               join your team
             and help fundraise with their own fundraising pages. All they need to do is click that link and click Join Team.
             Your team page will calculate how much your team has raised in total.  Complete with your fellow teams for
@@ -51,26 +68,7 @@
               %a{:href=> "https://support.classy.org/customer/en/portal/articles/2483368-how-to-manage-your-team-as-a-team-captain"}
                 Classy support page
 
-        %li
-          %h3
-            Fundraiser:
-            = @team.name
-          %p
-            This is the personal fundraising page we created for your Classy user account. We then linked it with your team fundraiser (#1 above).
-            To get you started we added a suggested fundraising goal that you can modify.
-            There are also many ways to
-            %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}/dashboard/overview"}
-              customize
-            your fundraiser page to tell your story.  It's easy! After customizing your page, it is very easy to
-            %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}"}
-              share it!
-          %ul
-            %li
-              %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}"}
-                Your Personal Page
-            %li
-              %a{:href=> "https://www.classy.org/fundraiser/#{@team.classy_fundraiser_page_id}/dashboard/overview"}
-                Customize
+
 
     %p
       Please try claiming your Classy account and rock that fundraiser!  If you have issues, questions, or concerns,
