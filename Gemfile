@@ -26,7 +26,7 @@ gem 'rack-tracker'
 # pub/sub
 gem 'wisper-activerecord'
 
-gem 'nokogiri', '~> 1.8.1'
+gem 'nokogiri'
 gem 'oj'
 
 gem 'rails', '~> 4.2'
