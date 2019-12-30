@@ -117,12 +117,13 @@
     - if current_user.is_any_of?(:admin, :operator)
       %h3
         %i.fa.fa-user
-          = t('.captain')
+        = t('.captain')
       = link_to user_url(@team.user.id) do
         = @team.user.first_name
         = @team.user.last_name
       %br
-      = @team.user.email
+      = mail_to(@team.user.email) do
+        = @team.user.email
 
     %h2
       - if @team.needs_people?
