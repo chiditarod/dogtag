@@ -53,7 +53,8 @@ class Team < ActiveRecord::Base
     "11th year OGs",
     "12th year sages",
     "13th year fingers crossed",
-    "14th year clumsy adolescents"
+    "14th year clumsy adolescents",
+    "15th year student drivers"
   ]
 
   def unfinalized

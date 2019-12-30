@@ -40,7 +40,8 @@ en:
   edit: Edit
   register: Register
   register_for: "Register for %{race_name}"
-
+  global_questions: "Questions? Email <a href='mailto:registration@chiditarod.org'>registration@chiditarod.org</a>"
+  store_instructions: "All products are for <u><strong>Pickup Only</strong></u> on race day or during mandatory racer registration. No shipping is available. Buying these products is completely optional and unrelated to completing your team registration."
 
   login: Login
   signup: Signup
@@ -160,8 +161,7 @@ en:
       spots_remaining: "There are %{remaining} spots remaining"
       waitlist_count: "Waitlist count: %{num}"
       instructions: |
-        Provide your team info first, then your racers on the next page.
-        Please write down your team name somewhere. This is a very important piece of information for you to remember.
+        Provide your basic team info here. This data is editable up until registration closes.
     edit:
       title: "Edit team for %{race_name}"
 
@@ -173,7 +173,7 @@ en:
       title: Manage your teams
       registering_for_race: "You are registering for %{race_name}"
       instructions: |
-        Use the dogPen to create and manage your teams. You can create and edit your team only
+        Manage your teams here. You can create and edit your team only
         when the race registration window is open.
         If you are a larger "team" made up of
         multiple carts, you'd register one team for each cart.
@@ -190,9 +190,8 @@ en:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
     form:
-      instructions: This information is editable up until registration closes.
       name: Name your team
-      name_instructions: After naming your team, you can register it in a race.
+      name_instructions: "If you plan on having more than 1 team in your ensemble, you must name them the same and use numerals, e.g. Vanguard #1, Vanguard #2, etc"
       # from reg
       name: What's your team name?
       description: Sum up your team in a montage of prose

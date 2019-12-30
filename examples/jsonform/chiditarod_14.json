@@ -1,0 +1,317 @@
+{
+  "schema":{
+    "type":"object",
+    "properties":{
+      "twitter":{
+        "title":"Got <a href='https://twitter.com/chiditarod' target='_blank'>Twitter</a>?",
+        "type":"string",
+        "description":"Does your team (or prominent team member have a twitter username or hashtag? Include @ or #, respectively.",
+        "required":false,
+        "pattern":"^[#@][A-Za-z0-9_]+$",
+        "maxLength":16
+      },
+      "racer-type":{
+        "title":"What type of team are you?",
+        "type":"string",
+        "description":"Most teams should choose racer. See the <a href='http://www.chiditarod.org/rules/#carts' target='_blank'>construction rules</a> for guidance. We love art carts and you should to, but you do have to present something super rad and have it approved.",
+        "enum":[
+          "Racer",
+          "Art Cart"
+        ],
+        "required":true
+      },
+      "private-comments":{
+        "title":"Any private comments to Coreganizers?",
+        "type":"string",
+        "required":false
+      },
+      "buddies":{
+        "title":"Did you want to race alongside any other teams or people? Who?",
+        "type":"string",
+        "description":"We can't guarantee anything, but we'll try to have you run together. Choosing this removes your sabotage privileges and your ability to win any prizes for time.",
+        "required":false
+      },
+      "explain-theme":{
+        "title":"Your theme, what's it all about?",
+        "type":"string",
+        "description":"What theme are you planning, and what sorts of ideas do you have for creating it? You must provide us with at least some information.",
+        "required":true
+      },
+      "primary-inspiration":{
+        "title":"What most closely matches your primary inspiration for racing in CHIditarod?",
+        "type":"string",
+        "description":"We want to know what really gets you revved up to race shopping carts in the freezing cold.",
+        "required":true,
+        "default":"",
+        "enum":[
+          "Charity in general",
+          "Fundraising",
+          "Food driving",
+          "1st Place",
+          "Spectacle",
+          "Being all Artsy",
+          "Industrial Design",
+          "Mechanical Design",
+          "Creative theming",
+          "Participatory culture",
+          "Building cool stuff",
+          "Excelling in contests",
+          "Winning",
+          "Pleasure",
+          "Sabotage",
+          "The experience, man",
+          "It is challenging",
+          "Doing a good thing but doing it all wrong",
+          "Tom LaPorte",
+          "I am heavily uninspired"
+        ]
+      },
+      "secondary-inspiration":{
+        "title":"What is your secondary inspiration?",
+        "type":"string",
+        "description":"What comes next?",
+        "required":true,
+        "default":"",
+        "enum":[
+          "Charity in general",
+          "Fundraising",
+          "Food driving",
+          "1st Place",
+          "Spectacle",
+          "Being all Artsy",
+          "Industrial Design",
+          "Mechanical Design",
+          "Creative theming",
+          "Participatory culture",
+          "Building cool stuff",
+          "Excelling in contests",
+          "Winning",
+          "Pleasure",
+          "Sabotage",
+          "The experience, man",
+          "It is challenging",
+          "Doing a good thing but doing it all wrong",
+          "Tom LaPorte",
+          "I am heavily uninspired"
+        ]
+      },
+      "agree-to-core-philosophy":{
+        "type":"string",
+        "title":"Did you read and will you follow the <a href='http://www.chiditarod.org/rules#core-philosophy' target='_blank'>Core Philosophy</a>?",
+        "description":"CHIditarod takes this very seriously, and feels you should, too. Do you understand that violations will result in you not being allowed to participate?",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-to-rules":{
+        "type":"string",
+        "title":"Did you read and will you follow the <a href='http://www.chiditarod.org/rules/' target='_blank'>race rules</a>?",
+        "description":"Ahem, this also means, do you understand you can be DQ'd if you do not pay attention to all the rules? They change every year. Reading the <a href='http://www.chiditarod.org/faq/' target='_blank'>F.A.Q.</a> will make you a better racer, and more attractive.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-to-sabotage":{
+        "type":"string",
+        "title":"Have you read and agreed to the <a href='http://chiditarod.org/sabotage-guidelines' target='_blank'>sabotage rules</a>?",
+        "description":"To review: The sabotage rules are indeed rules. Don't spoil anyone's day by being a jerk and getting DQ'd.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-to-cart-deposit":{
+        "type":"string",
+        "title":"Have you read and agreed to the <a href='http://www.chiditarod.org/rules/#cartdeposit' target='_blank'>cart deposit rules</a>?",
+        "description":"Make sure you read the rules. Once again we are offering <u>overnight cart parking</u> under specific guidelines.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-to-cart-food-poundage":{
+        "type":"string",
+        "title":"Do you agree to bring <a href='http://www.chiditarod.org/register/#food-drive' target='_blank'>69+ pounds of food</a>?",
+        "description":"This year's mimumum is 69 lbs, but don't stop there.. with your help we can bust all prior food drive records!  You must bring your food to the <u>starting line check-in</u>. If you plan on raising GOBS of food, <a href='mailto:info@chiditarod.org?subject=We%20are%20raising%20GOBS%20of%20food'>contact us</a> for special pre-drop arrangements to make your life easier.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-not-a-donation":{
+        "type":"string",
+        "title":"Do you understand the nature of your registration fee?",
+        "description":"The money you're paying is a fee to participate in the CHIditarod, not a donation to the CHIditarod Foundation.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "agree-to-orientation":{
+        "type":"string",
+        "title":"Do you agree to attend the pre-race orientation?",
+        "description":"Feb 21st @ 7:30 pm is the <u>mandatory</u> racer meeting. Location details will be emailed to you in advance. This is the only instance of the racer meeting and at least 1 person from each team must attend, or YOU CAN NOT RACE. You are welcome to bring more than 1 person but we need at least 1.  If your team is coming from more than 100 miles away, please email <a href='mailto:liz@chiditarod.org?subject=Racer%20meeting%20alternative'>liz@chiditarod.org</a> to make other arrangements.",
+        "required":true,
+        "pattern":"^Yes$",
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "flame-effects":{
+        "type":"string",
+        "title":"Fire Effects",
+        "description":"Do you want to have ANY fire on your cart? If so, describe in detail in the private comments. Must be approved. You also agree to bring a charged fire extinguisher.",
+        "required":true,
+        "enum":[
+          "No",
+          "Yes"
+        ]
+      },
+      "fundraising":{
+        "type":"string",
+        "title":"Do you plan on <a href='http://www.chiditarod.org/fundraising/' target='_blank'>Fundraising</a>?! Say yes!",
+        "description":"We want to help however we can to make fundraising for the race easy, fun, and rewarding.  Did you know that many companies offer matching grant programs? It's as easy as contacting your HR department.",
+        "required":true,
+        "enum":[
+          "Yes!",
+          "Yes, and I will ask my company about their matching grant programs",
+          "Probably",
+          "No fundraising for me"
+        ]
+      },
+      "party-bus-interest":{
+        "type":"string",
+        "title":"Shuttle Bus Interest",
+        "description":"We are hiring buses to take teams (not carts) from the finish line to the awards ceremony (just like last year). How interested is your team in riding the shuttle from the finish line to the awards ceremony? This is a one-way trip, meaning you will have to get your own transportation back to the finish line (but it’s not very far). We hear it was a good time..",
+        "required":true,
+        "enum":[
+          "No Interest",
+          "Maybe",
+          "Definitely"
+        ]
+      },
+      "cart-parking":{
+        "type":"string",
+        "title":"Overnight Cart Parking",
+        "description":"We will again offer the ability to park your cart at the finish line (with caveats). Which of these do you anticipate doing with your cart once you arrive at the finish line?<ul><li>Long Term - Park at finish line overnight, pickup next day between 12 pm - 2 pm SHARP</li><li>Short Term - Park at finish line during awards ceremony; pick up that night afterwards</li><li>Super Short Term - Take cart away from finish line immediately</li></ul>",
+        "required":true,
+        "enum":[
+          "Long Term",
+          "Short Term",
+          "Super Short Term"
+        ]
+      },
+      "party-bus-seats":{
+        "type":"string",
+        "title":"Shuttle Bus Seats",
+        "description":"How many seats do you want reserved? Please be as accurate as possible so we rent the right number of busses. If you do not reserve a seat, you are not guaranteed a spot.",
+        "required":true,
+        "enum":[
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+        ]
+      },
+      "referred-by":{
+        "type":"string",
+        "title":"How did you hear about CHIditarod?",
+        "description":"Was it a friend, specific website, specific social media channel, another organization, etc.",
+        "required":false
+      }
+    }
+  },
+  "form":[
+    {
+      "type":"fieldset",
+      "title":"Let's get to know each other",
+      "items":[
+        "racer-type",
+        {
+          "key":"explain-theme",
+          "type":"textarea"
+        },
+        "primary-inspiration",
+        "secondary-inspiration",
+        "twitter",
+        "buddies",
+        "referred-by"
+      ]
+    },
+    {
+      "type":"fieldset",
+      "title":"Ok, down to business",
+      "items":[
+        {
+          "type":"help",
+          "helpvalue":"The primary mission of the CHIditarod is to harness the love and energy of Chicagoans to forge positive connections and social good across our communities. The annual CHIditarod race aims to accomplish this goal by fostering a culture of mutual care and creative community engagement.<br/><br/>Flagrant violation of these core philosophies will result in exclusion from the event. Examples of such violations include, but are not limited to, disrespecting others or the property of others, performing racial or cultural stereotypes, participating in or promoting hate speech, enacting sabotage that borders on assault, and wasting food for sabotage or other ill-conceived purposes. Such behaviors bring harm to members of our community and are therefore harmful to all of us."
+        },
+        "agree-to-core-philosophy",
+        "agree-to-rules",
+        "agree-to-sabotage",
+        "agree-to-cart-deposit",
+        "agree-to-cart-food-poundage",
+        {
+          "key":"agree-not-a-donation",
+          "inlinetitle":"I understand that my registration fees are not a donation to the foundation."
+        },
+        {
+          "key":"agree-to-orientation",
+          "inlinetitle":"I Agree"
+        },
+        "flame-effects",
+        {
+          "key":"private-comments",
+          "type":"textarea"
+        }
+      ]
+    },
+    {
+      "type":"fieldset",
+      "title":"FunDraising!",
+      "items":[
+        {
+          "type":"help",
+          "helpvalue":"The CHIditarod's impact goes far beyond a single's day of fun. Thanks to YOU -- our paricipants -- CHIditarod raises thousands of dollars each year for our Microgrant Program!  It funds the hunger-fighting missions of Chicago-area nonprofits. $121,500 to date."
+        },
+        "fundraising"
+      ]
+    },
+    {
+      "type":"fieldset",
+      "title":"Post-race shenannigans",
+      "items":[
+        {
+          "key":"cart-parking"
+        },
+        {
+          "key":"party-bus-interest"
+        },
+        {
+          "key":"party-bus-seats"
+        }
+      ]
+    },
+    {
+      "type":"submit",
+      "title":"Save"
+    }
+  ]
+}
