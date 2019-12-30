@@ -41,6 +41,7 @@ en:
   register: Register
   register_for: "Register for %{race_name}"
   global_questions: "Questions? Email <a href='mailto:registration@chiditarod.org'>registration@chiditarod.org</a>"
+  store_instructions: "All products are for <u><strong>Pickup Only</strong></u> on race day or during mandatory racer registration. No shipping is available. Buying these products is completely optional and unrelated to completing your team registration."
 
   login: Login
   signup: Signup

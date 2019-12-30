@@ -26,7 +26,7 @@ class QuestionsController < ApplicationController
     :'racer-type', :'primary-inspiration', :'secondary-inspiration', :'twitter', :'buddies', :'private-comments', :'explain-theme',
     :'agree-to-core-philosophy', :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
     :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'referred-by',
-    :'party-bus-interest', :'party-bus-seats', :'cart-parking', :'collaborating'
+    :'party-bus-interest', :'party-bus-seats', :'cart-parking', :'collaborating', :'raced-in-past'
   ]
 
   # this method loads the jsonform data from the team's race
