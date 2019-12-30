@@ -46,14 +46,13 @@ class ClassyClient
     put("/campaigns/#{campaign_id}", body)
   end
 
+  # https://developers.classy.org/api-docs/v2/index.html#member-member-post
   def create_member(organization_id, first, last, email)
     # only the required things
     body = {
       "first_name" => first,
       "last_name" => last,
-      "email_address" => email,
-      "date_of_birth" => "",
-      "gender" => ""
+      "email_address" => email
     }
     post("/organizations/#{organization_id}/members", body)
   end
@@ -64,6 +63,7 @@ class ClassyClient
     nil
   end
 
+  # https://developers.classy.org/api-docs/v2/index.html#fundraising-teams-fundraising-team-post
   def create_fundraising_team(campaign_id, name, description, team_lead_id, goal)
     # only the required things
     body = {
