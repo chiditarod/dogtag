@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.5.3"
+ruby "2.5.7"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -49,7 +49,7 @@ gem 'awesome_print'
 gem 'httpclient'
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-gem 'therubyracer', platforms: :ruby
+gem 'libv8'
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
