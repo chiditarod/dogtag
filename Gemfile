@@ -17,8 +17,8 @@ gem 'role_model', '~> 0.8.2' # roles
 # payments
 gem 'stripe', '~> 1.58.0'
 
-gem 'pg', '~> 0.18.4'           # postgres for heroku
-gem 'json-schema'               # validate incoming jsonform
+gem 'pg', '~> 0.20.0'
+gem 'json-schema'
 
 # google analytics
 gem 'rack-tracker'
@@ -33,13 +33,13 @@ gem 'rails', '~> 4.2'
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 4.0.3'
+gem 'sass-rails'
 
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
 
 # Use CoffeeScript for .js.coffee assets and views
-gem 'coffee-rails', '~> 4.0.1'
+gem 'coffee-rails'
 
 gem 'haml'
 gem 'haml-rails'

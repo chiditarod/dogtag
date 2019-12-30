@@ -173,7 +173,7 @@ GEM
     nokogiri (1.10.7)
       mini_portile2 (~> 2.4.0)
     oj (3.10.0)
-    pg (0.18.4)
+    pg (0.20.0)
     power_assert (1.1.5)
     public_suffix (4.0.2)
     rack (1.6.12)
@@ -356,7 +356,7 @@ DEPENDENCIES
   cancancan (~> 2.3.0)
   capistrano
   codeclimate-test-reporter
-  coffee-rails (~> 4.0.1)
+  coffee-rails
   dotenv-rails
   factory_bot_rails
   haml
@@ -371,7 +371,7 @@ DEPENDENCIES
   newrelic_rpm
   nokogiri
   oj
-  pg (~> 0.18.4)
+  pg (~> 0.20.0)
   rack-tracker
   rails (~> 4.2)
   rails_12factor
@@ -381,7 +381,7 @@ DEPENDENCIES
   rollbar
   rspec
   rspec-rails
-  sass-rails (~> 4.0.3)
+  sass-rails
   sdoc
   sidekiq
   sidekiq-failures
