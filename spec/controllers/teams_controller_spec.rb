@@ -365,6 +365,12 @@ describe TeamsController do
           expect(response).to be_success
         end
 
+        it 'does not cache this page' do
+          get :show, :id => team.id
+          expect(response.headers['Cache-Control']).to eq('no-cache, no-store, max-age=0, must-revalidate')
+          expect(response.headers['Pragma']).to eq('no-cache')
+        end
+
         context "if the team is finalized" do
           let(:team) { FactoryBot.create :finalized_team }
 
