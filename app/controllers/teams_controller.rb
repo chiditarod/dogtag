@@ -15,6 +15,8 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TeamsController < ApplicationController
   before_filter :require_user
+  before_filter :set_no_cache, only: %w{show edit}
+
   load_and_authorize_resource
 
   def index
