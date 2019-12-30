@@ -31,6 +31,13 @@ CLASSY_CLIENT_SECRET=...       # optional
 ROLLBAR_ACCESS_TOKEN=...       # optional
 ```
 
+## Custom questions using jsonform
+
+Each race has a `jsonform` field. This field can contain a [jsonform](https://github.com/jsonform/jsonform) schema that is consumed and rendered as questions to the end-user during their team signup. Their responses are then saved into their team record and are included when exporting a CSV.
+
+- __NOTE:__ There's a hack that requires addition to `HACK_PARAM_WHITELIST` any time a new jsonform question is added.  See [https://github.com/chiditarod/dogtag/issues/40](https://github.com/chiditarod/dogtag/issues/40).
+- For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
+
 ## Developer Setup
 
 *Tested against MacOS Mojave (10.14.2)*
@@ -103,17 +110,15 @@ docker cp /local/file.dump $(docker-compose ps -q  db):/file.dump
 docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development /file.dump
 ```
 
+## Basic Deploy Plan
 
-Basic Deploy Plan
------------------
 1. Test locally using TEST Stripe credentials.
 2. Deploy to a Heroku staging environment using TEST credentials.
 3. Deploy to production using PROD credentials.
 4. Tail them logs.
 
+## Yearly Cycle
 
-Yearly Cycle
-------------
 Here is an outline of the yearly cycle for using Dogtag with a single event ([CHIditarod](http://www.chiditarod.org), in our case).
 
 1. Do a development cycle to incorporate any new features.
@@ -124,4 +129,3 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed
 1. Upgrade Rails to pick up security fixes.
-

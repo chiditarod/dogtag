@@ -1,14 +1,16 @@
 - if @team.race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-  .row
-    .col-sm-12
-      = t('.instructions')
+
   .row
     .col-sm-12
       = form_for @team, :html => {:role => 'form', :class => 'form-horizontal'} do |f|
 
         .form-group
           .col-sm-6.col-md-5.control-label= label_tag :name, t('.name')
-          .col-sm-6.col-md-7= f.text_field :name, :class => 'form-control'
+          .col-sm-6.col-md-7
+            = f.text_field :name, :class => 'form-control'
+            %br
+            %small
+              = t('.name_instructions')
 
         .form-group
           .col-sm-6.col-md-5.control-label= label_tag :description, t('.description')
