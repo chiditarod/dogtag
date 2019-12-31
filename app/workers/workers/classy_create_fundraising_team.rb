@@ -50,7 +50,7 @@ module Workers
       result = cc.create_fundraising_team(campaign_id, team.name, team.description, user.classy_id, default_goal)
       team.classy_id = result['id']
       team.save!
-      log[:response] = result
+      log[:response] = result.to_json
       log[:message] = "Success adding a classy fundraising team for team id: #{team.id}"
       log("complete", log)
 
