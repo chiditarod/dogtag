@@ -129,8 +129,16 @@ describe Workers::ClassyCreateFundraisingTeam do
         expect(valid_cc).to receive(:create_fundraising_team).and_return(json)
       end
 
+      let(:log) do
+        {
+          job: {'team_id' => team.id},
+          response: json.to_json,
+          message: "Success adding a classy fundraising team for team id: #{team.id}"
+        }
+      end
+
       it 'saves the classy_id to the team, saves the team, logs complete, and enqueues Workers::ClassyFundraisingTeamEmail' do
-        expect(worker).to receive(:log).with("complete", any_args)
+        expect(worker).to receive(:log).with("complete", log)
         expect(Workers::ClassyFundraisingTeamEmail).to receive(:perform_async)
         worker.perform({'team_id' => team.id})
         expect(team.reload.classy_id).to eq(json['id'])
