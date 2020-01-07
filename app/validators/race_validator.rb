@@ -17,9 +17,19 @@ class RaceValidator < ActiveModel::Validator
 
   def validate(record)
     validate_dates(record) if datetimes_parse?(record)
+    validate_jsonform(record)
   end
 
   private
+
+  def validate_jsonform(record)
+    return unless record.jsonform.present?
+    begin
+      JSON.parse(record.jsonform)
+    rescue JSON::ParserError => ex
+      record.errors.add(:jsonform, ex.message)
+    end
+  end
 
   def validate_dates(record)
     unless record.final_edits_close < record.race_datetime
@@ -37,7 +47,7 @@ class RaceValidator < ActiveModel::Validator
     dates = [:race_datetime, :registration_open, :registration_close]
     dates.each do |d|
       begin
-        DateTime.parse record.__send__(d).to_s
+        DateTime.parse(record.__send__(d).to_s)
       rescue ArgumentError
         record.errors.add(d, 'must be a valid datetime')
       end

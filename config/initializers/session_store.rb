@@ -15,4 +15,4 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Be sure to restart your server when you modify this file.
 
-RailsSkeleton::Application.config.session_store :cookie_store, key: '_rails-skeleton_session'
+RailsSkeleton::Application.config.session_store :cache_store, key: '_dogtag_session'
