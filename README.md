@@ -56,14 +56,23 @@ rbenv install $(cat .ruby-version)
 gem install bundler
 ```
 
-### Install Gems
+### Installation
 
-```bash
+#### MacOs 12.1
+
+```sh
 # MacOS 12.1
-brew install libv8 libpq
-bundle install
+xcode-select --install
+softwareupdate --all --install --force
 
-# Prior versions
+brew install readline openssl v8 libpq
+gem install libv8 --platform="x86_64-darwin-20"
+bundle install
+```
+
+#### Prior MacOS Versions
+
+```sh
 brew install libffi libpq
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libffi/lib/pkgconfig"
 bundle config --local build.ffi --with-ldflags="-L/usr/local/opt/libffi/lib"
@@ -144,4 +153,22 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 ```
 export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
 rbenv install 2.7.5
+```
+
+### Scratch Ruby Upgrade notes
+
+```sh
+bundle config build.thin --with-cflags="-Wno-error=implicit-function-declaration"
+
+gem install libv8 -v '8.4.255.0' -- --with-v8-lib
+
+bundle config build.libv8 --with-system-v8
+gem install libv8 -v '8.4.255.0' --with-system-v8
+
+CC='clang -fdeclspec' gem install libv8 -v '8.4.255.0'
+CC='clang -fdeclspec' gem install libv8 -v '8.4.255.0' --with-system-v8
+
+# bundle config build.libv8 --platform="x86_64-darwin-20"
+
+gem install bundler -v '2.1.4'
 ```
