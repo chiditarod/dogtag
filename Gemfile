@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.7.5"
+ruby "3.1.0"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -29,7 +29,7 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 4.2'
+gem 'rails', '~> 5.0.7'
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
@@ -49,7 +49,8 @@ gem 'awesome_print'
 gem 'httpclient'
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-gem 'libv8'
+#gem 'libv8'
+gem 'libv8-node'
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
@@ -58,7 +59,8 @@ gem 'jquery-rails'
 #gem 'turbolinks'
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 1.2'
+gem 'jbuilder'
+#gem 'jbuilder', '~> 1.2'
 
 # workers
 gem 'sidekiq'
@@ -68,7 +70,7 @@ gem 'redis-namespace'
 group :development do
   gem 'capistrano'
   gem 'mailcatcher'
-  gem 'web-console', '~> 3.0'
+  gem 'web-console' #, '~> 3.0'
 end
 
 group :test do
@@ -100,7 +102,8 @@ end
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
 # Use unicorn as the app server (heroku)
-gem 'unicorn', '~> 5.2'
+gem 'unicorn'
+#gem 'unicorn', '~> 5.2'
 
 # Use byebug debugger
 # gem 'byebug', group: [:development, :test]
