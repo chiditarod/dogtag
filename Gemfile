@@ -88,7 +88,6 @@ group :test do
 end
 
 group :test, :development do
-  gem 'test_after_commit' # required to test wisper pub/sub until rails 5+
   gem 'factory_bot_rails'
   gem 'dotenv-rails'
 end

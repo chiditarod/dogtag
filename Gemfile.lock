@@ -327,8 +327,6 @@ GEM
     temple (0.8.2)
     test-unit (3.5.3)
       power_assert
-    test_after_commit (1.1.0)
-      activerecord (>= 3.2)
     thin (1.8.1)
       daemons (~> 1.0, >= 1.0.9)
       eventmachine (~> 1.0, >= 1.0.4)
@@ -411,7 +409,6 @@ DEPENDENCIES
   stripe (~> 1.58.0)
   stripe-ruby-mock (~> 2.4.1)
   test-unit
-  test_after_commit
   timecop
   uglifier (>= 1.3.0)
   unicorn
