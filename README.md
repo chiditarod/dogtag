@@ -59,10 +59,16 @@ gem install bundler
 ### Install Gems
 
 ```bash
+# MacOS 12.1
+brew install libv8 libpq
+bundle install
+
+# Prior versions
 brew install libffi libpq
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/opt/libffi/lib/pkgconfig"
 bundle config --local build.ffi --with-ldflags="-L/usr/local/opt/libffi/lib"
 bundle config --local build.pg --with-opt-dir="/usr/local/opt/libpq"
+bundle install
 ```
 
 ### Build and run all containers
@@ -129,3 +135,13 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed
 1. Upgrade Rails to pick up security fixes.
+
+
+## Developers
+
+### Upgrade Ruby
+
+```
+export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
+rbenv install 2.7.5
+```

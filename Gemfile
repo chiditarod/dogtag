@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.5.7"
+ruby "2.7.5"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -72,6 +72,7 @@ group :development do
 end
 
 group :test do
+  gem 'rails-controller-testing'
   gem 'test-unit'
   gem 'rspec'
   gem 'rspec-rails'
@@ -101,5 +102,5 @@ end
 # Use unicorn as the app server (heroku)
 gem 'unicorn', '~> 5.2'
 
-# Use debugger
-# gem 'debugger', group: [:development, :test]
+# Use byebug debugger
+# gem 'byebug', group: [:development, :test]
