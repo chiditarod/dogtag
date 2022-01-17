@@ -39,7 +39,7 @@ describe Race do
     context 'registration_open is after registration_close' do
       let(:race) do
         FactoryBot.build :race, race_datetime: today + 4.weeks,
-          registration_open: (today + 3.week), registration_close: (today + 1.weeks), final_edits_close: (today + 3.weeks)
+          registration_open: (today + 3.weeks), registration_close: (today + 1.week), final_edits_close: (today + 3.weeks)
       end
 
       it 'fails validation' do

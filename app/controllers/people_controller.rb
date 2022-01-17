@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class PeopleController < ApplicationController
-  before_filter :require_user
+  before_action :require_user
   load_and_authorize_resource
 
   def destroy
@@ -41,7 +41,7 @@ class PeopleController < ApplicationController
   end
 
   def create
-    return render :status => 400 if params[:person].blank?
+    return render :status => :bad_request if params[:person].blank?
 
     @team = Team.find params[:team_id]
     @person = Person.new(person_params)

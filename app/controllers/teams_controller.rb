@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TeamsController < ApplicationController
-  before_filter :require_user
-  before_filter :set_no_cache, only: %w{show edit}
+  before_action :require_user
+  before_action :set_no_cache, only: %w{show edit}
 
   load_and_authorize_resource
 
@@ -44,7 +44,7 @@ class TeamsController < ApplicationController
   end
 
   def create
-    return render :status => 400 if params[:team].blank?
+    return render :status => :bad_request if params[:team].blank?
 
     @team = Team.new(team_params)
     @team.subscribe(TeamAuditor.new)

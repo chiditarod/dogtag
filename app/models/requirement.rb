@@ -15,10 +15,10 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Base model to be overridden by more specific requirements.
 class Requirement < ApplicationRecord
-  validates_presence_of :name
+  validates :name, presence: true
 
   belongs_to :race
-  validates_presence_of :race
+  validates :race, presence: true
 
   has_many :completed_requirements
   has_many :teams, :through => :completed_requirements
@@ -37,7 +37,7 @@ class Requirement < ApplicationRecord
 
   def cr_for(team)
     record = CompletedRequirement.where(:team_id => team.id, :requirement_id => id).first
-    record.present? ? record : nil
+    record.presence
   end
 
   def completed?(team)
