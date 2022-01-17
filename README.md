@@ -68,6 +68,8 @@ softwareupdate --all --install --force
 brew install readline openssl v8 libpq
 gem install libv8 --platform="x86_64-darwin-20"
 bundle install
+bundle exec bin/rails db:migrate RAILS_ENV=test
+rspec
 ```
 
 #### Prior MacOS Versions
