@@ -15,9 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Generates code coverage report in /coverage/ when specs are run
 require 'simplecov'
-SimpleCov.start 'rails' do
- add_filter "/vendor/"
-end
+#SimpleCov.start
 
 ENV["RAILS_ENV"] ||= 'test'
 

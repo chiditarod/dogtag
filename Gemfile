@@ -17,7 +17,7 @@ gem 'role_model', '~> 0.8.2' # roles
 # payments
 gem 'stripe', '~> 1.58.0'
 
-gem 'pg', '~> 0.20.0'
+gem 'pg'
 gem 'json-schema'
 
 # google analytics
@@ -30,10 +30,17 @@ gem 'nokogiri'
 gem 'oj'
 
 gem 'rails', '~> 5.0.7'
+
+# Use unicorn as the app server (heroku)
+gem 'unicorn'
+# Use Puma as the app server
+# see https://yuanjiang.space/switch-rails-server-from-unicorn-to-puma
+# gem 'puma', '~> 3.0'
+
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
-gem 'sass-rails'
+gem 'sass-rails', '~> 5.0'
 
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
@@ -55,12 +62,10 @@ gem 'libv8-node'
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 
-# Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
-#gem 'turbolinks'
-
+# Turbolinks makes navigating your web application faster. Read more: https://github.com/turbolinks/turbolinks
+#gem 'turbolinks', '~> 5'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
 gem 'jbuilder'
-#gem 'jbuilder', '~> 1.2'
 
 # workers
 gem 'sidekiq'
@@ -68,16 +73,16 @@ gem 'sidekiq-failures'
 gem 'redis-namespace'
 
 group :development do
+  # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
+  gem 'web-console'
+  gem 'listen'
   gem 'capistrano'
   gem 'mailcatcher'
-  gem 'web-console' #, '~> 3.0'
 end
 
 group :test do
   gem 'rails-controller-testing'
   gem 'test-unit'
-  gem 'rspec'
-  gem 'rspec-rails'
   gem 'wisper-rspec'
   gem 'webmock'
   gem 'simplecov'
@@ -88,8 +93,11 @@ group :test do
 end
 
 group :test, :development do
+  gem 'rspec-rails'
   gem 'factory_bot_rails'
   gem 'dotenv-rails'
+  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem 'byebug', platform: :mri
 end
 
 group :doc do
@@ -99,10 +107,6 @@ end
 
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
-
-# Use unicorn as the app server (heroku)
-gem 'unicorn'
-#gem 'unicorn', '~> 5.2'
 
 # Use byebug debugger
 # gem 'byebug', group: [:development, :test]

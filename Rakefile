@@ -4,4 +4,4 @@
 require File.expand_path('../config/application', __FILE__)
 require 'rollbar/rake_tasks'
 
-RailsSkeleton::Application.load_tasks
+Rails::Application.load_tasks
