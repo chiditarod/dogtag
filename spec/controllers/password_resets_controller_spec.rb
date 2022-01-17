@@ -55,7 +55,7 @@ describe PasswordResetsController do
     describe '#edit' do
 
       context 'when perishable_token does not find a user' do
-        let(:endpoint) { lambda { get :edit, id: '12345' } }
+        let(:endpoint) { lambda { get :edit, params: { id: '12345' } } }
         include_examples 'perishable token not found in db'
       end
 
@@ -63,7 +63,7 @@ describe PasswordResetsController do
         let(:user) { double('user').as_null_object }
         before do
           expect(User).to receive(:find_using_perishable_token).and_return(user)
-          get :edit, id: '12345'
+          get :edit, params: { id: '12345' }
         end
 
         include_examples 'assigns the user object'
@@ -80,7 +80,7 @@ describe PasswordResetsController do
     describe '#update' do
 
       context 'when perishable_token does not find a user' do
-        let(:endpoint) { lambda { patch :update, id: '12345' } }
+        let(:endpoint) { lambda { patch :update, params: { id: '12345' } } }
         include_examples 'perishable token not found in db'
       end
 
@@ -92,7 +92,7 @@ describe PasswordResetsController do
 
         context 'when new password and confirmation are blank' do
           let(:user) { FactoryBot.create :user }
-          let(:endpoint) { lambda { patch :update, id: user.id, password: '', password_confirmation: '' } }
+          let(:endpoint) { lambda { patch :update, params: { id: user.id, password: '', password_confirmation: '' } } }
 
           it 'sets flash error' do
             expect(flash[:error]).to eq('Ensure you supply a new password and confirmation')
@@ -108,7 +108,7 @@ describe PasswordResetsController do
 
         context 'when new password is accepted' do
           let(:user) { double('user', id: '12345', save: true).as_null_object }
-          let(:endpoint) { lambda { patch :update, id: user.id, password: 'foo', password_confirmation: 'foo' } }
+          let(:endpoint) { lambda { patch :update, params: { id: user.id, password: 'foo', password_confirmation: 'foo' } } }
 
           it 'logs the user in automatically'
 
@@ -124,7 +124,7 @@ describe PasswordResetsController do
         context 'when new password is not accepted' do
           let(:errors) { double('errors', messages: 'foo') }
           let(:user) { double('user', id: '12345', save: false, errors: errors).as_null_object }
-          let(:endpoint) { lambda { patch :update, id: user.id, password: 'foo', password_confirmation: 'foo' } }
+          let(:endpoint) { lambda { patch :update, params: { id: user.id, password: 'foo', password_confirmation: 'foo' } } }
 
           it 'sets flash error' do
             expect(flash[:error]).to eq('foo')
@@ -148,7 +148,7 @@ describe PasswordResetsController do
 
         it 'does not assign user, sets flash error, responds, 400, and renders #new' do
           expect(User).to receive(:find_by_email).and_return(nil)
-          post :create, email: user.email
+          post :create, params: { email: user.email }
           expect(flash[:error]).to eq("No user was found with email address: #{user.email}")
           expect(assigns(:user)).to be_nil
           expect(response.code).to eq('400')
@@ -161,7 +161,7 @@ describe PasswordResetsController do
         it 'calls the reset operation, sets flash notice, and redirects to home' do
           expect(User).to receive(:find_by_email).with(user.email).and_return(user)
           expect(user).to receive(:reset_password!)
-          post :create, email: user.email
+          post :create, params: { email: user.email }
           expect(flash[:notice]).to eq("Instructions to reset your password have been emailed to you")
           expect(response).to redirect_to(home_url)
         end
@@ -186,7 +186,7 @@ describe PasswordResetsController do
     end
 
     describe '#update' do
-      before { patch :update, id: '12345' }
+      before { patch :update, params: { id: '12345' } }
       include_examples 'logged in behavior'
     end
 
@@ -196,7 +196,7 @@ describe PasswordResetsController do
     end
 
     describe '#edit' do
-      before { get :edit, id: '12345' }
+      before { get :edit, params: { id: '12345' } }
       include_examples 'logged in behavior'
     end
 

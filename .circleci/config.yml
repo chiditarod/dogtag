@@ -1,11 +1,8 @@
+# https://circleci.com/docs/2.0/language-ruby/
 version: 2.1
 orbs:
   ruby: circleci/ruby@1.3.0
 references:
-  run_tests: &run_tests
-    run:
-      name: Run test suite
-      command: bundle exec rspec
   restore: &restore
     restore_cache:
       keys:
@@ -15,17 +12,22 @@ references:
       paths:
         - ./vendor/bundle
       key: v1_bundler_deps- # CIRCLE_JOB e.g. "ruby-2.5"
+  wait_for_db: &wait_for_db
+    run:
+      name: Wait for Database
+      command: dockerize -wait tcp://localhost:5432 -timeout 1m
+  migrate: &migrate
+    run:
+       name: Database migration
+       command: bundle exec bin/rails db:migrate
   bundle: &bundle
     run:
       name: install dependencies
       command: |
-        echo "export BUNDLE_JOBS=4" >> $BASH_ENV
-        echo "export BUNDLE_RETRY=3" >> $BASH_ENV
         echo "export BUNDLE_PATH=$(pwd)/vendor/bundle" >> $BASH_ENV
         source $BASH_ENV
         bundle install
-        # bundle update
-        bundle clean
+        # bundle clean
 
 jobs:
   test:
@@ -35,14 +37,27 @@ jobs:
       gemfile:
         type: string
     docker:
-      - image: "circleci/ruby:<< parameters.ruby_version >>"
+      - image: "circleci/ruby:<< parameters.ruby_version >>-node"
+      - image: circleci/postgres:10.6-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: dogtag_test
+          POSTGRES_PASSWORD: ""
     environment:
       GEMFILE_NAME: <<parameters.gemfile>>
+      RAILS_ENV: test
+      BUNDLE_JOBS: "4"
+      BUNDLE_RETRY: "3"
+      PGHOST: 127.0.0.1
+      PGUSER: postgres
+      PGPASSWORD: ""
     steps:
       - checkout
       - <<: *restore
       - <<: *bundle
-      - <<: *run_tests
+      - <<: *wait_for_db
+      - <<: *migrate
+      - ruby/rspec-test
       - <<: *save
 
 workflows:
@@ -53,4 +68,3 @@ workflows:
             parameters:
               ruby_version: ["2.7"]
               gemfile: ["Gemfile"]
-              

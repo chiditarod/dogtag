@@ -16,7 +16,7 @@
 require 'csv'
 
 class RacesController < ApplicationController
-  before_filter :require_user, :except => [:index, :show]
+  before_action :require_user, :except => [:index, :show]
   load_and_authorize_resource
 
   def index
@@ -47,7 +47,7 @@ class RacesController < ApplicationController
   end
 
   def export
-    return render :status => 400 if params[:race_id].blank?
+    return render :status => :bad_request if params[:race_id].blank?
 
     race_id = params[:race_id]
     teams = params[:finalized] ? Team.export(race_id, :finalized => true) : Team.export(race_id)
@@ -58,7 +58,7 @@ class RacesController < ApplicationController
   end
 
   def create
-    return render :status => 400 if params[:race].blank?
+    return render :status => :bad_request if params[:race].blank?
 
     @race = Race.new(prepare_params(race_params))
 

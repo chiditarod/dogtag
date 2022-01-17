@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class ChargesController < ApplicationController
-  before_filter :require_user
-  before_filter :require_stripe_params, only: [:create]
-  before_filter :require_charge_object, only: [:refund]
-  before_filter :require_prior_url
+  before_action :require_user
+  before_action :require_stripe_params, only: [:create]
+  before_action :require_charge_object, only: [:refund]
+  before_action :require_prior_url
 
-  STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
+  STRIPE_PARAMS = %i{amount stripeToken stripeEmail description metadata}
 
   # TODO: add safely_call_stripe into this method and rip out all the rescue stuff.
   def create
@@ -91,7 +91,7 @@ class ChargesController < ApplicationController
     unless @charge.refunded
       str = "Charge ID: #{@charge.id} could not be refunded. No action taken."
       Rails.logger.error(str)
-      return render status: 500, json: {error: str}
+      return render status: :internal_server_error, json: {error: str}
     end
 
     msg = "The refund has processed successfully"
@@ -123,7 +123,7 @@ class ChargesController < ApplicationController
   def require_prior_url
     unless session[:prior_url]
       render(
-        status: 400,
+        status: :bad_request,
         json: {
           errors: "The calling controller should set session[:prior_url] so this method knows where to return to. e.g. session[:prior_url] = request.original_url"
         }
@@ -132,16 +132,14 @@ class ChargesController < ApplicationController
   end
 
   def require_stripe_params
-    stripe_params = params.slice(*STRIPE_PARAMS)
-    if stripe_params.size < STRIPE_PARAMS.size
-      missing = STRIPE_PARAMS - stripe_params.keys
-      render(
-        status: :bad_request,
-        json: {
-          errors: "Missing required stripe parameter(s): #{missing.join(',')}"
-        }
-      )
-    end
+    inquiry = params.require(STRIPE_PARAMS)
+  rescue ActionController::ParameterMissing => e
+    render(
+      status: :bad_request,
+      json: {
+        errors: e
+      }
+    )
   end
 
   def require_charge_object
@@ -149,7 +147,7 @@ class ChargesController < ApplicationController
       @charge = Stripe::Charge.retrieve(params[:charge_id])
     end
 
-    return render status: 404, json: {error: ex.message} unless success
-    return render status: 400, json: {error: "Charge ID #{@charge.id} is already refunded"} if @charge.refunded
+    return render status: :not_found, json: {error: ex.message} unless success
+    return render status: :bad_request, json: {error: "Charge ID #{@charge.id} is already refunded"} if @charge.refunded
   end
 end

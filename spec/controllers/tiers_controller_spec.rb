@@ -32,13 +32,13 @@ describe TiersController do
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => -1
+        get :edit, params: { :id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => -1
+        patch :update, params: { :id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
@@ -63,7 +63,7 @@ describe TiersController do
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :id => 99 }
+        before { delete :destroy, params: { :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -71,13 +71,13 @@ describe TiersController do
 
       it 'removes a record' do
         expect do
-          delete :destroy, :id => @tier.id
+          delete :destroy, params: { :id => @tier.id }
         end.to change(Tier, :count).by(-1)
       end
 
       context 'with valid id' do
         before do
-          delete :destroy, :id => @tier.id
+          delete :destroy, params: { :id => @tier.id }
         end
         it 'sets flash notice' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
@@ -90,7 +90,7 @@ describe TiersController do
 
     describe '#update' do
       context 'on invalid id' do
-        before { put :update, :id => 99 }
+        before { put :update, params: { :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -98,7 +98,7 @@ describe TiersController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => @tier.id, :tier => {:price => '88800'}
+          patch :update, params: { :id => @tier.id, :tier => {:price => '88800'} }
         end
         it 'updates the requirement' do
           expect(@tier.reload.price).to eq(88800)
@@ -115,7 +115,7 @@ describe TiersController do
     describe '#edit' do
       context 'with invalid id' do
         before do
-          get :edit, :id => -1
+          get :edit, params: { :id => -1 }
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -124,7 +124,7 @@ describe TiersController do
 
       context 'with valid id' do
         before do
-          get :edit, :id => @tier.id
+          get :edit, params: { :id => @tier.id }
         end
         it 'sets @requirement and @tier objects, returns 200' do
           expect(assigns(:tier)).to eq(@tier)
@@ -137,7 +137,7 @@ describe TiersController do
     describe '#new' do
       context 'without requirement_id param' do
         it 'returns 400' do
-          post :create, :tier => valid_tier_hash
+          post :create, params: { :tier => valid_tier_hash }
           expect(response.status).to eq(400)
         end
       end
@@ -146,7 +146,7 @@ describe TiersController do
         before do
           @tier_stub = Tier.new
           allow(Tier).to receive(:new).and_return @tier_stub
-          get :new, :requirement_id => @req.id
+          get :new, params: { :requirement_id => @req.id }
         end
 
         it 'returns http success' do
@@ -169,7 +169,7 @@ describe TiersController do
 
       it 'adds a record' do
         expect do
-          post :create, :tier => valid_tier_hash.merge(:requirement_id => @req.id)
+          post :create, params: { :tier => valid_tier_hash.merge(:requirement_id => @req.id) }
         end.to change(Tier, :count).by 1
       end
 
@@ -184,7 +184,7 @@ describe TiersController do
 
         before do
           allow(Tier).to receive(:new).and_return(mock_tier)
-          post :create, tier: valid_tier_hash.merge(requirement_id: @req.id)
+          post :create, params: { tier: valid_tier_hash.merge(requirement_id: @req.id) }
         end
 
         it 'sets a flash error' do
@@ -194,7 +194,7 @@ describe TiersController do
 
       context 'upon success' do
         before do
-          post :create, :tier => valid_tier_hash.merge(:requirement_id => @req.id)
+          post :create, params: { :tier => valid_tier_hash.merge(:requirement_id => @req.id) }
         end
 
         it 'sets a flash notice' do

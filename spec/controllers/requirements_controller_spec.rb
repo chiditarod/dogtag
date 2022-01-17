@@ -20,25 +20,25 @@ describe RequirementsController do
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
-        get :new, :race_id => -1
+        get :new, params: { :race_id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create, :race_id => -1
+        post :create, params: { :race_id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :race_id => -1, :id => -1
+        get :edit, params: { :race_id => -1, :id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :race_id => -1, :id => 1
+        patch :update, params: { :race_id => -1, :id => 1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
@@ -56,7 +56,7 @@ describe RequirementsController do
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :race_id => req.race.id, :id => 99 }
+        before { delete :destroy, params: { :race_id => req.race.id, :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -65,13 +65,13 @@ describe RequirementsController do
       it 'removes a record' do
         req # create db record
         expect do
-          delete :destroy, :race_id => req.race.id, :id => req.id
+          delete :destroy, params: { :race_id => req.race.id, :id => req.id }
         end.to change(Requirement, :count).by(-1)
       end
 
       context 'with valid id' do
         before do
-          delete :destroy, :race_id => req.race.id, :id => req.id
+          delete :destroy, params: { :race_id => req.race.id, :id => req.id }
         end
 
         it 'sets flash notice' do
@@ -86,7 +86,7 @@ describe RequirementsController do
 
     describe '#update' do
       context 'on invalid id' do
-        before { put :update, :race_id => req.race.id, :id => 99 }
+        before { put :update, params: { :race_id => req.race.id, :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -94,8 +94,7 @@ describe RequirementsController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => req.id, :race_id => req.race.id,
-            :requirement => {:name => 'new name'}
+          patch :update, params: { :id => req.id, :race_id => req.race.id, :requirement => {:name => 'new name'} }
         end
 
         it 'updates the requirement' do
@@ -119,7 +118,7 @@ describe RequirementsController do
     describe '#edit' do
       context 'with invalid id' do
         before do
-          get :edit, :race_id => req.race.id, :id => 99
+          get :edit, params: { :race_id => req.race.id, :id => 99 }
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -128,7 +127,7 @@ describe RequirementsController do
 
       context 'with valid user id' do
         before do
-          get :edit, :race_id => req.race.id, :id => req.id
+          get :edit, params: { :race_id => req.race.id, :id => req.id }
         end
         it 'sets the requirement object' do
           expect(assigns(:requirement)).to eq(req)
@@ -143,7 +142,7 @@ describe RequirementsController do
       let(:req_stub) { Requirement.new }
       before do
         allow(Requirement).to receive(:new).and_return(req_stub)
-        get :new, :race_id => req.race.id
+        get :new, params: { :race_id => req.race.id }
       end
 
       it 'returns http success' do
@@ -164,14 +163,14 @@ describe RequirementsController do
 
       context 'without valid race' do
         it 'returns 404' do
-          post :create, :race_id => 99
+          post :create, params: { :race_id => 99 }
           expect(response.status).to eq(404)
         end
       end
 
       context 'without requirement param' do
         it 'returns 400' do
-          post :create, :race_id => req.race.id
+          post :create, params: { :race_id => req.race.id }
           expect(response.status).to eq(400)
         end
       end
@@ -179,13 +178,13 @@ describe RequirementsController do
       it 'adds a record' do
         req # create db record
         expect do
-          post :create, :race_id => req.race.id, :requirement => valid_req_hash
+          post :create, params: { :race_id => req.race.id, :requirement => valid_req_hash }
         end.to change(Requirement, :count).by 1
       end
 
       context 'upon success' do
         before do
-          post :create, :race_id => req.race.id, :requirement => valid_req_hash
+          post :create, params: { :race_id => req.race.id, :requirement => valid_req_hash }
         end
 
         it 'sets a flash notice' do

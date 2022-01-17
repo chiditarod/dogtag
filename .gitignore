@@ -32,3 +32,5 @@ vendor/bundle
 .DS_Store
 
 dump.rdb
+TAGS
+.byebug_history

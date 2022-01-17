@@ -15,8 +15,8 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class PasswordResetsController < ApplicationController
   # Method from: http://github.com/binarylogic/authlogic_example/blob/master/app/controllers/application_controller.rb
-  before_filter :require_no_user
-  before_filter :load_user_using_perishable_token, :only => [ :edit, :update ]
+  before_action :require_no_user
+  before_action :load_user_using_perishable_token, :only => [ :edit, :update ]
 
   def new
   end
@@ -24,7 +24,7 @@ class PasswordResetsController < ApplicationController
   def create
     unless params[:email].present?
       flash.now[:error] = "No email address provided."
-      return render action: :new, status: 400
+      return render action: :new, status: :bad_request
     end
 
     @user = User.find_by_email(params[:email])
@@ -35,7 +35,7 @@ class PasswordResetsController < ApplicationController
       redirect_to home_url
     else
       flash.now[:error] = "No user was found with email address: #{params[:email]}"
-      render action: :new, status: 400
+      render action: :new, status: :bad_request
     end
   end
 

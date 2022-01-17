@@ -1,19 +1,4 @@
-# Copyright (C) 2013 Devin Breen
-# This file is part of dogtag <https://github.com/chiditarod/dogtag>.
-#
-# dogtag is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# dogtag is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-RailsSkeleton::Application.configure do
+Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
   # In the development environment your application's code is reloaded on
@@ -24,14 +9,32 @@ RailsSkeleton::Application.configure do
   # Do not eager load code on boot.
   config.eager_load = false
 
-  # Show full error reports and disable caching.
-  config.consider_all_requests_local       = true
-  config.action_controller.perform_caching = false
+  # Show full error reports.
+  config.consider_all_requests_local = true
+
+  # Enable/disable caching. By default caching is disabled.
+  if Rails.root.join('tmp/caching-dev.txt').exist?
+    config.action_controller.perform_caching = true
+
+    config.cache_store = :memory_store
+    config.public_file_server.headers = {
+      'Cache-Control' => 'public, max-age=172800'
+    }
+  else
+    config.action_controller.perform_caching = false
+
+    config.cache_store = :null_store
+  end
+
+  # Don't care if the mailer can't send.
+  config.action_mailer.raise_delivery_errors = false
+
+  config.action_mailer.perform_caching = false
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
-  # Raise an error on page load if there are pending migrations
+  # Raise an error on page load if there are pending migrations.
   config.active_record.migration_error = :page_load
 
   # Debug mode disables concatenation and preprocessing of assets.
@@ -42,20 +45,29 @@ RailsSkeleton::Application.configure do
   # dcb -- quiet the dev logs.
   config.log_level = :debug
 
-  # SMTP config
+  # dcb -- SMTP config
   config.action_mailer.raise_delivery_errors = true
-
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = true
   config.action_mailer.default_options = {from: 'dogtag@chiditarod.org'}
 
-  # Whitelist the docker-compose network
+  # dcb - whitelist the docker-compose network
   config.web_console.whitelisted_ips = '0.0.0.0/0'
 
-  # Send to local mailcatcher gem
+  # dcb - send to local mailcatcher gem
   config.action_mailer.smtp_settings = {
     address:              ENV['SMTP_HOST'] || '127.0.0.1',
     port:                 ENV['SMTP_PORT'] || '1025',
     enable_starttls_auto: true
   }
+
+  # Suppress logger output for asset requests.
+  config.assets.quiet = true
+
+  # Raises error for missing translations
+  # config.action_view.raise_on_missing_translations = true
+
+  # Use an evented file watcher to asynchronously detect changes in source code,
+  # routes, locales, etc. This feature depends on the listen gem.
+  # config.file_watcher = ActiveSupport::EventedFileUpdateChecker
 end

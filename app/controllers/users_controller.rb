@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UsersController < ApplicationController
-  before_filter :require_user, :except => [:new, :create]
+  before_action :require_user, :except => [:new, :create]
   load_and_authorize_resource
 
   def index
@@ -34,7 +34,7 @@ class UsersController < ApplicationController
   end
 
   def create
-    return render :status => 400 if params[:user].blank?
+    return render :status => :bad_request if params[:user].blank?
 
     @user = User.new user_params
 

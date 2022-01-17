@@ -13,11 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class Team < ActiveRecord::Base
-  validates_presence_of :name, :description
-  validates_length_of :name, :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less."
-  validates_uniqueness_of :name, :scope => [:race], :message => 'should be unique per race'
-  validates_presence_of :experience
+class Team < ApplicationRecord
+  validates :name, :description, presence: true
+  validates :name, length: { :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less." }
+  validates :name, uniqueness: { :scope => [:race], :message => 'should be unique per race' }
+  validates :experience, presence: true
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
   validates_with TeamValidator
 
@@ -25,7 +25,7 @@ class Team < ActiveRecord::Base
 
   belongs_to :user
   belongs_to :race
-  validates_presence_of :user, :race
+  validates :user, :race, presence: true
 
   # A team has a certain number of people, per the settings for the race.
   has_many :people
