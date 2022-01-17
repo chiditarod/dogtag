@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  ruby: circleci/ruby@1.1.2
+  ruby: circleci/ruby@1.3.0
 references:
   run_tests: &run_tests
     run:
@@ -46,7 +46,7 @@ jobs:
       - <<: *save
 
 workflows:
-  all-tests:
+  all:
     jobs:
       - test:
           matrix:
