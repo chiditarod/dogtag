@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "3.1.0"
+ruby "2.7.5"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'

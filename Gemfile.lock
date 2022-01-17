@@ -426,7 +426,7 @@ DEPENDENCIES
   zonebie
 
 RUBY VERSION
-   ruby 3.1.0p0
+   ruby 2.7.5p203
 
 BUNDLED WITH
    2.1.4
