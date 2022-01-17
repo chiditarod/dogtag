@@ -1,0 +1,56 @@
+version: 2.1
+orbs:
+  ruby: circleci/ruby@1.1.2
+references:
+  run_tests: &run_tests
+    run:
+      name: Run test suite
+      command: bundle exec rspec
+  restore: &restore
+    restore_cache:
+      keys:
+        - v1_bundler_deps-
+  save: &save
+    save_cache:
+      paths:
+        - ./vendor/bundle
+      key: v1_bundler_deps- # CIRCLE_JOB e.g. "ruby-2.5"
+  bundle: &bundle
+    run:
+      name: install dependencies
+      command: |
+        echo "export BUNDLE_JOBS=4" >> $BASH_ENV
+        echo "export BUNDLE_RETRY=3" >> $BASH_ENV
+        echo "export BUNDLE_PATH=$(pwd)/vendor/bundle" >> $BASH_ENV
+        source $BASH_ENV
+        bundle install
+        # bundle update
+        bundle clean
+
+jobs:
+  test:
+    parameters:
+      ruby_version:
+        type: string
+      gemfile:
+        type: string
+    docker:
+      - image: "circleci/ruby:<< parameters.ruby_version >>"
+    environment:
+      GEMFILE_NAME: <<parameters.gemfile>>
+    steps:
+      - checkout
+      - <<: *restore
+      - <<: *bundle
+      - <<: *run_tests
+      - <<: *save
+
+workflows:
+  all-tests:
+    jobs:
+      - test:
+          matrix:
+            parameters:
+              ruby_version: ["2.7"]
+              gemfile: ["Gemfile"]
+              
