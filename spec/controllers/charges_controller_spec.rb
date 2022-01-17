@@ -89,8 +89,7 @@ describe ChargesController do
       }}
 
       ChargesController::STRIPE_PARAMS.each do |param|
-
-        fcontext "when params['#{param}'] is missing from request" do
+        context "when params['#{param}'] is missing from request" do
           before do
             post :create, params: valid_params.except(param)
           end
