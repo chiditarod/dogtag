@@ -16,7 +16,6 @@ x-default: &default
     - .:/app
 
 services:
-
   web:
     <<: *default
     ports:
