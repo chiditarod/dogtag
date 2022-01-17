@@ -18,7 +18,7 @@ module Dogtag
 
     # Migrated from Rails 4.2
     I18n.enforce_available_locales = true
-    config.filter_parameters << :password
+    # Include the lib/ directory
     config.autoload_paths += %W(#{config.root}/lib)
   end
 end

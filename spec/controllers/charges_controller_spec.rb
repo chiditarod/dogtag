@@ -79,18 +79,18 @@ describe ChargesController do
       end
 
       let(:valid_params) {{
-        'amount' => 10,
-        'stripeToken' => 'foo',
-        'stripeEmail' => 'bar',
-        'description' => 'hi',
-        'metadata' => {
-          'bat' => 'baz'
+        amount: 10,
+        stripeToken: 'foo',
+        stripeEmail: 'bar',
+        description: 'hi',
+        metadata: {
+          bat: 'baz'
         }
       }}
 
       ChargesController::STRIPE_PARAMS.each do |param|
 
-        context "when params['#{param}'] is missing from request" do
+        fcontext "when params['#{param}'] is missing from request" do
           before do
             post :create, params: valid_params.except(param)
           end
@@ -98,7 +98,7 @@ describe ChargesController do
           it "render a json error and returns bad request" do
             expect(response.status).to eq(400)
             json = JSON.parse(response.body)
-            expect(json['errors']).to eq("Missing required stripe parameter(s): #{param}")
+            expect(json['errors']).to eq("param is missing or the value is empty: #{param}")
           end
         end
       end

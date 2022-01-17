@@ -19,7 +19,7 @@ class ChargesController < ApplicationController
   before_action :require_charge_object, only: [:refund]
   before_action :require_prior_url
 
-  STRIPE_PARAMS = ['amount', 'stripeToken', 'stripeEmail', 'description', 'metadata']
+  STRIPE_PARAMS = %i{amount stripeToken stripeEmail description metadata}
 
   # TODO: add safely_call_stripe into this method and rip out all the rescue stuff.
   def create
@@ -132,16 +132,14 @@ class ChargesController < ApplicationController
   end
 
   def require_stripe_params
-    stripe_params = params.slice(*STRIPE_PARAMS)
-    if stripe_params.size < STRIPE_PARAMS.size
-      missing = STRIPE_PARAMS - stripe_params.keys
-      render(
-        status: :bad_request,
-        json: {
-          errors: "Missing required stripe parameter(s): #{missing.join(',')}"
-        }
-      )
-    end
+    inquiry = params.require(STRIPE_PARAMS)
+  rescue ActionController::ParameterMissing => e
+    render(
+      status: :bad_request,
+      json: {
+        errors: e
+      }
+    )
   end
 
   def require_charge_object
