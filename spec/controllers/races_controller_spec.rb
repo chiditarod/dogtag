@@ -30,27 +30,27 @@ describe RacesController do
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        get :edit, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        patch :update, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#export' do
       it 'redirects to login' do
-        get :export, :race_id => 1; expect(response).to redirect_to(new_user_session_path)
+        get :export, params: { :race_id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#registrations' do
       it 'redirects to login' do
-        get :registrations, :race_id => 1; expect(response).to redirect_to(new_user_session_path)
+        get :registrations, params: { :race_id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#show'
@@ -77,7 +77,7 @@ describe RacesController do
       end
 
       context 'with invalid race_id' do
-        before { get :registrations, :race_id => 100 }
+        before { get :registrations, params: { :race_id => 100 } }
         it 'sets 404' do
           expect(response.status).to eq(404)
         end
@@ -85,7 +85,7 @@ describe RacesController do
 
       context "with no teams" do
         let(:race) { FactoryBot.create :race }
-        before { get :registrations, :race_id => race.id }
+        before { get :registrations, params: { :race_id => race.id } }
 
         include_examples 'empty_finalized_teams'
         include_examples 'empty_waitlisted_teams'
@@ -93,7 +93,7 @@ describe RacesController do
 
       context "with a finalized team" do
         let(:team) { FactoryBot.create :finalized_team }
-        before { get :registrations, :race_id => team.race.id }
+        before { get :registrations, params: { :race_id => team.race.id } }
 
         it 'assigns finalized_teams' do
           expect(assigns :finalized_teams).to eq([team])
@@ -103,7 +103,7 @@ describe RacesController do
 
       context "with a non-finalized team" do
         let(:team) { FactoryBot.create :team }
-        before { get :registrations, :race_id => team.race.id }
+        before { get :registrations, params: { :race_id => team.race.id } }
 
         it 'assigns waitlisted_teams' do
           expect(assigns :waitlisted_teams).to eq([team])
@@ -114,7 +114,7 @@ describe RacesController do
 
     describe '#export' do
       context 'with invalid id' do
-        before { get :export, :race_id => 100 }
+        before { get :export, params: { :race_id => 100 } }
         it 'sets 404' do
           expect(response.status).to eq(404)
         end
@@ -127,7 +127,7 @@ describe RacesController do
       context 'with valid id' do
         before do
           @team = FactoryBot.create :finalized_team
-          get :show, :id => @team.race.id
+          get :show, params: { :id => @team.race.id }
         end
 
         it 'returns 200' do
@@ -140,7 +140,7 @@ describe RacesController do
 
     describe '#show' do
       context 'with invalid id' do
-        before { get :show, :id => 100 }
+        before { get :show, params: { :id => 100 } }
         it 'sets 404' do
           expect(response.status).to eq(404)
         end
@@ -149,7 +149,7 @@ describe RacesController do
       context 'with valid id' do
         before do
           @race = FactoryBot.create :race
-          get :show, :id => @race.id
+          get :show, params: { :id => @race.id }
         end
         it 'sets the @race object' do
           expect(assigns(:race)).to eq(@race)
@@ -167,7 +167,7 @@ describe RacesController do
 
     describe '#update' do
       context 'with invalid id' do
-        before { put :update, :id => 99 }
+        before { put :update, params: { :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -176,7 +176,7 @@ describe RacesController do
       context 'with valid patch data' do
         let(:race) { FactoryBot.create :race }
         before do
-          patch :update, :id => race.id, :race => {:max_teams => 200}
+          patch :update, params: { :id => race.id, :race => {:max_teams => 200} }
         end
         it 'updates the race, sets flash, redirects to race#edit' do
           expect(race.reload.max_teams).to eq(200)
@@ -200,7 +200,7 @@ describe RacesController do
         required.each do |param|
           bad_payload = valid_race_hash.dup
           bad_payload.delete param
-          post :create, :race => bad_payload
+          post :create, params: { :race => bad_payload }
           expect(response.status).to eq(200)
           expect(flash[:error]).not_to be_nil
           expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
@@ -209,13 +209,13 @@ describe RacesController do
 
       it 'adds a record' do
         expect do
-          post :create, :race => valid_race_hash
+          post :create, params: { :race => valid_race_hash }
         end.to change(Race, :count).by 1
       end
 
       context 'upon success' do
         before do
-          post :create, :race => valid_race_hash
+          post :create, params: { :race => valid_race_hash }
         end
 
         it 'converts filter_field array into comma-separated list'
@@ -254,7 +254,7 @@ describe RacesController do
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :id => 99 }
+        before { delete :destroy, params: { :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -266,12 +266,12 @@ describe RacesController do
         end
 
         it 'destroys the race' do
-          expect { delete :destroy, :id => @race.id }.to change(Race, :count).by(-1)
+          expect { delete :destroy, params: { :id => @race.id } }.to change(Race, :count).by(-1)
         end
 
         context 'with valid id' do
           before do
-            delete :destroy, :id => @race.id
+            delete :destroy, params: { :id => @race.id }
           end
 
           it 'sets the flash notice' do

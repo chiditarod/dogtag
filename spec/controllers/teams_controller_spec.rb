@@ -38,19 +38,19 @@ describe TeamsController do
       include_examples 'redirects to login'
     end
     describe '#edit' do
-      let(:endpoint) { lambda { get :edit, id: 1 }}
+      let(:endpoint) { lambda { get :edit, params: { id: 1 } }}
       include_examples 'redirects to login'
     end
     describe '#update' do
-      let(:endpoint) { lambda { patch :update, id: 1 }}
+      let(:endpoint) { lambda { patch :update, params: { id: 1 } }}
       include_examples 'redirects to login'
     end
     describe '#show' do
-      let(:endpoint) { lambda { get :show, id: 1 }}
+      let(:endpoint) { lambda { get :show, params: { id: 1 } }}
       include_examples 'redirects to login'
     end
     describe '#destroy' do
-      let(:endpoint) { lambda { delete :destroy, id: 1 }}
+      let(:endpoint) { lambda { delete :destroy, params: { id: 1 } }}
       include_examples 'redirects to login'
     end
   end
@@ -87,7 +87,7 @@ describe TeamsController do
 
         before do
           allow(Team).to receive(:new).and_return team
-          get :new, :race_id => race.id
+          get :new, params: { :race_id => race.id }
         end
 
         it 'returns http success' do
@@ -137,7 +137,7 @@ describe TeamsController do
         end
 
         context '[valid race_id]' do
-          before { get :index, :race_id => valid_team.race.id }
+          before { get :index, params: { :race_id => valid_team.race.id } }
 
           it 'assigns @race' do
             expect(assigns(:race)).to eq(valid_team.race)
@@ -147,7 +147,7 @@ describe TeamsController do
         end
 
         context '[unknown race_id]' do
-          before { get :index, :race_id => -1 }
+          before { get :index, params: { :race_id => -1 } }
           it "does not assign @race" do
             expect(assigns(:race)).to be_nil
           end
@@ -177,7 +177,7 @@ describe TeamsController do
 
           context "matching user's teams" do
             before do
-              get :index, :race_id => valid_team.race.id
+              get :index, params: { :race_id => valid_team.race.id }
             end
             it "sets race and assigns @myteams to the user's teams for this race" do
               expect(assigns(:race)).to eq(valid_team.race)
@@ -190,7 +190,7 @@ describe TeamsController do
           context "not matching user's teams" do
             let(:team_different_race) { FactoryBot.create :team }
             before do
-              get :index, :race_id => team_different_race.race.id
+              get :index, params: { :race_id => team_different_race.race.id }
             end
             it 'sets race' do
               expect(assigns(:race)).to eq(team_different_race.race)
@@ -201,7 +201,7 @@ describe TeamsController do
         end
 
         context '[unknown race_id]' do
-          before { get :index, :race_id => -1 }
+          before { get :index, params: { :race_id => -1 } }
           include_examples 'no_race'
           it "assigns @myteams to the user's teams" do
             expect(assigns(:myteams)).to eq([valid_team])
@@ -243,19 +243,19 @@ describe TeamsController do
       context 'with valid team parameters' do
         it 'writes a new db record' do
           expect do
-            post :create, :team => valid_team_hash
+            post :create, params: { :team => valid_team_hash }
           end.to change(Team, :count).by 1
         end
 
         it 'broadcasts when creating the record' do
           expect do
-            post :create, :team => valid_team_hash
+            post :create, params: { :team => valid_team_hash }
           end.to broadcast(:create_team_successful)
         end
 
         context 'upon success' do
           before do
-            post :create, :team => valid_team_hash
+            post :create, params: { :team => valid_team_hash }
           end
 
           it 'associates the current user with the new team' do
@@ -277,7 +277,7 @@ describe TeamsController do
         before do
           team_stub = double('team', save: false).as_null_object
           allow(Team).to receive(:new).and_return team_stub
-          post :create, :team => valid_team_hash
+          post :create, params: { :team => valid_team_hash }
         end
 
         it 'returns http success' do
@@ -294,7 +294,7 @@ describe TeamsController do
       let(:the_user) { valid_user }
 
       context 'on invalid id' do
-        before { put :update, :id => -1 }
+        before { put :update, params: { :id => -1 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -306,9 +306,7 @@ describe TeamsController do
         let(:team) { FactoryBot.create :team }
 
         before do
-          patch :update,
-            :id => team.id,
-            :team => {:description => 'New Description'}
+          patch :update, params: { :id => team.id, :team => {:description => 'New Description'} }
         end
 
         it 'updates the team' do
@@ -336,9 +334,7 @@ describe TeamsController do
 
         it 'broadcasts when updating the record' do
           expect do
-            patch :update,
-              :id => team.id,
-              :team => {:description => 'New Description'}
+            patch :update, params: { :id => team.id, :team => {:description => 'New Description'} }
           end.to broadcast(:update_team_successful)
         end
       end
@@ -348,7 +344,7 @@ describe TeamsController do
       let(:the_user) { valid_user }
 
       context 'using invalid team id' do
-        before { get :show, :id => 100 }
+        before { get :show, params: { :id => 100 } }
 
         it 'renders 404' do
           expect(response.status).to eq(404)
@@ -359,14 +355,14 @@ describe TeamsController do
         let(:team) { FactoryBot.create :team }
 
         it 'assigns team, assigns race, returns 200' do
-          get :show, :id => team.id
+          get :show, params: { :id => team.id }
           expect(assigns(:team)).to eq(team)
           expect(assigns(:race)).to eq(team.race)
           expect(response).to be_success
         end
 
         it 'does not cache this page' do
-          get :show, :id => team.id
+          get :show, params: { :id => team.id }
           expect(response.headers['Cache-Control']).to eq('no-cache, no-store, max-age=0, must-revalidate')
           expect(response.headers['Pragma']).to eq('no-cache')
         end
@@ -375,7 +371,7 @@ describe TeamsController do
           let(:team) { FactoryBot.create :finalized_team }
 
           it "does not display finalization banner since user is not the team captain" do
-            get :show, :id => team.id
+            get :show, params: { :id => team.id }
             expect(assigns(:display_notification)).to be_nil
           end
 
@@ -383,7 +379,7 @@ describe TeamsController do
             let(:the_user) { team.user }
 
             it "displays a banner on the page" do
-              get :show, :id => team.id
+              get :show, params: { :id => team.id }
               expect(assigns(:display_notification)).to eq(:notify_now_complete)
             end
           end
@@ -395,7 +391,7 @@ describe TeamsController do
       let(:the_user) { valid_user }
 
       context 'on invalid id' do
-        before { delete :destroy, :id => -1 }
+        before { delete :destroy, params: { :id => -1 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -404,21 +400,21 @@ describe TeamsController do
       it 'destroys the record' do
         team = FactoryBot.create :team
         expect do
-          delete :destroy, :id => team.id
+          delete :destroy, params: { :id => team.id }
         end.to change(Team, :count).by(-1)
       end
 
       it 'broadcasts when destroying the record' do
         team = FactoryBot.create :team
         expect do
-          delete :destroy, :id => team.id
+          delete :destroy, params: { :id => team.id }
         end.to broadcast(:destroy_team_successful)
       end
 
       context 'with valid id' do
         let(:valid_team) { FactoryBot.create :team }
         before do
-          delete :destroy, :id => valid_team.id
+          delete :destroy, params: { :id => valid_team.id }
         end
 
         it 'sets the flash notice and redirects to the team index' do

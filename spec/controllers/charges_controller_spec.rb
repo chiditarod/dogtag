@@ -33,7 +33,7 @@ describe ChargesController do
       include_examples 'redirects to login'
     end
     describe '#refund' do
-      let(:endpoint) { lambda { post :refund, charge_id: 1 }}
+      let(:endpoint) { lambda { post :refund, params: { charge_id: 1 } }}
       include_examples 'redirects to login'
     end
   end
@@ -58,7 +58,7 @@ describe ChargesController do
       context 'when session[:prior_url] is not set' do
         let(:error_json) {{ errors: "The calling controller should set session[:prior_url] so this method knows where to return to. e.g. session[:prior_url] = request.original_url"}.to_json}
         it "renders 400 with json message" do
-          post :create, amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz}
+          post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz} }
           expect(response.status).to eq(400)
           expect(response.body).to eq(error_json)
         end
@@ -68,7 +68,7 @@ describe ChargesController do
         before do
           expect(Customer).to receive(:get).and_return nil
           session[:prior_url] = '/prior_url/'
-          post :create, amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz}
+          post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz} }
         end
 
         it 'renders flash error' do
@@ -92,7 +92,7 @@ describe ChargesController do
 
         context "when params['#{param}'] is missing from request" do
           before do
-            post :create, valid_params.except(param)
+            post :create, params: valid_params.except(param)
           end
 
           it "render a json error and returns bad request" do
@@ -142,12 +142,10 @@ describe ChargesController do
 
           expect(CompletedRequirement.count).to eq(0)
 
-          post :create, amount: amount, stripeToken: 'foo',
-            stripeEmail: customer.email, description: 'hi',
-            metadata: {
+          post :create, params: { amount: amount, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {
               team_id: team.id,
               requirement_id: requirement.id
-            }.to_json
+            }.to_json }
         end
         after { StripeMock.stop }
 
@@ -200,7 +198,7 @@ describe ChargesController do
         context "Stripe returns invalid request" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::InvalidRequestError.new(I18n.t("foo"), :foo))
-            post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
           end
 
           let(:expected_flash_error) { /Invalid parameters supplied to Stripe API/ }
@@ -210,7 +208,7 @@ describe ChargesController do
         context "Stripe returns API connection error" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("foo", :foo))
-            post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
           end
 
           let(:expected_flash_error) { /There is an issue connecting to the Stripe API/ }
@@ -220,7 +218,7 @@ describe ChargesController do
         context "Stripe returns generic StripeError" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::StripeError.new("foo", :foo))
-            post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
           end
 
           let(:expected_flash_error) { "An error occured connecting to Stripe. Please email dogtag@chiditarod.org." }
@@ -230,7 +228,7 @@ describe ChargesController do
         context "Something raises an uncaught error" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise
-            post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
           end
 
           let(:expected_flash_error) { "An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org." }
@@ -245,7 +243,7 @@ describe ChargesController do
           context "when Stripe::CardError #{e}" do
             before do
               StripeMock.prepare_card_error(e)
-              post :create, amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json
+              post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
             end
 
             it 'assigns customer' do
@@ -302,7 +300,7 @@ describe ChargesController do
         let(:error_json) {{ errors: "The calling controller should set session[:prior_url] so this method knows where to return to. e.g. session[:prior_url] = request.original_url"}.to_json}
         it "renders 400 with json message" do
           session.delete(:prior_url)
-          post :refund, charge_id: charge.id
+          post :refund, params: { charge_id: charge.id }
           expect(response.status).to eq(400)
           expect(response.body).to eq(error_json)
         end
@@ -310,7 +308,7 @@ describe ChargesController do
 
       context 'when the charge is not found' do
         it 'renders 404' do
-          post :refund, charge_id: 0
+          post :refund, params: { charge_id: 0 }
           expect(response.status).to eq(404)
         end
       end
@@ -319,7 +317,7 @@ describe ChargesController do
         let(:error_json) {{ error: "Charge ID #{charge.id} is already refunded" }.to_json}
         it 'renders 400 with json message' do
           charge.refund
-          post :refund, charge_id: charge.id
+          post :refund, params: { charge_id: charge.id }
           expect(response.status).to eq(400)
           expect(response.body).to eq(error_json)
         end
@@ -330,7 +328,7 @@ describe ChargesController do
         it 'renders 500 with json message' do
           expect(charge).to receive(:refund).and_raise(StandardError)
           expect(Stripe::Charge).to receive(:retrieve).with(charge.id).and_return(charge)
-          post :refund, charge_id: charge.id
+          post :refund, params: { charge_id: charge.id }
           expect(response.status).to eq(500)
           expect(response.body).to eq(error_json)
         end
@@ -341,7 +339,7 @@ describe ChargesController do
 
         it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
           expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
-          post :refund, charge_id: charge.id
+          post :refund, params: { charge_id: charge.id }
           expect(flash[:notice]).to eq(flash_msg)
           expect(response).to redirect_to('/prior_url/')
         end
@@ -354,7 +352,7 @@ describe ChargesController do
 
             it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do
               expect(CompletedRequirement).to receive(:delete_by_charge)
-              post :refund, charge_id: charge.id, delete_completed_requirement: true
+              post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
               expect(flash[:notice]).to eq(flash_msg)
               expect(response).to redirect_to('/prior_url/')
             end
@@ -365,7 +363,7 @@ describe ChargesController do
 
             it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
               expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
-              post :refund, charge_id: charge.id, delete_completed_requirement: true
+              post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
               expect(flash[:notice]).to eq(flash_msg)
               expect(response).to redirect_to('/prior_url/')
             end

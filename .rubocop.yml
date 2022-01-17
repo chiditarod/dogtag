@@ -1,9 +1,9 @@
-AllCops:
-  DisabledByDefault: true
-
 require: rubocop-rails
 Rails:
   Enabled: true
 AllCops:
    TargetRubyVersion: 2.4
    TargetRailsVersion: 5.0
+
+AllCops:
+  DisabledByDefault: true

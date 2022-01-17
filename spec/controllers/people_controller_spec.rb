@@ -20,31 +20,31 @@ describe PeopleController do
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
-        get :new, :team_id => -1
+        get :new, params: { :team_id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create, :team_id => -1
+        post :create, params: { :team_id => -1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :team_id => -1, :id => 1
+        get :edit, params: { :team_id => -1, :id => 1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :team_id => -1, :id => 1
+        patch :update, params: { :team_id => -1, :id => 1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :team_id => -1, :id => 1
+        delete :destroy, params: { :team_id => -1, :id => 1 }
         expect(response).to redirect_to(new_user_session_path)
       end
     end
@@ -62,7 +62,7 @@ describe PeopleController do
 
     describe '#destroy' do
       context 'on invalid id' do
-        before { delete :destroy, :team_id => team.id, :id => 99 }
+        before { delete :destroy, params: { :team_id => team.id, :id => 99 } }
 
         it 'returns 404' do
           expect(response.status).to eq(404)
@@ -72,13 +72,13 @@ describe PeopleController do
       it 'destroys a record correctly' do
         team = FactoryBot.create :team, :with_people
         expect do
-          delete :destroy, :team_id => team.id, :id => team.people.first.id
+          delete :destroy, params: { :team_id => team.id, :id => team.people.first.id }
         end.to change(Person, :count).by(-1)
       end
 
       it 'broadcasts when destroying the record' do
         expect do
-          delete :destroy, :team_id => team.id, :id => team.people.first.id
+          delete :destroy, params: { :team_id => team.id, :id => team.people.first.id }
         end.to broadcast(:destroy_person_successful)
       end
 
@@ -90,7 +90,7 @@ describe PeopleController do
 
       context 'with valid id' do
         before do
-          delete :destroy, :team_id => team.id, :id => person.id
+          delete :destroy, params: { :team_id => team.id, :id => person.id }
         end
 
         it 'sets flash notice and redirects to team#show' do
@@ -102,7 +102,7 @@ describe PeopleController do
       context "if destroy fails" do
         before do
           expect_any_instance_of(Person).to receive(:destroy).and_return(false)
-          delete :destroy, :team_id => team.id, :id => person.id
+          delete :destroy, params: { :team_id => team.id, :id => person.id }
         end
 
         it "sets flash" do
@@ -113,7 +113,7 @@ describe PeopleController do
 
     describe '#update' do
       context 'on invalid id' do
-        before { put :update, :team_id => team.id, :id => 99 }
+        before { put :update, params: { :team_id => team.id, :id => 99 } }
         it 'returns 404' do
           expect(response.status).to eq(404)
         end
@@ -121,8 +121,7 @@ describe PeopleController do
 
       context 'with valid patch data' do
         before do
-          patch :update, :id => person.id, :team_id => team.id,
-            :person => {:last_name => 'foo'}
+          patch :update, params: { :id => person.id, :team_id => team.id, :person => {:last_name => 'foo'} }
         end
         it 'updates the user, sets team (needed by _form.html.haml), sets flash, and redirects to team#show' do
           expect(person.reload.last_name).to eq('foo')
@@ -135,8 +134,7 @@ describe PeopleController do
       context "if update fails" do
         before do
           expect_any_instance_of(Person).to receive(:update_attributes).and_return(false)
-          patch :update, :id => person.id, :team_id => team.id,
-            :person => {:last_name => 'foo'}
+          patch :update, params: { :id => person.id, :team_id => team.id, :person => {:last_name => 'foo'} }
         end
 
         it "sets flash" do
@@ -149,7 +147,7 @@ describe PeopleController do
     describe '#edit' do
       context 'with invalid user id' do
         before do
-          get :edit, :team_id => team.id, :id => -1
+          get :edit, params: { :team_id => team.id, :id => -1 }
         end
         it 'responds with 404' do
           expect(response.status).to eq(404)
@@ -158,7 +156,7 @@ describe PeopleController do
 
       context 'with valid user id' do
         before do
-          get :edit, :team_id => team.id, :id => person.id
+          get :edit, params: { :team_id => team.id, :id => person.id }
         end
         it 'assigns person and returns 200' do
           expect(assigns(:person)).to eq(person)
@@ -171,7 +169,7 @@ describe PeopleController do
       let(:dude) { Person.new }
       before do
         allow(Person).to receive(:new).and_return(dude)
-        get :new, :team_id => team.id
+        get :new, params: { :team_id => team.id }
       end
 
       it 'assigns person to Person.new, sets team (needed by _form.html.haml), and returns http success' do
@@ -187,26 +185,26 @@ describe PeopleController do
 
       context 'without person param' do
         it 'returns 400' do
-          post :create, :team_id => team_no_people.id
+          post :create, params: { :team_id => team_no_people.id }
           expect(response.status).to eq(400)
         end
       end
 
       it 'adds a record' do
         expect do
-          post :create, :team_id => team_no_people.id, :person => new_person_hash
+          post :create, params: { :team_id => team_no_people.id, :person => new_person_hash }
         end.to change(Person, :count).by 1
       end
 
       it 'broadcasts when creating the record' do
         expect do
-          post :create, :team_id => team_no_people.id, :person => new_person_hash
+          post :create, params: { :team_id => team_no_people.id, :person => new_person_hash }
         end.to broadcast(:create_person_successful)
       end
 
       context 'upon success' do
         before do
-          post :create, :team_id => team_no_people.id, :person => new_person_hash
+          post :create, params: { :team_id => team_no_people.id, :person => new_person_hash }
         end
 
         it 'assigns person to team, sets a flash notice, redirects to team#show' do
@@ -221,7 +219,7 @@ describe PeopleController do
         let(:incomplete_hash) { new_person_hash.delete(:email); new_person_hash }
 
         it 'returns http success and sets flash error' do
-          post :create, :team_id => team.id, :person => incomplete_hash
+          post :create, params: { :team_id => team.id, :person => incomplete_hash }
           expect(response).to be_success
           expect(flash[:error]).to_not be_nil
         end

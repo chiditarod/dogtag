@@ -63,7 +63,7 @@ describe UserSessionsController do
         context 'with session[:return_to]' do
           before do
             session[:return_to] = 'http://somewhere'
-            post :create, user_session: user_session_hash
+            post :create, params: { user_session: user_session_hash }
           end
 
           it 'sets flash and redirects to session[:return_to]' do
@@ -74,7 +74,7 @@ describe UserSessionsController do
 
         context 'without session[:return_to]' do
           before do
-            post :create, user_session: user_session_hash
+            post :create, params: { user_session: user_session_hash }
           end
 
           it 'sets flash and redirects to account page' do
@@ -93,7 +93,7 @@ describe UserSessionsController do
           }
         end
         before do
-          post :create, :user_session => user_session_hash
+          post :create, params: { :user_session => user_session_hash }
         end
 
         it 'sets a flash notice' do
