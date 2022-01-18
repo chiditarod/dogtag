@@ -13,9 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class Race < ActiveRecord::Base
-  validates_presence_of :name, :max_teams, :people_per_team
-  validates_presence_of :race_datetime, :registration_open, :registration_close, :final_edits_close
+class Race < ApplicationRecord
+  validates :name, :max_teams, :people_per_team, presence: true
+  validates :race_datetime, :registration_open, :registration_close, :final_edits_close, presence: true
   validates :max_teams, :people_per_team, :numericality => {
     :only_integer => true,
     :greater_than => 0
@@ -25,7 +25,7 @@ class Race < ActiveRecord::Base
     greater_than: 0,
     allow_nil: true
   }
-  validates_uniqueness_of :name
+  validates :name, uniqueness: true
   validates_with RaceValidator
 
   # todo: validate filter_field based on contents of jsonform schema

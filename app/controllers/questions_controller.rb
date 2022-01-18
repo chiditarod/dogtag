@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class QuestionsController < ApplicationController
-  before_filter :require_user
+  before_action :require_user
 
   respond_to :json, only: [:create]
   respond_to :html, only: [:show]

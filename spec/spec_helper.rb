@@ -15,9 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Generates code coverage report in /coverage/ when specs are run
 require 'simplecov'
-SimpleCov.start 'rails' do
- add_filter "/vendor/"
-end
+#SimpleCov.start
 
 ENV["RAILS_ENV"] ||= 'test'
 
@@ -37,7 +35,8 @@ Dir[Rails.root.join("spec/support/**/*.rb")].each { |f| require f }
 ActiveRecord::Migration.check_pending! if defined?(ActiveRecord::Migration)
 
 RSpec.configure do |config|
-
+  config.filter_run focus: true
+  config.run_all_when_everything_filtered = true
   config.include(Wisper::RSpec::BroadcastMatcher)
 
   # Remove this line if you're not using ActiveRecord or ActiveRecord fixtures

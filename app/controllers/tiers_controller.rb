@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TiersController < ApplicationController
-  before_filter :require_user
+  before_action :require_user
   load_and_authorize_resource
 
   def destroy
@@ -44,7 +44,7 @@ class TiersController < ApplicationController
       @requirement = Requirement.find(tier_params[:requirement_id])
     rescue ActiveRecord::RecordNotFound
       flash[:error] = t('requirement_not_found')
-      return render :status => 400
+      return render :status => :bad_request
     end
 
     @tier = Tier.new(tier_params)

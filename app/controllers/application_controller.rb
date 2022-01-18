@@ -50,17 +50,17 @@ class ApplicationController < ActionController::Base
   private
 
   def is_production?
-    Rails.env == 'production'
+    Rails.env.production?
   end
 
   def render_not_found(ex)
     log_error(ex)
-    render template: "/error/404.html.erb", status: 404
+    render template: "/error/404.html.erb", status: :not_found
   end
 
   def render_400(ex)
     log_error(ex)
-    render template: "/error/400.html.erb", status: 400
+    render template: "/error/400.html.erb", status: :bad_request
   end
 
   def render_access_denied(ex)
@@ -70,7 +70,7 @@ class ApplicationController < ActionController::Base
 
   def render_error(ex)
     log_error(ex)
-    render template: "/error/500.html.erb", status: 500
+    render template: "/error/500.html.erb", status: :internal_server_error
   end
 
   def log_error(ex)

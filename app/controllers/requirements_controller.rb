@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class RequirementsController < ApplicationController
-  before_filter :require_user
+  before_action :require_user
 
   load_and_authorize_resource :race
   load_and_authorize_resource :requirement, :through => :race
@@ -42,10 +42,10 @@ class RequirementsController < ApplicationController
   end
 
   def create
-    return render :status => 400 if params[:requirement].blank?
+    return render :status => :bad_request if params[:requirement].blank?
 
     @race = Race.find params[:race_id]
-    return render :status => 400 if @race.nil?
+    return render :status => :bad_request if @race.nil?
 
     @requirement = Requirement.new requirement_params
     @requirement.race = @race

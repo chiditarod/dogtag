@@ -31,17 +31,17 @@ describe UsersController do
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        get :edit, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        patch :update, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, :id => 1; expect(response).to redirect_to(new_user_session_path)
+        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
       end
     end
 
@@ -75,7 +75,7 @@ describe UsersController do
           it 'returns 200 and sets flash[:error]' do
             bad_payload = valid_user_hash.dup
             bad_payload.delete param
-            post :create, :user => bad_payload
+            post :create, params: { :user => bad_payload }
             expect(response.status).to eq(200)
             expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
           end
@@ -84,14 +84,14 @@ describe UsersController do
 
       it 'adds a record' do
         expect do
-          post :create, :user => valid_user_hash
+          post :create, params: { :user => valid_user_hash }
         end.to change(User, :count).by(1)
       end
 
       context 'when user save is successful' do
         it 'sends a welcome email, sets a flash notice, and redirects to user#show' do
           expect(Workers::WelcomeEmail).to receive(:perform_async)
-          post :create, :user => valid_user_hash
+          post :create, params: { :user => valid_user_hash }
           expect(flash[:notice]).to eq(I18n.t 'create_success_user')
           expect(response).to redirect_to assigns(:user)
         end
@@ -135,7 +135,7 @@ describe UsersController do
       context 'with invalid user id' do
 
         it 'runs the user_update_checker and returns 404' do
-          get :show, :id => -1
+          get :show, params: { :id => -1 }
           expect(controller.should_run_update_checker).to be true
           expect(response.status).to eq(404)
         end
@@ -144,7 +144,7 @@ describe UsersController do
       context 'with valid user id' do
 
         it 'sets the @user, runs the user_update_checker, returns 200' do
-          get :show, :id => some_user.id
+          get :show, params: { :id => some_user.id }
           expect(assigns(:user)).to eq(some_user)
           expect(controller.should_run_update_checker).to be true
           expect(response).to be_success
@@ -157,7 +157,7 @@ describe UsersController do
       context 'with invalid user id' do
 
         it 'does not run user_update_checker and returns 404' do
-          get :edit, :id => -1
+          get :edit, params: { :id => -1 }
           expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
@@ -166,7 +166,7 @@ describe UsersController do
       context 'with valid user id' do
 
         it 'sets the @user object, returns 200, does not run user_update_checker' do
-          get :edit, :id => some_user.id
+          get :edit, params: { :id => some_user.id }
           expect(assigns(:user)).to eq(some_user)
           expect(response).to be_success
           expect(controller.should_run_update_checker).to be false
@@ -179,7 +179,7 @@ describe UsersController do
       context 'on invalid id' do
 
         it 'does not run user_update_checker and returns 404' do
-          put :update, :id => -1
+          put :update, params: { :id => -1 }
           expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
@@ -188,7 +188,7 @@ describe UsersController do
       context 'with valid patch data' do
 
         it 'updates the user, does not run user_update_checker, sets flash, and redirects to user#show' do
-          patch :update, :id => some_user.id, :user => {:phone => '000-000-0000'}
+          patch :update, params: { :id => some_user.id, :user => {:phone => '000-000-0000'} }
           expect(some_user.reload.phone).to eq('000-000-0000')
           expect(controller.should_run_update_checker).to be false
           expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
@@ -202,7 +202,7 @@ describe UsersController do
       context 'on invalid id' do
 
         it 'returns 404' do
-          delete :destroy, :id => -1
+          delete :destroy, params: { :id => -1 }
           expect(response.status).to eq(404)
         end
       end
@@ -213,12 +213,12 @@ describe UsersController do
         it 'destroys the user' do
           some_user = FactoryBot.create :user
           expect do
-            delete :destroy, :id => some_user.id
+            delete :destroy, params: { :id => some_user.id }
           end.to change(User, :count).by(-1)
         end
 
         it 'sets the flash notice and redirects to the user index' do
-          delete :destroy, :id => some_user.id
+          delete :destroy, params: { :id => some_user.id }
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
           expect(response).to redirect_to users_path
         end

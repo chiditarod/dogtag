@@ -21,7 +21,7 @@ addons:
 
 before_script:
   - psql -c 'create database dogtag_test;' -U postgres
-  - bin/rake db:migrate RAILS_ENV=test
+  - bin/rails db:migrate RAILS_ENV=test
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
@@ -40,4 +40,4 @@ deploy:
     secure: kNlxn+CZBCxoo816X6tXACkkpVHBaFbduOhW3CzenY3+NOmLXJnuHClWvIc4ZzQuAWsLWAG/wrRr0hhxtxyvyT4kU4vl6X9RsEDMKLT+W6tnoJcIUdymxYK4Iaz8bYkXHQw0iMg5N7NPiT9JXcWTPfVb1fKqfD82oln7r6arLGI=
   run:
     - 'sleep 30'
-    - 'rake db:migrate'
+    - 'bin/rais db:migrate'

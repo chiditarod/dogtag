@@ -26,11 +26,11 @@ describe QuestionsController do
     end
 
     describe '#create' do
-      let(:endpoint) { lambda { post :create, team_id: 1 }}
+      let(:endpoint) { lambda { post :create, params: { team_id: 1 } }}
       include_examples 'redirects to login'
     end
     describe '#show' do
-      let(:endpoint) { lambda { get :show, id: 1, team_id: 1 }}
+      let(:endpoint) { lambda { get :show, params: { id: 1, team_id: 1 } }}
       include_examples 'redirects to login'
     end
   end
@@ -54,7 +54,7 @@ describe QuestionsController do
 
       context 'when team is not found' do
         it 'renders 404' do
-          post :create, team_id: team.id + 1
+          post :create, params: { team_id: team.id + 1 }
           expect(response.status).to eq(404)
         end
       end
@@ -63,7 +63,7 @@ describe QuestionsController do
         let(:race) { FactoryBot.create :race_with_jsonform, :registration_closed }
 
         it 'sets a flash info and redirects to team path' do
-          post :create, team_id: team.id
+          post :create, params: { team_id: team.id }
           expect(flash[:error]).to eq(I18n.t('questions.cannot_modify'))
           expect(response.status).to redirect_to(team_path(team))
         end
@@ -76,7 +76,7 @@ describe QuestionsController do
 
         context "when a parameter #{situation}" do
           it 'rejects the invalid params' do
-            post :create, thedata.merge!(bad_param)
+            post :create, params: thedata.merge!(bad_param)
             expect(team.reload.jsonform).to eq({'racer-type' => 'Racer'}.to_json)
           end
         end
@@ -95,7 +95,7 @@ describe QuestionsController do
 
         it 'logs an error, sets a flash error, and redirects to team questions path' do
           expect(Rails.logger).to receive(:error)
-          post :create, thedata
+          post :create, params: thedata
           expect(flash[:error]).to eq(I18n.t('questions.could_not_save'))
           expect(response.status).to redirect_to(team_questions_path(team))
         end
@@ -108,7 +108,7 @@ describe QuestionsController do
         }}
 
         it 'sets a flash info and redirects to team path' do
-          post :create, thedata
+          post :create, params: thedata
           expect(flash[:info]).to eq(I18n.t('questions.updated'))
           expect(response.status).to redirect_to(team_path(team))
         end
@@ -121,7 +121,7 @@ describe QuestionsController do
       context 'the team is not found' do
         let(:race) { FactoryBot.create :race }
         before do
-          get :show, team_id: team.id + 1
+          get :show, params: { team_id: team.id + 1 }
         end
 
         it 'returns 404' do
@@ -132,7 +132,7 @@ describe QuestionsController do
       context 'race has no jsonform data' do
         let(:race) { FactoryBot.create :race }
         before do
-          get :show, team_id: team.id
+          get :show, params: { team_id: team.id }
         end
 
         it 'sets flash info' do
@@ -148,7 +148,7 @@ describe QuestionsController do
 
         before do
           allow(controller).to receive(:form_authenticity_token).and_return('fake_token')
-          get :show, team_id: team.id
+          get :show, params: { team_id: team.id }
         end
 
         it 'renders 200 and assigns @questions' do

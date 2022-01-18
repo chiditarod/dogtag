@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Base model to be overridden by more specific requirements.
-class Requirement < ActiveRecord::Base
-  validates_presence_of :name
+class Requirement < ApplicationRecord
+  validates :name, presence: true
 
   belongs_to :race
-  validates_presence_of :race
+  validates :race, presence: true
 
   has_many :completed_requirements
   has_many :teams, :through => :completed_requirements
@@ -37,7 +37,7 @@ class Requirement < ActiveRecord::Base
 
   def cr_for(team)
     record = CompletedRequirement.where(:team_id => team.id, :requirement_id => id).first
-    record.present? ? record : nil
+    record.presence
   end
 
   def completed?(team)

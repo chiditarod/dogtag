@@ -15,7 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Intermediate model between a Team and Requirement
 # User indicates which user made the association
-class CompletedRequirement < ActiveRecord::Base
+class CompletedRequirement < ApplicationRecord
 
   include Wisper.model
 
@@ -23,9 +23,9 @@ class CompletedRequirement < ActiveRecord::Base
   belongs_to :requirement
   belongs_to :user
 
-  validates_presence_of :team, :requirement, :user
-  validates_uniqueness_of :team, :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.'
-  validates_uniqueness_of :requirement, :scope => [:team], :allow_nil => true, :message => 'has already been completed for that team'
+  validates :team, :requirement, :user, presence: true
+  validates :team, uniqueness: { :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.' }
+  validates :requirement, uniqueness: { :scope => [:team], :allow_nil => true, :message => 'has already been completed for that team' }
 
   # todo: use postgres native json field type, here.
   serialize :metadata, JSON

@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby "2.5.7"
+ruby "2.7.5"
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -17,7 +17,7 @@ gem 'role_model', '~> 0.8.2' # roles
 # payments
 gem 'stripe', '~> 1.58.0'
 
-gem 'pg', '~> 0.20.0'
+gem 'pg'
 gem 'json-schema'
 
 # google analytics
@@ -29,11 +29,18 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 4.2'
+gem 'rails', '~> 5.0.7'
+
+# Use unicorn as the app server (heroku)
+gem 'unicorn'
+# Use Puma as the app server
+# see https://yuanjiang.space/switch-rails-server-from-unicorn-to-puma
+# gem 'puma', '~> 3.0'
+
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
-gem 'sass-rails'
+gem 'sass-rails', '~> 5.0'
 
 # Use Uglifier as compressor for JavaScript assets
 gem 'uglifier', '>= 1.3.0'
@@ -49,16 +56,16 @@ gem 'awesome_print'
 gem 'httpclient'
 
 # See https://github.com/sstephenson/execjs#readme for more supported runtimes
-gem 'libv8'
+#gem 'libv8'
+gem 'libv8-node'
 
 # Use jquery as the JavaScript library
 gem 'jquery-rails'
 
-# Turbolinks makes following links in your web application faster. Read more: https://github.com/rails/turbolinks
-#gem 'turbolinks'
-
+# Turbolinks makes navigating your web application faster. Read more: https://github.com/turbolinks/turbolinks
+#gem 'turbolinks', '~> 5'
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
-gem 'jbuilder', '~> 1.2'
+gem 'jbuilder'
 
 # workers
 gem 'sidekiq'
@@ -66,15 +73,16 @@ gem 'sidekiq-failures'
 gem 'redis-namespace'
 
 group :development do
+  # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
+  gem 'web-console'
+  gem 'listen'
   gem 'capistrano'
   gem 'mailcatcher'
-  gem 'web-console', '~> 3.0'
 end
 
 group :test do
+  gem 'rails-controller-testing'
   gem 'test-unit'
-  gem 'rspec'
-  gem 'rspec-rails'
   gem 'wisper-rspec'
   gem 'webmock'
   gem 'simplecov'
@@ -82,12 +90,16 @@ group :test do
   gem 'codeclimate-test-reporter'
   gem 'zonebie'
   gem 'timecop'
+  gem 'rspec_junit_formatter'
 end
 
 group :test, :development do
-  gem 'test_after_commit' # required to test wisper pub/sub until rails 5+
+  gem 'rspec-rails'
   gem 'factory_bot_rails'
   gem 'dotenv-rails'
+  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem 'byebug', platform: :mri
+  gem 'rubocop-rails'
 end
 
 group :doc do
@@ -98,8 +110,5 @@ end
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
-# Use unicorn as the app server (heroku)
-gem 'unicorn', '~> 5.2'
-
-# Use debugger
-# gem 'debugger', group: [:development, :test]
+# Use byebug debugger
+# gem 'byebug', group: [:development, :test]
