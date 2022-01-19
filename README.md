@@ -169,6 +169,11 @@ export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
 rbenv install 2.7.5
 ```
 
+### Jsonform hacks
+
+When you add fields to the jsonform, they won't persist unless you
+allowlist them in `app/controllers/questions_controller.rb`.
+
 ### Scratch Ruby Upgrade notes
 
 ```sh
