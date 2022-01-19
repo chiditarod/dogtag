@@ -7,7 +7,7 @@ Rails.application.configure do
   config.action_mailer.default_options = {from: ENV['DEFAULT_FROM_EMAIL']}
   config.action_mailer.smtp_settings = {
     :address        => ENV['SMTP_HOST'],
-    :port           => ENV['SMTP_PORT'],
+    :port           => ENV['SMTP_PORT'].to_i,
     :authentication => :plain,
     :user_name      => ENV['SMTP_USERNAME'],
     :password       => ENV['SMTP_PASSWORD'],
