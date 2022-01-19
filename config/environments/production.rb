@@ -1,19 +1,17 @@
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
-  # dcb - Heroku SMTP
+  # action mailer config
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = true
-  config.action_mailer.default_options = {from: 'dogtag@chiditarod.org'}
-
-  # dcb - Send to sendgrid
+  config.action_mailer.default_options = {from: ENV['DEFAULT_FROM_EMAIL']}
   config.action_mailer.smtp_settings = {
-    :address        => 'smtp.sendgrid.net',
-    :port           => '465',  # 587
+    :address        => ENV['SMTP_HOST'],
+    :port           => ENV['SMTP_PORT'],
+    :user_name      => ENV['SMTP_USERNAME'],
+    :password       => ENV['SMTP_PASSWORD'],
+    :domain         => ENV['SMTP_DOMAIN'],
     :authentication => :plain,
-    :user_name      => ENV['SENDGRID_USERNAME'],
-    :password       => ENV['SENDGRID_PASSWORD'],
-    :domain         => 'heroku.com',
     :enable_starttls_auto => true
   }
 

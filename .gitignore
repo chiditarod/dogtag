@@ -34,3 +34,4 @@ vendor/bundle
 dump.rdb
 TAGS
 .byebug_history
+.idea/

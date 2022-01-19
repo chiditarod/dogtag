@@ -26,9 +26,15 @@ Runtime Environment Variables
 DATABASE_URL=postgres://postgres:123abc@localhost:5432
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
-CLASSY_CLIENT_ID=...           # optional
-CLASSY_CLIENT_SECRET=...       # optional
-ROLLBAR_ACCESS_TOKEN=...       # optional
+CLASSY_CLIENT_ID=              # optional
+CLASSY_CLIENT_SECRET=          # optional
+ROLLBAR_ACCESS_TOKEN=          # optional
+DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
+SMTP_DOMAIN                    # e.g. heroku.com
+SMTP_HOST                      # e.g. smtp.foo.tld
+SMTP_PORT
+SMTP_USERNAME
+SMTP_PASSWORD
 ```
 
 ## Custom questions using jsonform
