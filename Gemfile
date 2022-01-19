@@ -77,7 +77,6 @@ group :development do
   gem 'web-console'
   gem 'listen'
   gem 'capistrano'
-  gem 'mailcatcher'
 end
 
 group :test do
@@ -110,5 +109,4 @@ end
 # Use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
-# Use byebug debugger
-# gem 'byebug', group: [:development, :test]
+gem 'tzinfo-data'
