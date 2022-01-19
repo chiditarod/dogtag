@@ -26,7 +26,7 @@ services:
     command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
 
   db:
-    image: postgres:10.6-alpine
+    image: postgres:11.14-alpine
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
