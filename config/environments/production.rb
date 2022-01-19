@@ -6,10 +6,10 @@ Rails.application.configure do
   config.action_mailer.perform_deliveries = true
   config.action_mailer.default_options = {from: 'dogtag@chiditarod.org'}
 
-  # dcb - Send to local mailcatcher gem
+  # dcb - Send to sendgrid
   config.action_mailer.smtp_settings = {
     :address        => 'smtp.sendgrid.net',
-    :port           => '587',
+    :port           => '465',  # 587
     :authentication => :plain,
     :user_name      => ENV['SENDGRID_USERNAME'],
     :password       => ENV['SENDGRID_PASSWORD'],
