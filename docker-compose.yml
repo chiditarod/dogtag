@@ -5,10 +5,6 @@ x-default: &default
   depends_on:
     - redis
     - db
-  environment:
-    - DATABASE_URL=postgres://postgres@db:5432
-    - REDIS_URL=redis://redis:6379/0
-    - SMTP_HOST=mailcatcher
   networks:
     - web
   volumes:
@@ -18,11 +14,24 @@ x-default: &default
 services:
   web:
     <<: *default
+    environment:
+      - DATABASE_URL=postgres://postgres@db:5432
+      - REDIS_URL=redis://redis:6379/0
+        # read stripe secrets from local env (or .env file)
+      - STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY}"
+      - STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}"
+        # TODO: SMTP_HOST might not be needed here
+      - SMTP_HOST=mailcatcher
     ports:
       - "3000:3000"
 
   worker:
     <<: *default
+    environment:
+      - DATABASE_URL=postgres://postgres@db:5432
+      - REDIS_URL=redis://redis:6379/0
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
     command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
 
   db:
@@ -38,7 +47,7 @@ services:
       - ./docker/init-postgres.sh:/docker-entrypoint-initdb.d/init-postgres.sh
 
   redis:
-    image: redis:3-alpine
+    image: redis:5-alpine
     command: redis-server --appendonly yes
     networks:
       - web
@@ -48,8 +57,9 @@ services:
       - redis_cache:/data
 
   mailcatcher:
-    build: .
-    command: bundle exec mailcatcher --foreground --ip=0.0.0.0
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mailcatcher
     networks:
       - web
     volumes:

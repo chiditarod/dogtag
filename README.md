@@ -62,9 +62,9 @@ rbenv install $(cat .ruby-version)
 gem install bundler
 ```
 
-### Installation
+### Install
 
-#### MacOs 12.1
+#### MacOS 12.1
 
 ```sh
 # MacOS 12.1
@@ -88,12 +88,6 @@ bundle config --local build.pg --with-opt-dir="/usr/local/opt/libpq"
 bundle install
 ```
 
-### Build and run all containers
-
-This will also create the `dogtag_test` and `dogtag_development` databases.
-
-    docker-compose up -d
-
 ### Create an `.env` file for local development
 
 This file is used when booting Rails outside of Docker.  Customize `.env` with `STRIPE_PUBLISHABLE_KEY` and `STRIPE_PUBLISHABLE_KEY` entries, which are currently required to boot the app.
@@ -102,7 +96,27 @@ This file is used when booting Rails outside of Docker.  Customize `.env` with `
 cp .env.example .env
 ```
 
-### Create and Migrate Databases
+## Local Development
+
+### Build and run all containers
+
+This will also create the `dogtag_test` and `dogtag_development` databases and will build and boot mailcatcher.
+
+    docker-compose up -d
+
+### Run the test suite
+
+    docker-compose run web bundle exec rspec   # from within the container
+    bundle exec rspec                          # or from the console
+
+### Mailcatcher
+
+The `mailcatcher` gem gets built into a docker image and deployed in the
+docker compose cluster. It exposes an SMTP port on `1025` and a web UI on `1080`.
+
+## Database
+
+### Create and Migrate
 
 Via docker:
 
@@ -113,14 +127,6 @@ Or via the command line:
 
     bundle exec rake db:migrate
     RAILS_ENV=test bundle exec rake db:migrate
-
-### Run the test suite
-
-    docker-compose run web bundle exec rspec   # from within the container
-    bundle exec rspec                          # or from the console
-
-
-## Useful Commands
 
 ### Connect to postgres inside container
 
@@ -140,7 +146,7 @@ docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-ow
 3. Deploy to production using PROD credentials.
 4. Tail them logs.
 
-## Yearly Cycle
+## Yearly SDLC Cycle
 
 Here is an outline of the yearly cycle for using Dogtag with a single event ([CHIditarod](http://www.chiditarod.org), in our case).
 

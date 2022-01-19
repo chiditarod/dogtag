@@ -1,9 +1,13 @@
-FROM ruby:2.5.3-slim
+FROM ruby:2.7.5-alpine
 
-RUN apt-get update -qq
-RUN apt-get install -y build-essential \
-    libpq-dev \
-    libsqlite3-dev
+RUN set -xe \
+    && apk add --no-cache \
+        libstdc++ \
+        libpq-dev \
+        sqlite-libs \
+        build-base \
+        sqlite-dev \
+        nodejs
 
 ENV app /app
 RUN mkdir $app
