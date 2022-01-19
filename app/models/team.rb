@@ -54,7 +54,9 @@ class Team < ApplicationRecord
     "12th year sages",
     "13th year fingers crossed",
     "14th year clumsy adolescents",
-    "15th year student drivers"
+    "15th year student drivers",
+    "Sweet 16th",
+    "17th year.. wait, what?"
   ]
 
   def unfinalized
