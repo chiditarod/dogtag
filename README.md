@@ -64,10 +64,25 @@ gem install bundler
 
 ### Install
 
+#### MacOS 12.6
+
+```sh
+xcode-select --install
+softwareupdate --all --install --force
+
+brew install readline openssl v8 libpq
+gem install libv8 --platform="x86_64-darwin-20"
+bundle config --local build.pg --with-opt-include="/opt/homebrew/opt/libpq/include" --with-opt-lib="/opt/homebrew/opt/libpq/lib"
+bundle install
+
+docker-compose up -d db
+bundle exec bin/rails db:migrate RAILS_ENV=test
+rspec
+```
+
 #### MacOS 12.1
 
 ```sh
-# MacOS 12.1
 xcode-select --install
 softwareupdate --all --install --force
 
