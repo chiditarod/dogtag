@@ -139,7 +139,7 @@ describe Team do
 
       it 'Queues up an email to the user and logs status' do
         expect(Rails.logger).to receive(:info).with("Finalized Team: #{team.name} (id: #{team.id})")
-        expect(Workers::TeamFinalizer).to receive(:perform_async).with({team_id: team.id})
+        expect(Workers::TeamFinalizer).to receive(:perform_async).with({'team_id' => team.id})
         team.finalize
       end
     end

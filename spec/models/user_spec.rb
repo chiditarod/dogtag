@@ -35,7 +35,7 @@ describe User do
     end
 
     it "queues an email to be sent" do
-      expect(Workers::PasswordResetEmail).to receive(:perform_async).with({user_id: user.id, host: '80'})
+      expect(Workers::PasswordResetEmail).to receive(:perform_async).with({'user_id' => user.id, 'host' => '80'})
       user.reset_password!('80')
     end
   end

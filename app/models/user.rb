@@ -64,6 +64,6 @@ class User < ApplicationRecord
 
   def reset_password!(host)
     reset_perishable_token!
-    Workers::PasswordResetEmail.perform_async({user_id: self.id, host: host})
+    Workers::PasswordResetEmail.perform_async({'user_id' => self.id, 'host' => host})
   end
 end

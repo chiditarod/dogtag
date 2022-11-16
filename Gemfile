@@ -29,7 +29,11 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 5.0.7'
+gem 'rails', '~> 5.1.7'
+# locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
+gem 'psych', '< 4'
+# newer versions of rdoc depend on psych 4+
+gem 'rdoc', '~> 6.3.3'
 
 # Use unicorn as the app server (heroku)
 gem 'unicorn'
@@ -70,7 +74,7 @@ gem 'jbuilder'
 # workers
 gem 'sidekiq'
 gem 'sidekiq-failures'
-gem 'redis-namespace'
+#gem 'redis-namespace'
 
 group :development do
   # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
@@ -85,6 +89,7 @@ group :test do
   gem 'wisper-rspec'
   gem 'webmock'
   gem 'simplecov'
+  gem 'simplecov_json_formatter', '~> 0.1.4'
   gem 'stripe-ruby-mock', '~> 2.4.1'
   gem 'codeclimate-test-reporter'
   gem 'zonebie'

@@ -74,7 +74,7 @@ class Team < ApplicationRecord
     self.finalized = true
 
     if self.save
-      Workers::TeamFinalizer.perform_async({team_id: self.id})
+      Workers::TeamFinalizer.perform_async({'team_id' => self.id})
       Rails.logger.info "Finalized Team: #{name} (id: #{id})"
       true
     else

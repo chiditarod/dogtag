@@ -32,8 +32,8 @@ describe Workers::TeamFinalizer do
 
     it "calls other workers and logs their job ids" do
       expect(worker).to receive(:log).with("received", {job: job})
-      expect(Workers::TeamFinalizedEmail).to receive(:perform_async).with({team_id: team_id}).and_return("foo")
-      expect(Workers::ClassyCreateFundraisingTeam).to receive(:perform_async).with({team_id: team_id}).and_return("bar")
+      expect(Workers::TeamFinalizedEmail).to receive(:perform_async).with({'team_id' => team_id}).and_return("foo")
+      expect(Workers::ClassyCreateFundraisingTeam).to receive(:perform_async).with({'team_id' => team_id}).and_return("bar")
       expect(worker).to receive(:log).with("complete", data)
       worker.perform(job)
     end
