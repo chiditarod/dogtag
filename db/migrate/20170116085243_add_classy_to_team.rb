@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddClassyToTeam < ActiveRecord::Migration
+class AddClassyToTeam < ActiveRecord::Migration[5.1]
   def up
     add_column :teams, :classy_id,                 :integer
     add_column :teams, :classy_fundraiser_page_id, :integer

@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddAssignedTeamNumberToTeam < ActiveRecord::Migration
+class AddAssignedTeamNumberToTeam < ActiveRecord::Migration[5.1]
   def up
     add_column :teams, :assigned_team_number, :integer
   end

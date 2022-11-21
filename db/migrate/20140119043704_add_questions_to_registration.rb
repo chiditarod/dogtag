@@ -15,7 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # I originally wanted to use JsonForm to store this per-race, but I couldn't get it
 # to work and well, there's deadlines.
-class AddQuestionsToRegistration < ActiveRecord::Migration
+class AddQuestionsToRegistration < ActiveRecord::Migration[5.1]
   def change
     add_column :registrations, :racer_type, :string
     add_column :registrations, :primary_inspiration, :string

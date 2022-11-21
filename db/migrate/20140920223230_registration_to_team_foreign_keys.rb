@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class RegistrationToTeamForeignKeys < ActiveRecord::Migration
+class RegistrationToTeamForeignKeys < ActiveRecord::Migration[5.1]
   def up
     # completed requirements table
     remove_index  :completed_requirements, :name => :completed_requirements_index

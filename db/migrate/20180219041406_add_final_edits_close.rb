@@ -1,4 +1,4 @@
-class AddFinalEditsClose < ActiveRecord::Migration
+class AddFinalEditsClose < ActiveRecord::Migration[5.1]
   def up
     add_column :races, :final_edits_close, :datetime
 

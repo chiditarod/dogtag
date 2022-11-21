@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class CreateCompletedRequirementsJoinTable < ActiveRecord::Migration
+class CreateCompletedRequirementsJoinTable < ActiveRecord::Migration[5.1]
   def change
     create_table :completed_requirements do |t|
       t.belongs_to :registration

@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddClassyToRace < ActiveRecord::Migration
+class AddClassyToRace < ActiveRecord::Migration[5.1]
   def up
     add_column :races, :classy_campaign_id,  :integer
     add_column :races, :classy_default_goal, :integer

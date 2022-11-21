@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddFilterFieldToRaces < ActiveRecord::Migration
+class AddFilterFieldToRaces < ActiveRecord::Migration[5.1]
   def up
     add_column :races, :filter_field, :string
   end
