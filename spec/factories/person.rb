@@ -21,5 +21,6 @@ FactoryBot.define do
     phone { "123-345-6789" }
     experience { 3 }
     zipcode { '12345' }
+    association :team, strategy: :build
   end
 end
