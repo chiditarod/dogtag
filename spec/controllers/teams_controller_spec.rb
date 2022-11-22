@@ -91,7 +91,7 @@ describe TeamsController do
         end
 
         it 'returns http success' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
         it 'assigns team to Team.new' do
           expect(assigns(:team)).to eq(team)
@@ -112,7 +112,7 @@ describe TeamsController do
 
       shared_examples 'is_http_success' do
         it 'returns success' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
       end
       shared_examples 'myteams_empty' do
@@ -281,7 +281,7 @@ describe TeamsController do
         end
 
         it 'returns http success' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
         it 'sets a flash notice' do
           expect(flash.now[:error]).to include(I18n.t 'create_failed')
@@ -358,7 +358,7 @@ describe TeamsController do
           get :show, params: { :id => team.id }
           expect(assigns(:team)).to eq(team)
           expect(assigns(:race)).to eq(team.race)
-          expect(response).to be_success
+          expect(response).to be_successful
         end
 
         it 'does not cache this page' do

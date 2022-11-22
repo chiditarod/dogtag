@@ -45,7 +45,7 @@ describe PasswordResetsController do
       end
 
       it 'renders 200' do
-        expect(response).to be_success
+        expect(response).to be_successful
       end
       it 'renders #new' do
         expect(request).to render_template(:new)
@@ -69,7 +69,7 @@ describe PasswordResetsController do
         include_examples 'assigns the user object'
 
         it 'renders 200' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
         it 'renders #edit' do
           expect(request).to render_template(:edit)
@@ -98,7 +98,7 @@ describe PasswordResetsController do
             expect(flash[:error]).to eq('Ensure you supply a new password and confirmation')
           end
           it 'renders 200' do
-            expect(response).to be_success
+            expect(response).to be_successful
           end
           it 'renders #edit' do
             expect(request).to render_template(:edit)
@@ -130,7 +130,7 @@ describe PasswordResetsController do
             expect(flash[:error]).to eq('foo')
           end
           it 'renders 200' do
-            expect(response).to be_success
+            expect(response).to be_successful
           end
           it 'renders #edit' do
             expect(request).to render_template(:edit)
