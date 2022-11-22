@@ -363,7 +363,7 @@ describe TeamsController do
 
         it 'does not cache this page' do
           get :show, params: { :id => team.id }
-          expect(response.headers['Cache-Control']).to eq('no-cache, no-store, max-age=0, must-revalidate')
+          expect(response.headers['Cache-Control']).to eq('no-cache, no-store')
           expect(response.headers['Pragma']).to eq('no-cache')
         end
 
