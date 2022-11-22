@@ -4,6 +4,9 @@ ruby "2.7.6"
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
 
+# Reduces boot times through caching; required in config/boot.rb
+gem 'bootsnap', require: false
+
 group :production do
   gem 'rails_12factor' # 12 factor support for rails (http://12factor.net/)
   gem 'newrelic_rpm'
@@ -29,7 +32,7 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 5.1.7'
+gem 'rails', '~> 5.2.8'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
 gem 'psych', '< 4'
 # newer versions of rdoc depend on psych 4+
