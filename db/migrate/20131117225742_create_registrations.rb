@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class CreateRegistrations < ActiveRecord::Migration
+class CreateRegistrations < ActiveRecord::Migration[5.1]
   def change
     create_table :registrations do |t|
       t.string :name

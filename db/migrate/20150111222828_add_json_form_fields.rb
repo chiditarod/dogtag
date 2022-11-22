@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddJsonFormFields < ActiveRecord::Migration
+class AddJsonFormFields < ActiveRecord::Migration[5.1]
   def up
     add_column :races, :jsonform, :text
     add_column :teams, :jsonform, :text

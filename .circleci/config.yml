@@ -1,7 +1,7 @@
 # https://circleci.com/docs/2.0/language-ruby/
 version: 2.1
 orbs:
-  ruby: circleci/ruby@1.3.0
+  ruby: circleci/ruby@2.0.0
 references:
   restore: &restore
     restore_cache:
@@ -37,8 +37,8 @@ jobs:
       gemfile:
         type: string
     docker:
-      - image: "circleci/ruby:<< parameters.ruby_version >>-node"
-      - image: circleci/postgres:10.6-alpine
+      - image: "cimg/ruby:<< parameters.ruby_version >>-node"
+      - image: cimg/postgres:10.22
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: dogtag_test
@@ -66,5 +66,5 @@ workflows:
       - test:
           matrix:
             parameters:
-              ruby_version: ["2.7"]
+              ruby_version: ["2.7.6"]
               gemfile: ["Gemfile"]

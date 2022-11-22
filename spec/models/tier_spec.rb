@@ -53,10 +53,8 @@ describe Tier do
     end
 
     it 'passes when two tiers with the same information are assigned to different requirements' do
-      req2 = FactoryBot.create :payment_requirement
-      tier2 = FactoryBot.create(:tier)
-      req2.tiers << tier2
-      expect(tier2).to be_valid
+      req2 = FactoryBot.create :payment_requirement_with_tier
+      expect(req2.tiers.first).to be_valid
     end
   end
 end

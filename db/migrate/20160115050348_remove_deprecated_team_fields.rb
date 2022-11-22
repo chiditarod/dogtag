@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class RemoveDeprecatedTeamFields < ActiveRecord::Migration
+class RemoveDeprecatedTeamFields < ActiveRecord::Migration[5.1]
   def up
     remove_column :teams, :racer_type
     remove_column :teams, :primary_inspiration

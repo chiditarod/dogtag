@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddRolesMaskToUsers < ActiveRecord::Migration
+class AddRolesMaskToUsers < ActiveRecord::Migration[5.1]
   def change
     add_column :users, :roles_mask, :integer
   end

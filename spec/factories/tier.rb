@@ -22,6 +22,8 @@ FactoryBot.define do
     price { 5000 }
     begin_at { thetime - 2.weeks }
 
+    association :requirement, factory: :payment_requirement, strategy: :build
+
     factory :tier2 do
       price { 6000 }
       begin_at { thetime - 2.days }

@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Using single table inheritance (STI)
-class CreateRequirements < ActiveRecord::Migration
+class CreateRequirements < ActiveRecord::Migration[5.1]
   def change
     create_table :requirements do |t|
       t.belongs_to :race

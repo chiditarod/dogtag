@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class MergeRegistrationsIntoTeams < ActiveRecord::Migration
+class MergeRegistrationsIntoTeams < ActiveRecord::Migration[5.1]
 
   THEFIELDS = %w(name description twitter created_at updated_at notified_at
                  race_id racer_type primary_inspiration rules_confirmation

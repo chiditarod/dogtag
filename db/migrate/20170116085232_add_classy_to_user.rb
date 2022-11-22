@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-class AddClassyToUser < ActiveRecord::Migration
+class AddClassyToUser < ActiveRecord::Migration[5.1]
   def up
     add_column :users, :classy_id, :integer
   end
