@@ -31,6 +31,7 @@ references:
 
 jobs:
   test:
+    parallelism: 4
     parameters:
       ruby_version:
         type: string
