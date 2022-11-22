@@ -37,7 +37,7 @@ describe UserSessionsController do
       it 'returns http success' do
         activate_authlogic
         get :new
-        expect(response).to be_success
+        expect(response).to be_successful
       end
     end
 

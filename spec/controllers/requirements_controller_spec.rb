@@ -133,7 +133,7 @@ describe RequirementsController do
           expect(assigns(:requirement)).to eq(req)
         end
         it 'returns 200' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
       end
     end
@@ -146,7 +146,7 @@ describe RequirementsController do
       end
 
       it 'returns http success' do
-        expect(response).to be_success
+        expect(response).to be_successful
       end
 
       it 'assigns requirement to Requirement.new' do

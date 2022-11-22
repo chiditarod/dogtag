@@ -131,7 +131,7 @@ describe RacesController do
         end
 
         it 'returns 200' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
         it 'sends CSV data'
         it 'handles the finalized param'
@@ -155,7 +155,7 @@ describe RacesController do
           expect(assigns(:race)).to eq(@race)
         end
         it 'returns 200' do
-          expect(response).to be_success
+          expect(response).to be_successful
         end
         it "sets @my_race_teams to the user's teams for this race"
       end
@@ -234,7 +234,7 @@ describe RacesController do
         race1 = FactoryBot.create :race
         race2 = FactoryBot.create :race
         get :index
-        expect(response).to be_success
+        expect(response).to be_successful
         expect(assigns(:races)).to eq([race1, race2])
       end
     end
@@ -247,7 +247,7 @@ describe RacesController do
       end
 
       it 'returns http success, assigns @race to Race.new' do
-        expect(response).to be_success
+        expect(response).to be_successful
         expect(assigns(:race)).to eq(race)
       end
     end

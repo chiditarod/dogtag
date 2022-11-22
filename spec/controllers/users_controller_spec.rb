@@ -53,7 +53,7 @@ describe UsersController do
       end
 
       it 'returns http success' do
-        expect(response).to be_success
+        expect(response).to be_successful
       end
       it 'assigns @user to User.new' do
         expect(assigns(:user)).to eq(@user_stub)
@@ -117,7 +117,7 @@ describe UsersController do
 
       it 'assigns @user to User.new and returns success' do
         expect(assigns(:user)).to eq(new_user)
-        expect(response).to be_success
+        expect(response).to be_successful
       end
     end
 
@@ -126,7 +126,7 @@ describe UsersController do
       it 'sets @users to all users and returns http success' do
         get :index
         expect(assigns(:users)).to_not be_nil
-        expect(response).to be_success
+        expect(response).to be_successful
       end
     end
 
@@ -147,7 +147,7 @@ describe UsersController do
           get :show, params: { :id => some_user.id }
           expect(assigns(:user)).to eq(some_user)
           expect(controller.should_run_update_checker).to be true
-          expect(response).to be_success
+          expect(response).to be_successful
         end
       end
     end
@@ -168,7 +168,7 @@ describe UsersController do
         it 'sets the @user object, returns 200, does not run user_update_checker' do
           get :edit, params: { :id => some_user.id }
           expect(assigns(:user)).to eq(some_user)
-          expect(response).to be_success
+          expect(response).to be_successful
           expect(controller.should_run_update_checker).to be false
         end
       end

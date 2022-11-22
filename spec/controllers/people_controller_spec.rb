@@ -160,7 +160,7 @@ describe PeopleController do
         end
         it 'assigns person and returns 200' do
           expect(assigns(:person)).to eq(person)
-          expect(response).to be_success
+          expect(response).to be_successful
         end
       end
     end
@@ -175,7 +175,7 @@ describe PeopleController do
       it 'assigns person to Person.new, sets team (needed by _form.html.haml), and returns http success' do
         expect(assigns(:person)).to eq(dude)
         expect(assigns(:team)).to eq(team)
-        expect(response).to be_success
+        expect(response).to be_successful
       end
     end
 
@@ -220,7 +220,7 @@ describe PeopleController do
 
         it 'returns http success and sets flash error' do
           post :create, params: { :team_id => team.id, :person => incomplete_hash }
-          expect(response).to be_success
+          expect(response).to be_successful
           expect(flash[:error]).to_not be_nil
         end
       end
