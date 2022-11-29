@@ -28,7 +28,6 @@ class ApplicationController < ActionController::Base
   unless Rails.configuration.consider_all_requests_local
     rescue_from Exception, :with => :render_error
     rescue_from ActionController::RoutingError, :with => :render_not_found
-    rescue_from ActionController::UnknownController, :with => :render_not_found
     rescue_from CanCan::AccessDenied, :with => :render_access_denied
   end
   # we always want these (including during tests)
