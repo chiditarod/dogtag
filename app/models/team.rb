@@ -56,7 +56,8 @@ class Team < ApplicationRecord
     "14th year clumsy adolescents",
     "15th year student drivers",
     "Sweet 16th",
-    "17th year.. wait, what?"
+    "17th year.. wait, what?",
+    "18th year I'M AN ADULT"
   ]
 
   def unfinalized
