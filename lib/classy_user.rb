@@ -18,9 +18,6 @@ class ClassyUser
   # associate dogtag user account with an existing classy user, or tell classy
   # to make a new association and send them an invite to the classy platform.
   def self.link_user_to_classy!(user, race)
-
-    return user if user.classy_id.present?
-
     cc = ClassyClient.new
 
     if result = cc.get_member(user.email)

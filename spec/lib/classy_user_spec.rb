@@ -24,14 +24,23 @@ describe ClassyUser do
 
     context "when user already has a classy id in db" do
       let(:user) { FactoryBot.create :user, :with_classy_id }
+      let(:cc)   { double(ClassyClient) }
 
-      it "returns the user object" do
-        expect(result).to eq(user)
+      before do
+        expect(ClassyClient).to receive(:new).and_return(cc)
+      end
+
+      context "and the classy id associated with the user's email address has changed" do
+        it "saves the new classy id in the user object" do
+          expect(user.classy_id).to eq(123456)
+          expect(cc).to receive(:get_member).and_return({'id' => '123'})
+          expect(result.classy_id).to eq(123)
+          expect(user.reload.classy_id).to eq(123)
+        end
       end
     end
 
     context "when user has no classy id" do
-
       let(:user) { FactoryBot.create :user }
       let(:cc)   { double(ClassyClient) }
 
@@ -40,7 +49,6 @@ describe ClassyUser do
       end
 
       context "user email address has classy account" do
-
         it "associates the user with classy and returns the user object" do
           expect(user.classy_id).to be_nil
           expect(cc).to receive(:get_member).and_return({'id' => '123'})
@@ -49,7 +57,6 @@ describe ClassyUser do
       end
 
       context "when email address is not found in classy" do
-
         it "creates a new classy member, associates the user with classy and returns the user object" do
           expect(user.classy_id).to be_nil
           expect(cc).to receive(:get_member).and_return(nil)
