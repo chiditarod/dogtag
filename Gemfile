@@ -14,7 +14,7 @@ group :production do
 end
 
 gem 'authlogic', '~> 4.4.2'  # authentication
-gem 'cancancan', '~> 2.3.0'  # authorization, w/ Rails 4.2 support
+gem 'cancancan', '~> 3.5.0'  # authorization, w/ Rails 4.2 support
 gem 'role_model', '~> 0.8.2' # roles
 
 # payments
