@@ -10,22 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180219041406) do
+ActiveRecord::Schema.define(version: 2018_02_19_041406) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "completed_requirements", id: :serial, force: :cascade do |t|
-    t.integer "team_id"
-    t.integer "requirement_id"
-    t.integer "user_id"
+  create_table "completed_requirements", force: :cascade do |t|
+    t.bigint "team_id"
+    t.bigint "requirement_id"
+    t.bigint "user_id"
     t.text "metadata"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["requirement_id"], name: "index_completed_requirements_on_requirement_id"
     t.index ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id", unique: true
+    t.index ["team_id"], name: "index_completed_requirements_on_team_id"
+    t.index ["user_id"], name: "index_completed_requirements_on_user_id"
   end
 
-  create_table "people", id: :serial, force: :cascade do |t|
+  create_table "people", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
     t.string "email"
@@ -33,12 +36,13 @@ ActiveRecord::Schema.define(version: 20180219041406) do
     t.string "twitter"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.integer "team_id"
+    t.bigint "team_id"
     t.integer "experience"
     t.string "zipcode", null: false
+    t.index ["team_id"], name: "index_people_on_team_id"
   end
 
-  create_table "races", id: :serial, force: :cascade do |t|
+  create_table "races", force: :cascade do |t|
     t.string "name"
     t.datetime "race_datetime"
     t.datetime "registration_open"
@@ -54,17 +58,18 @@ ActiveRecord::Schema.define(version: 20180219041406) do
     t.datetime "final_edits_close", null: false
   end
 
-  create_table "requirements", id: :serial, force: :cascade do |t|
-    t.integer "race_id"
+  create_table "requirements", force: :cascade do |t|
+    t.bigint "race_id"
     t.string "type"
     t.string "name"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["race_id"], name: "index_requirements_on_race_id"
   end
 
-  create_table "teams", id: :serial, force: :cascade do |t|
+  create_table "teams", force: :cascade do |t|
     t.string "name"
-    t.integer "user_id"
+    t.bigint "user_id"
     t.datetime "created_at"
     t.datetime "updated_at"
     t.text "description"
@@ -81,17 +86,19 @@ ActiveRecord::Schema.define(version: 20180219041406) do
     t.integer "classy_id"
     t.integer "classy_fundraiser_page_id"
     t.index ["race_id"], name: "index_teams_on_race_id"
+    t.index ["user_id"], name: "index_teams_on_user_id"
   end
 
-  create_table "tiers", id: :serial, force: :cascade do |t|
-    t.integer "requirement_id"
+  create_table "tiers", force: :cascade do |t|
+    t.bigint "requirement_id"
     t.datetime "begin_at"
     t.integer "price"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.index ["requirement_id"], name: "index_tiers_on_requirement_id"
   end
 
-  create_table "users", id: :serial, force: :cascade do |t|
+  create_table "users", force: :cascade do |t|
     t.string "first_name"
     t.string "last_name"
     t.string "phone"
