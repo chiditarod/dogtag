@@ -39,7 +39,7 @@ jobs:
         type: string
     docker:
       - image: "cimg/ruby:<< parameters.ruby_version >>-node"
-      - image: cimg/postgres:10.22
+      - image: cimg/postgres:14.6
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: dogtag_test
