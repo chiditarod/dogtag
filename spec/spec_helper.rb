@@ -15,7 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 # Generates code coverage report in /coverage/ when specs are run
 require 'simplecov'
-#SimpleCov.start
+SimpleCov.start
 
 ENV["RAILS_ENV"] ||= 'test'
 
