@@ -2,7 +2,8 @@
   "dependencies": {
     "@rails/webpacker": "5.4.4",
     "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12"
+    "webpack-cli": "^3.3.12",
+    "@babel/plugin-transform-private-methods": "^7.23.3"
   },
   "devDependencies": {
     "webpack-dev-server": "^3"
