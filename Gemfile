@@ -13,13 +13,9 @@ group :production do
   gem 'rollbar'
 end
 
-#gem 'authlogic', '~> 4.4.2'  # authentication
-
 gem 'authlogic', '~> 6.4.0'  # authentication
 gem 'scrypt', '~> 3.0'
-
 # See: https://github.com/CanCanCommunity/cancancan/blob/develop/docs/migrating.md#from-2x-to-3x
-# cancancan 2.3.0 -> 3.0.2
 gem 'cancancan', '~> 3.5.0'  # authorization
 gem 'role_model', '~> 0.8.2' # roles
 
