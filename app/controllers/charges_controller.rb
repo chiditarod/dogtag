@@ -137,7 +137,7 @@ class ChargesController < ApplicationController
     render(
       status: :bad_request,
       json: {
-        errors: e
+        errors: e.original_message
       }
     )
   end

@@ -138,7 +138,7 @@ describe PeopleController do
         end
 
         it "sets flash" do
-          result = [I18n.t('update_failed'), {}]
+          result = [I18n.t('update_failed')]
           expect(flash.now[:error]).to match_array(result)
         end
       end

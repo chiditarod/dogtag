@@ -15,7 +15,8 @@ end
 
 #gem 'authlogic', '~> 4.4.2'  # authentication
 
-gem 'authlogic', '~> 5.2.0'  # authentication
+gem 'authlogic', '~> 6.4.0'  # authentication
+gem 'scrypt', '~> 3.0'
 
 # See: https://github.com/CanCanCommunity/cancancan/blob/develop/docs/migrating.md#from-2x-to-3x
 # cancancan 2.3.0 -> 3.0.2
@@ -37,7 +38,7 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 6.0.6'
+gem 'rails', '~> 6.1.7.6'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
 # TODO: remove once at Ruby 3.1+
 gem 'psych', '< 4'

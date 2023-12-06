@@ -45,7 +45,9 @@ class UsersController < ApplicationController
       redirect_back_or_default user_url(@user.id)
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @user.errors.messages
+      @user.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

@@ -174,11 +174,11 @@ describe TiersController do
       end
 
       context 'when saving fails' do
-        let(:errors) {{ "foo" => "bar" }}
+        let(:errors) { [ ActiveModel::Error.new(Tier, :price, "foo") ] }
         let(:mock_tier) do
           _t = Tier.new
           allow(_t).to receive(:save).and_return(false)
-          allow(_t).to receive_message_chain(:errors, :messages).and_return(errors)
+          allow(_t).to receive(:errors).and_return(errors)
           _t
         end
 
@@ -188,7 +188,7 @@ describe TiersController do
         end
 
         it 'sets a flash error' do
-          expect(flash[:error]).to eq([I18n.t('create_failed'), errors])
+          expect(flash[:error]).to eq([I18n.t('create_failed'), {price: "foo"}])
         end
       end
 

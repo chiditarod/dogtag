@@ -23,7 +23,7 @@ class PersonValidator < ActiveModel::Validator
     if record.team.present? && record.team.race.present?
       race = record.team.race
       if !(race.open_for_registration? || race.in_final_edits_window?)
-        record.errors[:generic] << "cannot edit this information after the final edit date"
+        record.errors.add(:generic, "cannot edit this information after the final edit date")
       end
     end
   end
@@ -31,7 +31,7 @@ class PersonValidator < ActiveModel::Validator
   def validate_person_count(record)
     if record.team.present? && record.team.race.present?
       if record.team.people.count == record.team.race.people_per_team
-        record.errors[:maximum] << "people already added to this team"
+        record.errors.add(:maximum, "people already added to this team")
       end
     end
   end

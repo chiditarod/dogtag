@@ -38,7 +38,7 @@ class ApplicationController < ActionController::Base
   end
 
   def set_no_cache
-    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Cache-Control'] = 'no-cache, no-store'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
   end
@@ -77,7 +77,9 @@ class ApplicationController < ActionController::Base
       redirect_to(redirect_to_url)
     else
       flash.now[:error] = [I18n.t('update_failed')]
-      flash.now[:error] << obj_to_update.errors.messages
+      obj_to_update.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

@@ -55,7 +55,7 @@ class User < ApplicationRecord
 
     # In version 3.4.0, the default crypto_provider was changed from Sha512 to SCrypt.
     c.transition_from_crypto_providers = [Authlogic::CryptoProviders::Sha512]
-    c.crypto_provider = Authlogic::CryptoProviders::SCrypt
+    c.crypto_provider = ::Authlogic::CryptoProviders::SCrypt
   end
 
   # ---------------------------------------------------------------

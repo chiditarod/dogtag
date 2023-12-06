@@ -67,7 +67,9 @@ class RacesController < ApplicationController
       return redirect_to races_path
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @race.errors.messages
+      @race.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

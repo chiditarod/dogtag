@@ -55,7 +55,9 @@ class TiersController < ApplicationController
       redirect_to edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @tier.errors.messages
+      @tier.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 
