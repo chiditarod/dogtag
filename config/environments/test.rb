@@ -5,7 +5,9 @@ Rails.application.configure do
   # test suite. You never need to work with it otherwise. Remember that
   # your test database is "scratch space" for the test suite and is wiped
   # and recreated between test runs. Don't rely on the data there!
-  config.cache_classes = true
+  # Rails 5.2 -> 6
+  # Spring reloads the application code if something changes. In the test environment you need to enable reloading for that to work.
+  config.cache_classes = false
 
   # eager load on boot to work around lazy loading of STI (Single Table Inheritance) models and Rails 6 / Zeitwerk
   # TODO: in the future we can eager-load the STI models instead of eager loading in dev and test

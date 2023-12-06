@@ -8,11 +8,16 @@ Bundler.require(*Rails.groups)
 
 module Dogtag
   class Application < Rails::Application
-    # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 5.1
+    # Rails 5.2 -> 6.0
+    config.load_defaults 6.0
 
-    # rails 5.2 -> 6.0
+    # Rails 5.2 -> 6.0
     config.autoloader = :zeitwerk
+
+    # Rails 5.2 -> 6.0
+    # The new configuration point config.add_autoload_paths_to_load_path is true by default for backwards compatibility, but allows you to opt-out from adding the autoload paths to $LOAD_PATH. By opting-out you optimize $LOAD_PATH lookups (less directories to check), and save Bootsnap work and memory consumption, since it does not need to build an index for these directories.
+    # TODO: try setting this to false
+    config.add_autoload_paths_to_load_path = true
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration should go into files in config/initializers
