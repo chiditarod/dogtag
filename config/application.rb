@@ -8,8 +8,8 @@ Bundler.require(*Rails.groups)
 
 module Dogtag
   class Application < Rails::Application
-    # Rails 5.2 -> 6.0
-    config.load_defaults 6.0
+    # Rails 5.2 -> 6.1
+    config.load_defaults 6.1
 
     # Rails 5.2 -> 6.0
     config.autoloader = :zeitwerk
