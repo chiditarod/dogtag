@@ -13,8 +13,13 @@ group :production do
   gem 'rollbar'
 end
 
-gem 'authlogic', '~> 4.4.2'  # authentication
-gem 'cancancan', '~> 2.3.0'  # authorization, w/ Rails 4.2 support
+#gem 'authlogic', '~> 4.4.2'  # authentication
+
+gem 'authlogic', '~> 5.2.0'  # authentication
+
+# See: https://github.com/CanCanCommunity/cancancan/blob/develop/docs/migrating.md#from-2x-to-3x
+# cancancan 2.3.0 -> 3.0.2
+gem 'cancancan', '~> 3.0.2'  # authorization
 gem 'role_model', '~> 0.8.2' # roles
 
 # payments
@@ -32,8 +37,9 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 5.2.8'
+gem 'rails', '~> 6.0.6'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
+# TODO: remove once at Ruby 3.1+
 gem 'psych', '< 4'
 # newer versions of rdoc depend on psych 4+
 gem 'rdoc', '~> 6.3.3'
@@ -47,7 +53,7 @@ gem 'unicorn'
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 5.0'
+gem 'sass-rails', '~> 6.0'
 
 gem 'webpacker'
 

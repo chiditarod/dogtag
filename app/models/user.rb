@@ -15,9 +15,31 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class User < ApplicationRecord
   validates :first_name, :last_name, :phone, :email, presence: true
-  validates :email, format: { :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i }
   validates :phone, format: { :with => /\A\d{3}-\d{3}-\d{4}\z/, :message => "should be in the form 555-867-5309" }
-  validates :email, uniqueness: true
+
+  # AuthLogic 4.4.3 -> 5.2.0
+  # see: https://github.com/binarylogic/authlogic/blob/master/doc/use_normal_rails_validation.md
+  validates :email,
+    format: {
+      with: /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i,
+      message: "should look like an email address."
+    },
+    length: { maximum: 100 },
+    uniqueness: {
+      case_sensitive: false,
+      if: :will_save_change_to_email?
+    }
+  validates :password,
+    confirmation: { if: :require_password? },
+    length: {
+      minimum: 8,
+      if: :require_password?
+    }
+  validates :password_confirmation,
+    length: {
+      minimum: 8,
+      if: :require_password?
+  }
 
   has_many :completed_requirements
   has_many :teams
@@ -29,7 +51,6 @@ class User < ApplicationRecord
   # authlogic
   acts_as_authentic do |c|
     c.login_field = :email
-    c.validate_login_field = false
     c.perishable_token_valid_for = 3.hours
 
     # In version 3.4.0, the default crypto_provider was changed from Sha512 to SCrypt.
