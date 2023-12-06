@@ -53,7 +53,9 @@ class PeopleController < ApplicationController
       redirect_to team_url :id => @person.team.id
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @person.errors.messages
+      @person.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

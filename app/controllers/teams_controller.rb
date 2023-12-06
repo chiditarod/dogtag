@@ -58,7 +58,9 @@ class TeamsController < ApplicationController
       redirect_to team_questions_path(@team)
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @team.errors.messages
+      @team.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 
@@ -94,10 +96,12 @@ class TeamsController < ApplicationController
 
     @team.on(:update_team_failed) do |team|
       flash.now[:error] = [I18n.t('update_failed')]
-      flash.now[:error] << team.errors.messages
+      @team.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
 
-    @team.update_attributes(team_params)
+    @team.update(team_params)
   end
 
   # TODO: only allow delete if no payments

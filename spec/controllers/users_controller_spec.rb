@@ -68,10 +68,8 @@ describe UsersController do
         expect(response.status).to eq(400)
       end
 
-      %i(first_name last_name email phone password password_confirmation).each do |param|
-
+      %i(first_name last_name email phone password_confirmation).each do |param|
         context "when required param '#{param}' is missing" do
-
           it 'returns 200 and sets flash[:error]' do
             bad_payload = valid_user_hash.dup
             bad_payload.delete param

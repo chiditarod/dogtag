@@ -55,7 +55,9 @@ class RequirementsController < ApplicationController
       redirect_to edit_race_requirement_url(:race_id => @requirement.race.id, :id => @requirement.id)
     else
       flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @requirement.errors.messages
+      @requirement.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

@@ -18,9 +18,6 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
-  # SSL
-  force_ssl :if => :is_production?
-
   helper :all
   helper_method :current_user
 
@@ -41,16 +38,12 @@ class ApplicationController < ActionController::Base
   end
 
   def set_no_cache
-    response.headers['Cache-Control'] = 'no-cache, no-store, max-age=0, must-revalidate'
+    response.headers['Cache-Control'] = 'no-cache, no-store'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
   end
 
   private
-
-  def is_production?
-    Rails.env.production?
-  end
 
   def render_not_found(ex)
     log_error(ex)
@@ -79,12 +72,14 @@ class ApplicationController < ActionController::Base
   ## common functions used in controllers ------
 
   def try_to_update(obj_to_update, attributes_to_apply, redirect_to_url, success_msg='update_success')
-    if obj_to_update.update_attributes(attributes_to_apply)
+    if obj_to_update.update(attributes_to_apply)
       flash[:notice] = I18n.t(success_msg)
       redirect_to(redirect_to_url)
     else
       flash.now[:error] = [I18n.t('update_failed')]
-      flash.now[:error] << obj_to_update.errors.messages
+      obj_to_update.errors.each do |e|
+        flash.now[:error] << {e.attribute.to_sym => e.message}
+      end
     end
   end
 

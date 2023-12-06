@@ -27,7 +27,7 @@ class TierValidator < ActiveModel::Validator
     return unless tiers
     dates = tiers.map(&:begin_at)
     if dates.include? record.begin_at
-      record.errors[:begin_at] << 'must be unique per payment requirement'
+      record.errors.add(:begin_at, 'must be unique per payment requirement')
     end
   end
 
@@ -36,7 +36,7 @@ class TierValidator < ActiveModel::Validator
     return unless tiers.present?
     prices = tiers.map(&:price)
     if prices.include? record.price
-      record.errors[:price] << 'must be unique per payment requirement'
+      record.errors.add(:price, 'must be unique per payment requirement')
     end
   end
 

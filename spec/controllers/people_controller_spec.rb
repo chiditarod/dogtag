@@ -133,12 +133,12 @@ describe PeopleController do
 
       context "if update fails" do
         before do
-          expect_any_instance_of(Person).to receive(:update_attributes).and_return(false)
+          expect_any_instance_of(Person).to receive(:update).and_return(false)
           patch :update, params: { :id => person.id, :team_id => team.id, :person => {:last_name => 'foo'} }
         end
 
         it "sets flash" do
-          result = [I18n.t('update_failed'), {}]
+          result = [I18n.t('update_failed')]
           expect(flash.now[:error]).to match_array(result)
         end
       end
