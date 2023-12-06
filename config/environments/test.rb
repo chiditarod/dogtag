@@ -7,10 +7,10 @@ Rails.application.configure do
   # and recreated between test runs. Don't rely on the data there!
   config.cache_classes = true
 
-  # Do not eager load code on boot. This avoids loading your whole application
-  # just for the purpose of running a single test. If you are using a tool that
-  # preloads Rails for running tests, you may have to set it to true.
-  config.eager_load = false
+  # eager load on boot to work around lazy loading of STI (Single Table Inheritance) models and Rails 6 / Zeitwerk
+  # TODO: in the future we can eager-load the STI models instead of eager loading in dev and test
+  #       see: https://edgeguides.rubyonrails.org/autoloading_and_reloading_constants.html#single-table-inheritance
+  config.eager_load = true
 
   # Configure public file server for tests with Cache-Control for performance.
   config.public_file_server.enabled = true

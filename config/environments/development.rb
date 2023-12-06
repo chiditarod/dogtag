@@ -6,8 +6,10 @@ Rails.application.configure do
   # since you don't have to restart the web server when you make code changes.
   config.cache_classes = false
 
-  # Do not eager load code on boot.
-  config.eager_load = false
+  # eager load on boot to work around lazy loading of STI (Single Table Inheritance) models and Rails 6 / Zeitwerk
+  # TODO: in the future we can eager-load the STI models instead of eager loading in dev and test
+  #       see: https://edgeguides.rubyonrails.org/autoloading_and_reloading_constants.html#single-table-inheritance
+  config.eager_load = true
 
   # Show full error reports.
   config.consider_all_requests_local = true
