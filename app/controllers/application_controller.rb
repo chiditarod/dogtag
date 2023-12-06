@@ -18,9 +18,6 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
-  # SSL
-  force_ssl :if => :is_production?
-
   helper :all
   helper_method :current_user
 
@@ -47,10 +44,6 @@ class ApplicationController < ActionController::Base
   end
 
   private
-
-  def is_production?
-    Rails.env.production?
-  end
 
   def render_not_found(ex)
     log_error(ex)
