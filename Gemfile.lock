@@ -467,7 +467,6 @@ DEPENDENCIES
   unicorn
   web-console
   webmock
-  webpacker
   wisper-activerecord
   wisper-rspec
   zonebie
