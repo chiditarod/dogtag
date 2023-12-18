@@ -34,7 +34,7 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 7.0.8'
+gem 'rails', '~> 7.1'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
 # TODO: remove once at Ruby 3.1+
 gem 'psych', '< 4'

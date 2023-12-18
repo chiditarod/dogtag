@@ -19,7 +19,7 @@ vendor/bundle
 /db/*.sqlite3-journal
 
 # Ignore all logfiles and tempfiles.
-/log/*.log
+/log/*.log*
 /tmp
 
 # SimpleCov code coverage report
