@@ -101,7 +101,7 @@ describe UserSessionsController do
         end
 
         it 'renders user_session#new' do
-          expect(response.status).to eq(200)
+          expect(response.status).to eq(422)
           expect(response).to render_template(:new)
         end
       end
@@ -122,7 +122,7 @@ describe UserSessionsController do
 
       it 'sets flash notice and redirects to home' do
         expect(flash[:notice]).to eq(I18n.t 'logout_success')
-        expect(response).to redirect_to(home_url)
+        expect(response).to redirect_to(new_user_session_url)
       end
     end
   end

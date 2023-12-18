@@ -19,7 +19,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   helper :all
-  helper_method :current_user
+  helper_method :current_user_session, :current_user
 
   # rescue_from ORDERING MATTERS.  Start generic first
   unless Rails.configuration.consider_all_requests_local
@@ -41,6 +41,18 @@ class ApplicationController < ActionController::Base
     response.headers['Cache-Control'] = 'no-cache, no-store'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = 'Fri, 01 Jan 1990 00:00:00 GMT'
+  end
+
+  protected
+
+  def handle_unverified_request
+    # raise an exception
+    fail ActionController::InvalidAuthenticityToken
+    # or destroy session, redirect
+    if current_user_session
+      current_user_session.destroy
+    end
+    redirect_to root_url
   end
 
   private
@@ -94,9 +106,14 @@ class ApplicationController < ActionController::Base
 
   ## user/session stuff -----------------------------------------
 
+  def current_user_session
+    return @current_user_session if defined?(@current_user_session)
+    @current_user_session = UserSession.find
+  end
+
   def current_user
-    return @current_user if defined? @current_user
-    @current_user = UserSession.find && UserSession.find.record
+    return @current_user if defined?(@current_user)
+    @current_user = current_user_session && current_user_session.user
   end
 
   def require_user

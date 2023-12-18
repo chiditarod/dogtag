@@ -28,14 +28,14 @@ class UserSessionsController < ApplicationController
       redirect_back_or_default(account_url)
     else
       flash[:error] = t('login_failed')
-      render :action => :new
+      render :new, status: 422
     end
   end
 
   def destroy
-    UserSession.find.destroy
+    current_user_session.destroy
     flash[:notice] = t('logout_success')
-    redirect_back_or_default(home_url)
+    redirect_to new_user_session_url
   end
 
   private
