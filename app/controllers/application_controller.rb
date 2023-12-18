@@ -47,12 +47,12 @@ class ApplicationController < ActionController::Base
 
   def render_not_found(ex)
     log_error(ex)
-    render template: "/error/404.html.erb", status: :not_found
+    render file: "#{Rails.root}/public/404.html", status: :not_found
   end
 
   def render_400(ex)
     log_error(ex)
-    render template: "/error/400.html.erb", status: :bad_request
+    render file: "#{Rails.root}/public/400.html", status: :bad_request
   end
 
   def render_access_denied(ex)
@@ -62,7 +62,7 @@ class ApplicationController < ActionController::Base
 
   def render_error(ex)
     log_error(ex)
-    render template: "/error/500.html.erb", status: :internal_server_error
+    render file: "#{Rails.root}/public/500.html", status: :internal_server_error
   end
 
   def log_error(ex)

@@ -34,7 +34,7 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
-gem 'rails', '~> 6.1.7.6'
+gem 'rails', '~> 7.0.8'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
 # TODO: remove once at Ruby 3.1+
 gem 'psych', '< 4'
@@ -50,10 +50,10 @@ gem 'unicorn'
 gem 'responders' # responds_to support
 
 # Use SCSS for stylesheets
-gem 'sass-rails', '~> 6.0'
+gem 'sass-rails' #, '~> 7.0'
 
 # Use Uglifier as compressor for JavaScript assets
-gem 'uglifier', '>= 1.3.0'
+gem 'uglifier' #, '>= 1.3.0'
 
 # Use CoffeeScript for .js.coffee assets and views
 gem 'coffee-rails'
