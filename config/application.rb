@@ -1,6 +1,6 @@
-require_relative 'boot'
+require_relative "boot"
 
-require 'rails/all'
+require "rails/all"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
@@ -10,9 +10,6 @@ module Dogtag
   class Application < Rails::Application
     # Rails 5.2 -> 6.1 -> 7.0
     config.load_defaults 7.0
-
-    # Rails 5.2 -> 6.0
-    config.autoloader = :zeitwerk
 
     # Rails 5.2 -> 6.0
     # The new configuration point config.add_autoload_paths_to_load_path is true by default for backwards compatibility, but allows you to opt-out from adding the autoload paths to $LOAD_PATH. By opting-out you optimize $LOAD_PATH lookups (less directories to check), and save Bootsnap work and memory consumption, since it does not need to build an index for these directories.
