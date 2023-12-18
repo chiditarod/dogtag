@@ -7,7 +7,7 @@
           - msg.stringify_keys.each do |k,v|
             - if k.present? && v.present?
               =k.humanize
-              =v.join(', and ')
+              =v
               %br
         - else
           %strong= msg
