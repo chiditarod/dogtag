@@ -30,11 +30,12 @@ CLASSY_CLIENT_ID=              # optional
 CLASSY_CLIENT_SECRET=          # optional
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
-SMTP_DOMAIN                    # e.g. heroku.com
+SMTP_DOMAIN                    # e.g. yourdomain.tld
 SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
+RAILS_LOG_LEVEL                # info, debug, error, warn
 ```
 
 ## Custom questions using jsonform
