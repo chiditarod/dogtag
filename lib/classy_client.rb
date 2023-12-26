@@ -46,15 +46,30 @@ class ClassyClient
     put("/campaigns/#{campaign_id}", body)
   end
 
+  # create_member calls the classy api and attempts to create a member record and then a supporter record.
+  # if this email address aleady has a member record associated with it in classy, the api endpoint will respond with
+  # "This email address is already used." and a subsequent call should be made to try creating a supporter record
+  # The required fields are first_name, last_name, and email_address
+  #
   # https://developers.classy.org/api-docs/v2/index.html#member-member-post
   def create_member(organization_id, first, last, email)
-    # only the required things
     body = {
       "first_name" => first,
       "last_name" => last,
       "email_address" => email
     }
-    post("/organizations/#{organization_id}/members", body)
+    post_response("/organizations/#{organization_id}/members", body)
+  end
+
+  # create_supporter calls the classy api and attempts ot create a suppoter record for organization_id.
+  # This step is not required if create_member was called and returned 200
+  def create_supporter(organization_id, first, last, email)
+    body = {
+      "first_name" => first,
+      "last_name" => last,
+      "email_address" => email
+    }
+    post_response("/organizations/#{organization_id}/supporters", body)
   end
 
   def get_fundraising_team(team_id)
@@ -138,11 +153,34 @@ class ClassyClient
     end
   end
 
+  def post_response(uri, body=nil)
+    with_token do |args|
+      args[:body] = body.to_json if body.present?
+      wrap(:post, "/#{API_VERSION}#{uri}", args)
+    end
+  end
+
   def put(uri, body={})
     with_token do |args|
       args[:body] = body.to_json if body.present?
       wrapper(:put, "/#{API_VERSION}#{uri}", args)
     end
+  end
+
+  # docs for httpclient gem: http://www.rubydoc.info/gems/httpclient/HTTPClient
+  # for get, specify query in args, e.g.
+  #   query: { 'foo' => 'bar', 'baz' => 'omg' }
+  # for post, specify a body in args
+  #
+  # args - args to pass to http_client
+  def wrap(verb, uri, args={})
+    args[:header] = {} unless args[:header].present?
+    args[:header]['User-Agent'] = 'dogtag'
+    args[:follow_redirect] = true
+
+    http = HTTPClient.new
+    http.connect_timeout = DEFAULT_TIMEOUT
+    http.send(verb, "#{API_HOST}#{uri}", args)
   end
 
   # docs for httpclient gem: http://www.rubydoc.info/gems/httpclient/HTTPClient
