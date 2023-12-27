@@ -10,10 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_02_19_041406) do
+ActiveRecord::Schema.define(version: 2023_12_28_175357) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "classy_cache_org_members", force: :cascade do |t|
+    t.integer "classy_org_id"
+    t.string "email"
+    t.integer "classy_member_id"
+    t.datetime "classy_updated_at"
+    t.index ["email", "classy_member_id", "classy_updated_at"], name: "index_classy_org_members", unique: true
+  end
 
   create_table "completed_requirements", force: :cascade do |t|
     t.bigint "team_id"

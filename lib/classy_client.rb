@@ -61,8 +61,8 @@ class ClassyClient
     post_response("/organizations/#{organization_id}/members", body)
   end
 
-  # create_supporter calls the classy api and attempts ot create a suppoter record for organization_id.
-  # This step is not required if create_member was called and returned 200
+  # create_supporter calls the classy api and attempts to create a supporter record for organization_id.
+  # This function is not required if create_member was called with the same arguments and returned 200.
   def create_supporter(organization_id, first, last, email)
     body = {
       "first_name" => first,
@@ -70,6 +70,32 @@ class ClassyClient
       "email_address" => email
     }
     post_response("/organizations/#{organization_id}/supporters", body)
+  end
+
+  # get_supporter will attempt to find a supporter record with email address of 'email'
+  # the classy organization 'organization_id'. It will page through each api response until
+  # all classy records are exhausted. returns nil if no supporter record was found.
+  # NOTE: this process can take a long time.
+  def get_supporter(organization_id, email, page=1)
+    response = get("/organizations/#{organization_id}/supporters?page=#{page}")
+    if response["data"].index{|d| d["email_address"] =~ /#{email}/ } != nil
+      return response["data"][response["data"].index{|d| d["email_address"]  =~ /#{email}/ }]
+    end
+    if response["current_page"] == response["last_page"]
+      return nil
+    end
+    return get_supporter(organization_id, email, page+1)
+  end
+
+  # with_supporters allows each page of org supporter records returned
+  # from the classy api to be yielded to a block
+  def with_supporters(organization_id, page=1, &block)
+    response = get("/organizations/#{organization_id}/supporters?page=#{page}")
+    yield(response["data"])
+    if response["current_page"] == response["last_page"]
+      return nil
+    end
+    return with_supporters(organization_id, page+1, &block)
   end
 
   def get_fundraising_team(team_id)

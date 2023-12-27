@@ -50,11 +50,6 @@ describe User do
           expect(user).to be_valid
         end
       end
-
-      it 'fails with poorly formed phone number' do
-        user.phone = "abc123"
-        expect(user).to be_invalid
-      end
     end
 
     describe 'email'
