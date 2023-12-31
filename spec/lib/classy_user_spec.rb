@@ -22,7 +22,7 @@ describe ClassyUser do
     let(:race)   { FactoryBot.create :race }
     let(:result) { ClassyUser.link_user_to_classy!(user, race) }
 
-    context "when user already has a classy id in db" do
+    context "when user already has a classy id in local db" do
       let(:user) { FactoryBot.create :user, :with_classy_id }
       let(:cc)   { double(ClassyClient) }
 
@@ -33,6 +33,8 @@ describe ClassyUser do
       context "and the classy id associated with the user's email address has changed" do
         it "saves the new classy id in the user object" do
           expect(user.classy_id).to eq(123456)
+          expect(cc).to receive(:get_campaign).and_return({'organization_id' => '987'})
+          expect(cc).to receive(:create_member).with("987", user.first_name, user.last_name, user.email).and_return({'organization_id' => '987'})
           expect(cc).to receive(:get_member).and_return({'id' => '123'})
           expect(result.classy_id).to eq(123)
           expect(user.reload.classy_id).to eq(123)
