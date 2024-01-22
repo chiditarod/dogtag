@@ -68,6 +68,7 @@ class ClassyUser
       if response.code == 400 && Array(b.dig("error", "member_id")).index{|e| e =~ err_member_id_used} != nil
         Rails.logger.info "classy reported supporter account already exists for email: #{user.email}"
 
+        # select the most recent record for this email and use that classy member id
         record = ClassyCacheOrgMember.where(email: user.email).order(classy_updated_at: :desc).limit(1).first
         if record.nil?
           Rails.logger.info "did not find classy member_id in cache for email: #{user.email}"

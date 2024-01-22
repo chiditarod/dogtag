@@ -22,6 +22,31 @@ describe ClassyUser do
     let(:race)   { FactoryBot.create :race }
     let(:result) { ClassyUser.link_user_to_classy!(user, race) }
 
+    context "when user is not a classy member" do
+      it "saves the returned classy member id in the user object" do
+      end
+    end
+
+    context "when user is a classy member but not an organization supporter" do
+      it "saves the returned classy member id in the user object" do
+      end
+    end
+
+    context "when user is a classy member and an organization supporter" do
+      context "when the classy member cache contains the member record" do
+        it "saves the cached classy member id in the user object" do
+
+        end
+      end
+
+      context "when the classy member cache does not contain the member record" do
+        it "logs an error and does not change the user object" do
+
+        end
+      end
+    end
+
+
     context "when user already has a classy id in local db" do
       let(:user) { FactoryBot.create :user, :with_classy_id }
       let(:cc)   { double(ClassyClient) }
