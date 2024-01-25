@@ -27,8 +27,8 @@ class QuestionsController < ApplicationController
     :'agree-to-core-philosophy', :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
     :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'referred-by',
     :'party-bus-interest', :'party-bus-seats', :'cart-parking', :'collaborating', :'raced-in-past', :'super-bonus-challenge',
-    :'no-cart-parking', :'covid1', :'covid2', :'covid3', :'covid4', :'covid5', :'covid6', :'covid7',
-    :'covid8', :'covid9', :'covid10', :'covid11', :'covid12'
+    :'no-cart-parking', :'instagram', :'theme-chosen',
+    :'covid1', :'covid2', :'covid3', :'covid4', :'covid5', :'covid6', :'covid7', :'covid8', :'covid9', :'covid10', :'covid11', :'covid12'
   ]
 
   # this method loads the jsonform data from the team's race
