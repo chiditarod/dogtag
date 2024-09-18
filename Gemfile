@@ -35,6 +35,9 @@ gem 'wisper-activerecord'
 gem 'nokogiri'
 gem 'oj'
 
+# requird until upgrade
+gem "ffi", "< 1.17.0"
+
 gem 'rails', '~> 5.2.8'
 # locking psych < 4 mitigates https://stackoverflow.com/questions/71191685/visit-psych-nodes-alias-unknown-alias-default-psychbadalias
 gem 'psych', '< 4'
