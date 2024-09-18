@@ -18,33 +18,35 @@ require 'spec_helper'
 describe ClassyUser do
 
   describe "#link_user_to_classy!" do
-
+    # let(:user) { FactoryBot.create :user, :with_classy_id }
     let(:race)   { FactoryBot.create :race }
     let(:result) { ClassyUser.link_user_to_classy!(user, race) }
 
-    context "when user is not a classy member" do
-      it "saves the returned classy member id in the user object" do
-      end
-    end
+    # context "when user is not a classy member" do
+    #   let(:user) { FactoryBot.create :user }:with_classy_id }
+    #   it "saves the returned classy member id in the user object" do
+    #   end
+    # end
 
-    context "when user is a classy member but not an organization supporter" do
-      it "saves the returned classy member id in the user object" do
-      end
-    end
+    # context "when user is a classy member but not an organization supporter" do
+    #   # let(:user) { FactoryBot.create :user, :with... }
+    #   it "saves the returned classy member id in the user object" do
+    #   end
+    # end
 
-    context "when user is a classy member and an organization supporter" do
-      context "when the classy member cache contains the member record" do
-        it "saves the cached classy member id in the user object" do
+    # context "when user is a classy member and an organization supporter" do
+    #   # let(:user) { FactoryBot.create :user, :with... }
+    #   context "when the classy member cache contains the member record" do
+    #     it "saves the cached classy member id in the user object" do
 
-        end
-      end
+    #     end
+    #   end
 
-      context "when the classy member cache does not contain the member record" do
-        it "logs an error and does not change the user object" do
-
-        end
-      end
-    end
+    #   context "when the classy member cache does not contain the member record" do
+    #     it "logs an error and does not change the user object" do
+    #     end
+    #   end
+    # end
 
 
     context "when user already has a classy id in local db" do
@@ -61,7 +63,7 @@ describe ClassyUser do
           expect(cc).to receive(:get_campaign).and_return({'organization_id' => '987'})
           expect(cc).to receive(:create_member).with("987", user.first_name, user.last_name, user.email).and_return({'organization_id' => '987'})
           expect(cc).to receive(:get_member).and_return({'id' => '123'})
-          expect(result.classy_id).to eq(123)
+          expect(link_user_to_classy!.classy_id).to eq(123)
           expect(user.reload.classy_id).to eq(123)
         end
       end
