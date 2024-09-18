@@ -83,8 +83,7 @@ describe Workers::Common do
     let(:worker) { MyCoolWorker.new }
     let(:data)   {{ some: :thing }}
     let(:log) {{
-      event: "foo",
-      worker: worker.class.to_s,
+      message: "foo",
       jid: nil,
       data: data
     }}
@@ -121,7 +120,7 @@ describe Workers::Common do
       }}
 
       it "passes them along" do
-        expect(Rails.logger).to receive(:send).with(:error, log.merge({exception: ex_hash}))
+        expect(Rails.logger).to receive(:send).with(:error, log.merge({error: ex_hash}))
         worker.log('foo', data, :error, exception)
       end
     end

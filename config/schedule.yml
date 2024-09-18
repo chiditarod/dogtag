@@ -1,0 +1,4 @@
+classy_org_member_cacher:
+  cron: "*/20 * * * *"
+  class: "Workers::ClassyCacheOrgMemberCacher"
+  queue: default

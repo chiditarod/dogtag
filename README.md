@@ -28,6 +28,7 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_SECRET_KEY=sk_test_...
 CLASSY_CLIENT_ID=              # optional
 CLASSY_CLIENT_SECRET=          # optional
+CLASSY_ORGS=                   # comma-separated list of classy organization ids the client has access to. used to cache org members
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
 SMTP_DOMAIN                    # e.g. heroku.com

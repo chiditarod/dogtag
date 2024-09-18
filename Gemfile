@@ -1,5 +1,5 @@
 source 'https://rubygems.org'
-ruby '2.7.7'
+ruby '2.7.8'
 
 gem 'bootstrap-sass'
 gem 'bootswatch-rails'
@@ -19,6 +19,9 @@ gem 'role_model', '~> 0.8.2' # roles
 
 # payments
 gem 'stripe', '~> 1.58.0'
+
+# bulk insert db capabilities added natively to Rails 6+
+gem 'activerecord-import'
 
 gem 'pg'
 gem 'json-schema'
@@ -77,7 +80,8 @@ gem 'jbuilder'
 # workers
 gem 'sidekiq'
 gem 'sidekiq-failures'
-#gem 'redis-namespace'
+gem 'sidekiq-unique-jobs'
+gem "sidekiq-cron"
 
 group :development do
   # Access an IRB console on exception pages or by using <%= console %> anywhere in the code.
