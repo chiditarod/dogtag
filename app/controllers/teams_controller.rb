@@ -15,9 +15,22 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TeamsController < ApplicationController
   before_action :require_user
-  before_action :set_no_cache, only: %w{show edit}
+  before_action :set_no_cache, only: %w{show edit search}
 
   load_and_authorize_resource
+
+  def search
+    if params[:q].present?
+      query = params[:q].parameterize
+      @teams = Team.where('name ILIKE ?', "%#{query}%")
+    else
+      @teams = Team.none
+    end
+
+    respond_to do |format|
+      format.json { render json: @teams.map { |team| { id: team.id, text: "#{team.name} - #{team.race.name}" } } }
+    end
+  end
 
   def index
     @myteams = Team.where(:user => current_user).order(created_at: :desc)

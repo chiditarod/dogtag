@@ -1,4 +1,43 @@
 $(".users.index").ready ->
+
+  $('.select2-name').select2
+    placeholder: 'Search by first or last name'
+    ajax:
+      url: $('.select2-name').data('url')
+      dataType: 'json'
+      delay: 500
+      data: (params) ->
+        q: params.term
+        page: params.page || 1
+      processResults: (data) ->
+        results: data
+      cache: true
+
+  $('.select2-name').on 'select2:select', (e) ->
+    userId = e.params.data.id
+    $('#selected-user-id').val(userId)
+    $('#search-form').attr('action', "/users/#{userId}")
+    $('#search-form').submit()
+
+  $('.select2-team').select2
+    placeholder: 'Search by team name'
+    ajax:
+      url: $('.select2-team').data('url')
+      dataType: 'json'
+      delay: 500
+      data: (params) ->
+        q: params.term
+        page: params.page || 1
+      processResults: (data) ->
+        results: data
+      cache: true
+
+  $('.select2-team').on 'select2:select', (e) ->
+    teamId = e.params.data.id
+    $('#selected-team-id').val(teamId)
+    $('#search-form').attr('action', "/teams/#{teamId}")
+    $('#search-form').submit()
+
   # ------------------------------------------------------------------------
   # TableSorter Stuff
 
