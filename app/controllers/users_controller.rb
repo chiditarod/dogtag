@@ -15,7 +15,21 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UsersController < ApplicationController
   before_action :require_user, :except => [:new, :create]
+  before_action :set_no_cache, only: %w{search}
   load_and_authorize_resource
+
+  def search
+    if params[:q].present?
+      query = params[:q]
+      @users = User.where('first_name ILIKE ? OR last_name ILIKE ? OR email ILIKE ?', "%#{query.parameterize}%", "%#{query.parameterize}%", "%#{query}%")
+    else
+      @users = User.none
+    end
+
+    respond_to do |format|
+      format.json { render json: @users.map { |user| { id: user.id, text: "#{user.first_name} #{user.last_name} (#{user.email})" } } }
+    end
+  end
 
   def index
     @users = User.page(index_params[:page])

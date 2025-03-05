@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 
+  get 'users/search', to: 'users#search', as: 'search_users'
+  get 'teams/search', to: 'teams#search', as: 'search_teams'
+  
   # super basic static homepage text hack
   root :controller => 'homepages', :action => "index", :as => :home
 

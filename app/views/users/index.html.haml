@@ -1,5 +1,16 @@
 %h1
-  =t('.users')
+  = t('.search')
+  
+= form_with id: "search-form", url: "#", method: :get, local: true do |f|
+  = f.select :user_id, [], {}, class: 'select2-name', data: { placeholder: 'Search by first, last, or email', url: search_users_path }
+  = f.hidden_field :id, id: 'selected-user-id'
+  = f.select :team_id, [], {}, class: 'select2-team', data: { placeholder: 'Search by team name', url: search_teams_path }
+  = f.hidden_field :team_id, id: 'selected-team-id' 
+
+%hr
+
+%h1
+  = t('.users')
   %small
     = link_to new_user_path do
       %i.fa.fa-plus
@@ -20,7 +31,6 @@
 
   %tbody
     - @users.each do |user|
-
       - if user.teams.empty?
         %tr
           %td
@@ -38,9 +48,7 @@
           - else
             %td
             %td
-
       - else
-
         - user.teams.each do |t|
           %tr
             %td
@@ -49,7 +57,6 @@
               %small= mail_to user.email
             %td= link_to t.name, team_url(t.id)
             %td= link_to t.race.name, race_url(t.race.id)
-
             %td
               %small
                 - if current_user.is_any_of?([:admin, :refunder])
@@ -67,7 +74,6 @@
                             = price_in_dollars_and_cents(v)
                           %br
                         %br
-
             - if current_user.is? :admin
               %td= user.roles.to_a.map(&:capitalize).join(', ')
               %td
