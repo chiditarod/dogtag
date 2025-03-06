@@ -24,7 +24,7 @@
               %i.fa.fa-users.fa-2x
               =t '.my_teams'
 
-        - if current_user.gets_admin_menu?
+        - if current_user.gets_admin_menu? || current_user.is?(:refunder)
           %li.dropdown
             %a.dropdown-toggle{"data-toggle" => "dropdown", href: "#"}
               %i.fa.fa-star-o.fa-2x

@@ -60,14 +60,15 @@ class Ability
     # no user-level access required
 
     if user.is? :refunder
-      can [:index], User
-      can [:index, :show], Team
+      can [:index, :search, :show], User
+      can [:index, :search, :show], Team
       can [:refund], :charges
     end
 
     if user.is? :operator
       can [:export], Race
-      can [:index, :show, :edit, :update], [Team, Person]
+      can [:index, :search, :show], User
+      can [:index, :search, :show, :edit, :update], [Team, Person]
       can [:index, :show, :edit, :update, :create], [Race, PaymentRequirement, Tier]
       can [:refund], :charges
     end
