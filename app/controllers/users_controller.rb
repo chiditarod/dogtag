@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UsersController < ApplicationController
-  before_action :require_user, :except => [:new, :create]
+  before_action :require_user, except: [:new, :create]
   before_action :set_no_cache, only: %w{search}
   load_and_authorize_resource
 

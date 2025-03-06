@@ -1,11 +1,12 @@
 %h1
   = t('.search')
-  
-= form_with id: "search-form", url: "#", method: :get, local: true do |f|
-  = f.select :user_id, [], {}, class: 'select2-name', data: { placeholder: 'Search by first, last, or email', url: search_users_path }
-  = f.hidden_field :id, id: 'selected-user-id'
-  = f.select :team_id, [], {}, class: 'select2-team', data: { placeholder: 'Search by team name', url: search_teams_path }
-  = f.hidden_field :team_id, id: 'selected-team-id' 
+
+- if current_user.gets_admin_menu? || current_user.is?(:refunder)
+  = form_with id: "search-form", url: "#", method: :get, local: true do |f|
+    = f.select :user_id, [], {}, class: 'select2-name', data: { placeholder: 'Search by first, last, or email', url: search_users_path }
+    = f.hidden_field :id, id: 'selected-user-id'
+    = f.select :team_id, [], {}, class: 'select2-team', data: { placeholder: 'Search by team name', url: search_teams_path }
+    = f.hidden_field :team_id, id: 'selected-team-id' 
 
 %hr
 
