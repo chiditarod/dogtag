@@ -129,7 +129,6 @@ GEM
     date (3.5.1)
     diff-lcs (1.6.2)
     docile (1.4.1)
-    domain_name (0.6.20240107)
     dotenv (3.2.0)
     dotenv-rails (3.2.0)
       dotenv (= 3.2.0)
@@ -166,9 +165,6 @@ GEM
       haml (>= 4.0.6)
       railties (>= 5.1)
     hashdiff (1.2.1)
-    http-accept (1.7.0)
-    http-cookie (1.1.0)
-      domain_name (~> 0.5)
     httpclient (2.9.0)
       mutex_m
     i18n (1.14.8)
@@ -222,10 +218,6 @@ GEM
       net-pop
       net-smtp
     marcel (1.1.0)
-    mime-types (3.7.0)
-      logger
-      mime-types-data (~> 3.2025, >= 3.2025.0507)
-    mime-types-data (3.2025.0924)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
     minitest (6.0.1)
@@ -247,7 +239,6 @@ GEM
     net-smtp (0.5.1)
       net-protocol
     net-ssh (7.3.0)
-    netrc (0.11.0)
     newrelic_rpm (10.0.0)
       logger
     nio4r (2.7.5)
@@ -351,11 +342,6 @@ GEM
     responders (3.2.0)
       actionpack (>= 7.0)
       railties (>= 7.0)
-    rest-client (2.1.0)
-      http-accept (>= 1.7.0, < 2.0)
-      http-cookie (>= 1.0.2, < 2.0)
-      mime-types (>= 1.16, < 4.0)
-      netrc (~> 0.8)
     rexml (3.4.4)
     role_model (0.8.2)
     rollbar (3.7.0)
@@ -457,12 +443,11 @@ GEM
       net-ssh (>= 2.8.0)
       ostruct
     stringio (3.2.0)
-    stripe (1.58.0)
-      rest-client (>= 1.4, < 4.0)
-    stripe-ruby-mock (2.4.1)
+    stripe (18.3.0)
+    stripe-ruby-mock (2.5.8)
       dante (>= 0.2.0)
       multi_json (~> 1.0)
-      stripe (>= 1.31.0, <= 1.58.0)
+      stripe (>= 2.0.3)
     temple (0.10.4)
     test-unit (3.7.7)
       power_assert
@@ -560,8 +545,8 @@ DEPENDENCIES
   sidekiq-unique-jobs
   simplecov
   simplecov_json_formatter (~> 0.1.4)
-  stripe (~> 1.58.0)
-  stripe-ruby-mock (~> 2.4.1)
+  stripe (~> 18.3.0)
+  stripe-ruby-mock (~> 2.5.8)
   test-unit
   timecop
   tzinfo-data

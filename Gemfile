@@ -19,7 +19,7 @@ gem 'cancancan', '~> 3.0'  # authorization, Rails 6.0+ support
 gem 'role_model', '~> 0.8.2' # roles
 
 # payments
-gem 'stripe', '~> 1.58.0'
+gem 'stripe', '~> 18.3.0'
 
 # bulk insert db capabilities added natively to Rails 6+
 gem 'activerecord-import'
@@ -97,7 +97,7 @@ group :test do
   gem 'webmock'
   gem 'simplecov'
   gem 'simplecov_json_formatter', '~> 0.1.4'
-  gem 'stripe-ruby-mock', '~> 2.4.1'
+  gem 'stripe-ruby-mock', '~> 2.5.8'
   gem 'codeclimate-test-reporter'
   gem 'zonebie'
   gem 'timecop'
