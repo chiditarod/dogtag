@@ -38,7 +38,7 @@ gem 'nokogiri'
 gem 'oj'
 
 
-gem 'rails', '~> 8.0.0'
+gem 'rails', '~> 8.1.2'
 
 # Use unicorn as the app server (heroku)
 gem 'unicorn'
