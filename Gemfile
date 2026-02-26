@@ -13,7 +13,7 @@ group :production do
   gem 'rollbar'
 end
 
-gem 'authlogic', '~> 6.0'  # authentication - Rails 6.0+ support
+gem 'authlogic', '~> 6.6'  # authentication - Rails 6.0+ support
 gem 'scrypt' # Required by authlogic 6.x for SCrypt crypto provider
 gem 'cancancan', '~> 3.0'  # authorization, Rails 6.0+ support
 gem 'role_model', '~> 0.8.2' # roles
