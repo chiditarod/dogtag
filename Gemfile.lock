@@ -79,10 +79,10 @@ GEM
     airbrussh (1.6.0)
       sshkit (>= 1.6.1, != 1.7.0)
     ast (2.4.3)
-    authlogic (6.5.0)
-      activemodel (>= 5.2, < 8.1)
-      activerecord (>= 5.2, < 8.1)
-      activesupport (>= 5.2, < 8.1)
+    authlogic (6.6.0)
+      activemodel (>= 7.2, < 8.2)
+      activerecord (>= 7.2, < 8.2)
+      activesupport (>= 7.2, < 8.2)
       request_store (~> 1.0)
     autoprefixer-rails (10.4.21.0)
       execjs (~> 2)
@@ -228,7 +228,8 @@ GEM
     mime-types-data (3.2025.0924)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
-    minitest (6.0.1)
+    minitest (6.0.2)
+      drb (~> 2.0)
       prism (~> 1.5)
     msgpack (1.8.0)
     multi_json (1.19.1)
@@ -273,14 +274,14 @@ GEM
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
-    prism (1.8.0)
+    prism (1.9.0)
     psych (5.3.1)
       date
       stringio
     public_suffix (7.0.2)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.21)
+    rack (2.2.22)
     rack-session (1.0.2)
       rack (< 3)
     rack-test (2.2.0)
@@ -515,7 +516,7 @@ PLATFORMS
 
 DEPENDENCIES
   activerecord-import
-  authlogic (~> 6.0)
+  authlogic (~> 6.6)
   awesome_print
   bootsnap
   bootstrap-sass
