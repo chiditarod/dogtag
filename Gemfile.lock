@@ -89,7 +89,7 @@ GEM
     awesome_print (1.9.2)
     base64 (0.3.0)
     benchmark (0.5.0)
-    bigdecimal (4.0.1)
+    bigdecimal (4.1.2)
     bindex (0.8.1)
     bootsnap (1.21.1)
       msgpack (~> 1.2)
@@ -228,7 +228,8 @@ GEM
     mime-types-data (3.2025.0924)
     mini_mime (1.1.5)
     mini_portile2 (2.8.9)
-    minitest (6.0.1)
+    minitest (6.0.6)
+      drb (~> 2.0)
       prism (~> 1.5)
     msgpack (1.8.0)
     multi_json (1.19.1)
@@ -273,14 +274,14 @@ GEM
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
-    prism (1.8.0)
+    prism (1.9.0)
     psych (5.3.1)
       date
       stringio
     public_suffix (7.0.2)
     raabro (1.4.0)
     racc (1.8.1)
-    rack (2.2.21)
+    rack (2.2.23)
     rack-session (1.0.2)
       rack (< 3)
     rack-test (2.2.0)
@@ -341,7 +342,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
-    redis-client (0.26.3)
+    redis-client (0.29.0)
       connection_pool
     regexp_parser (2.11.3)
     reline (0.6.3)
@@ -424,7 +425,7 @@ GEM
       logger
       rack (>= 2.2.4, < 3.3)
       redis-client (>= 0.23.0, < 1)
-    sidekiq-cron (2.3.1)
+    sidekiq-cron (2.4.0)
       cronex (>= 0.13.0)
       fugit (~> 1.8, >= 1.11.1)
       globalid (>= 1.0.1)
