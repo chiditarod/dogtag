@@ -49,4 +49,40 @@ describe MailTracking do
     expect(deliveries.count).to eq(1)
     expect(deliveries.last["X-Dogtag-Kind"]).to be_nil
   end
+
+  context "with a dedupe_key" do
+    let(:team) { FactoryBot.create(:team) }
+    let(:mail) { UserMailer.team_finalized_email(team.user, team) }
+    let(:attrs) { { team_id: team.id, kind: "team_finalized", dedupe_key: "once", recipient: team.user.email } }
+
+    before do
+      allow_any_instance_of(UserMailer).to receive(:track).and_wrap_original do |m, **kw|
+        m.call(**kw, dedupe_key: "once")
+      end
+    end
+
+    it "suppresses delivery when a non-failed row already exists" do
+      existing = SentEmail.create!(attrs.merge(status: "sent"))
+      expect { mail.deliver_now }.not_to change { [deliveries.count, SentEmail.count] }
+      expect(existing.reload.status).to eq("sent")
+    end
+
+    it "reuses a failed row and delivers" do
+      existing = SentEmail.create!(attrs.merge(status: "failed", error: "boom"))
+      expect { mail.deliver_now }.to change { deliveries.count }.by(1)
+      expect(SentEmail.count).to eq(1)
+      existing.reload
+      expect([existing.status, existing.error]).to eq(["sent", nil])
+      expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => existing.id } })
+    end
+  end
+
+  it "marks the row failed with the error and re-raises when delivery raises" do
+    user = FactoryBot.create(:user)
+    allow_any_instance_of(Mail::TestMailer).to receive(:deliver!).and_raise(IOError, "smtp down")
+    expect { UserMailer.welcome_email(user).deliver_now }.to raise_error(IOError, "smtp down")
+    e = SentEmail.last
+    expect([e.status, e.error]).to eq(["failed", "IOError: smtp down"])
+    expect(e.status_changed_at).to be_present
+  end
 end

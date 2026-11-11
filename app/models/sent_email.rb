@@ -2,7 +2,7 @@
 # SendGrid event webhook, and used for reminder idempotency via the unique
 # partial index on [team_id, kind, dedupe_key].
 class SentEmail < ApplicationRecord
-  STATUSES = %w[queued sent delivered deferred bounced dropped spam_report].freeze
+  STATUSES = %w[queued failed sent delivered deferred bounced dropped spam_report].freeze
 
   def delivered?
     status == "delivered"

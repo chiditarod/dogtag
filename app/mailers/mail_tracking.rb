@@ -22,17 +22,19 @@ class MailTracking
   def self.delivering_email(message)
     attrs = HEADERS.transform_values { |name| message[name]&.value.presence }
     message.add_message_id if message.message_id.blank?
+    details = {
+      mailer: message.delivery_handler&.name,
+      recipient: Array(message.to).join(", "),
+      subject: message.subject,
+      message_id: message.message_id
+    }
 
-    sent_email = SentEmail.create!(
-      attrs.merge(
-        mailer: message.delivery_handler&.name,
-        recipient: Array(message.to).join(", "),
-        subject: message.subject,
-        message_id: message.message_id
-      )
-    )
-    message.instance_variable_set(ID_IVAR, sent_email.id)
-    message["X-SMTPAPI"] = { unique_args: { sent_email_id: sent_email.id } }.to_json
+    sent_email = begin
+      SentEmail.create!(attrs.merge(details))
+    rescue ActiveRecord::RecordNotUnique
+      claim_duplicate(message, attrs, details)
+    end
+    attach(message, sent_email) if sent_email
   rescue StandardError => e
     Rails.logger.error("MailTracking.delivering_email failed: #{e.class}: #{e.message}")
   ensure
@@ -47,4 +49,38 @@ class MailTracking
   rescue StandardError => e
     Rails.logger.error("MailTracking.delivered_email failed: #{e.class}: #{e.message}")
   end
+
+  # Called by UserMailer when delivery raises, so the row doesn't stay "queued".
+  def self.delivery_failed(message, error)
+    id = message.instance_variable_get(ID_IVAR)
+    return unless id
+
+    SentEmail.where(id: id).update_all(
+      status: "failed", error: "#{error.class}: #{error.message}",
+      status_changed_at: Time.current, updated_at: Time.current
+    )
+  rescue StandardError => e
+    Rails.logger.error("MailTracking.delivery_failed failed: #{e.class}: #{e.message}")
+  end
+
+  # A row already exists for this (team, kind, dedupe_key). Retry it if the
+  # previous attempt failed; otherwise suppress this delivery.
+  def self.claim_duplicate(message, attrs, details)
+    existing = SentEmail.find_by!(attrs.slice(:team_id, :kind, :dedupe_key))
+    if existing.status == "failed"
+      existing.update!(details.merge(status: "queued", error: nil, status_changed_at: Time.current))
+      existing
+    else
+      message.perform_deliveries = false
+      Rails.logger.info("MailTracking: suppressed duplicate #{attrs[:kind]} email (dedupe_key=#{attrs[:dedupe_key]}, team_id=#{attrs[:team_id]})")
+      nil
+    end
+  end
+  private_class_method :claim_duplicate
+
+  def self.attach(message, sent_email)
+    message.instance_variable_set(ID_IVAR, sent_email.id)
+    message["X-SMTPAPI"] = { unique_args: { sent_email_id: sent_email.id } }.to_json
+  end
+  private_class_method :attach
 end

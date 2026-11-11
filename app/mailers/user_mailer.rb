@@ -16,6 +16,13 @@
 class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
+  # Record delivery failures on the tracked sent_emails row, then re-raise so
+  # job retries still happen.
+  rescue_from StandardError do |e|
+    MailTracking.delivery_failed(message, e)
+    raise e
+  end
+
   def welcome_email(user)
     @user = user
     track(kind: "welcome", user: user)
