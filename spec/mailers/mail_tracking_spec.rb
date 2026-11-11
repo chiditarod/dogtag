@@ -75,6 +75,36 @@ describe MailTracking do
       expect([existing.status, existing.error]).to eq(["sent", nil])
       expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => existing.id } })
     end
+
+    it "suppresses delivery while a recent row is still queued" do
+      SentEmail.create!(attrs.merge(status: "queued"))
+      expect { mail.deliver_now }.not_to change { deliveries.count }
+    end
+
+    it "reclaims a row abandoned in queued and delivers" do
+      existing = SentEmail.create!(attrs.merge(status: "queued", updated_at: 16.minutes.ago))
+      expect { mail.deliver_now }.to change { deliveries.count }.by(1)
+      expect(SentEmail.count).to eq(1)
+      expect(existing.reload.status).to eq("sent")
+    end
+
+    it "suppresses delivery when another sender claims the failed row first" do
+      existing = SentEmail.create!(attrs.merge(status: "failed"))
+      allow(SentEmail).to receive(:find_by!).and_wrap_original do |m, *args|
+        m.call(*args).tap { |row| SentEmail.where(id: row.id).update_all(status: "queued", updated_at: Time.current) }
+      end
+
+      expect { mail.deliver_now }.not_to change { deliveries.count }
+      expect(existing.reload.status).to eq("queued")
+    end
+
+    it "suppresses a duplicate sent inside a transaction without breaking it" do
+      SentEmail.create!(attrs.merge(status: "sent"))
+      SentEmail.transaction do
+        expect { mail.deliver_now }.not_to change { deliveries.count }
+        expect(SentEmail.count).to eq(1)
+      end
+    end
   end
 
   it "marks the row failed with the error and re-raises when delivery raises" do
