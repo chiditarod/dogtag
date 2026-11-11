@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -48,6 +48,51 @@ function ControlledPhone({ onComplete }: { onComplete: () => void }) {
   );
 }
 
+describe('useAutoAdvance', () => {
+  function Form({ children }: { children: ReactNode }) {
+    const advance = useAutoAdvance();
+    return (
+      <form>
+        <input aria-label="first" />
+        {children}
+        <button type="button" onClick={(e) => advance(e.currentTarget)}>
+          go
+        </button>
+        <input aria-label="last" />
+      </form>
+    );
+  }
+
+  it('skips hidden, inert and disabled-fieldset controls', async () => {
+    render(
+      <Form>
+        <input aria-label="gone" style={{ display: 'none' }} />
+        <div style={{ display: 'none' }}>
+          <input aria-label="nested gone" />
+        </div>
+        <div inert>
+          <input aria-label="inert" />
+        </div>
+        <fieldset disabled>
+          <input aria-label="fieldset" />
+        </fieldset>
+      </Form>,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'go' }));
+    expect(screen.getByLabelText('last')).toHaveFocus();
+  });
+
+  it('is a no-op for a null or unknown element', () => {
+    function Probe() {
+      const advance = useAutoAdvance();
+      advance(null);
+      advance(document.createElement('input'));
+      return null;
+    }
+    expect(() => render(<Probe />)).not.toThrow();
+  });
+});
+
 describe('PhoneInput', () => {
   it('formats as digits are typed and advances focus at ten digits', async () => {
     const onComplete = vi.fn();
@@ -90,6 +135,33 @@ describe('PhoneInput', () => {
     await userEvent.keyboard('9');
     expect(phone).toHaveValue('(312) 955-5');
     expect(phone.selectionStart).toBe(7);
+  });
+
+  it('removes the adjacent digit when Backspace deletes a separator', async () => {
+    render(<ControlledPhone onComplete={() => {}} />);
+    const phone = screen.getByLabelText<HTMLInputElement>('Phone');
+    await userEvent.type(phone, '3125550144');
+    phone.setSelectionRange(6, 6); // "(312) |555-0144"
+    await userEvent.keyboard('{Backspace}');
+    expect(phone).toHaveValue('(315) 550-144');
+    expect(phone.selectionStart).toBe(3);
+  });
+
+  it('removes the following digit when Delete deletes a separator', async () => {
+    render(<ControlledPhone onComplete={() => {}} />);
+    const phone = screen.getByLabelText<HTMLInputElement>('Phone');
+    await userEvent.type(phone, '3125550144');
+    phone.setSelectionRange(9, 9); // "(312) 555|-0144"
+    await userEvent.keyboard('{Delete}');
+    expect(phone).toHaveValue('(312) 555-144');
+    expect(phone.selectionStart).toBe(9);
+  });
+
+  it('drops a typed leading 1 once eleven digits are entered', async () => {
+    render(<ControlledPhone onComplete={() => {}} />);
+    const phone = screen.getByLabelText('Phone');
+    await userEvent.type(phone, '13125550144');
+    expect(phone).toHaveValue('(312) 555-0144');
   });
 
   it('forwards the aria props injected by Field', () => {

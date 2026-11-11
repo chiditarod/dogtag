@@ -14,7 +14,7 @@ export function InfoTip({ label, children }: InfoTipProps) {
         <button
           type="button"
           aria-label={label}
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-base leading-none text-link focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
+          className="relative inline-flex h-6 w-6 before:absolute before:-inset-[10px] before:content-[''] items-center justify-center rounded-full text-base leading-none text-link focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
         >
           <span aria-hidden="true">ⓘ</span>
         </button>
@@ -23,6 +23,7 @@ export function InfoTip({ label, children }: InfoTipProps) {
         <Popover.Content
           side="bottom"
           align="start"
+          aria-label={label}
           sideOffset={6}
           collisionPadding={12}
           className="z-50 max-w-[min(20rem,calc(100vw-1.5rem))] rounded-md border border-flag bg-white p-3 font-sans text-sm text-navy shadow-md focus:outline-none"

@@ -28,7 +28,7 @@ export function SignupForm() {
       {
         first_name: value('first_name'),
         last_name: value('last_name'),
-        email,
+        email: email.trim().toLowerCase(),
         phone: toApiPhone(phone),
         password: value('password'),
         password_confirmation: value('password_confirmation'),
