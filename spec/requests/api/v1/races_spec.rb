@@ -18,6 +18,16 @@ describe "API v1 races", type: :request do
     end
   end
 
+  it "lists a current race that has both plain and payment requirements" do
+    FactoryBot.create(:requirement, race: race)
+
+    get "/api/v1/races"
+
+    expect(response).to have_http_status(:ok)
+    payment_requirements = json["races"].first["payment_requirements"]
+    expect(payment_requirements.map { |r| r["id"] }).to eq([requirement.id])
+  end
+
   describe "GET /api/v1/races/:id" do
     it "returns the race fields" do
       get "/api/v1/races/#{race.id}"
