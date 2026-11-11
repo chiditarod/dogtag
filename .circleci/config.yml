@@ -139,12 +139,16 @@ jobs:
       # Setup database
       - <<: *migrate
 
-      # Build the React registration SPA served at /register
+      # Unit-test, then build the React registration SPA served at /register
+      - run:
+          name: Install registration SPA dependencies
+          command: npm --prefix frontend ci
+      - run:
+          name: Run registration SPA unit tests (Vitest)
+          command: npm --prefix frontend test -- --run
       - run:
           name: Build registration SPA
-          command: |
-            npm --prefix frontend ci
-            npm --prefix frontend run build
+          command: npm --prefix frontend run build
 
       # Create .env file for Stripe credentials
       - run:
