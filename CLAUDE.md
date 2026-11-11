@@ -321,6 +321,8 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 
 4. **Authlogic 6.x**: Password validations are explicit (not automatic) - see User model for the pattern
 
+5. **JSON API (`/api/v1`)**: Controllers inherit `Api::V1::BaseController < ActionController::Base` (not `ApplicationController`). Authlogic is activated automatically by its railtie; CSRF token comes from `GET /api/v1/csrf` and is sent as `X-CSRF-Token`. Errors render `{ error, errors }` via `render_errors`. In request specs, `UserSession.find` is not usable after the request (Authlogic is deactivated); use `session_user_id` from `spec/support/api_helpers.rb`.
+
 ## Technical Debt
 
 The following items were identified during the Rails 8 upgrade and should be addressed when time permits:

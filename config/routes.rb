@@ -102,6 +102,17 @@ Rails.application.routes.draw do
   #     resources :products
   #   end
 
+  # JSON API consumed by the React SPA
+  namespace :api, defaults: { format: :json } do
+    namespace :v1 do
+      get "csrf", to: "csrf#show"
+      get "me", to: "sessions#show"
+      resource :session, only: [:create, :destroy]
+      resources :users, only: [:create]
+      resources :password_resets, only: [:create]
+    end
+  end
+
   # Catch-all route for unmatched paths - returns 404 without raising exception
   # This prevents ActionController::RoutingError from being logged to Rollbar
   # Must be last route in the file
