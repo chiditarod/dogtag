@@ -110,6 +110,7 @@ Rails.application.routes.draw do
       resource :session, only: [:create, :destroy]
       resources :users, only: [:create]
       resources :password_resets, only: [:create]
+      match "*path", to: "base#route_not_found", via: :all
     end
   end
 

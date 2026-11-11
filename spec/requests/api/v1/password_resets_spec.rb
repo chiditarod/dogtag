@@ -24,4 +24,12 @@ describe "API v1 password resets", type: :request do
     expect(response).to have_http_status(:accepted)
     expect(Workers::PasswordResetEmail.jobs.size).to eq(0)
   end
+
+  it "uses the configured host, not the request Host header, for the reset link" do
+    host! "evil.example"
+    post "/api/v1/password_resets", params: { email: user.email }, as: :json
+    host = Workers::PasswordResetEmail.jobs.first["args"].first["host"]
+    expect(host).to eq(ActionMailer::Base.default_url_options[:host])
+    expect(host).not_to include("evil.example")
+  end
 end

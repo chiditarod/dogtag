@@ -19,6 +19,19 @@ describe "API v1 sessions", type: :request do
       expect(session_user_id).to be_nil
     end
 
+    it "keeps the existing session when the new login fails" do
+      api_login(user)
+      post "/api/v1/session", params: { email: user.email, password: "wrong" }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(session_user_id).to eq(user.id)
+    end
+
+    it "returns 422 login_failed when fields are missing" do
+      post "/api/v1/session", params: {}, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["error"]).to eq("login_failed")
+    end
+
     it "switches to the new credentials when already logged in" do
       other = FactoryBot.create(:user)
       api_login(user)
@@ -35,6 +48,16 @@ describe "API v1 sessions", type: :request do
       delete "/api/v1/session"
       expect(response).to have_http_status(:no_content)
       expect(session_user_id).to be_nil
+    end
+
+    it "invalidates a replayed copy of the old cookie" do
+      api_login(user)
+      saved = cookies.to_hash
+      delete "/api/v1/session"
+      expect(session_user_id).to be_nil
+      saved.each { |name, value| cookies[name] = value }
+      get "/api/v1/me"
+      expect(response).to have_http_status(:unauthorized)
     end
 
     it "returns 204 when not logged in" do

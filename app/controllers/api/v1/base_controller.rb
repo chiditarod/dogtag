@@ -3,6 +3,17 @@ class Api::V1::BaseController < ActionController::Base
   # every ActionController::Base subclass by its Rails railtie (activate_authlogic).
   protect_from_forgery with: :exception
 
+  # Declared first: later (more specific) handlers take precedence.
+  rescue_from StandardError do |e|
+    raise e unless rescue_unexpected_errors?
+
+    Rails.logger.error("#{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}")
+    Rollbar.error(e) if defined?(Rollbar)
+    render_errors("server_error", status: :internal_server_error)
+  end
+  rescue_from ActionDispatch::Http::Parameters::ParseError do |_e|
+    render_errors("bad_request", status: :bad_request)
+  end
   rescue_from ActiveRecord::RecordInvalid do |e|
     render_errors(e.record)
   end
@@ -19,7 +30,16 @@ class Api::V1::BaseController < ActionController::Base
     render_errors("invalid_csrf", status: :unprocessable_entity)
   end
 
+  def route_not_found
+    render_errors("not_found", status: :not_found)
+  end
+
   private
+
+  # Overridable seam: in development (consider_all_requests_local) let exceptions surface.
+  def rescue_unexpected_errors?
+    !Rails.configuration.consider_all_requests_local
+  end
 
   def current_user
     return @current_user if defined?(@current_user)
