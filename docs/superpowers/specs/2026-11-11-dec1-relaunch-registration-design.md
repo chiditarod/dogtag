@@ -255,7 +255,7 @@ The page has a header and four numbered cards. Each card shows a status pill and
   1. a payment tier changes within the next 48 hours (the builder may tune the window)
   2. registration closes in 7 days
   3. registration closes in 24 hours. Issue #206 says "124 hours", which is read as a typo.
-- **Idempotent:** record each sent reminder (team, kind, tier/date key) so nothing is sent twice. This needs a small new table.
+- **Idempotent:** each sent reminder is recorded in `sent_emails` (team, kind, tier/date `dedupe_key`; see Email delivery verification), so nothing is sent twice.
 - **Content:**
   - what's still missing (the checklist status)
   - the price change or deadline
@@ -299,7 +299,7 @@ The page has a header and four numbered cards. Each card shows a status pill and
    - **`dogtag` is production** (`dogtag.chiditarod.org`, `heroku` remote) and **`dogtag-staging` is staging**.
    - Delete the `dogtag-22` app and remove its git remote. Deleting the app is irreversible, so confirm with the owner right before doing it.
    - Provision Postgres, Redis, a web dyno, and a worker dyno on `dogtag`.
-   - Set config vars: Stripe live keys, Classy, SMTP, Rollbar, `REDIS_URL`, Sidekiq web auth.
+   - Set config vars: Stripe live keys, Classy, SMTP (SendGrid), SendGrid event-webhook verification key, Rollbar, `REDIS_URL`, Sidekiq web auth.
    - Restore `postgres_dump-20260409.dump`, run migrations, and smoke test.
    - Stage first on `dogtag-staging`.
 5. **Live test (production):**
@@ -345,21 +345,94 @@ Build in this order. Cut from the bottom.
    - questions renderer + #40
    - payment
    - "You're in" card
-3. **Past-racer picker.**
-4. **#162 fix** (see below).
-5. **Reminder emails.** These may ship after Dec 1, but must be live before the first tier change.
-6. **Per-race experience labels** (column + admin field). If cut, the constant just gets the 22nd label.
-7. **Classy spec gaps** beyond #162.
+3. **Email verification:**
+   - layer 1 specs
+   - layer 2 Mailpit e2e
+   - layer 3 `sent_emails` log + `emails:verify`
+
+   These are needed before the live test. The SendGrid webhook, admin page, and delivered/bounced status may follow shortly after Dec 1 if time is short.
+4. **Past-racer picker.**
+5. **#162 fix** (see below).
+6. **Reminder emails.** These may ship after Dec 1, but must be live before the first tier change.
+7. **Per-race experience labels** (column + admin field). If cut, the constant just gets the 22nd label.
+8. **Classy spec gaps** beyond #162.
 
 ## Classy #162 (Claude's call)
 
 Fix it for launch, not just reproduce it. Returning captains who changed their email hit "This email address is already used" in `ClassyUser#link_user_to_classy!`, and returning captains are exactly who the picker serves. Reproduce it in a spec first, then make the smallest change in `ClassyUser`/`ClassyClient`, for example looking up the existing Classy member by the old email or linking by Classy id. Avoid a broader Classy rewrite.
+
+## Email delivery verification (owner decision: all three layers)
+
+Production sends through **SendGrid** over SMTP (existing `SMTP_*` config). Emails must be verifiable programmatically at every level, not by "check your inbox".
+
+### Layer 1: RSpec chain specs
+
+Each spec runs with `Sidekiq::Testing.inline!` and asserts on `ActionMailer::Base.deliveries`: recipient, subject, and key links.
+
+| Chain | Expected email |
+|---|---|
+| Signup (legacy controller and API) | welcome email |
+| Password-reset request | reset email with a working token link |
+| Finalization through Wisper → `TeamFinalizer` | team-finalized email |
+| `ClassyCreateFundraisingTeam` (WebMock'd Classy) | Classy fundraising email with the fundraising page URL |
+| Each reminder trigger | exactly one reminder. Running the job twice sends nothing new. Finalized teams and closed races get none. |
+
+### Layer 2: Mailpit in docker-compose for local and e2e
+
+- Add a **Mailpit** service (SMTP + HTTP API) alongside the Postgres sidecar.
+- In development and the Playwright e2e environment, the app sends real SMTP to Mailpit.
+- Playwright helpers query Mailpit's API to assert, per test:
+  - the email arrived
+  - its recipient and subject
+  - links point at the right host (covers #83)
+- Each test clears the Mailpit inbox before it runs.
+- The password-reset e2e follows the emailed link to completion.
+- The full-registration e2e asserts welcome + finalized emails.
+- A reminder e2e triggers the reminder job and asserts the email.
+
+### Layer 3: Outgoing log + SendGrid event webhook (staging/production)
+
+- **`sent_emails` table:**
+  - Columns:
+    - mailer
+    - action
+    - recipient
+    - subject
+    - related records (`user_id`, `team_id`, `race_id` as applicable)
+    - `kind` / `dedupe_key` (used for reminders)
+    - SMTP `message_id`
+    - status (`sent`, `failed`, `delivered`, `bounced`, `dropped`, `deferred`, `spam_report`)
+    - error
+    - timestamps
+  - Written by an ActionMailer delivery observer/interceptor, so every mailer is covered without per-mailer code. Delivery exceptions record `failed`.
+- **Correlation with SendGrid:**
+  - Each outgoing message gets an `X-SMTPAPI` header with `unique_args: { sent_email_id: <id> }`.
+  - SendGrid echoes this in event webhook payloads.
+  - This avoids relying on SendGrid's own message id, which differs from the SMTP Message-ID.
+- **Webhook endpoint (`POST /webhooks/sendgrid`):**
+  - Verifies SendGrid's **signed event webhook** (ECDSA public key in a config var) and rejects unsigned requests.
+  - Updates `sent_emails.status` from `processed`, `delivered`, `deferred`, `bounce`, `dropped` and `spamreport` events.
+  - Must be idempotent, because SendGrid retries and batches events.
+- **Setup:**
+  - Configuring the event webhook URL and signing key in the SendGrid dashboard is an owner step.
+  - Do it on staging first.
+- **Admin page:** recent emails with filters by team, recipient, status, and kind. Linked from the team admin view.
+- **Rake task:** `emails:verify[team_id]` prints each expected email for the team's current state and its status, then exits non-zero if any are missing or not `delivered`. Expected emails:
+  - welcome
+  - finalized
+  - Classy fundraising
+  - any reminders that were due
+- **Reminder idempotency:** use `sent_emails` (`kind` + `dedupe_key` unique per team) instead of a separate reminders table.
+- **Live production test:**
+  - After the test registration, `emails:verify` must report all emails `delivered`.
+  - Checking the actual inbox is optional, either by the owner or through the Gmail connector if the owner allows it.
 
 ## Go/no-go criteria (Nov 24)
 
 All must be true to launch on the SPA:
 - The full racer path passes in Playwright: signup, team, roster with picker, questions, payment, finalization.
 - On staging with Stripe test mode, finalization triggers the Classy team creation job and the emails. A Classy sandbox is used if available; otherwise this step is verified in the production live test.
+- Email layers 1 and 2 pass in CI and locally. On staging, `emails:verify` reports the test team's emails as at least `sent`, and as `delivered` once the SendGrid webhook is configured.
 - No regressions in the RSpec suite. The legacy flow still works.
 - The owner has clicked through it on a phone and a desktop.
 
@@ -388,7 +461,7 @@ All must be true to launch on the SPA:
 - SPA mount path and Rails catch-all routing, and how the Vite build lands in `public/`.
 - Exact API payload shapes, and whether to add a serializer gem or hand-roll JSON.
 - Phone/mask library choice, tooltip primitive, form library.
-- Column type for experience labels; reminders table shape; cron time of day.
+- Column type for experience labels; exact `sent_emails` columns and indexes; cron time of day.
 - PR breakdown and order. Smaller PRs are preferred, and the ops steps are not PRs.
 
 ## Sequencing (beyond this doc)
