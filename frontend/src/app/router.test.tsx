@@ -6,7 +6,7 @@ import { server } from '@/test/server';
 import { routes, BASENAME } from '@/app/router';
 import { AppProvider } from '@/app/provider';
 import { t } from '@/locales/en';
-import { buildRace } from '@/test/fixtures';
+import { buildRace, buildTeam } from '@/test/fixtures';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, {
@@ -30,6 +30,7 @@ describe('router', () => {
       http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
       http.get('/api/v1/races/1', () => HttpResponse.json({ race: buildRace() })),
       http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
+      http.get('/api/v1/teams/5', () => HttpResponse.json({ team: buildTeam({ id: 5 }) })),
     );
   });
 
@@ -51,11 +52,17 @@ describe('router', () => {
     ['/register/forgot-password', 'forgotPassword.heading'],
     ['/register/races/1/teams/new', 'teams.newHeading'],
     ['/register/teams', 'teams.listHeading'],
-    ['/register/teams/5', 'teams.checklistHeading'],
   ] as const)('routes %s', async (path, key) => {
     renderAt(path);
     expect(
       await screen.findByRole('heading', { name: t(key) }),
+    ).toBeInTheDocument();
+  });
+
+  it('routes /register/teams/5 to the team checklist', async () => {
+    renderAt('/register/teams/5');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' }),
     ).toBeInTheDocument();
   });
 

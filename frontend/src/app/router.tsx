@@ -10,15 +10,12 @@ import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { SignupRoute } from '@/app/routes/signup';
+import { TeamRoute } from '@/app/routes/team';
 import { TeamsRoute } from '@/app/routes/teams';
 import { RequireAuth } from '@/features/auth/components/require-auth';
-import { t, type en } from '@/locales/en';
+import { t } from '@/locales/en';
 
 export const BASENAME = '/register';
-
-function Placeholder({ heading }: { heading: keyof typeof en }) {
-  return <h1 className="font-display text-2xl font-semibold">{t(heading)}</h1>;
-}
 
 function NotFound() {
   return (
@@ -59,7 +56,7 @@ export const routes: RouteObject[] = [
           },
           {
             path: '/teams/:teamId',
-            element: <Placeholder heading="teams.checklistHeading" />,
+            element: <TeamRoute />,
           },
         ],
       },

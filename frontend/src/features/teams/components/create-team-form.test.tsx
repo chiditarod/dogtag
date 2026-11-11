@@ -87,7 +87,7 @@ describe('CreateTeamForm', () => {
     );
     const { router } = renderApp('/races/1/teams/new');
     await fillAndSubmit();
-    await screen.findByRole('heading', { name: t('teams.checklistHeading') });
+    await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
     expect(router.state.location.pathname).toBe('/register/teams/9');
     expect(body).toEqual({
       race_id: 1,

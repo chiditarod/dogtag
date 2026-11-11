@@ -9,6 +9,7 @@ import { RequireAuth } from '@/features/auth/components/require-auth';
 import { apiFetch } from '@/lib/api-client';
 import { clearCsrfToken } from '@/lib/api-client';
 import { t } from '@/locales/en';
+import { buildTeam } from '@/test/fixtures';
 import { server } from '@/test/server';
 import { renderApp } from '@/test/render-app';
 
@@ -22,6 +23,7 @@ beforeEach(() => {
     // Pages landed on after auth fetch these; content is irrelevant here.
     http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
     http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
+    http.get('/api/v1/teams/5', () => HttpResponse.json({ team: buildTeam({ id: 5 }) })),
   );
 });
 afterEach(() => clearCsrfToken());
@@ -152,7 +154,7 @@ describe('RequireAuth', () => {
     await userEvent.click(screen.getByRole('button', { name: t('login.submit') }));
 
     expect(
-      await screen.findByRole('heading', { name: t('teams.checklistHeading') }),
+      await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/register/teams/5');
   });
