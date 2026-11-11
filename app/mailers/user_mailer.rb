@@ -16,29 +16,51 @@
 class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
+  # Record delivery failures on the tracked sent_emails row, then re-raise so
+  # job retries still happen.
+  rescue_from StandardError do |e|
+    MailTracking.delivery_failed(message, e)
+    raise e
+  end
+
   def welcome_email(user)
     @user = user
+    track(kind: "welcome", user: user)
     mail(to: @user.email, subject: "Welcome to dogTag")
   end
 
   def team_finalized_email(user, team)
+    track(kind: "team_finalized", team: team, user: user)
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Registration Confirmed for #{team.name}")
   end
 
   def team_waitlisted_email(user, team)
+    track(kind: "team_waitlisted", team: team, user: user)
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Registration Waitlisted for #{team.name}")
   end
 
   def password_reset_instructions(user, host)
+    track(kind: "password_reset", user: user)
     @edit_password_reset_url = edit_password_reset_url(user.perishable_token, host: host)
     mail(to: user.email, subject: 'dogTag Password Reset Instructions')
   end
 
   def classy_fundraising_team_created(user, team)
+    track(kind: "classy_fundraising", team: team, user: user)
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Fundraising is ready for #{team.name}")
   end
 
   private
+
+  # Sets X-Dogtag-* headers read (and stripped) by MailTracking before delivery.
+  def track(kind:, team: nil, user: nil, dedupe_key: nil)
+    headers["X-Dogtag-Action"] = action_name
+    headers["X-Dogtag-Kind"] = kind
+    headers["X-Dogtag-User-Id"] = user&.id&.to_s
+    headers["X-Dogtag-Team-Id"] = team&.id&.to_s
+    headers["X-Dogtag-Race-Id"] = team&.race_id&.to_s
+    headers["X-Dogtag-Dedupe-Key"] = dedupe_key
+  end
 
   def set_vars_and_send(user, team, to, subject)
     @user = user

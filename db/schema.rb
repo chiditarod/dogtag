@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_11_085233) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_11_090237) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -73,6 +73,28 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_11_085233) do
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.index ["race_id"], name: "index_requirements_on_race_id"
+  end
+
+  create_table "sent_emails", force: :cascade do |t|
+    t.text "mailer"
+    t.text "action"
+    t.text "recipient"
+    t.text "subject"
+    t.bigint "user_id"
+    t.bigint "team_id"
+    t.bigint "race_id"
+    t.text "kind"
+    t.text "dedupe_key"
+    t.text "message_id"
+    t.text "status", default: "queued"
+    t.text "error"
+    t.datetime "status_changed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["message_id"], name: "index_sent_emails_on_message_id"
+    t.index ["status"], name: "index_sent_emails_on_status"
+    t.index ["team_id", "kind", "dedupe_key"], name: "index_sent_emails_on_team_kind_dedupe_key", unique: true, where: "(dedupe_key IS NOT NULL)"
+    t.index ["team_id"], name: "index_sent_emails_on_team_id"
   end
 
   create_table "teams", force: :cascade do |t|

@@ -1,0 +1,38 @@
+%h1 Email Log
+
+= form_with url: url_for(action: "index"), method: :get, local: true, class: "form-inline" do |f|
+  = f.text_field :team_id, value: params[:team_id], placeholder: "Team ID", class: "form-control"
+  = f.select :status, SentEmail::STATUSES, { include_blank: "Any status", selected: params[:status] }, class: "form-control"
+  = f.text_field :kind, value: params[:kind], placeholder: "Kind", class: "form-control"
+  = f.text_field :recipient, value: params[:recipient], placeholder: "Recipient", class: "form-control"
+  = f.submit "Filter", class: "btn btn-default", name: nil
+
+%hr
+
+= paginate(@sent_emails)
+
+%table#sent-emails.table.table-bordered.table-hover
+  %thead
+    %tr
+      %th Sent
+      %th Kind
+      %th Recipient
+      %th Subject
+      %th Team
+      %th Status
+      %th Changed
+      %th Error
+  %tbody
+    - @sent_emails.each do |email|
+      %tr
+        %td= email.created_at.strftime("%b %e, %Y %l:%M %p")
+        %td= email.kind
+        %td= email.recipient
+        %td= email.subject
+        %td
+          - if email.team_id
+            = link_to email.team_id, team_path(email.team_id)
+        %td= email.status
+        %td= email.status_changed_at&.strftime("%b %e, %Y %l:%M %p")
+        %td
+          %small= email.error

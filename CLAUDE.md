@@ -290,6 +290,7 @@ Optional:
 - `VITE_DEV_SERVER` - dev only; redirect SPA routes to the Vite dev server
 - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `CLASSY_ORGS` - Classy integration
 - `ROLLBAR_ACCESS_TOKEN` - Error tracking
+- `SENDGRID_WEBHOOK_PUBLIC_KEY` - Verifies `POST /webhooks/sendgrid` (401 when unset). See README "Email delivery tracking"
 
 ## Development Commands
 

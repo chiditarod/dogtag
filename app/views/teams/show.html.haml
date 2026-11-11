@@ -51,6 +51,10 @@
       %p
         = @team.description
 
+    - if can? :index, SentEmail
+      .row
+        = link_to "Emails", sent_emails_path(team_id: @team.id)
+
 = render @display_notification.to_s if @display_notification
 
 %ul.nav.nav-tabs
