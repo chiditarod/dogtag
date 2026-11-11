@@ -17,7 +17,12 @@ const notAuthenticated = () =>
   HttpResponse.json({ error: 'not_authenticated', errors: {} }, { status: 401 });
 
 beforeEach(() => {
-  server.use(http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })));
+  server.use(
+    http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })),
+    // Pages landed on after auth fetch these; content is irrelevant here.
+    http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
+    http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
+  );
 });
 afterEach(() => clearCsrfToken());
 
@@ -89,7 +94,7 @@ describe('SignupForm', () => {
     let me = false;
     server.use(
       http.get('/api/v1/me', () => (me ? HttpResponse.json({ user }) : notAuthenticated())),
-      http.get('/api/v1/races', () => HttpResponse.json({})),
+      http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
       http.post('/api/v1/users', () => {
         me = true;
         return HttpResponse.json({ user }, { status: 201 });

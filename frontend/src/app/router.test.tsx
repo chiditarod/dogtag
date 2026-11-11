@@ -6,6 +6,7 @@ import { server } from '@/test/server';
 import { routes, BASENAME } from '@/app/router';
 import { AppProvider } from '@/app/provider';
 import { t } from '@/locales/en';
+import { buildRace } from '@/test/fixtures';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, {
@@ -24,7 +25,12 @@ const user = { id: 1, first_name: 'Ada', last_name: 'L', email: 'a@example.com',
 describe('router', () => {
   beforeEach(() => {
     // Logged in, so guarded routes render.
-    server.use(http.get('/api/v1/me', () => HttpResponse.json({ user })));
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user })),
+      http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
+      http.get('/api/v1/races/1', () => HttpResponse.json({ race: buildRace() })),
+      http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
+    );
   });
 
   it('shows the race list heading at /register/', () => {

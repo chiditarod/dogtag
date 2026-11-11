@@ -6,8 +6,11 @@ import {
 } from 'react-router-dom';
 import { RegisterLayout } from '@/components/layouts/register-layout';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
+import { NewTeamRoute } from '@/app/routes/new-team';
+import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { SignupRoute } from '@/app/routes/signup';
+import { TeamsRoute } from '@/app/routes/teams';
 import { RequireAuth } from '@/features/auth/components/require-auth';
 import { t, type en } from '@/locales/en';
 
@@ -35,7 +38,7 @@ export const routes: RouteObject[] = [
   {
     element: <RegisterLayout />,
     children: [
-      { path: '/', element: <Placeholder heading="races.heading" /> },
+      { path: '/', element: <RacesRoute /> },
       { path: '/login', element: <LoginRoute /> },
       { path: '/signup', element: <SignupRoute /> },
       { path: '/forgot-password', element: <ForgotPasswordRoute /> },
@@ -48,11 +51,11 @@ export const routes: RouteObject[] = [
         children: [
           {
             path: '/races/:raceId/teams/new',
-            element: <Placeholder heading="teams.newHeading" />,
+            element: <NewTeamRoute />,
           },
           {
             path: '/teams',
-            element: <Placeholder heading="teams.listHeading" />,
+            element: <TeamsRoute />,
           },
           {
             path: '/teams/:teamId',
