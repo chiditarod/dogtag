@@ -18,7 +18,9 @@ class TeamChecklist
       finalized: !!team.finalized,
       remaining: remaining(racers, questions, fee),
       team_number: team.assigned_team_number,
-      classy_fundraising_url: classy_fundraising_url
+      classy_fundraising_url: classy_fundraising_url,
+      # Only races with a Classy campaign get a fundraising page, so only they should wait for one.
+      classy_expected: race.classy_campaign_id.present?
     }
   end
 

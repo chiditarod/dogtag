@@ -54,6 +54,8 @@ export interface Checklist {
   remaining: number;
   team_number: number | null;
   classy_fundraising_url: string | null;
+  /** The race has a Classy campaign, so a fundraising page will be created. */
+  classy_expected: boolean;
 }
 
 export interface Team {

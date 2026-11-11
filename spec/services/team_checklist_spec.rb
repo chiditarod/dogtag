@@ -16,6 +16,7 @@ describe TeamChecklist do
       expect(checklist[:finalized]).to eq(false)
       expect(checklist[:team_number]).to be_nil
       expect(checklist[:classy_fundraising_url]).to be_nil
+      expect(checklist[:classy_expected]).to eq(false)
     end
   end
 
@@ -93,7 +94,8 @@ describe TeamChecklist do
     let(:race) { FactoryBot.create(:race_with_jsonform, :with_classy_data) }
     let(:team) { FactoryBot.create(:team, :with_classy_id, race: race) }
 
-    it "builds the classy fundraising url" do
+    it "expects a fundraising page and builds the classy fundraising url" do
+      expect(checklist[:classy_expected]).to eq(true)
       expect(checklist[:classy_fundraising_url]).to eq(
         "https://www.classy.org/team/#{team.classy_id}?campaignId=#{race.classy_campaign_id}"
       )

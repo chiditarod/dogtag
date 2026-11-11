@@ -40,10 +40,12 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
           {t('team.fundraisingLink')}
         </a>
       ) : (
-        <div role="status" className="space-y-1 text-sm">
-          <p>{t('team.fundraisingPending')}</p>
-          <p className="text-navy/70">{t('team.fundraisingPendingHint')}</p>
-        </div>
+        checklist.classy_expected && (
+          <div role="status" className="space-y-1 text-sm">
+            <p>{t('team.fundraisingPending')}</p>
+            <p className="text-navy/70">{t('team.fundraisingPendingHint')}</p>
+          </div>
+        )
       )}
     </ChecklistCard>
   );

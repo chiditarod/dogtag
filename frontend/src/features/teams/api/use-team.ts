@@ -16,7 +16,8 @@ export const FUNDRAISING_POLL_MAX_ATTEMPTS = 30;
 
 interface UseTeamOptions {
   /**
-   * While the team is finalized but `classy_fundraising_url` is still null,
+   * While the team is finalized and expects a Classy page (`classy_expected`)
+   * but `classy_fundraising_url` is still null,
    * refetch every 10s, at most 30 times (5 minutes).
    */
   pollForFundraisingUrl?: boolean;
@@ -40,7 +41,11 @@ export function useTeam(
     refetchInterval: (query: Query<Team>) => {
       if (!pollForFundraisingUrl) return false;
       const checklist = query.state.data?.checklist;
-      if (!checklist?.finalized || checklist.classy_fundraising_url) {
+      if (
+        !checklist?.finalized ||
+        !checklist.classy_expected ||
+        checklist.classy_fundraising_url
+      ) {
         pollStart.current = null;
         return false;
       }

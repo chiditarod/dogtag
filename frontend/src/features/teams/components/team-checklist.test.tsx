@@ -166,6 +166,28 @@ describe('YoureInCard', () => {
     expect(screen.queryByText(/Finish the steps above/)).toBeNull();
   });
 
+  it('shows only the team number, without polling, when the race has no Classy campaign', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let requests = 0;
+    server.use(
+      http.get('/api/v1/teams/9', () => {
+        requests += 1;
+        return HttpResponse.json({
+          team: buildTeam({
+            checklist: buildChecklist({ finalized: true, remaining: 0, team_number: 12, classy_expected: false }),
+          }),
+        });
+      }),
+    );
+    renderApp('/teams/9');
+    expect(await screen.findByText('Team #12')).toBeInTheDocument();
+    expect(screen.queryByText('Your fundraising page is being set up…')).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Open your fundraising page' })).toBeNull();
+
+    await act(() => vi.advanceTimersByTimeAsync(60_000));
+    expect(requests).toBe(1);
+  });
+
   it('polls every 10s while the URL is missing and stops when it arrives', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     let requests = 0;
