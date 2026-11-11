@@ -36,7 +36,18 @@ SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
+SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional; base64 key from SendGrid's Signed Event Webhook. Without it the webhook returns 401
 ```
+
+## Email delivery tracking
+
+Every outgoing email is logged to `sent_emails` and tagged with an `X-SMTPAPI` header (`unique_args.sent_email_id`). SendGrid delivery events then update each row's status.
+
+- **SendGrid setup:** go to Mail Settings → Event Webhook and set the POST URL to `https://<host>/webhooks/sendgrid`. Enable the processed, delivered, deferred, bounce, dropped and spam report events. Turn on **Signed Event Webhook** and copy the verification key into `SENDGRID_WEBHOOK_PUBLIC_KEY`. Set this up on staging first.
+- **Admin log:** operators and admins can browse `/sent_emails`, filtered by team, status, kind or recipient. Each team page also links to its emails.
+- **Verify a team:** `bundle exec rake "emails:verify[<team_id>]"` (on Heroku: `heroku run rake "emails:verify[<team_id>]"`) prints each expected email with a label of `OK`, `MISSING`, `NOT DELIVERED` or `UNTRACKED`. It exits 1 if any is `MISSING` or `NOT DELIVERED`.
+  - `UNTRACKED` means the email would have been sent before logging began. It does not fail the check.
+  - Until `SENDGRID_WEBHOOK_PUBLIC_KEY` is set, `sent` counts as OK. After that, only `delivered` does.
 
 ## Custom questions using jsonform
 

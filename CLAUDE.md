@@ -238,6 +238,7 @@ Required for production:
 Optional:
 - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `CLASSY_ORGS` - Classy integration
 - `ROLLBAR_ACCESS_TOKEN` - Error tracking
+- `SENDGRID_WEBHOOK_PUBLIC_KEY` - Verifies `POST /webhooks/sendgrid` (401 when unset). See README "Email delivery tracking"
 
 ## Development Commands
 
