@@ -256,8 +256,9 @@ bundle exec rspec                           # All tests
 bundle exec rspec spec/models/              # Model tests only
 bundle exec rspec spec/path/to_spec.rb:42   # Single test at line
 
-# Run integration tests (Playwright)
+# Run integration tests (Playwright). Needs: docker compose up -d db redis mailpit
 npm test
+npx playwright test tests/spa   # SPA suite only (Mailpit inbox at http://localhost:8025)
 
 # Start development server
 bundle exec rails server
@@ -331,6 +332,13 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 5. **JSON API (`/api/v1`)**: Controllers inherit `Api::V1::BaseController < ActionController::Base` (not `ApplicationController`). Authlogic is activated automatically by its railtie; CSRF token comes from `GET /api/v1/csrf` and is sent as `X-CSRF-Token`. Errors render `{ error, errors }` via `render_errors`. In request specs, `UserSession.find` is not usable after the request (Authlogic is deactivated); use `session_user_id` from `spec/support/api_helpers.rb`.
 
 6. **Payments**: All card charges (legacy `ChargesController#create` and `POST /api/v1/teams/:id/payments`) go through `Payments::ChargeTeam`, which rejects a requirement from another race (`:wrong_race`), checks `requirement.completed?(team)` before touching Stripe, and always charges `requirement.amount_due_cents`. Callers must `authorize! :edit, team` first. Payments for one team+requirement are serialized with a session-level Postgres advisory lock (`:in_progress` when held); non-`PaymentRequirement` and `MockPaymentRequirement` are `:not_payable`. If the completed requirement cannot be saved after a successful charge, the charge id is logged (and sent to Rollbar) so it can be refunded by hand. `POST /api/v1/teams/:id/mock_payments` is routed only in development/test.
+
+## E2E Learnings
+
+- Playwright boots Rails in **development** (delivery_method :smtp to Mailpit) with `SIDEKIQ_INLINE=true` (config/initializers/sidekiq.rb; ignored in production), `REGISTRATION_UI=spa`, `APP_HOST=localhost:3099`; `VITE_DEV_SERVER` must be unset. CircleCI runs the same with `RAILS_ENV=development` against the `dogtag_test` DB, since the test env uses in-memory mail delivery.
+- Each Playwright spec seeds with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) via `tests/helpers/seed.ts`; `test_seeds:cleanup` sweeps users, teams, `Race %` races and `@example.com` SentEmail rows.
+- Person records can only be created while their race is open; seed past races by moving dates with `update_columns` afterwards.
+- Roster slots repeat past-racer chips in every empty slot, so use exact text matches in locators.
 
 ## Technical Debt
 

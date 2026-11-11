@@ -16,6 +16,32 @@ npm install
 npx playwright install
 ```
 
+## SPA end-to-end suite (`tests/spa/`)
+
+These specs drive the React registration app at `/register` and check the emails Rails sends.
+
+Prerequisites:
+
+```bash
+docker compose up -d db redis mailpit   # Postgres, Redis, and the Mailpit SMTP sink
+```
+
+- Mailpit receives mail on SMTP `localhost:1025`; browse the inbox at http://localhost:8025. Specs read it over its HTTP API via `tests/helpers/mailpit.ts` (`clearInbox`, `waitForEmail`, `countEmails`).
+- `playwright.config.ts` boots Rails (development environment, port 3099) with `APP_HOST=localhost:3099`, `SIDEKIQ_INLINE=true` (jobs run in-process, no Sidekiq worker needed), `REGISTRATION_UI=spa` and `SMTP_HOST=localhost SMTP_PORT=1025`. `VITE_DEV_SERVER` is intentionally unset so Rails serves the built SPA. An already-running server on the port is reused, so stop any dev server started without these variables.
+- `tests/global-setup.ts` builds the SPA (`npm --prefix frontend ci` if `frontend/node_modules` is missing, then `npm --prefix frontend run build`). Set `SPA_BUILD=skip` to reuse the existing `public/register` build.
+
+```bash
+npx playwright test tests/spa                 # just the SPA suite
+SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
+```
+
+Specs (each seeds its own data with a `test_seeds:*` task and unique emails, and sweeps it with `test_seeds:cleanup`):
+
+- **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay, "You're in!", confirmation email.
+- **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer chip, the form pre-fills, Save fills the slot.
+- **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
+- **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.
+
 ## Running Tests
 
 ### Local Development
@@ -75,6 +101,7 @@ heroku run rails test_seeds:basic -r heroku
 
 ### Current Tests
 
+- **`spa/*.spec.ts`**: SPA registration, past racers, password reset and reminder emails (see above).
 - **`user-joins-team.spec.ts`**: Tests the happy path where a 5th user joins a team with 4 members, triggering team finalization.
 
 ### Writing New Tests
@@ -142,6 +169,9 @@ To run tests in CI:
 npm ci
 npx playwright install --with-deps
 
+# Services: Postgres, Redis, and Mailpit (SMTP on 1025, API on 8025)
+# Build the SPA (or let tests/global-setup.ts do it): npm --prefix frontend ci && npm --prefix frontend run build
+
 # Seed test data
 bundle exec rails test_seeds:basic
 
@@ -160,6 +190,7 @@ Edit `playwright.config.ts` to:
 - Modify retry logic
 - Configure reporters
 - Set base URL
+- Change the environment the Rails server boots with (`serverEnv`)
 
 ## Common Issues
 

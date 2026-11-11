@@ -7,6 +7,9 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
+#   rails test_seeds:spa_registration          (open race with questions + mock fee for the SPA registration flow)
+#   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
+#   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:cleanup                   (clean up all test data)
 
 namespace :test_seeds do
@@ -363,6 +366,163 @@ namespace :test_seeds do
     puts "  Credentials file: #{credentials_file}"
   end
 
+  # Small JSONForm whose answers are all single strings: radios, textarea,
+  # agree checkbox and a select (4+ options).
+  SPA_TEST_JSONFORM = {
+    schema: {
+      type: "object",
+      properties: {
+        "racer-type" => { title: "Team type", type: "string", enum: ["Racer", "Art Cart"], required: true },
+        "explain-theme" => { title: "Your theme", type: "string", required: true },
+        "agree-to-rules" => { title: "I will follow the race rules", type: "string", required: true, pattern: "^Yes$", enum: %w[No Yes] },
+        "fundraising" => { title: "Fundraising plans", type: "string", required: true, enum: ["Yes!", "Probably", "Maybe", "No fundraising for me"] }
+      }
+    },
+    form: [
+      "racer-type",
+      { key: "explain-theme", type: "textarea" },
+      "agree-to-rules",
+      "fundraising",
+      { type: "submit", title: "Save" }
+    ]
+  }.to_json.freeze
+
+  def write_test_credentials(unique_id, credentials)
+    file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+    File.write(file, credentials.to_json)
+    puts "  Credentials file: #{file}"
+  end
+
+  desc "Open race (JSONForm questions, mock fee, 2 racers per team) and credentials for a brand-new SPA user"
+  task spa_registration: :environment do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding SPA registration test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    race = FactoryBot.create(:race,
+      name: "Race #{unique_id[0..7]}",
+      people_per_team: 2,
+      max_teams: 100,
+      jsonform: SPA_TEST_JSONFORM
+    )
+    requirement = MockPaymentRequirement.create!(name: "Registration Fee", race: race)
+    tier = Tier.create!(requirement: requirement, price: 5000, begin_at: 10.days.ago)
+
+    write_test_credentials(unique_id,
+      first_name: "Spa",
+      last_name: "Registrant",
+      email: "spa-#{unique_id}@example.com",
+      phone: "3125550100",
+      password: "securepass123",
+      race_id: race.id,
+      race_name: race.name,
+      people_per_team: race.people_per_team,
+      fee_cents: tier.price
+    )
+    puts "✅ Seeded race #{race.name} (ID: #{race.id})"
+  end
+
+  desc "Captain with a 2025 team of three racers and an empty team in a current open race"
+  task past_racers: :environment do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding past racers test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "Past",
+      email: "past-captain-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    past_race = FactoryBot.create(:race,
+      name: "Race Past #{unique_id[0..7]}",
+      people_per_team: 3,
+      max_teams: 100
+    )
+    past_team = FactoryBot.create(:team, name: "Test Team Past #{unique_id[0..7]}", race: past_race, user: captain)
+    racers = %w[Ada Grace Edsger].map.with_index do |first_name, index|
+      FactoryBot.create(:person,
+        team: past_team,
+        first_name: first_name,
+        last_name: "Racer",
+        email: "past-racer#{index + 1}-#{unique_id}@example.com",
+        phone: "312-555-010#{index}",
+        zipcode: "6060#{index + 1}",
+        experience: 2
+      )
+    end
+    # Racers can only be added while a race is open, so move it into 2025 afterwards.
+    past_race.update_columns(
+      registration_open: Time.zone.local(2025, 1, 1),
+      registration_close: Time.zone.local(2025, 2, 1),
+      final_edits_close: Time.zone.local(2025, 2, 15),
+      race_datetime: Time.zone.local(2025, 3, 1)
+    )
+
+    race = FactoryBot.create(:race,
+      name: "Race #{unique_id[0..7]}",
+      people_per_team: 3,
+      max_teams: 100
+    )
+    team = FactoryBot.create(:team, name: "Test Team Current #{unique_id[0..7]}", race: race, user: captain)
+
+    write_test_credentials(unique_id,
+      captain_email: captain.email,
+      captain_password: "password123",
+      race_id: race.id,
+      race_name: race.name,
+      team_id: team.id,
+      team_name: team.name,
+      past_racers: racers.map { |r| { first_name: r.first_name, last_name: r.last_name, email: r.email, phone: r.phone, zipcode: r.zipcode } }
+    )
+    puts "✅ Seeded captain #{captain.email} with #{racers.size} past racers"
+  end
+
+  desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"
+  task reminder: :environment do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding registration reminder test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "Reminder",
+      email: "reminder-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    race = FactoryBot.create(:race,
+      name: "Race #{unique_id[0..7]}",
+      people_per_team: 2,
+      max_teams: 100,
+      registration_open: 1.week.ago,
+      registration_close: 23.hours.from_now,
+      final_edits_close: 3.days.from_now,
+      race_datetime: 2.weeks.from_now
+    )
+    team = FactoryBot.create(:team, name: "Test Team Reminder #{unique_id[0..7]}", race: race, user: captain)
+
+    write_test_credentials(unique_id,
+      captain_email: captain.email,
+      race_id: race.id,
+      race_name: race.name,
+      team_id: team.id,
+      team_name: team.name
+    )
+    puts "✅ Seeded unfinalized team #{team.name} (ID: #{team.id}) in race closing in 23h"
+  end
+
   desc "Clean up all test data"
   task cleanup: :environment do
     puts "🧹 Cleaning up test data..."
@@ -375,6 +535,7 @@ namespace :test_seeds do
     }
 
     # Delete test data (keep the static admin user)
+    SentEmail.where("recipient LIKE ?", "%@example.com").delete_all
     User.where("email LIKE ? AND email != ?", "%@example.com", "test+admin@example.com").destroy_all
     Team.where("name LIKE ?", "Test Team%").destroy_all
     Race.where("name LIKE ?", "Race %").destroy_all

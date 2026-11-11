@@ -116,19 +116,37 @@ cp .env.example .env
 
 ### Build and run all containers
 
-This will also create the `dogtag_test` and `dogtag_development` databases and will build and boot mailcatcher.
+This will also create the `dogtag_test` and `dogtag_development` databases and boot Mailpit.
 
-    docker-compose up -d
+    docker compose up -d
+
+To run only the services needed when Rails runs on the host (and for the Playwright suite):
+
+    docker compose up -d db redis mailpit
 
 ### Run the test suite
 
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
 
-### Mailcatcher
+### Mailpit
 
-The `mailcatcher` gem gets built into a docker image and deployed in the
-docker compose cluster. It exposes an SMTP port on `1025` and a web UI on `1080`.
+[Mailpit](https://mailpit.axllent.org) runs in the docker compose cluster
+(`axllent/mailpit`). It accepts SMTP on `1025` and serves the inbox UI at
+http://localhost:8025. In development Rails delivers mail over SMTP to
+`SMTP_HOST` (default `localhost`) and `SMTP_PORT` (default `1025`), so every
+email dogtag sends shows up in the Mailpit inbox.
+
+### End-to-end tests (Playwright)
+
+    docker compose up -d db redis mailpit
+    npm ci && npx playwright install chromium
+    npm test                                  # all specs; builds the SPA first (SPA_BUILD=skip to reuse the build)
+    npx playwright test tests/spa             # only the SPA suite
+
+Playwright boots Rails with `SIDEKIQ_INLINE=true` (jobs run in-process, no
+Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. See
+`tests/README.md` for details.
 
 ## Registration SPA (React)
 
@@ -184,7 +202,7 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Do a development cycle to incorporate any new features.
 1. Update the jsonform with any new questions and expected responses for the specific race.
 1. Launch it all locally, make sure Stripe payments are functioning and a team can finalize their registration successfully.
-1. Use mailcatcher to ensure emails are being created and sent.
+1. Use Mailpit (http://localhost:8025) to ensure emails are being created and sent.
 1. Check that the SSL certificate for dogtag.chiditarod.org is up to date and working
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed

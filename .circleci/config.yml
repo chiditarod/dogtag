@@ -23,6 +23,10 @@ references:
     run:
       name: Wait for Redis
       command: dockerize -wait tcp://localhost:6379 -timeout 1m
+  wait_for_mailpit: &wait_for_mailpit
+    run:
+      name: Wait for Mailpit
+      command: dockerize -wait tcp://localhost:1025 -timeout 1m
   migrate: &migrate
     run:
        name: Database migration
@@ -84,6 +88,8 @@ jobs:
           POSTGRES_PASSWORD: ""
       # Redis service (for Sidekiq)
       - image: cimg/redis:7.4
+      # Mailpit: SMTP sink on 1025, inbox API on 8025 (read by tests/helpers/mailpit.ts)
+      - image: axllent/mailpit:v1.21
     environment:
       RAILS_ENV: test
       BUNDLE_JOBS: "4"
@@ -94,6 +100,8 @@ jobs:
       # Playwright config
       CI: "true"
       TEST_PORT: "3099"
+      SMTP_HOST: localhost
+      SMTP_PORT: "1025"
     steps:
       - checkout
 
@@ -126,9 +134,17 @@ jobs:
       # Wait for services
       - <<: *wait_for_db
       - <<: *wait_for_redis
+      - <<: *wait_for_mailpit
 
       # Setup database
       - <<: *migrate
+
+      # Build the React registration SPA served at /register
+      - run:
+          name: Build registration SPA
+          command: |
+            npm --prefix frontend ci
+            npm --prefix frontend run build
 
       # Create .env file for Stripe credentials
       - run:
@@ -137,10 +153,16 @@ jobs:
             echo "STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY" > .env
             echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env
 
-      # Run Playwright tests
+      # Run Playwright tests. The Rails server runs in the development environment
+      # (against the migrated dogtag_test database) because only development delivers
+      # mail over SMTP to Mailpit; the test environment uses the in-memory :test delivery.
       - run:
           name: Run Playwright integration tests
-          command: npm test
+          command: |
+            RAILS_ENV=development \
+            DATABASE_URL=postgres://postgres@127.0.0.1:5432/dogtag_test \
+            SPA_BUILD=skip \
+            npm test
           no_output_timeout: 10m
 
       # Store test artifacts
