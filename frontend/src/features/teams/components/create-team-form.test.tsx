@@ -39,6 +39,27 @@ describe('CreateTeamForm', () => {
     expect(await screen.findByText(t('teams.experienceTipBody'))).toBeInTheDocument();
   });
 
+  it('blocks submit and flags the select when no years-racing option is chosen', async () => {
+    let posted = false;
+    server.use(
+      http.post('/api/v1/teams', () => {
+        posted = true;
+        return HttpResponse.json({ team: buildTeam() }, { status: 201 });
+      }),
+    );
+    renderApp('/races/1/teams/new');
+    await userEvent.type(await screen.findByLabelText(t('teams.name')), 'Cart Pushers');
+    await userEvent.type(screen.getByLabelText(t('teams.description')), 'We push carts');
+    await userEvent.click(screen.getByRole('button', { name: t('teams.create') }));
+    const select = screen.getByLabelText(t('teams.experience'));
+    expect(await screen.findByText(t('teams.experienceRequired'))).toBeInTheDocument();
+    expect(select).toHaveAttribute('aria-invalid', 'true');
+    expect(select).toHaveFocus();
+    expect(posted).toBe(false);
+    await userEvent.selectOptions(select, 'Twice');
+    expect(screen.queryByText(t('teams.experienceRequired'))).toBeNull();
+  });
+
   it('shows a duplicate-name 422 under Name', async () => {
     server.use(
       http.post('/api/v1/teams', () =>

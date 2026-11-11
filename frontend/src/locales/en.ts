@@ -46,6 +46,7 @@ export const en = {
   'teams.description': 'Description',
   'teams.experience': 'Team years racing',
   'teams.experiencePlaceholder': 'Select one',
+  'teams.experienceRequired': 'Choose how many years your team has raced',
   'teams.experienceTip': 'About team years racing',
   'teams.experienceTipBody':
     'Count the CHIditarods your team has raced together, not counting this one.',

@@ -33,6 +33,7 @@ describe('RaceList', () => {
   });
 
   it('shows a closed race with the closed badge and no start button', async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2027-03-01T12:00:00Z') });
     mockRaces(buildRace({ open_for_registration: false }));
     renderApp('/');
     expect(await screen.findByText(t('races.closed'))).toBeInTheDocument();

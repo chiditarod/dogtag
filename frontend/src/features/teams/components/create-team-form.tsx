@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
@@ -15,9 +15,16 @@ export function CreateTeamForm({ race }: { race: Race }) {
   const navigate = useNavigate();
   const createTeam = useCreateTeam();
   const [experience, setExperience] = useState('');
+  const [missingExperience, setMissingExperience] = useState(false);
+  const experienceRef = useRef<HTMLSelectElement>(null);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (experience === '') {
+      setMissingExperience(true);
+      experienceRef.current?.focus();
+      return;
+    }
     const form = new FormData(event.currentTarget);
     createTeam.mutate(
       {
@@ -65,7 +72,11 @@ export function CreateTeamForm({ race }: { race: Race }) {
       <Field
         label={t('teams.experience')}
         name="experience"
-        error={fieldErrors.experience}
+        error={
+          missingExperience
+            ? [t('teams.experienceRequired')]
+            : fieldErrors.experience
+        }
         hint={
           <InfoTip label={t('teams.experienceTip')}>
             {t('teams.experienceTipBody')}
@@ -75,14 +86,18 @@ export function CreateTeamForm({ race }: { race: Race }) {
         {(control) => (
           <select
             {...control}
+            ref={experienceRef}
             value={experience}
-            onChange={(event) => setExperience(event.target.value)}
+            onChange={(event) => {
+              setExperience(event.target.value);
+              setMissingExperience(false);
+            }}
             required
             className={`${controlClass} min-h-11`}
           >
             <option value="">{t('teams.experiencePlaceholder')}</option>
             {race.experience_labels.map((label, index) => (
-              <option key={label} value={index}>
+              <option key={index} value={index}>
                 {label}
               </option>
             ))}
