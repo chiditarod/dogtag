@@ -14,6 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class JsonForm
+  # Keep only answers whose keys are defined in the race's schema, dropping blank values.
+  def self.filter_answers(race, params)
+    params
+      .to_unsafe_h
+      .slice(*race.question_fields)
+      .reject { |_key, value| value.blank? }
+      .transform_keys(&:to_s)
+  end
 
   def self.add_csrf(jsonform, auth_token)
 

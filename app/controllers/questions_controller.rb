@@ -19,18 +19,6 @@ class QuestionsController < ApplicationController
   respond_to :json, only: [:create]
   respond_to :html, only: [:show]
 
-  # HACK: get around strong parameters.
-  # These are the names of the parameter keys in the Race's jsonschema.
-  # TODO: figure out how to calculate this dynamically.
-  HACK_PARAM_WHITELIST = [
-    :'racer-type', :'primary-inspiration', :'secondary-inspiration', :'twitter', :'buddies', :'private-comments', :'explain-theme',
-    :'agree-to-core-philosophy', :'agree-to-rules', :'agree-to-sabotage', :'agree-to-cart-deposit', :'agree-to-cart-food-poundage',
-    :'agree-not-a-donation', :'agree-to-orientation', :'flame-effects', :'fundraising', :'referred-by',
-    :'party-bus-interest', :'party-bus-seats', :'cart-parking', :'collaborating', :'raced-in-past', :'super-bonus-challenge',
-    :'no-cart-parking', :'instagram', :'theme-chosen',
-    :'covid1', :'covid2', :'covid3', :'covid4', :'covid5', :'covid6', :'covid7', :'covid8', :'covid9', :'covid10', :'covid11', :'covid12'
-  ]
-
   # this method loads the jsonform data from the team's race
   def show
     authorize! :show, :questions
@@ -52,7 +40,7 @@ class QuestionsController < ApplicationController
   def create
     authorize! :create, :questions
     @team = Team.find(params[:team_id])
-    authorize! :show, @team
+    authorize! :edit, @team
 
     # todo: move this validation logic into model
     unless @team.race.open_for_registration?
@@ -60,7 +48,7 @@ class QuestionsController < ApplicationController
       return redirect_to team_path(@team)
     end
 
-    @team.jsonform = filter_the_params.to_json
+    @team.jsonform = JsonForm.filter_answers(@team.race, params).to_json
 
     if @team.save
       flash[:info] = I18n.t('questions.updated')
@@ -70,21 +58,5 @@ class QuestionsController < ApplicationController
       flash[:error] = I18n.t('questions.could_not_save')
       redirect_to team_questions_path(@team)
     end
-  end
-
-  private
-
-  # filter the params by the whitelist and remove any with blank values
-  # TODO: change this to slice! and reject! after spec'ing
-  def filter_the_params
-    params
-      .slice(*HACK_PARAM_WHITELIST)
-      .reject{ |_k,v| v.blank? }
-  end
-
-  def question_params
-    params
-      .require(:team_id)
-      .permit(HACK_PARAM_WHITELIST)
   end
 end

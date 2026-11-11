@@ -53,6 +53,12 @@ describe QuestionsController do
       expect { get :show, params: { team_id: team.id } }.to raise_error(CanCan::AccessDenied)
     end
 
+    it "forbids a refunder from saving answers to someone else's team" do
+      login_user! FactoryBot.create(:refunder_user)
+      expect { post :create, params: { team_id: team.id, 'racer-type' => 'Racer' } }.to raise_error(CanCan::AccessDenied)
+      expect(team.reload.jsonform).to be_nil
+    end
+
     it "lets the team's owner save answers" do
       login_user! team.user
       post :create, params: { team_id: team.id, 'racer-type' => 'Racer' }
@@ -105,6 +111,18 @@ describe QuestionsController do
             post :create, params: thedata.merge!(bad_param)
             expect(team.reload.jsonform).to eq({'racer-type' => 'Racer'}.to_json)
           end
+        end
+      end
+
+      context "when the race schema has a key that was never in the old whitelist" do
+        let(:race) do
+          schema = { "schema" => { "type" => "object", "properties" => { "brand-new-q" => { "type" => "string" } } }, "form" => [{ "key" => "brand-new-q" }] }
+          FactoryBot.create :race_with_jsonform, json_data: schema.to_json
+        end
+
+        it "saves the answer" do
+          post :create, params: { team_id: team.id, "brand-new-q" => "yes", "racer-type" => "Racer" }
+          expect(JSON.parse(team.reload.jsonform)).to eq({ "brand-new-q" => "yes" })
         end
       end
 
