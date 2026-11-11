@@ -31,7 +31,8 @@ describe EmailVerifier do
   end
 
   it "ok when all expected are sent" do
-    team.update!(finalized: true, classy_id: 99)
+    team.race.update!(classy_campaign_id: 12345)
+    team.update!(finalized: true)
     track("welcome", user_id: user.id)
     track("team_finalized", team_id: team.id)
     track("classy_fundraising", team_id: team.id)
@@ -41,10 +42,30 @@ describe EmailVerifier do
     expect(verifier.ok?).to be true
   end
 
-  it "only expects welcome for an unfinalized team without a classy id" do
+  it "only expects welcome for an unfinalized team" do
+    team.race.update!(classy_campaign_id: 12345)
     track("welcome", user_id: user.id)
 
     expect(verifier.report.map { |r| r[:kind] }).to eq(["welcome"])
+    expect(verifier.ok?).to be true
+  end
+
+  it "reports MISSING classy_fundraising for a finalized team in a Classy race" do
+    team.race.update!(classy_campaign_id: 12345)
+    team.update!(finalized: true)
+    track("welcome", user_id: user.id)
+    track("team_finalized", team_id: team.id)
+
+    expect(rows["classy_fundraising"]).to eq(kind: "classy_fundraising", status: nil, ok: false)
+    expect(verifier.ok?).to be false
+  end
+
+  it "does not expect classy_fundraising for a finalized team in a race without a campaign" do
+    team.update!(finalized: true, classy_id: 99)
+    track("welcome", user_id: user.id)
+    track("team_finalized", team_id: team.id)
+
+    expect(verifier.report.map { |r| r[:kind] }).to eq(%w[welcome team_finalized])
     expect(verifier.ok?).to be true
   end
 

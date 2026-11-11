@@ -29,7 +29,7 @@ class EmailVerifier
   def expected_rows
     kinds = ["welcome"]
     kinds << "team_finalized" if team.finalized
-    kinds << "classy_fundraising" if team.classy_id.present?
+    kinds << "classy_fundraising" if team.finalized && team.race.classy_campaign_id.present?
     kinds.map { |kind| row_for(kind, latest(kind)) }
   end
 
