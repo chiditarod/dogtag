@@ -2,3 +2,8 @@ classy_org_member_cacher:
   cron: "*/20 * * * *"
   class: "Workers::ClassyCacheOrgMemberCacher"
   queue: default
+
+registration_reminders:
+  cron: "0 15 * * *" # 9am Central
+  class: "Workers::RegistrationReminders"
+  queue: default

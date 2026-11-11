@@ -16,6 +16,10 @@
 class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
+  include MoneyHelper, DateHelper
+
+  CENTRAL_TIME = "Central Time (US & Canada)".freeze
+
   # Record delivery failures on the tracked sent_emails row, then re-raise so
   # job retries still happen.
   rescue_from StandardError do |e|
@@ -50,7 +54,29 @@ class UserMailer < ActionMailer::Base
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Fundraising is ready for #{team.name}")
   end
 
+  # kind is one of tier_change, closing_week, closing_day. details carries
+  # :dedupe_key plus, for tier_change, :new_price_cents and :begins_at.
+  def registration_reminder(team, kind, details)
+    @team = team
+    @kind = kind
+    @price = "$#{price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
+    @date = human_readable((details[:begins_at] || team.race.registration_close).in_time_zone(CENTRAL_TIME))
+    @missing = missing_items(team)
+    @team_url = RegistrationUi.team_url(team)
+    track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
+    mail(to: team.user.email, subject: "#{team.race.name}: #{t(".subject_#{kind}")}")
+  end
+
   private
+
+  def missing_items(team)
+    race = team.race
+    items = []
+    items << t("user_mailer.registration_reminder.racers", count: team.people.size, total: race.people_per_team) if team.people.size < race.people_per_team
+    items << t("user_mailer.registration_reminder.questions") unless team.completed_questions?
+    items << t("user_mailer.registration_reminder.fee") unless team.completed_all_requirements?
+    items
+  end
 
   # Sets X-Dogtag-* headers read (and stripped) by MailTracking before delivery.
   def track(kind:, team: nil, user: nil, dedupe_key: nil)

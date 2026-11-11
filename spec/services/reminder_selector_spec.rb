@@ -1,0 +1,88 @@
+require "spec_helper"
+
+describe ReminderSelector do
+  let(:now) { Time.zone.now.change(usec: 0) }
+  let(:race) { FactoryBot.create(:race, registration_open: now - 2.weeks, registration_close: now + 30.days, final_edits_close: now + 40.days, race_datetime: now + 50.days) }
+  let!(:team) { FactoryBot.create(:team, race: race) }
+  let(:payment) { FactoryBot.create(:payment_requirement, race: race) }
+
+  def due(at = now)
+    ReminderSelector.new(now: at).due
+  end
+
+  def add_tiers(begin_ats)
+    begin_ats.map { |t| FactoryBot.create(:tier, requirement: payment, price: 5000, begin_at: t) }
+  end
+
+  around { |ex| Timecop.freeze(now) { ex.run } }
+
+  describe "tier_change" do
+    let!(:current_tier) { add_tiers([now - 1.week]).first }
+
+    it "selects tier_change 47h before a tier" do
+      upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 47.hours)
+      reminder = due.find { |r| r.kind == "tier_change" }
+
+      expect(reminder.team).to eq(team)
+      expect(reminder.dedupe_key).to eq("tier-#{upcoming.id}")
+      expect(reminder.details).to include(new_price_cents: 7000, begins_at: upcoming.begin_at)
+    end
+
+    it "not 49h before" do
+      FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 49.hours)
+      expect(due.select { |r| r.kind == "tier_change" }).to be_empty
+    end
+
+    it "does not remind teams that already paid" do
+      FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 47.hours)
+      FactoryBot.create(:completed_requirement, team: team, requirement: payment)
+      expect(due.select { |r| r.kind == "tier_change" }).to be_empty
+    end
+  end
+
+  describe "closing reminders" do
+    it "selects closing_week at 6.5 days" do
+      race.update!(registration_close: now + 6.5.days)
+      reminder = due.find { |r| r.kind == "closing_week" }
+      expect(reminder.team).to eq(team)
+      expect(reminder.dedupe_key).to eq("close-7d")
+      expect(due.map(&:kind)).not_to include("closing_day")
+    end
+
+    it "closing_day at 23h" do
+      race.update!(registration_close: now + 23.hours)
+      reminder = due.find { |r| r.kind == "closing_day" }
+      expect(reminder.dedupe_key).to eq("close-24h")
+      expect(due.map(&:kind)).not_to include("closing_week")
+    end
+
+    it "selects nothing outside the windows" do
+      race.update!(registration_close: now + 3.days)
+      expect(due).to be_empty
+    end
+  end
+
+  context "when closing in 23h" do
+    before { race.update!(registration_close: now + 23.hours) }
+
+    it "skips finalized teams" do
+      team.update_column(:finalized, true)
+      expect(due).to be_empty
+    end
+
+    it "skips closed races" do
+      race.update_columns(registration_close: now - 1.hour)
+      expect(due).to be_empty
+    end
+
+    it "skips when already sent" do
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h", status: "sent")
+      expect(due).to be_empty
+    end
+
+    it "retries when the earlier attempt failed" do
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h", status: "failed")
+      expect(due.map(&:dedupe_key)).to eq(["close-24h"])
+    end
+  end
+end

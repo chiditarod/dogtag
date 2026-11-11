@@ -218,6 +218,8 @@ class Workers::MyWorker
 end
 ```
 
+Cron jobs live in `config/schedule.yml`; sidekiq-cron auto-loads it on Sidekiq server startup (no initializer needed). `Workers::RegistrationReminders` runs daily; idempotency comes from `SentEmail` dedupe keys (`ReminderSelector`).
+
 ### Event-Driven Architecture
 
 Models use Wisper for pub/sub events:
