@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '@/features/questions/__fixtures__/chiditarod_21.json';
 import { clearCsrfToken } from '@/lib/api-client';
 import { buildChecklist, buildRace, buildTeam, user } from '@/test/fixtures';
@@ -37,14 +37,20 @@ function serve({
   answers = {},
   checklist = {},
   race = {},
-}: { answers?: Record<string, string>; checklist?: Partial<Checklist>; race?: Partial<Race> } = {}) {
+  jsonform = fixture,
+}: {
+  answers?: Record<string, string>;
+  checklist?: Partial<Checklist>;
+  race?: Partial<Race>;
+  jsonform?: unknown;
+} = {}) {
   const team = buildTeam({
     race: buildRace(race),
     checklist: buildChecklist({ questions: { required: true, done: false }, ...checklist }),
   });
   server.use(
     http.get('/api/v1/teams/9', () => HttpResponse.json({ team })),
-    http.get('/api/v1/teams/9/questions', () => HttpResponse.json({ jsonform: fixture, answers })),
+    http.get('/api/v1/teams/9/questions', () => HttpResponse.json({ jsonform, answers })),
     http.put('/api/v1/teams/9/questions', async ({ request }) => {
       puts.push(await request.json());
       return putResponse();
@@ -117,6 +123,22 @@ describe('QuestionsCard', () => {
     expect(c.getAllByText('You must agree to continue').length).toBeGreaterThan(0);
     expect(c.getByRole('textbox', { name: /Got Instagram/ })).toHaveAttribute('aria-invalid', 'true');
     expect(within(c.getByRole('radiogroup', { name: /What type of team/ })).getAllByRole('radio')[0]).toHaveFocus();
+  });
+
+  it('still saves (server validates) when the schema has a pattern ajv cannot compile', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const schema = structuredClone(fixture.schema) as Record<string, unknown> & {
+      properties: Record<string, Record<string, unknown>>;
+    };
+    schema.properties.instagram.pattern = '\\A[a-z]+\\z';
+    serve({ jsonform: { ...fixture, schema } });
+    renderApp('/teams/9');
+    const c = await card();
+    await c.findByRole('radiogroup', { name: /What type of team/ });
+    await userEvent.click(c.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it('leaving an agreement unchecked blocks save with the agreement message', async () => {

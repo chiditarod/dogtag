@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fixture from '@/features/questions/__fixtures__/chiditarod_21.json';
 import {
   defaultAnswers,
@@ -102,6 +102,19 @@ describe('validateAnswers', () => {
 
   it('rejects values outside an enum', () => {
     expect(validateAnswers(schema, { ...valid, 'racer-type': 'Hovercraft' })['racer-type']).toHaveLength(1);
+  });
+
+  it('skips client validation (returns {}) and warns once when ajv cannot compile the schema', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ruby: JsonformSchema = {
+      type: 'object',
+      properties: { handle: { type: 'string', pattern: '\\A[a-z]+\\z', required: true } },
+    } as unknown as JsonformSchema;
+
+    expect(validateAnswers(ruby, {})).toEqual({});
+    expect(validateAnswers(ruby, { handle: 'NOT VALID' })).toEqual({});
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 
   it('caches the compiled validator per schema object', () => {

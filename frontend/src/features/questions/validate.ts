@@ -37,12 +37,24 @@ export function draft04ToDraft07(schema: JsonformSchema): JsonformSchema {
   return converted as unknown as JsonformSchema;
 }
 
-const compiled = new WeakMap<JsonformSchema, ValidateFunction>();
+/** Cached for schemas ajv cannot compile; the server's 422 is then the only gate. */
+const NO_CLIENT_VALIDATION = 'none';
+const compiled = new WeakMap<JsonformSchema, ValidateFunction | typeof NO_CLIENT_VALIDATION>();
 
+/**
+ * Race schemas are validated server-side with Ruby, so they may hold things
+ * ajv rejects (Ruby-only regex like `\A`/`\z`, unknown formats). Never let
+ * that block saving: skip client validation for that schema instead.
+ */
 function validatorFor(schema: JsonformSchema) {
   let validate = compiled.get(schema);
   if (!validate) {
-    validate = ajv.compile(draft04ToDraft07(schema));
+    try {
+      validate = ajv.compile(draft04ToDraft07(schema));
+    } catch (error) {
+      console.warn('Skipping client-side question validation; schema did not compile.', error);
+      validate = NO_CLIENT_VALIDATION;
+    }
     compiled.set(schema, validate);
   }
   return validate;
@@ -80,6 +92,7 @@ export function validateAnswers(schema: JsonformSchema, answers: Answers): Answe
   }
 
   const validate = validatorFor(schema);
+  if (validate === NO_CLIENT_VALIDATION) return {};
   validate(data);
 
   const errors: AnswerErrors = {};
