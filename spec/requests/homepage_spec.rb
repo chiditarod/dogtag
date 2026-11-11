@@ -1,6 +1,8 @@
 require "spec_helper"
 
 describe "Homepage get started link", type: :request do
+  before { stub_const("ENV", ENV.to_h.except("REGISTRATION_UI")) }
+
   it "links to the legacy races list by default" do
     get "/"
     expect(response.body).to include(%(href="#{races_url}"))

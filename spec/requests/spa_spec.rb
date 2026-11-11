@@ -1,23 +1,17 @@
 require "spec_helper"
 
 describe "SPA under /register", type: :request do
-  let(:build_dir) { Rails.root.join("public", "register") }
-  let(:index_file) { build_dir.join("index.html") }
+  let(:index_file) { Pathname.new(Dir.mktmpdir).join("index.html") }
 
-  around do |example|
-    backup = index_file.exist? ? File.read(index_file) : nil
-    FileUtils.rm_f(index_file)
-    example.run
-  ensure
-    FileUtils.rm_f(index_file)
-    File.write(index_file, backup) if backup
+  before do
+    stub_const("ENV", ENV.to_h.except("VITE_DEV_SERVER"))
+    allow(SpaController).to receive(:index_path).and_return(index_file)
   end
 
+  after { FileUtils.rm_rf(index_file.dirname) }
+
   context "when the build exists" do
-    before do
-      FileUtils.mkdir_p(build_dir)
-      File.write(index_file, '<!doctype html><html><body><div id="root"></div></body></html>')
-    end
+    before { File.write(index_file, '<!doctype html><html><body><div id="root"></div></body></html>') }
 
     it "serves index.html for deep links" do
       get "/register/teams/5"
@@ -30,6 +24,12 @@ describe "SPA under /register", type: :request do
       get "/register"
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('<div id="root">')
+    end
+
+    it "returns 404 for missing assets instead of the SPA shell" do
+      get "/register/assets/missing.js"
+      expect(response).to have_http_status(:not_found)
+      expect(response.body).not_to include('<div id="root">')
     end
 
     it "redirects to the Vite dev server when VITE_DEV_SERVER is set" do

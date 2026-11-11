@@ -143,7 +143,7 @@ npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to 
 
 - Set `REGISTRATION_UI=spa` to make the homepage "Get started" link point at `/register` (default is the legacy UI).
 - Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
-- In production, set `RAILS_SERVE_STATIC_FILES` so `/register/assets/*` is served. Heroku builds the SPA via the `heroku-postbuild` script.
+- Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
 ## Database
 
