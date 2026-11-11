@@ -60,11 +60,11 @@ class UserMailer < ActionMailer::Base
     @team = team
     @kind = kind
     @price = "$#{price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
-    @date = human_readable((details[:begins_at] || team.race.registration_close).in_time_zone(CENTRAL_TIME))
+    @date = human_readable((details[:begins_at] || team.race.registration_close).in_time_zone(CENTRAL_TIME)).squish
     @missing = missing_items(team)
     @team_url = RegistrationUi.team_url(team)
     track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
-    mail(to: team.user.email, subject: "#{team.race.name}: #{t(".subject_#{kind}")}")
+    mail(to: team.user.email, subject: "#{team.race.name}: #{t(".subject_#{kind}", date: @date)}")
   end
 
   private

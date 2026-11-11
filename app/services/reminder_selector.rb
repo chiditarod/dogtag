@@ -1,5 +1,6 @@
 # Finds registration reminder emails that are due for unfinalized teams in
-# races that are open for registration. A reminder is skipped once a
+# races that are open for registration and not full (teams in a full race are
+# waitlisted and are contacted when registration closes). A reminder is skipped once a
 # SentEmail exists for its (team, "registration_reminder", dedupe_key) unless
 # that delivery failed, in which case it is retried.
 class ReminderSelector
@@ -9,6 +10,7 @@ class ReminderSelector
 
   def initialize(now: Time.zone.now)
     @now = now
+    @full_races = {}
   end
 
   def due
@@ -27,7 +29,13 @@ class ReminderSelector
   end
 
   def reminders_for(team)
-    [tier_change(team), closing(team)].flatten.compact
+    return [] if full?(team.race)
+
+    [tier_change(team), closing(team)].compact
+  end
+
+  def full?(race)
+    @full_races.fetch(race.id) { @full_races[race.id] = race.full? }
   end
 
   def tier_change(team)
@@ -42,20 +50,21 @@ class ReminderSelector
     )
   end
 
-  # The soonest tier starting within the window on an enabled payment
-  # requirement that the team has not already satisfied.
+  # The soonest tier starting within the window on an enabled (a tier has
+  # begun) payment requirement that the team has not already satisfied.
+  # Evaluated against the injected clock, not Time.zone.now.
   def upcoming_tier(team)
     paid_ids = team.completed_requirements.map(&:requirement_id)
     team.race.requirements.grep(PaymentRequirement).filter_map do |requirement|
-      next if !requirement.enabled? || paid_ids.include?(requirement.id)
+      next if paid_ids.include?(requirement.id) || requirement.tiers.none? { |tier| tier.begin_at < now }
 
-      requirement.next_tiers.find { |tier| tier.begin_at > now && tier.begin_at <= now + TIER_WINDOW }
+      requirement.tiers.select { |tier| tier.begin_at > now && tier.begin_at <= now + TIER_WINDOW }.min_by(&:begin_at)
     end.min_by(&:begin_at)
   end
 
   def closing(team)
     close = team.race.registration_close
-    if close > now + 6.days && close <= now + 7.days
+    if close > now + 2.days && close <= now + 7.days
       Reminder.new(team: team, kind: "closing_week", dedupe_key: "close-7d", details: {})
     elsif close > now && close <= now + 24.hours
       Reminder.new(team: team, kind: "closing_day", dedupe_key: "close-24h", details: {})

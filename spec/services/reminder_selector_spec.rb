@@ -40,6 +40,20 @@ describe ReminderSelector do
     end
   end
 
+  it "uses the injected clock rather than the real one" do
+    add_tiers([now - 1.week])
+    upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 10.days)
+    expect(due).to be_empty
+    expect(due(now + 10.days - 47.hours).map(&:dedupe_key)).to eq(["tier-#{upcoming.id}"])
+  end
+
+  it "sends no reminders of any kind for waitlisted teams in a full race" do
+    race.update!(max_teams: 1, registration_close: now + 23.hours)
+    FactoryBot.create(:finalized_team, race: race)
+    expect(team.reload.finalized).to be_nil
+    expect(due).to be_empty
+  end
+
   describe "closing reminders" do
     it "selects closing_week at 6.5 days" do
       race.update!(registration_close: now + 6.5.days)
@@ -56,8 +70,22 @@ describe ReminderSelector do
       expect(due.map(&:kind)).not_to include("closing_week")
     end
 
-    it "selects nothing outside the windows" do
+    it "catches up: closing_week is selected with 3 days left, but not again once sent" do
       race.update!(registration_close: now + 3.days)
+      reminder = due.first
+      expect(reminder.dedupe_key).to eq("close-7d")
+
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-7d", status: "sent")
+      expect(due(now + 1.day)).to be_empty
+    end
+
+    it "selects nothing between the closing_day and closing_week windows" do
+      race.update!(registration_close: now + 36.hours)
+      expect(due).to be_empty
+    end
+
+    it "selects nothing more than 7 days out" do
+      race.update!(registration_close: now + 8.days)
       expect(due).to be_empty
     end
   end
