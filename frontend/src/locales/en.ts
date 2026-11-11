@@ -120,6 +120,7 @@ export const en = {
   'roster.email': 'Email',
   'roster.phone': 'Phone',
   'roster.zip': 'ZIP code',
+  'roster.zipLabel': 'ZIP',
   'roster.years': 'Years racing',
   'roster.yearsTip': 'About years racing',
   'roster.yearsTipBody':

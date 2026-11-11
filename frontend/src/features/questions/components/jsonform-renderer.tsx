@@ -23,7 +23,7 @@ function warnUnknown(type: string) {
 }
 
 const richText =
-  'space-y-2 text-sm text-navy [&_a]:text-link [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5';
+  'space-y-2 text-sm text-navy [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5';
 
 /**
  * Renders the Joshfire JSONForm subset used by race questions: fieldsets,

@@ -1,11 +1,11 @@
-import { useEffect, useRef, type ReactNode } from 'react';
-import { formatPhoneDisplay } from '@/components/inputs/format';
-import { Button } from '@/components/ui/button';
-import type { PastRacer } from '@/features/roster/api/use-past-racers';
-import { PastRacerChips } from '@/features/roster/components/past-racer-chips';
-import { fullName, initials } from '@/features/roster/utils';
-import { t } from '@/locales/en';
-import type { Person } from '@/types/api';
+import { useEffect, useRef, type ReactNode } from "react";
+import { formatPhoneDisplay } from "@/components/inputs/format";
+import { Button } from "@/components/ui/button";
+import type { PastRacer } from "@/features/roster/api/use-past-racers";
+import { PastRacerChips } from "@/features/roster/components/past-racer-chips";
+import { fullName, initials } from "@/features/roster/utils";
+import { t } from "@/locales/en";
+import type { Person } from "@/types/api";
 
 export function Avatar({ person }: { person: Person }) {
   return (
@@ -53,56 +53,70 @@ export function FilledSlot({
     if (confirmingRemove) keepRef.current?.focus();
   }, [confirmingRemove]);
 
-  const contact = [
-    person.email,
-    person.phone ? formatPhoneDisplay(person.phone) : null,
-    person.zipcode,
-    person.twitter,
-  ].filter(Boolean);
   const name = fullName(person);
 
   return (
     <div className="space-y-3">
-      <div className="flex items-start gap-3">
-        <Avatar person={person} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold">{name}</p>
-            {captain && (
-              <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
-                {t('roster.captain')}
-              </span>
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <Avatar person={person} />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold">{name}</p>
+              {captain && (
+                <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
+                  {t("roster.captain")}
+                </span>
+              )}
+            </div>
+            <p className="truncate text-sm text-navy/80" title={person.email}>
+              {person.email}
+            </p>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-navy/80">
+              {person.phone && (
+                <span className="whitespace-nowrap">
+                  {formatPhoneDisplay(person.phone)}
+                </span>
+              )}
+              {person.zipcode && (
+                <span className="whitespace-nowrap">
+                  <span className="mr-1 text-xs uppercase tracking-wide text-navy/60">
+                    {t("roster.zipLabel")}
+                  </span>
+                  <span className="whitespace-nowrap">{person.zipcode}</span>
+                </span>
+              )}
+              {person.twitter && (
+                <span className="whitespace-nowrap">{person.twitter}</span>
+              )}
+            </div>
+            {experienceLabel && (
+              <p className="text-xs text-navy/60">{experienceLabel}</p>
             )}
           </div>
-          <p className="break-words text-sm text-navy/80">
-            {contact.join(' · ')}
-          </p>
-          {experienceLabel && (
-            <p className="text-sm text-navy/80">
-              <span>{experienceLabel}</span>
-            </p>
-          )}
         </div>
         {!confirmingRemove && (
-          <div className="flex shrink-0 flex-wrap justify-end gap-1">
+          <div className="flex shrink-0 gap-1 pl-[3.25rem] sm:pl-0">
             {canEdit && (
               <Button
                 variant="ghost"
-                aria-label={`${t('roster.edit')} ${name}`}
+                className="min-h-9 px-2 py-1"
+                aria-label={`${t("roster.edit")} ${name}`}
                 data-focus-key={`edit-${person.id}`}
                 onClick={onEdit}
               >
-                {t('roster.edit')}
+                {t("roster.edit")}
               </Button>
             )}
             {canRemove && (
               <Button
                 variant="ghost"
-                aria-label={`${t('roster.remove')} ${name}`}
+                className="min-h-9 px-2 py-1"
+                aria-label={`${t("roster.remove")} ${name}`}
                 data-focus-key={`remove-${person.id}`}
                 onClick={onAskRemove}
               >
-                {t('roster.remove')}
+                {t("roster.remove")}
               </Button>
             )}
           </div>
@@ -111,7 +125,7 @@ export function FilledSlot({
       {confirmingRemove && (
         <div className="space-y-2 rounded-md border border-flag bg-page p-3">
           <p className="text-sm font-semibold">
-            {t('roster.confirmRemove', { name: person.first_name })}
+            {t("roster.confirmRemove", { name: person.first_name })}
           </p>
           {removeError && (
             <p role="alert" className="text-sm text-starText">
@@ -120,10 +134,10 @@ export function FilledSlot({
           )}
           <div className="flex gap-2">
             <Button loading={removing} onClick={onConfirmRemove}>
-              {t('roster.confirmYes')}
+              {t("roster.confirmYes")}
             </Button>
             <Button ref={keepRef} variant="secondary" onClick={onCancelRemove}>
-              {t('roster.confirmKeep')}
+              {t("roster.confirmKeep")}
             </Button>
           </div>
         </div>
@@ -151,7 +165,9 @@ export function EmptySlot({
   onShowMore,
 }: EmptySlotProps) {
   if (!canAdd) {
-    return <p className="py-2 text-sm text-navy/60">{t('roster.emptyClosed')}</p>;
+    return (
+      <p className="py-2 text-sm text-navy/60">{t("roster.emptyClosed")}</p>
+    );
   }
   return (
     <div className="space-y-2">
@@ -160,15 +176,21 @@ export function EmptySlot({
         data-focus-key={`add-${index}`}
         onClick={onAdd}
       >
-        {t('roster.add')}
+        {t("roster.add")}
       </Button>
-      <PastRacerChips racers={pastRacers} onPick={onPick} onShowMore={onShowMore} />
+      <PastRacerChips
+        racers={pastRacers}
+        onPick={onPick}
+        onShowMore={onShowMore}
+      />
     </div>
   );
 }
 
 export function SlotItem({ children }: { children: ReactNode }) {
   return (
-    <li className="rounded-md border border-flag/70 bg-white p-3">{children}</li>
+    <li className="rounded-md border border-flag/70 bg-white p-3">
+      {children}
+    </li>
   );
 }

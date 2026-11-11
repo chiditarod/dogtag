@@ -130,6 +130,27 @@ describe('RosterCard slots', () => {
     expect(within(second).getByText('Twice')).toBeInTheDocument();
   });
 
+  it('lays contact details out as separate, non-wrapping items', async () => {
+    serve({
+      people: [
+        buildPerson({ twitter: '@ada' }),
+        buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', twitter: null }),
+      ],
+    });
+    renderApp('/teams/9');
+    await openRoster();
+    const [first, second] = slots();
+    const email = within(first).getByText('ada@example.com');
+    expect(email).toHaveAttribute('title', 'ada@example.com');
+    expect(email).toHaveClass('truncate');
+    expect(within(first).getByText('(312) 555-0100')).toHaveClass('whitespace-nowrap');
+    expect(within(first).getByText('60601')).toHaveClass('whitespace-nowrap');
+    expect(within(first).getByText('ZIP')).toBeInTheDocument();
+    expect(within(first).getByText('@ada')).toHaveClass('whitespace-nowrap');
+    expect(within(second).getByText('bo@example.com')).toBeInTheDocument();
+    expect(within(second).queryByText(/^@/)).toBeNull();
+  });
+
   it('marks the first person matching the signed-in email (case-insensitive) as captain', async () => {
     serve({
       people: [

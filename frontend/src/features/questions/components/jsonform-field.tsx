@@ -190,7 +190,7 @@ export function JsonformField({
           as="div"
           id={hintId}
           html={description}
-          className="space-y-2 text-sm text-navy/80 [&_a]:text-link [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+          className="space-y-2 text-sm text-navy/80 [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
         />
       )}
       {hasError && (
