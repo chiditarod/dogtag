@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { execSync } from 'child_process';
 import { clearInbox, countEmails, waitForEmail } from '../helpers/mailpit';
-import { railsEnv, seed, type Seed } from '../helpers/seed';
+import { seed, type Seed } from '../helpers/seed';
+import { railsEnv } from '../helpers/server-env';
 
 /**
  * Registration reminders: a race closing in 23 hours with an unfinalized team

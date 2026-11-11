@@ -1,22 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { TEST_PORT, serverEnv } from './tests/helpers/server-env';
 
-// Use a fixed test port (different from dev port 3000) to avoid conflicts
-// Can be overridden with TEST_PORT env var
-const TEST_PORT = process.env.TEST_PORT || '3099';
-
-// Environment for the Rails server under test. Mail goes over SMTP to Mailpit
-// (docker compose up -d mailpit), jobs run inline (no Sidekiq process), and the
-// homepage points at the built React SPA. VITE_DEV_SERVER must stay unset so
-// Rails serves the built public/register/index.html.
-const serverEnv: Record<string, string> = {
-  ...(process.env as Record<string, string>),
-  APP_HOST: `localhost:${TEST_PORT}`,
-  SIDEKIQ_INLINE: 'true',
-  REGISTRATION_UI: 'spa',
-  SMTP_HOST: process.env.SMTP_HOST || 'localhost',
-  SMTP_PORT: process.env.SMTP_PORT || '1025',
-};
-delete serverEnv.VITE_DEV_SERVER;
+// The test port (default 3099, override with TEST_PORT) and the Rails server
+// environment (APP_HOST, SIDEKIQ_INLINE, REGISTRATION_UI, SMTP_*) live in
+// tests/helpers/server-env.ts, shared with the specs.
 
 /**
  * Playwright configuration for Dogtag integration tests
@@ -92,7 +79,7 @@ export default defineConfig({
   webServer: {
     command: `bundle exec rails server -u webrick -p ${TEST_PORT}`,
     url: `http://localhost:${TEST_PORT}`,
-    env: serverEnv,
+    env: serverEnv(),
     reuseExistingServer: true, // Always reuse if server already running (it must have the env above)
     timeout: 120 * 1000, // 2 minutes for server startup
     stdout: 'pipe',

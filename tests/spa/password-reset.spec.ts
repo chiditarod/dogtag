@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { clearInbox, waitForEmail } from '../helpers/mailpit';
 import { seed, type Seed } from '../helpers/seed';
+import { APP_HOST } from '../helpers/server-env';
 
 /**
  * SPA end-to-end: request a reset from the SPA, follow the emailed link to the
@@ -36,7 +37,7 @@ test.describe('SPA password reset', () => {
       const email = await waitForEmail({ to: c.user_email, subjectIncludes: 'Password Reset' });
       const link = email.links.find((url) => /\/password_resets\/[^/]+\/edit/.test(url));
       expect(link).toBeTruthy();
-      expect(link).toContain('localhost:3099');
+      expect(link).toContain(APP_HOST);
 
       await page.goto(link!);
       await expect(page.getByRole('heading', { name: /update.*password/i })).toBeVisible();

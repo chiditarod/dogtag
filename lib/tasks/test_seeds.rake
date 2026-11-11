@@ -11,10 +11,22 @@
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:cleanup                   (clean up all test data)
+#
+# All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
 
 namespace :test_seeds do
+  # Every task here creates fake data or (cleanup) deletes by name/email pattern,
+  # so refuse to run in production unless explicitly allowed.
+  desc "Abort when running in production (set ALLOW_TEST_SEEDS_IN_PRODUCTION=true to override)"
+  task :guard do
+    if Rails.env.production? && ENV["ALLOW_TEST_SEEDS_IN_PRODUCTION"] != "true"
+      abort "test_seeds tasks create and delete data by pattern and are disabled in production. " \
+            "Set ALLOW_TEST_SEEDS_IN_PRODUCTION=true to run them deliberately."
+    end
+  end
+
   desc "Create admin user only (static email)"
-  task admin: :environment do
+  task admin: [:guard, :environment] do
     puts "🌱 Creating admin user..."
 
     # Only create if doesn't exist
@@ -36,7 +48,7 @@ namespace :test_seeds do
   end
 
   desc "Create basic test environment using factories: captain, race, team with 4 people"
-  task basic: :environment do
+  task basic: [:guard, :environment] do
     require 'factory_bot_rails'
     require 'json'
     require 'securerandom'
@@ -116,7 +128,7 @@ namespace :test_seeds do
   end
 
   desc "Create race with 2 payment requirements (1 tier and 3 tiers) using factories"
-  task payment_tiers: :environment do
+  task payment_tiers: [:guard, :environment] do
     require 'factory_bot_rails'
     require 'json'
     require 'securerandom'
@@ -200,7 +212,7 @@ namespace :test_seeds do
   end
 
   desc "Create team with 5 people and 1 real Stripe payment requirement"
-  task stripe_payment: :environment do
+  task stripe_payment: [:guard, :environment] do
     require 'factory_bot_rails'
     require 'json'
     require 'securerandom'
@@ -276,7 +288,7 @@ namespace :test_seeds do
   end
 
   desc "Create user for password reset test"
-  task password_reset: :environment do
+  task password_reset: [:guard, :environment] do
     require 'factory_bot_rails'
     require 'json'
     require 'securerandom'
@@ -311,7 +323,7 @@ namespace :test_seeds do
   end
 
   desc "Generate perishable token for password reset test"
-  task password_reset_token: :environment do
+  task password_reset_token: [:guard, :environment] do
     require 'json'
 
     unique_id = ENV['TEST_UNIQUE_ID']
@@ -340,7 +352,7 @@ namespace :test_seeds do
   end
 
   desc "Create credentials for user registration test (no database seeding needed)"
-  task user_registration: :environment do
+  task user_registration: [:guard, :environment] do
     require 'json'
     require 'securerandom'
 
@@ -394,7 +406,7 @@ namespace :test_seeds do
   end
 
   desc "Open race (JSONForm questions, mock fee, 2 racers per team) and credentials for a brand-new SPA user"
-  task spa_registration: :environment do
+  task spa_registration: [:guard, :environment] do
     require "factory_bot_rails"
     require "json"
     require "securerandom"
@@ -426,7 +438,7 @@ namespace :test_seeds do
   end
 
   desc "Captain with a 2025 team of three racers and an empty team in a current open race"
-  task past_racers: :environment do
+  task past_racers: [:guard, :environment] do
     require "factory_bot_rails"
     require "json"
     require "securerandom"
@@ -487,7 +499,7 @@ namespace :test_seeds do
   end
 
   desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"
-  task reminder: :environment do
+  task reminder: [:guard, :environment] do
     require "factory_bot_rails"
     require "json"
     require "securerandom"
@@ -524,7 +536,7 @@ namespace :test_seeds do
   end
 
   desc "Clean up all test data"
-  task cleanup: :environment do
+  task cleanup: [:guard, :environment] do
     puts "🧹 Cleaning up test data..."
 
     # Count before deletion (exclude the static admin user)

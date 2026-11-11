@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { clearInbox, waitForEmail } from '../helpers/mailpit';
 import { seed, type Seed } from '../helpers/seed';
+import { APP_HOST } from '../helpers/server-env';
 
 /**
  * SPA end-to-end: sign up, create a team, add racers, answer the race
@@ -43,7 +44,7 @@ test.describe('SPA registration: sign up through finalization', () => {
 
       const welcome = await waitForEmail({ to: c.email, subjectIncludes: 'Welcome to dogTag' });
       expect(welcome.links.length).toBeGreaterThan(0);
-      expect(welcome.links.some((link) => link.includes('localhost:3099'))).toBe(true);
+      expect(welcome.links.some((link) => link.includes(APP_HOST))).toBe(true);
     });
 
     await test.step('Start a team in the seeded race', async () => {

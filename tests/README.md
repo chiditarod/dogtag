@@ -35,7 +35,7 @@ npx playwright test tests/spa                 # just the SPA suite
 SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
 ```
 
-Specs (each seeds its own data with a `test_seeds:*` task and unique emails, and sweeps it with `test_seeds:cleanup`):
+Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the rows are removed by `test_seeds:cleanup` at the next global setup, not by the spec itself):
 
 - **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay, "You're in!", confirmation email.
 - **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer chip, the form pre-fills, Save fills the slot.
@@ -87,14 +87,16 @@ BASE_URL=https://dogtag-staging.herokuapp.com npm test
 BASE_URL=https://dogtag.herokuapp.com npm test
 ```
 
-**Note:** Before running tests against deployed environments, seed the test data:
+**Note:** Before running tests against deployed environments, seed the test data.
+All `test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern)
+abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set:
 
 ```bash
-# Staging
-heroku run rails test_seeds:basic -r staging
+# Staging (a Heroku staging app normally runs RAILS_ENV=production, so the flag is needed there too)
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r staging
 
 # Production (use with caution!)
-heroku run rails test_seeds:basic -r heroku
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r heroku
 ```
 
 ## Test Structure
@@ -134,8 +136,8 @@ After running tests, clean up test data:
 # Local
 bundle exec rails test_seeds:cleanup
 
-# Staging
-heroku run rails test_seeds:cleanup -r staging
+# Staging (needs the production opt-in flag, see above)
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:cleanup -r staging
 ```
 
 ## Debugging
