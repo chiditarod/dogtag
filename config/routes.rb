@@ -113,6 +113,7 @@ Rails.application.routes.draw do
       resources :races, only: [:index, :show]
       resources :teams, only: [:index, :show, :create, :update] do
         resources :people, only: [:create, :update, :destroy]
+        resources :past_racers, only: [:index]
       end
       match "*path", to: "base#route_not_found", via: :all
     end
