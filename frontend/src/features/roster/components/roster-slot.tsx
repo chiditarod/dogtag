@@ -1,11 +1,11 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { formatPhoneDisplay } from "@/components/inputs/format";
-import { Button } from "@/components/ui/button";
-import type { PastRacer } from "@/features/roster/api/use-past-racers";
-import { PastRacerChips } from "@/features/roster/components/past-racer-chips";
-import { fullName, initials } from "@/features/roster/utils";
-import { t } from "@/locales/en";
-import type { Person } from "@/types/api";
+import { useEffect, useRef, type ReactNode } from 'react';
+import { formatPhoneDisplay } from '@/components/inputs/format';
+import { Button } from '@/components/ui/button';
+import type { PastRacer } from '@/features/roster/api/use-past-racers';
+import { PastRacerChips } from '@/features/roster/components/past-racer-chips';
+import { fullName, initials } from '@/features/roster/utils';
+import { t } from '@/locales/en';
+import type { Person } from '@/types/api';
 
 export function Avatar({ person }: { person: Person }) {
   return (
@@ -65,7 +65,7 @@ export function FilledSlot({
               <p className="font-semibold">{name}</p>
               {captain && (
                 <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
-                  {t("roster.captain")}
+                  {t('roster.captain')}
                 </span>
               )}
             </div>
@@ -74,25 +74,19 @@ export function FilledSlot({
             </p>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-navy/80">
               {person.phone && (
-                <span className="whitespace-nowrap">
-                  {formatPhoneDisplay(person.phone)}
-                </span>
+                <span className="whitespace-nowrap">{formatPhoneDisplay(person.phone)}</span>
               )}
               {person.zipcode && (
                 <span className="whitespace-nowrap">
                   <span className="mr-1 text-xs uppercase tracking-wide text-navy/60">
-                    {t("roster.zipLabel")}
+                    {t('roster.zipLabel')}
                   </span>
-                  <span className="whitespace-nowrap">{person.zipcode}</span>
+                  {person.zipcode}
                 </span>
               )}
-              {person.twitter && (
-                <span className="whitespace-nowrap">{person.twitter}</span>
-              )}
+              {person.twitter && <span className="whitespace-nowrap">{person.twitter}</span>}
             </div>
-            {experienceLabel && (
-              <p className="text-xs text-navy/60">{experienceLabel}</p>
-            )}
+            {experienceLabel && <p className="text-xs text-navy/60">{experienceLabel}</p>}
           </div>
         </div>
         {!confirmingRemove && (
@@ -100,23 +94,23 @@ export function FilledSlot({
             {canEdit && (
               <Button
                 variant="ghost"
-                className="min-h-9 px-2 py-1"
-                aria-label={`${t("roster.edit")} ${name}`}
+                className="sm:min-h-9"
+                aria-label={`${t('roster.edit')} ${name}`}
                 data-focus-key={`edit-${person.id}`}
                 onClick={onEdit}
               >
-                {t("roster.edit")}
+                {t('roster.edit')}
               </Button>
             )}
             {canRemove && (
               <Button
                 variant="ghost"
-                className="min-h-9 px-2 py-1"
-                aria-label={`${t("roster.remove")} ${name}`}
+                className="sm:min-h-9"
+                aria-label={`${t('roster.remove')} ${name}`}
                 data-focus-key={`remove-${person.id}`}
                 onClick={onAskRemove}
               >
-                {t("roster.remove")}
+                {t('roster.remove')}
               </Button>
             )}
           </div>
@@ -125,7 +119,7 @@ export function FilledSlot({
       {confirmingRemove && (
         <div className="space-y-2 rounded-md border border-flag bg-page p-3">
           <p className="text-sm font-semibold">
-            {t("roster.confirmRemove", { name: person.first_name })}
+            {t('roster.confirmRemove', { name: person.first_name })}
           </p>
           {removeError && (
             <p role="alert" className="text-sm text-starText">
@@ -134,10 +128,10 @@ export function FilledSlot({
           )}
           <div className="flex gap-2">
             <Button loading={removing} onClick={onConfirmRemove}>
-              {t("roster.confirmYes")}
+              {t('roster.confirmYes')}
             </Button>
             <Button ref={keepRef} variant="secondary" onClick={onCancelRemove}>
-              {t("roster.confirmKeep")}
+              {t('roster.confirmKeep')}
             </Button>
           </div>
         </div>
@@ -165,9 +159,7 @@ export function EmptySlot({
   onShowMore,
 }: EmptySlotProps) {
   if (!canAdd) {
-    return (
-      <p className="py-2 text-sm text-navy/60">{t("roster.emptyClosed")}</p>
-    );
+    return <p className="py-2 text-sm text-navy/60">{t('roster.emptyClosed')}</p>;
   }
   return (
     <div className="space-y-2">
@@ -176,21 +168,15 @@ export function EmptySlot({
         data-focus-key={`add-${index}`}
         onClick={onAdd}
       >
-        {t("roster.add")}
+        {t('roster.add')}
       </Button>
-      <PastRacerChips
-        racers={pastRacers}
-        onPick={onPick}
-        onShowMore={onShowMore}
-      />
+      <PastRacerChips racers={pastRacers} onPick={onPick} onShowMore={onShowMore} />
     </div>
   );
 }
 
 export function SlotItem({ children }: { children: ReactNode }) {
   return (
-    <li className="rounded-md border border-flag/70 bg-white p-3">
-      {children}
-    </li>
+    <li className="rounded-md border border-flag/70 bg-white p-3">{children}</li>
   );
 }

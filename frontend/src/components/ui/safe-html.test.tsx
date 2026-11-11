@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { SafeHtml } from '@/components/ui/safe-html';
 
 describe('SafeHtml', () => {
@@ -19,17 +19,22 @@ describe('SafeHtml', () => {
     expect(wrapper.className).toContain('[&_a:focus-visible]:outline');
   });
 
-  it('does not toggle a checkbox when a link inside its label is clicked', async () => {
+  it('keeps link clicks from reaching ancestor handlers or toggling a label checkbox', async () => {
+    const onAncestorClick = vi.fn();
     render(
-      <label>
-        <input type="checkbox" />
-        <SafeHtml html={'Follow the <a href="https://example.com/x">Core Philosophy</a>?'} />
-      </label>,
+      <div onClick={onAncestorClick}>
+        <label>
+          <input type="checkbox" />
+          <SafeHtml html={'Follow the <a href="https://example.com/x">Core Philosophy</a>?'} />
+        </label>
+      </div>,
     );
     const box = screen.getByRole('checkbox');
     const link = screen.getByRole('link', { name: 'Core Philosophy' });
     link.addEventListener('click', (e) => e.preventDefault()); // no navigation in jsdom
     await userEvent.click(link);
+    expect(onAncestorClick).not.toHaveBeenCalled();
+    // Browsers already skip label activation for links; this locks that in.
     expect(box).not.toBeChecked();
   });
 });
