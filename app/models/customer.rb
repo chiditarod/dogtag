@@ -22,7 +22,8 @@ class Customer
         return create_new_customer(user, stripe_token, stripe_email)
       end
 
-      customer = Stripe::Customer.retrieve(user.stripe_customer_id)
+      customer = retrieve_customer(user)
+      return replace_missing_customer(user, stripe_token, stripe_email) if customer == :missing
       return nil if customer.nil?
 
       # update the customer with new token and email
@@ -35,6 +36,27 @@ class Customer
 
     private
 
+    # Returns the Stripe customer, nil, or :missing when Stripe no longer has
+    # the saved customer (e.g. deleted in the dashboard, or a live-mode id
+    # used with test-mode keys).
+    def retrieve_customer(user)
+      customer = Stripe::Customer.retrieve(user.stripe_customer_id)
+      customer.respond_to?(:deleted) && customer.deleted ? :missing : customer
+    rescue Stripe::InvalidRequestError => e
+      raise unless e.http_status == 404 || e.message.match?(/No such customer/i)
+
+      :missing
+    end
+
+    def replace_missing_customer(user, stripe_token, stripe_email)
+      Rails.logger.warn "Stripe customer #{user.stripe_customer_id} for user ID #{user.id} is missing; creating a new customer."
+      user.update_column(:stripe_customer_id, nil)
+      customer = create_new_customer(user, stripe_token, stripe_email)
+      user.stripe_customer_id = customer&.id # keep the caller's in-memory record in sync
+      user.clear_attribute_changes([:stripe_customer_id])
+      customer
+    end
+
     def create_new_customer(current_user, stripe_token, stripe_email)
       user = User.find(current_user.id)
       customer = Stripe::Customer.create(
@@ -46,15 +68,7 @@ class Customer
       )
       return nil if customer.nil?
 
-      user.stripe_customer_id = customer.id
-      user.save!
-
-      if user.stripe_customer_id.nil?
-        user.stripe_customer_id = customer.id
-        user.save
-      else
-        Rails.logger.error "ERROR: User ID #{user.id} has a customer_id but we are inside create_new_customer."
-      end
+      user.update!(stripe_customer_id: customer.id)
 
       customer
     end

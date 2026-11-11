@@ -34,6 +34,18 @@ describe Payments::ChargeTeam do
     expect(cr.metadata).to include("amount" => 5000, "charge_id" => a_string_starting_with("test_ch"), "customer_id" => user.reload.stripe_customer_id)
   end
 
+  it "creates a new Stripe customer when the saved one no longer exists" do
+    user.update!(stripe_customer_id: "cus_gone")
+
+    result = call
+
+    expect(result.ok).to be(true)
+    expect(CompletedRequirement.count).to eq(1)
+    new_id = user.reload.stripe_customer_id
+    expect(new_id).not_to eq("cus_gone")
+    expect(result.completed_requirement.metadata).to include("customer_id" => new_id)
+  end
+
   it "does not call Stripe and returns :already_paid when the requirement is already completed" do
     expect(call.ok).to be(true)
 
