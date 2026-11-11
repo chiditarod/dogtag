@@ -1,0 +1,21 @@
+dogtag  :::  Chiditarod registration BoT
+
+<%= t(".heading", team: @team.name) %>
+
+<% if @kind == "tier_change" %>
+<%= t(".tier_change", price: @price, date: @date) %>
+<% else %>
+<%= t(".closing", date: @date) %>
+<% end %>
+<% if @missing.any? %>
+
+<%= t(".missing_intro") %>
+<% @missing.each do |item| %>
+- <%= item %>
+<% end %>
+<% end %>
+
+<%= t(".link") %> <%= @team_url %>
+
+glory,
+-- dogtag bot

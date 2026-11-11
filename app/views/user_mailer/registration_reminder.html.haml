@@ -1,0 +1,25 @@
+%html
+  %head
+    %meta{"http-equiv" => "Content-Type", :content => "text/html; charset=utf-8"}
+  %body
+    %h1 dogtag  :::  Chiditarod registration BoT
+    %h4= t(".heading", team: @team.name)
+    - if @kind == "tier_change"
+      %p
+        %b= t(".tier_change", price: @price, date: @date)
+    - else
+      %p
+        %b= t(".closing", date: @date)
+    - if @missing.any?
+      %p= t(".missing_intro")
+      %ul
+        - @missing.each do |item|
+          %li= item
+    %p
+      = t(".link")
+      %a{href: @team_url}= @team_url
+    %p
+      glory,
+      %br
+      %a{href: "mailto:dogtag@chiditarod.org"}
+        dogtag bot
