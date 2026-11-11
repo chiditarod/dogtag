@@ -1,7 +1,11 @@
 import { Link, Outlet } from 'react-router-dom';
+import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
+import { UserMenu } from '@/features/auth/components/user-menu';
 import { t } from '@/locales/en';
 
 export function RegisterLayout() {
+  useUnauthorizedRedirect();
+
   return (
     <div className="min-h-screen bg-page">
       <header className="border-b-4 border-flag bg-white">
@@ -14,10 +18,7 @@ export function RegisterLayout() {
             />
           </Link>
           <nav aria-label={t('layout.userMenu')} className="shrink-0 text-sm">
-            {/* Placeholder: replaced by the real user menu in a later task. */}
-            <Link to="/login" className="font-semibold text-link hover:underline">
-              {t('layout.login')}
-            </Link>
+            <UserMenu />
           </nav>
         </div>
       </header>
