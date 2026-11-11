@@ -368,6 +368,13 @@ describe ChargesController do
           expect(response).to redirect_to('/prior_url/')
         end
 
+        it 'marks the matching CompletedRequirement as refunded' do
+          cr.update!(metadata: { 'charge_id' => charge.id, 'amount' => 7000 })
+          post :refund, params: { charge_id: charge.id }
+          expect(cr.reload.metadata["refunded"]).to eq(true)
+          expect(cr.metadata["charge_id"]).to eq(charge.id)
+        end
+
         context 'when delete_completed_requirement is passed' do
 
           context 'and the user is an admin' do

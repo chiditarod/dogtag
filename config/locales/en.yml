@@ -196,8 +196,6 @@ en:
       race_not_found: Race not found.
       teams_for: "Teams for %{name}"
       register_for: "Register for %{name}"
-    update:
-      success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     create:
       register_for_race: "Register for %{race_name}"
       spots_remaining: "There are %{remaining} spots remaining"
@@ -261,6 +259,7 @@ en:
       waitlisted_instructions_html: "Your team has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
     update:
       edit_team: "Edit team for %{race_name}"
+      success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     destroy:
       has_payments: This team has completed requirements and cannot be deleted. Please contact support if you need to delete this team.
     table:

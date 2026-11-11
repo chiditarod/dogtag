@@ -55,6 +55,25 @@ describe UserMailer do
     include_examples "common tests"
   end
 
+  describe "mailer host" do
+    before do
+      allow(UserMailer).to receive(:default_url_options).and_return(host: "staging.example.org", protocol: "https")
+    end
+
+    it "welcome email links use the configured mailer host" do
+      mail = UserMailer.welcome_email(FactoryBot.create(:user))
+      expect(mail.body.encoded).to include("staging.example.org")
+      expect(mail.body.encoded).not_to include("dogtag.chiditarod.org")
+    end
+
+    it "team finalized email links use the configured mailer host" do
+      team = FactoryBot.create(:team)
+      mail = UserMailer.team_finalized_email(team.user, team)
+      expect(mail.body.encoded).to include("staging.example.org")
+      expect(mail.body.encoded).not_to include("dogtag.chiditarod.org")
+    end
+  end
+
   describe '#team_finalized_email' do
     let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }

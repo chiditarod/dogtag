@@ -104,6 +104,8 @@ class ChargesController < ApplicationController
       return render status: :internal_server_error, json: {error: str}
     end
 
+    CompletedRequirement.mark_refunded_by_charge(@charge.id)
+
     msg = "The refund has processed successfully"
 
     if params.fetch(:delete_completed_requirement, false)

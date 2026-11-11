@@ -15,12 +15,6 @@
     = javascript_include_tag 'application'
     = javascript_include_tag "//cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.js"
 
-
-    -# comodo ssl graphic
-    %script
-      var tlJsHost = ((window.location.protocol == "https:") ? "https://secure.comodo.com/" : "http://www.trustlogo.com/");
-      document.write(unescape("%3Cscript src='" + tlJsHost + "trustlogo/javascript/trustlogo.js' type='text/javascript'%3E%3C/script%3E"));
-
   %body{:class => "#{controller_name} #{action_name}"}
 
     .container
@@ -35,8 +29,3 @@
         %small
           = raw t('global_questions')
         %br
-        %br
-        %script
-          TrustLogo("https://dogtag.chiditarod.org/comodo_secure_76x26_transp.png", "CL1", "none");
-        %a{:href => "https://www.positivessl.com/", :id => "comodoTL"}
-          Positive SSL
