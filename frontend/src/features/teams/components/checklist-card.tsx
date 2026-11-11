@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { t } from '@/locales/en';
 
 interface ChecklistCardProps {
   number: number;
@@ -49,7 +50,12 @@ export function ChecklistCard({
         >
           {title}
         </h2>
-        <Badge tone={done ? 'success' : 'neutral'}>{pill}</Badge>
+        <Badge tone={done ? 'success' : 'neutral'}>
+          {pill}
+          <span className="sr-only">
+            , {done ? t('team.srDone') : t('team.srTodo')}
+          </span>
+        </Badge>
       </div>
       {children}
     </Card>

@@ -9,7 +9,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
         number={4}
         title={t('team.youreIn')}
         status="todo"
-        pill={t('team.pillTodo')}
+        pill={t('team.pillLocked')}
         locked
       >
         <p className="text-sm">{t('team.locked')}</p>

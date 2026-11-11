@@ -43,6 +43,31 @@ describe('TeamChecklist header', () => {
     expect(await screen.findByText('1 thing left')).toBeInTheDocument();
   });
 
+  it('says nothing is due yet (with the date) when the fee has not opened and nothing remains', async () => {
+    serveTeam({
+      remaining: 0,
+      fee: {
+        done: true,
+        amount_due_cents: null,
+        paid_cents: 0,
+        next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+        requirement_id: 3,
+      },
+    });
+    renderApp('/teams/9');
+    expect(
+      await screen.findByText('Nothing to do yet — the registration fee opens Tue, Dec 1, 2026'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/things left/)).toBeNull();
+  });
+
+  it("says we're finalizing when nothing remains but the team is not finalized", async () => {
+    serveTeam({ remaining: 0 });
+    renderApp('/teams/9');
+    expect(await screen.findByText("Almost there! We're finalizing your team.")).toBeInTheDocument();
+    expect(screen.queryByText(/things left/)).toBeNull();
+  });
+
   it("says You're in! when finalized", async () => {
     serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
     renderApp('/teams/9');
@@ -110,6 +135,22 @@ describe('TeamChecklist cards', () => {
     expect(within(card).getByText('Opens Tue, Dec 1, 2026')).toBeInTheDocument();
     expect(within(card).queryByText('Paid')).toBeNull();
     expect(within(card).queryByText('Done')).toBeNull();
+  });
+});
+
+describe('card pills', () => {
+  it('give screen readers a to do / done suffix and card 4 reads Locked', async () => {
+    serveTeam({ racers: { filled: 2, total: 5, done: false } });
+    renderApp('/teams/9');
+    const racers = (await screen.findByRole('heading', { level: 2, name: 'Racers' })).closest(
+      '[role="group"]',
+    ) as HTMLElement;
+    expect(racers).toHaveTextContent('2 of 5, to do');
+    const final = screen.getByRole('heading', { level: 2, name: "You're in!" }).closest(
+      '[role="group"]',
+    ) as HTMLElement;
+    expect(within(final).getByText('Locked')).toBeInTheDocument();
+    expect(final).toHaveTextContent('Locked, to do');
   });
 });
 
@@ -206,6 +247,33 @@ describe('EditTeamBasics', () => {
     await waitFor(() => expect(screen.queryByLabelText('Team name')).toBeNull());
   });
 
+  it('focuses the name field on open and returns focus to the toggle on cancel', async () => {
+    serveTeam();
+    renderApp('/teams/9');
+    const toggle = await screen.findByRole('button', { name: 'Edit team details' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(toggle);
+    expect(await screen.findByLabelText('Team name')).toHaveFocus();
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAttribute('aria-controls', screen.getByLabelText('Team name').closest('form')!.id);
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByLabelText('Team name')).toBeNull();
+    expect(toggle).toHaveFocus();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('returns focus to the toggle after a successful save', async () => {
+    serveTeam();
+    server.use(
+      http.patch('/api/v1/teams/9', () => HttpResponse.json({ team: buildTeam({ name: 'Cart Pullers' }) })),
+    );
+    renderApp('/teams/9');
+    await openForm();
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(screen.queryByLabelText('Team name')).toBeNull());
+    expect(screen.getByRole('button', { name: 'Edit team details' })).toHaveFocus();
+  });
+
   it('shows 422 field errors inline and stays open', async () => {
     serveTeam();
     server.use(
@@ -238,6 +306,27 @@ describe('EditTeamBasics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Registration is closed');
     await waitFor(() => expect(gets).toBe(2));
+  });
+});
+
+describe('page banner', () => {
+  it('clears after a later successful mutation', async () => {
+    serveTeam();
+    let calls = 0;
+    server.use(
+      http.patch('/api/v1/teams/9', () => {
+        calls += 1;
+        return calls === 1
+          ? HttpResponse.json({ error: 'Registration is closed', errors: {} }, { status: 403 })
+          : HttpResponse.json({ team: buildTeam() });
+      }),
+    );
+    renderApp('/teams/9');
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit team details' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Save changes' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Registration is closed');
+    await userEvent.click(screen.getByRole('button', { name: 'Save changes' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });
 });
 

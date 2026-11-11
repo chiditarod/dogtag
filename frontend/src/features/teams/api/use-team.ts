@@ -41,6 +41,9 @@ export function useTeam(
         pollStart.current = null;
         return false;
       }
+      // The cap counts completed data updates (not wall-clock time), and
+      // TanStack pauses interval refetches in background tabs by default,
+      // so "5 minutes" is approximate and only elapses while visible.
       pollStart.current ??= query.state.dataUpdateCount;
       const attempts = query.state.dataUpdateCount - pollStart.current;
       return attempts < FUNDRAISING_POLL_MAX_ATTEMPTS

@@ -21,6 +21,11 @@ interface TeamPageErrorContextValue {
    */
   reportError: (error: unknown) => boolean;
   dismiss: () => void;
+  /**
+   * Call from a mutation's `onSuccess`: a later success means the earlier 403
+   * banner is stale, so it is cleared.
+   */
+  clearError: () => void;
 }
 
 const TeamPageErrorContext = createContext<TeamPageErrorContextValue | null>(
@@ -48,7 +53,7 @@ export function TeamPageErrorProvider({
   );
   const dismiss = useCallback(() => setMessage(null), []);
   const value = useMemo(
-    () => ({ message, reportError, dismiss }),
+    () => ({ message, reportError, dismiss, clearError: dismiss }),
     [message, reportError, dismiss],
   );
 

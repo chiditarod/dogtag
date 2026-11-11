@@ -49,7 +49,10 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
           number={1}
           title={t('team.racers')}
           status={checklist.racers.done ? 'done' : 'todo'}
-          pill={`${checklist.racers.filled} of ${checklist.racers.total}`}
+          pill={t('team.racersPill', {
+            filled: checklist.racers.filled,
+            total: checklist.racers.total,
+          })}
         >
           <RosterCardSlot team={team} />
         </ChecklistCard>

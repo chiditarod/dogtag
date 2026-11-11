@@ -66,6 +66,12 @@ export const en = {
   'team.save': 'Save changes',
   'team.cancel': 'Cancel',
   'team.dismiss': 'Dismiss',
+  'team.nothingYet': 'Nothing to do yet — the registration fee opens {date}',
+  'team.almostThere': "Almost there! We're finalizing your team.",
+  'team.racersPill': '{filled} of {total}',
+  'team.pillLocked': 'Locked',
+  'team.srDone': 'done',
+  'team.srTodo': 'to do',
   'team.pillDone': 'Done',
   'team.pillTodo': 'To do',
   'team.pillPaid': 'Paid',
@@ -83,6 +89,14 @@ export const en = {
   'notFound.home': 'Back to races',
 } as const;
 
-export function t(key: keyof typeof en): string {
-  return en[key];
+/** Looks up a string; `{name}` placeholders are filled from `vars`. */
+export function t(
+  key: keyof typeof en,
+  vars?: Record<string, string | number>,
+): string {
+  const text: string = en[key];
+  if (!vars) return text;
+  return text.replace(/\{(\w+)\}/g, (match, name: string) =>
+    name in vars ? String(vars[name]) : match,
+  );
 }

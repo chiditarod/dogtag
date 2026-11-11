@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -16,10 +16,23 @@ export function EditTeamBasics({ team }: { team: Team }) {
   const [experience, setExperience] = useState('');
   const [missingExperience, setMissingExperience] = useState(false);
   const experienceRef = useRef<HTMLSelectElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const formId = useId();
   const updateTeam = useUpdateTeam(team.id);
-  const { reportError } = useTeamPageError();
+  const { reportError, clearError } = useTeamPageError();
 
-  function openForm() {
+  useEffect(() => {
+    if (open) nameRef.current?.focus();
+  }, [open]);
+
+  function close() {
+    setOpen(false);
+    toggleRef.current?.focus();
+  }
+
+  function toggle() {
+    if (open) return close();
     setExperience(team.experience === null ? '' : String(team.experience));
     setMissingExperience(false);
     updateTeam.reset();
@@ -41,17 +54,12 @@ export function EditTeamBasics({ team }: { team: Team }) {
         experience: Number(experience),
       },
       {
-        onSuccess: () => setOpen(false),
+        onSuccess: () => {
+          clearError();
+          close();
+        },
         onError: (error) => reportError(error),
       },
-    );
-  }
-
-  if (!open) {
-    return (
-      <Button variant="ghost" aria-expanded={false} onClick={openForm}>
-        {t('team.edit')}
-      </Button>
     );
   }
 
@@ -62,8 +70,8 @@ export function EditTeamBasics({ team }: { team: Team }) {
     Object.keys(fieldErrors).length === 0 &&
     !(error instanceof ApiError && error.status === 403);
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-4" noValidate>
+  const formElement = open && (
+    <form id={formId} onSubmit={onSubmit} className="space-y-4" noValidate>
       {showGenericError && (
         <div
           role="alert"
@@ -73,7 +81,7 @@ export function EditTeamBasics({ team }: { team: Team }) {
         </div>
       )}
       <Field label={t('teams.name')} name="name" error={fieldErrors.name}>
-        <Input autoComplete="off" defaultValue={team.name} required />
+        <Input ref={nameRef} autoComplete="off" defaultValue={team.name} required />
       </Field>
       <Field
         label={t('teams.description')}
@@ -129,10 +137,25 @@ export function EditTeamBasics({ team }: { team: Team }) {
         <Button type="submit" loading={updateTeam.isPending}>
           {t('team.save')}
         </Button>
-        <Button variant="secondary" onClick={() => setOpen(false)}>
+        <Button variant="secondary" onClick={close}>
           {t('team.cancel')}
         </Button>
       </div>
     </form>
+  );
+
+  return (
+    <div className="space-y-3">
+      <Button
+        ref={toggleRef}
+        variant="ghost"
+        aria-expanded={open}
+        aria-controls={open ? formId : undefined}
+        onClick={toggle}
+      >
+        {t('team.edit')}
+      </Button>
+      {formElement}
+    </div>
   );
 }

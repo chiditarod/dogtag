@@ -6,8 +6,13 @@ import type { Team } from '@/types/api';
 import { isFeeOpensLater } from '@/features/teams/utils';
 
 function remainingText(team: Team): string {
-  const { remaining, finalized } = team.checklist;
+  const { remaining, finalized, fee } = team.checklist;
   if (finalized) return t('team.youreIn');
+  if (remaining === 0) {
+    return isFeeOpensLater(fee)
+      ? t('team.nothingYet', { date: formatDate(fee.next_tier!.begins_at) })
+      : t('team.almostThere');
+  }
   const unit = remaining === 1 ? 'teams.thingsLeft_one' : 'teams.thingsLeft_other';
   return `${remaining} ${t(unit)}`;
 }
