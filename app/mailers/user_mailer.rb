@@ -16,7 +16,7 @@
 class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
-  include MoneyHelper, DateHelper
+  helper MoneyHelper, DateHelper
 
   CENTRAL_TIME = "Central Time (US & Canada)".freeze
 
@@ -59,8 +59,8 @@ class UserMailer < ActionMailer::Base
   def registration_reminder(team, kind, details)
     @team = team
     @kind = kind
-    @price = "$#{price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
-    @date = human_readable((details[:begins_at] || team.race.registration_close).in_time_zone(CENTRAL_TIME)).squish
+    @price = "$#{view_context.price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
+    @date = central_time_label(details[:begins_at] || team.race.registration_close)
     @missing = missing_items(team)
     @team_url = RegistrationUi.team_url(team)
     track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
@@ -68,6 +68,12 @@ class UserMailer < ActionMailer::Base
   end
 
   private
+
+  # e.g. "November 13, 2026 at 5:59 PM CST"
+  def central_time_label(time)
+    central = time.in_time_zone(CENTRAL_TIME)
+    "#{view_context.human_readable(central)} #{central.strftime("%Z")}".squish
+  end
 
   def missing_items(team)
     race = team.race
