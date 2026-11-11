@@ -321,7 +321,7 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 
 ## Known Quirks
 
-1. **JSONForm whitelist hack**: New jsonform fields must be added to `HACK_PARAM_WHITELIST` in `app/controllers/questions_controller.rb`
+1. **JSONForm answers**: Permitted answer keys come from the race's JSONForm schema; no allowlist to maintain
 
 2. **Classy ID type**: `teams.classy_id` is an integer column - ensure proper type casting when working with Classy API responses
 

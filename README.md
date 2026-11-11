@@ -36,13 +36,18 @@ SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
+APP_HOST                       # host (and :port, if any) used in email links; production defaults to dogtag.chiditarod.org, so staging must set it
+REGISTRATION_UI=spa            # optional: use the React SPA under /register (only takes effect once the SPA is built, or VITE_DEV_SERVER is set)
+SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional: verification key for the SendGrid event webhook (POST /webhooks/sendgrid); when unset, the webhook is rejected and "sent" counts as delivered
+SIDEKIQ_INLINE=true            # dev/e2e only: run jobs in-process without a Sidekiq worker (ignored in production)
+VITE_DEV_SERVER=http://localhost:5173  # dev only: redirect /register/* to the Vite dev server
 ```
 
 ## Custom questions using jsonform
 
 Each race has a `jsonform` field. This field can contain a [jsonform](https://github.com/jsonform/jsonform) schema that is consumed and rendered as questions to the end-user during their team signup. Their responses are then saved into their team record and are included when exporting a CSV.
 
-- __NOTE:__ There's a hack that requires addition to `HACK_PARAM_WHITELIST` any time a new jsonform question is added.  See [https://github.com/chiditarod/dogtag/issues/40](https://github.com/chiditarod/dogtag/issues/40).
+- Answer keys are taken from the race's schema, so new questions need no code changes.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
 ## Developer Setup
@@ -159,7 +164,7 @@ npm --prefix frontend run build     # builds into public/register (gitignored)
 npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
 ```
 
-- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link point at `/register` (default is the legacy UI).
+- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link and emails point at `/register` (default is the legacy UI). It only takes effect when the SPA is built (or `VITE_DEV_SERVER` is set), so a missing build falls back to the legacy UI instead of linking to a 503.
 - Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
 - Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
@@ -217,11 +222,6 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
 rbenv install 2.7.5
 ```
-
-### Jsonform hacks
-
-When you add fields to the jsonform, they won't persist unless you
-allowlist them in `app/controllers/questions_controller.rb`.
 
 ### Scratch Ruby Upgrade notes
 
