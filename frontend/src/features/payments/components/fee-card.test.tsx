@@ -27,10 +27,13 @@ function serve({
   checklist = {},
   race = {},
   paymentResponse,
+  refetchedAmount,
 }: {
   checklist?: Partial<Checklist>;
   race?: Partial<Race>;
-  paymentResponse?: () => Response;
+  paymentResponse?: () => Response | Promise<Response>;
+  /** amount_due_cents returned by every GET after the first. */
+  refetchedAmount?: number;
 } = {}) {
   const team = buildTeam({
     race: buildRace({ payment_requirements: [requirement], ...race }),
@@ -58,6 +61,10 @@ function serve({
   server.use(
     http.get('/api/v1/teams/9', () => {
       teamGets += 1;
+      if (refetchedAmount !== undefined && teamGets > 1) {
+        const fee = { ...team.checklist.fee, amount_due_cents: refetchedAmount };
+        return HttpResponse.json({ team: { ...team, checklist: { ...team.checklist, fee } } });
+      }
       return HttpResponse.json({ team });
     }),
     http.post('/api/v1/teams/9/payments', record('payments')),
@@ -126,7 +133,8 @@ describe('FeeCard', () => {
       path: 'payments',
       body: { requirement_id: 3, stripe_token: 'tok_1', stripe_email: 'pay@example.com' },
     });
-    expect(await (await card()).findByText('Paid $300')).toBeInTheDocument();
+    const paid = await (await card()).findByText('Paid $300');
+    expect(paid).toHaveFocus();
     expect(screen.getByRole('heading', { name: /You're in/ })).toBeInTheDocument();
   });
 
@@ -141,7 +149,10 @@ describe('FeeCard', () => {
       button.click();
       button.click();
     });
+    await waitFor(() => expect(checkout).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 50)); // let a (wrongly) second price check finish
     expect(checkout).toHaveBeenCalledTimes(1);
+    expect(teamGets).toBe(2);
   });
 
   it('re-enables silently when the popup is closed without paying', async () => {
@@ -170,18 +181,19 @@ describe('FeeCard', () => {
     expect(posts).toHaveLength(0);
   });
 
-  it('shows "Already paid" on a 409 and refetches the team', async () => {
+  it('shows the server message on a 409 and refetches the team', async () => {
+    const message = 'This requirement has already been paid for this team, so your card was not charged.';
     serve({
-      paymentResponse: () =>
-        HttpResponse.json({ error: 'duplicate', errors: {} }, { status: 409 }),
+      paymentResponse: () => HttpResponse.json({ error: message, errors: {} }, { status: 409 }),
     });
     checkout.mockResolvedValue({ token: 'tok_1', email: 'a@example.com' });
     const click = userEvent.setup();
     renderApp('/teams/9');
     await click.click(await payButton());
 
-    expect(await screen.findByText('Already paid')).toBeInTheDocument();
-    await waitFor(() => expect(teamGets).toBe(2));
+    expect(await screen.findByText(message)).toBeInTheDocument();
+    // initial load, the pre-payment price check, then the invalidation.
+    await waitFor(() => expect(teamGets).toBe(3));
   });
 
   it('shows the server message when a payment is still in progress', async () => {
@@ -198,7 +210,6 @@ describe('FeeCard', () => {
     await click.click(await payButton());
 
     expect(await screen.findByText(/already being processed/)).toBeInTheDocument();
-    expect(screen.queryByText('Already paid')).not.toBeInTheDocument();
   });
 
   it('shows a card error inline on a 402 and allows a retry', async () => {
@@ -241,6 +252,90 @@ describe('FeeCard', () => {
     await click.click(await payButton());
 
     expect(await (await card()).findByRole('alert')).toHaveTextContent('Stripe is having trouble.');
+    // A lost success must be able to settle: the team is refetched after a non-card failure.
+    await waitFor(() => expect(teamGets).toBe(3));
+  });
+
+  it('refetches the team after a network failure and shows a generic error', async () => {
+    serve({ paymentResponse: () => HttpResponse.error() });
+    checkout.mockResolvedValue({ token: 'tok_1', email: 'a@example.com' });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await payButton());
+
+    expect(await (await card()).findByRole('alert')).toHaveTextContent('Something went wrong');
+    await waitFor(() => expect(teamGets).toBe(3));
+  });
+
+  it('does not refetch after a card decline', async () => {
+    serve({
+      paymentResponse: () =>
+        HttpResponse.json({ error: 'Your card was declined.', errors: {} }, { status: 402 }),
+    });
+    checkout.mockResolvedValue({ token: 'tok_1', email: 'a@example.com' });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await payButton());
+    await (await card()).findByText('Your card was declined.');
+
+    expect(teamGets).toBe(2); // initial load + the pre-payment price check only
+  });
+
+  it('does not open Checkout when the price changed; shows the new price and a notice', async () => {
+    serve({ refetchedAmount: 35000 });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await payButton());
+
+    const fee = await card();
+    expect(await fee.findByText('The registration fee is now $350. Please review and pay again.')).toBeInTheDocument();
+    expect(await fee.findByRole('button', { name: 'Pay $350' })).toBeEnabled();
+    expect(fee.getByText('$350', { selector: 'p' })).toBeInTheDocument();
+    expect(checkout).not.toHaveBeenCalled();
+    expect(posts).toHaveLength(0);
+  });
+
+  it('does not open Checkout without a publishable key', async () => {
+    serve({ race: { stripe_publishable_key: null } });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await payButton());
+
+    expect(
+      await screen.findByText('Payment is temporarily unavailable. Please try again.'),
+    ).toBeInTheDocument();
+    expect(checkout).not.toHaveBeenCalled();
+  });
+
+  it('shows a closed message with no button once registration has closed', async () => {
+    serve({ race: { open_for_registration: false } });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText('Registration is closed.')).toBeInTheDocument();
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('still shows the paid summary on a closed race', async () => {
+    serve({
+      race: { open_for_registration: false },
+      checklist: {
+        fee: { done: true, amount_due_cents: null, paid_cents: 30000, next_tier: null, requirement_id: 3 },
+      },
+    });
+    renderApp('/teams/9');
+    expect(await (await card()).findByText('Paid $300')).toBeInTheDocument();
+  });
+
+  it("says payment isn't available when there is no amount due and the fee is not done", async () => {
+    serve({
+      checklist: {
+        fee: { done: false, amount_due_cents: null, paid_cents: 0, next_tier: null, requirement_id: 3 },
+      },
+    });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText("Payment isn't available right now.")).toBeInTheDocument();
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('hides Pay and shows the waitlist message when the race is full', async () => {

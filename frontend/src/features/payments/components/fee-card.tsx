@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/features/auth/api/use-me';
 import { usePay, type PayVariables } from '@/features/payments/api/use-pay';
-import { teamQueryKey } from '@/features/teams/api/use-team';
+import { fetchTeam, teamQueryKey } from '@/features/teams/api/use-team';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
 import { formatCents, isFeeOpensLater } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
@@ -29,6 +29,8 @@ export function FeeCard({ team }: { team: Team }) {
   // Synchronous guard: state updates are async, so a fast double-click would
   // otherwise open two Checkout popups.
   const busy = useRef(false);
+  // Set while a payment is in flight so the paid summary takes focus when it appears.
+  const focusPaid = useRef(false);
 
   const requirement =
     race.payment_requirements.find((item) => item.id === fee.requirement_id) ??
@@ -37,12 +39,24 @@ export function FeeCard({ team }: { team: Team }) {
 
   if (checklist.finalized || (fee.done && fee.paid_cents > 0)) {
     return (
-      <p className="text-base font-semibold text-navy">
+      <p
+        tabIndex={-1}
+        ref={(element) => {
+          if (element && focusPaid.current) {
+            focusPaid.current = false;
+            element.focus();
+          }
+        }}
+        className="text-base font-semibold text-navy focus:outline-none"
+      >
         {fee.paid_cents > 0
           ? t('fee.paid', { amount: formatCents(fee.paid_cents) })
           : t('fee.paidNoAmount')}
       </p>
     );
+  }
+  if (!race.open_for_registration) {
+    return <p className="text-base text-navy">{t('fee.closed')}</p>;
   }
   if (isFeeOpensLater(fee)) {
     return (
@@ -55,37 +69,60 @@ export function FeeCard({ team }: { team: Team }) {
     return <p className="text-base text-navy">{t('fee.waitlist')}</p>;
   }
   if (fee.amount_due_cents === null || !requirement) {
-    return <p className="text-base text-navy">{t('fee.noneDue')}</p>;
+    return (
+      <p className="text-base text-navy">
+        {fee.done ? t('fee.noneDue') : t('fee.notAvailable')}
+      </p>
+    );
   }
 
   const amountCents = fee.amount_due_cents;
   const amount = formatCents(amountCents);
 
   function handleError(error: unknown) {
-    if (reportError(error)) return;
-    if (error instanceof ApiError) {
-      if (error.status === 409) {
-        // Already paid, or another payment is still being processed.
-        void queryClient.invalidateQueries({ queryKey: teamQueryKey(team.id) });
-        setMessage(
-          /process/i.test(error.error) ? error.error : t('fee.alreadyPaid'),
-        );
-        return;
-      }
-      setMessage(error.error || t('common.genericError'));
-      return;
+    if (reportError(error)) return; // 403: page banner, which also refetches.
+    const card = error instanceof ApiError && error.status === 402;
+    // Anything but a card decline may have been a lost success (or an
+    // already-paid/in-progress conflict), so let the server's state settle.
+    if (!card) {
+      void queryClient.invalidateQueries({ queryKey: teamQueryKey(team.id) });
     }
-    setMessage(t('common.genericError'));
+    setMessage(
+      error instanceof ApiError && error.error
+        ? error.error
+        : t('common.genericError'),
+    );
   }
 
   async function submit(variables: PayVariables) {
     setPhase('posting');
+    focusPaid.current = true;
     try {
       await pay.mutateAsync(variables);
       clearError();
     } catch (error) {
+      focusPaid.current = false;
       handleError(error);
     }
+  }
+
+  /**
+   * The server charges the tier active right now, so confirm the displayed
+   * price is still current before showing a Checkout popup for it. Returns the
+   * amount to charge, or null when the card changed and the user must review.
+   */
+  async function confirmedAmount(): Promise<number | null> {
+    const fresh = await queryClient.fetchQuery({
+      queryKey: teamQueryKey(team.id),
+      queryFn: () => fetchTeam(team.id),
+      staleTime: 0,
+    });
+    const next = fresh.checklist.fee;
+    if (next.amount_due_cents === amountCents) return amountCents;
+    if (next.amount_due_cents !== null && !next.done) {
+      setMessage(t('fee.changed', { amount: formatCents(next.amount_due_cents) }));
+    }
+    return null;
   }
 
   async function handlePay() {
@@ -98,11 +135,24 @@ export function FeeCard({ team }: { team: Team }) {
         await submit({ requirementId: requirement.id, mock: true });
         return;
       }
+      if (!race.stripe_publishable_key) {
+        setMessage(t('fee.unavailable'));
+        return;
+      }
+      let current;
+      try {
+        current = await confirmedAmount();
+      } catch (error) {
+        handleError(error);
+        return;
+      }
+      if (current === null) return;
+
       let result;
       try {
         result = await openStripeCheckout({
-          key: race.stripe_publishable_key ?? '',
-          amountCents,
+          key: race.stripe_publishable_key,
+          amountCents: current,
           email: me.data?.email ?? '',
           description: `${requirement.name} for ${team.name} | ${race.name}`,
           name: race.name,

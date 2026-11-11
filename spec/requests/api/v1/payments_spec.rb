@@ -58,6 +58,32 @@ describe "API v1 payments", type: :request do
       expect(CompletedRequirement.count).to eq(0)
     end
 
+    context "when registration is closed" do
+      before { team.race.update_column(:registration_close, 1.week.ago) }
+
+      it "returns 403 without calling Stripe" do
+        expect(Stripe::Charge).not_to receive(:create)
+
+        post path, params: params, as: :json
+
+        expect(response).to have_http_status(:forbidden)
+        expect(json["error"]).to eq(I18n.t("api.errors.registration_closed"))
+        expect(CompletedRequirement.count).to eq(0)
+      end
+
+      context "as an operator" do
+        let(:login_user) { FactoryBot.create(:operator_user) }
+        let!(:team) { FactoryBot.create(:team, race: requirement.race) }
+
+        it "allows the payment" do
+          post path, params: params.merge(stripe_email: login_user.email), as: :json
+
+          expect(response).to have_http_status(:created)
+          expect(CompletedRequirement.count).to eq(1)
+        end
+      end
+    end
+
     it "returns 422 when the requirement belongs to another race" do
       other = FactoryBot.create(:payment_requirement_with_tier)
       expect(Stripe::Charge).not_to receive(:create)

@@ -19,6 +19,7 @@ module Payments
     def call
       return failure(:wrong_race) if requirement.race_id != team.race_id
       return failure(:not_payable) unless chargeable?
+      return failure(:registration_closed, I18n.t("api.errors.registration_closed")) unless payable_now?
 
       with_advisory_lock { charge_and_record }
     rescue Stripe::CardError => e
@@ -40,6 +41,11 @@ module Payments
     # Only real payment requirements are charged; mock requirements never reach Stripe.
     def chargeable?
       requirement.is_a?(PaymentRequirement) && !requirement.is_a?(MockPaymentRequirement)
+    end
+
+    # Registration must be open, except that admins and operators may take payment after it closes.
+    def payable_now?
+      team.race.open_for_registration? || user.is_any_of?(:admin, :operator)
     end
 
     # Serializes payments for one team and requirement across processes, so two requests (even with

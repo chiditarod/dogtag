@@ -47,6 +47,31 @@ describe Payments::ChargeTeam do
     expect(CompletedRequirement.count).to eq(1)
   end
 
+  context "when registration is closed" do
+    before { requirement.race.update_column(:registration_close, 1.week.ago) }
+
+    it "returns :registration_closed without calling Stripe" do
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:registration_closed)
+      expect(result.message).to eq(I18n.t("api.errors.registration_closed"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "still allows an operator to take payment" do
+      operator = FactoryBot.create(:operator_user)
+
+      result = call(user: operator)
+
+      expect(result.ok).to be(true)
+      expect(CompletedRequirement.count).to eq(1)
+    end
+  end
+
   it "rejects a requirement from another race without calling Stripe" do
     other = FactoryBot.create(:payment_requirement_with_tier)
     expect(Stripe::Charge).not_to receive(:create)

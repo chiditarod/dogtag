@@ -22,6 +22,10 @@ interface UseTeamOptions {
   pollForFundraisingUrl?: boolean;
 }
 
+export async function fetchTeam(teamId: string | number | undefined) {
+  return (await apiFetch<{ team: Team }>(`/teams/${teamId}`)).team;
+}
+
 export function useTeam(
   teamId: string | number | undefined,
   { pollForFundraisingUrl = false }: UseTeamOptions = {},
@@ -31,8 +35,7 @@ export function useTeam(
 
   return useQuery({
     queryKey: teamQueryKey(teamId),
-    queryFn: async () =>
-      (await apiFetch<{ team: Team }>(`/teams/${teamId}`)).team,
+    queryFn: () => fetchTeam(teamId),
     enabled: teamId !== undefined,
     refetchInterval: (query: Query<Team>) => {
       if (!pollForFundraisingUrl) return false;

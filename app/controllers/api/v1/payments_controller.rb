@@ -2,6 +2,7 @@ class Api::V1::PaymentsController < Api::V1::BaseController
   before_action :require_api_user!
 
   STATUSES = {
+    registration_closed: :forbidden,
     already_paid: :conflict,
     in_progress: :conflict,
     card_error: :payment_required,
