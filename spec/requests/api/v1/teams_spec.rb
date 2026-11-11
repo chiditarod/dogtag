@@ -47,6 +47,36 @@ describe "API v1 teams", type: :request do
         expect(json["team"]["checklist"]["racers"]).to include("filled" => 0, "total" => race.people_per_team)
       end
 
+      it "returns 403 and creates nothing when registration is closed" do
+        closed = FactoryBot.create(:race, :registration_closed)
+        expect do
+          post "/api/v1/teams", params: { race_id: closed.id, team: team_params }, as: :json
+        end.not_to change(Team, :count)
+        expect(response).to have_http_status(:forbidden)
+        expect(json["error"]).to eq("Registration is closed for this race.")
+      end
+
+      it "returns 403 when registration has not opened yet" do
+        upcoming = FactoryBot.create(:race, :registration_opens_tomorrow)
+        post "/api/v1/teams", params: { race_id: upcoming.id, team: team_params }, as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "allows joining a full race that is open (waitlist)" do
+        full = FactoryBot.create(:full_race)
+        post "/api/v1/teams", params: { race_id: full.id, team: team_params }, as: :json
+        expect(response).to have_http_status(:created)
+      end
+
+      it "lets an operator create a team on a closed race" do
+        operator = FactoryBot.create(:operator_user)
+        api_login(operator)
+        closed = FactoryBot.create(:race, :registration_closed)
+        post "/api/v1/teams", params: { race_id: closed.id, team: team_params }, as: :json
+        expect(response).to have_http_status(:created)
+        expect(Team.last.user).to eq(operator)
+      end
+
       it "returns 404 when the race does not exist" do
         post "/api/v1/teams", params: { race_id: 0, team: team_params }, as: :json
         expect(response).to have_http_status(:not_found)

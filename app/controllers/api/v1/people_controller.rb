@@ -4,6 +4,7 @@ class Api::V1::PeopleController < Api::V1::BaseController
 
   def create
     authorize!(:create, Person)
+    authorize!(:update, @team, message: I18n.t("api.errors.registration_closed"))
     @person = @team.people.build(params.expect(person: person_attributes))
     @person.subscribe(PersonAuditor.new)
 
@@ -29,8 +30,8 @@ class Api::V1::PeopleController < Api::V1::BaseController
   # Racers have no destroy rule in Ability; owners may remove one while registration
   # is open (the Team update rule), unless the team is already complete.
   def destroy
-    @person = @team.people.find(params[:id])
     authorize!(:update, @team, message: I18n.t("api.errors.registration_closed"))
+    @person = @team.people.find(params[:id])
     return render_errors(I18n.t("people.destroy.team_complete")) if @team.meets_finalization_requirements?
 
     @person.subscribe(PersonAuditor.new)

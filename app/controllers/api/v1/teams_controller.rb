@@ -14,6 +14,10 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def create
     authorize!(:create, Team)
     @race = Race.find(params[:race_id])
+    unless @race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
+      raise CanCan::AccessDenied.new(I18n.t("api.errors.registration_closed"))
+    end
+
     @team = Team.new(params.expect(team: [:name, :description, :experience]))
     @team.subscribe(TeamAuditor.new)
     @team.user = current_user

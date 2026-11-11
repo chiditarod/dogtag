@@ -54,18 +54,19 @@ describe "API v1 people", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it "is rejected with the generic validation error after the final edit date" do
-      closed_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :after_final_edits_window))
-      post "/api/v1/teams/#{closed_team.id}/people", params: { person: person_params }, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
-      expect(json["error"]).to be_present
-      expect(json["errors"]["generic"]).to be_present
+    it "returns 403 with a readable error once registration has closed" do
+      closed_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :registration_closed))
+      expect do
+        post "/api/v1/teams/#{closed_team.id}/people", params: { person: person_params }, as: :json
+      end.not_to change(Person, :count)
+      expect(response).to have_http_status(:forbidden)
+      expect(json["error"]).to eq("Registration is closed for this race.")
     end
 
-    it "still allows adding a racer during the final edits window" do
-      window_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :in_final_edits_window))
-      post "/api/v1/teams/#{window_team.id}/people", params: { person: person_params }, as: :json
-      expect(response).to have_http_status(:created)
+    it "returns 403 after the final edit date" do
+      late_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :after_final_edits_window))
+      post "/api/v1/teams/#{late_team.id}/people", params: { person: person_params }, as: :json
+      expect(response).to have_http_status(:forbidden)
     end
 
     it "finalizes a complete team when the last slot is filled" do
@@ -111,6 +112,14 @@ describe "API v1 people", type: :request do
       other = FactoryBot.create(:team, user: user, race: race)
       patch "/api/v1/teams/#{other.id}/people/#{person.id}", params: { person: { first_name: "Hax" } }, as: :json
       expect(response).to have_http_status(:not_found)
+    end
+
+    it "still allows updating during the final edits window" do
+      window_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :in_final_edits_window))
+      window_person = FactoryBot.build(:person, team: window_team).tap { |p| p.save!(validate: false) }
+      patch "/api/v1/teams/#{window_team.id}/people/#{window_person.id}", params: { person: { first_name: "Edited" } }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(window_person.reload.first_name).to eq("Edited")
     end
 
     it "returns 403 with a readable message after the final edit date" do
