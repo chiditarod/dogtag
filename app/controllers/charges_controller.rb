@@ -26,9 +26,9 @@ class ChargesController < ApplicationController
 
     # the amount is never taken from the client; Payments::ChargeTeam derives it from the requirement's active tier
     metadata = JSON.parse params[:metadata]
-    team = Team.find(metadata['team_id'])
+    team = Team.find(metadata["team_id"])
     authorize! :edit, team
-    requirement = Requirement.find(metadata['requirement_id'])
+    requirement = Requirement.find(metadata["requirement_id"])
 
     result = Payments::ChargeTeam.call(
       user: current_user,

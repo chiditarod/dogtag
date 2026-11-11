@@ -76,6 +76,26 @@ describe "API v1 payments", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
+    it "returns 422 for a requirement that cannot be paid by card" do
+      plain = FactoryBot.create(:requirement, race: team.race)
+      expect(Stripe::Charge).not_to receive(:create)
+
+      post path, params: params.merge(requirement_id: plain.id), as: :json
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns 409 when a payment for the team is already in progress" do
+      allow(Payments::ChargeTeam).to receive(:call).and_return(
+        Payments::ChargeTeam::Result.new(ok: false, error_code: :in_progress, message: I18n.t("charges.in_progress"), completed_requirement: nil)
+      )
+
+      post path, params: params, as: :json
+
+      expect(response).to have_http_status(:conflict)
+      expect(json["error"]).to eq(I18n.t("charges.in_progress"))
+    end
+
     it "returns 502 when Stripe fails" do
       allow(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("down"))
 

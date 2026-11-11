@@ -3,9 +3,11 @@ class Api::V1::PaymentsController < Api::V1::BaseController
 
   STATUSES = {
     already_paid: :conflict,
+    in_progress: :conflict,
     card_error: :payment_required,
     no_active_tier: :unprocessable_entity,
     wrong_race: :unprocessable_entity,
+    not_payable: :unprocessable_entity,
     customer_failed: :unprocessable_entity,
     stripe_error: :bad_gateway,
     unexpected: :bad_gateway

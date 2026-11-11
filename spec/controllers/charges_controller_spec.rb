@@ -213,15 +213,16 @@ describe ChargesController do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
         let(:team) { FactoryBot.create :team, race: requirement.race }
 
+        before { StripeMock.start }
+        after { StripeMock.stop }
+
         it "charges" do
-          StripeMock.start
           session[:prior_url] = '/prior_url/'
           customer = Stripe::Customer.create(card: stripe_helper.generate_card_token, email: 'a@b.co')
           expect(Customer).to receive(:get).and_return(customer)
           post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
                                   metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
           expect(CompletedRequirement.count).to eq(1)
-          StripeMock.stop
         end
       end
 
