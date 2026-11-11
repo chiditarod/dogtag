@@ -1,3 +1,4 @@
+import { FeeCard } from '@/features/payments/components/fee-card';
 import { QuestionsCard } from '@/features/questions/components/questions-card';
 import { RosterCard } from '@/features/roster/components/roster-card';
 import type { Team } from '@/types/api';
@@ -23,6 +24,5 @@ export function QuestionsCardSlot({ team }: SlotProps) {
 }
 
 export function FeeCardSlot({ team }: SlotProps) {
-  void team;
-  return null;
+  return <FeeCard team={team} />;
 }
