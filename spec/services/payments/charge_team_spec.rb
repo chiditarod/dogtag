@@ -72,6 +72,55 @@ describe Payments::ChargeTeam do
     end
   end
 
+  context "when the race is full and the team is waitlisted" do
+    before { requirement.race.update_column(:max_teams, 0) }
+
+    it "returns :race_full without calling Stripe" do
+      expect(requirement.race.reload).to be_full
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:race_full)
+      expect(result.message).to eq(I18n.t("charges.race_full"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "still allows an operator to take payment" do
+      result = call(user: FactoryBot.create(:operator_user))
+
+      expect(result.ok).to be(true)
+      expect(CompletedRequirement.count).to eq(1)
+    end
+  end
+
+  describe "expected_amount_cents" do
+    it "returns :price_changed with the current price when it differs, without calling Stripe" do
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call(expected_amount_cents: 4000)
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:price_changed)
+      expect(result.message).to eq(I18n.t("charges.price_changed", amount: "$50.00"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "charges when it matches the current price" do
+      result = call(expected_amount_cents: 5000)
+
+      expect(result.ok).to be(true)
+      expect(result.completed_requirement.metadata["amount"]).to eq(5000)
+    end
+
+    it "charges when it is absent" do
+      expect(call(expected_amount_cents: nil).ok).to be(true)
+    end
+  end
+
   it "rejects a requirement from another race without calling Stripe" do
     other = FactoryBot.create(:payment_requirement_with_tier)
     expect(Stripe::Charge).not_to receive(:create)

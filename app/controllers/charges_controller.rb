@@ -24,7 +24,8 @@ class ChargesController < ApplicationController
   def create
     authorize! :create, :charges
 
-    # the amount is never taken from the client; Payments::ChargeTeam derives it from the requirement's active tier
+    # the amount is never taken from the client; Payments::ChargeTeam derives it from the requirement's active tier.
+    # The posted amount is the price the Checkout popup showed, so a mismatch means the price changed meanwhile.
     metadata = JSON.parse params[:metadata]
     team = Team.find(metadata["team_id"])
     authorize! :edit, team
@@ -35,7 +36,8 @@ class ChargesController < ApplicationController
       team: team,
       requirement: requirement,
       stripe_token: params[:stripeToken],
-      stripe_email: params[:stripeEmail]
+      stripe_email: params[:stripeEmail],
+      expected_amount_cents: params[:amount].to_i
     )
 
     if result.ok

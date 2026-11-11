@@ -131,7 +131,12 @@ describe('FeeCard', () => {
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({
       path: 'payments',
-      body: { requirement_id: 3, stripe_token: 'tok_1', stripe_email: 'pay@example.com' },
+      body: {
+        requirement_id: 3,
+        stripe_token: 'tok_1',
+        stripe_email: 'pay@example.com',
+        expected_amount_cents: 30000,
+      },
     });
     const paid = await (await card()).findByText('Paid $300');
     expect(paid).toHaveFocus();

@@ -6,7 +6,14 @@ import type { Checklist } from '@/types/api';
 
 export type PayVariables =
   | { requirementId: number; mock: true }
-  | { requirementId: number; mock?: false; stripeToken: string; stripeEmail: string };
+  | {
+      requirementId: number;
+      mock?: false;
+      stripeToken: string;
+      stripeEmail: string;
+      /** The amount Checkout showed; the server refuses (409) if the price changed since. */
+      expectedAmountCents: number;
+    };
 
 /**
  * Pays the team's fee: POST /payments with a Checkout token, or
@@ -26,6 +33,7 @@ export function usePay(teamId: number) {
                 requirement_id: variables.requirementId,
                 stripe_token: variables.stripeToken,
                 stripe_email: variables.stripeEmail,
+                expected_amount_cents: variables.expectedAmountCents,
               },
         },
       ),

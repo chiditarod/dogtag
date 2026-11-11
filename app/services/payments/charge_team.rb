@@ -1,15 +1,18 @@
 # Charges a team's card for a payment requirement and records the completed requirement.
 # Shared by the legacy ChargesController and the JSON API so both enforce the same rules:
 # the amount always comes from the requirement's active tier (never from the client), a
-# requirement must belong to the team's race, and a paid requirement is never charged twice.
+# requirement must belong to the team's race, a paid requirement is never charged twice, a waitlisted
+# team in a full race cannot pay, and a client that shows a price passes it as expected_amount_cents so
+# the card is never charged more (or less) than the payer was shown.
 module Payments
   class ChargeTeam
     Result = Data.define(:ok, :error_code, :message, :completed_requirement)
 
     def self.call(**) = new(**).call
 
-    def initialize(user:, team:, requirement:, stripe_token:, stripe_email:)
+    def initialize(user:, team:, requirement:, stripe_token:, stripe_email:, expected_amount_cents: nil)
       @user = user
+      @expected_amount_cents = expected_amount_cents
       @team = team
       @requirement = requirement
       @stripe_token = stripe_token
@@ -20,6 +23,7 @@ module Payments
       return failure(:wrong_race) if requirement.race_id != team.race_id
       return failure(:not_payable) unless chargeable?
       return failure(:registration_closed, I18n.t("api.errors.registration_closed")) unless payable_now?
+      return failure(:race_full) if waitlisted?
 
       with_advisory_lock { charge_and_record }
     rescue Stripe::CardError => e
@@ -36,7 +40,7 @@ module Payments
 
     private
 
-    attr_reader :user, :team, :requirement, :stripe_token, :stripe_email
+    attr_reader :user, :team, :requirement, :stripe_token, :stripe_email, :expected_amount_cents
 
     # Only real payment requirements are charged; mock requirements never reach Stripe.
     def chargeable?
@@ -45,7 +49,19 @@ module Payments
 
     # Registration must be open, except that admins and operators may take payment after it closes.
     def payable_now?
-      team.race.open_for_registration? || user.is_any_of?(:admin, :operator)
+      team.race.open_for_registration? || staff?
+    end
+
+    # When the race is full, unfinalized teams are on the waitlist and cannot pay, except through staff.
+    def waitlisted?
+      team.race.full? && !staff?
+    end
+
+    def staff? = user.is_any_of?(:admin, :operator)
+
+    # Checked inside the lock, right before charging, so a tier change cannot slip in between.
+    def price_changed?(amount)
+      !expected_amount_cents.nil? && amount != expected_amount_cents
     end
 
     # Serializes payments for one team and requirement across processes, so two requests (even with
@@ -69,6 +85,7 @@ module Payments
 
       amount = requirement.amount_due_cents
       return failure(:no_active_tier) if amount.nil?
+      return failure(:price_changed, I18n.t("charges.price_changed", amount: format_cents(amount))) if price_changed?(amount)
 
       customer = Customer.get(user, stripe_token, stripe_email)
       unless customer
@@ -128,6 +145,8 @@ module Payments
     def log_duplicate_charge(charge)
       alert("Duplicate charge #{charge.id} for team #{team.id}, requirement #{requirement.id}, user #{user.id}: a concurrent request already completed this requirement. Refund this charge.")
     end
+
+    def format_cents(cents) = ActiveSupport::NumberHelper.number_to_currency(cents / 100.0)
 
     def alert(message)
       Rails.logger.error(message)

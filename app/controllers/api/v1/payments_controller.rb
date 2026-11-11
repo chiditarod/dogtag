@@ -5,6 +5,8 @@ class Api::V1::PaymentsController < Api::V1::BaseController
     registration_closed: :forbidden,
     already_paid: :conflict,
     in_progress: :conflict,
+    race_full: :conflict,
+    price_changed: :conflict,
     card_error: :payment_required,
     no_active_tier: :unprocessable_entity,
     wrong_race: :unprocessable_entity,
@@ -25,7 +27,8 @@ class Api::V1::PaymentsController < Api::V1::BaseController
       team: team,
       requirement: requirement,
       stripe_token: stripe_token,
-      stripe_email: params[:stripe_email].presence || current_user.email
+      stripe_email: params[:stripe_email].presence || current_user.email,
+      expected_amount_cents: params[:expected_amount_cents].presence&.to_i
     )
 
     if result.ok

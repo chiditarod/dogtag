@@ -167,6 +167,7 @@ export function FeeCard({ team }: { team: Team }) {
         requirementId: requirement.id,
         stripeToken: result.token,
         stripeEmail: result.email,
+        expectedAmountCents: current,
       });
     } finally {
       busy.current = false;
