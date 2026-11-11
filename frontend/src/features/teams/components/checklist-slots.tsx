@@ -1,3 +1,4 @@
+import { QuestionsCard } from '@/features/questions/components/questions-card';
 import { RosterCard } from '@/features/roster/components/roster-card';
 import type { Team } from '@/types/api';
 
@@ -18,8 +19,7 @@ export function RosterCardSlot({ team }: SlotProps) {
 }
 
 export function QuestionsCardSlot({ team }: SlotProps) {
-  void team;
-  return null;
+  return <QuestionsCard team={team} />;
 }
 
 export function FeeCardSlot({ team }: SlotProps) {
