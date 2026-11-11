@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiFetch, clearCsrfToken } from '@/lib/api-client';
+import { apiFetch, ApiError, clearCsrfToken } from '@/lib/api-client';
 import { meQueryKey, type User } from '@/features/auth/api/use-me';
 
 export interface LoginInput {
@@ -23,7 +23,17 @@ export function useLogin() {
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => apiFetch<void>('/session', { method: 'DELETE' }),
+    mutationFn: async () => {
+      try {
+        await apiFetch<void>('/session', {
+          method: 'DELETE',
+          skipUnauthorized: true,
+        });
+      } catch (error) {
+        // 401 means the session already expired: effectively logged out.
+        if (!(error instanceof ApiError && error.status === 401)) throw error;
+      }
+    },
     onSuccess: () => {
       clearCsrfToken();
       queryClient.clear();

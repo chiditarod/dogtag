@@ -1,7 +1,12 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { useQuery } from '@tanstack/react-query';
+import type { RouteObject } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RegisterLayout } from '@/components/layouts/register-layout';
+import { RequireAuth } from '@/features/auth/components/require-auth';
+import { apiFetch } from '@/lib/api-client';
 import { clearCsrfToken } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import { server } from '@/test/server';
@@ -160,6 +165,56 @@ describe('RequireAuth', () => {
   });
 });
 
+function Probe() {
+  useQuery({ queryKey: ['probe'], queryFn: () => apiFetch('/probe') });
+  return <p>probe page</p>;
+}
+
+const probeRoutes: RouteObject[] = [
+  {
+    element: <RegisterLayout />,
+    children: [
+      { path: '/login', element: <Probe /> },
+      {
+        path: '/teams/:id',
+        element: (
+          <RequireAuth>
+            <Probe />
+          </RequireAuth>
+        ),
+      },
+    ],
+  },
+];
+
+describe('401 from a non-/me request', () => {
+  it('redirects a protected page to /login?next=<path>', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user })),
+      http.get('/api/v1/probe', notAuthenticated),
+    );
+    const { router } = renderApp('/teams/7?tab=1', probeRoutes);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/register/login'));
+    expect(router.state.location.search).toBe('?next=%2Fteams%2F7%3Ftab%3D1');
+  });
+
+  it('does not change the URL when already on /login', async () => {
+    const probed = vi.fn();
+    server.use(
+      http.get('/api/v1/me', notAuthenticated),
+      http.get('/api/v1/probe', () => {
+        probed();
+        return notAuthenticated();
+      }),
+    );
+    const { router } = renderApp('/login', probeRoutes);
+    await waitFor(() => expect(probed).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(router.state.location.pathname).toBe('/register/login');
+    expect(router.state.location.search).toBe('');
+  });
+});
+
 describe('UserMenu', () => {
   it('shows Log in when logged out', async () => {
     server.use(http.get('/api/v1/me', notAuthenticated));
@@ -188,5 +243,23 @@ describe('UserMenu', () => {
     expect(queryClient.getQueryData(['other'])).toBeUndefined();
     expect(await screen.findByRole('link', { name: t('layout.login') })).toBeInTheDocument();
     expect(screen.queryByText('Ada')).not.toBeInTheDocument();
+  });
+
+  it('treats a 401 on logout as logged out: clears the cache and goes home', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user })),
+      http.delete('/api/v1/session', notAuthenticated),
+    );
+    const { router, queryClient } = renderApp('/forgot-password');
+    expect(await screen.findByText('Ada')).toBeInTheDocument();
+    queryClient.setQueryData(['other'], 'cached');
+    server.use(http.get('/api/v1/me', notAuthenticated));
+
+    await userEvent.click(screen.getByRole('button', { name: t('layout.logout') }));
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/register'));
+    expect(router.state.location.search).toBe('');
+    expect(queryClient.getQueryData(['other'])).toBeUndefined();
+    expect(await screen.findByRole('link', { name: t('layout.login') })).toBeInTheDocument();
   });
 });

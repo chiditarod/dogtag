@@ -32,23 +32,32 @@ export function setUnauthorizedHandler(fn: () => void) {
 
 let csrfToken: string | null = null;
 let csrfRequest: Promise<string> | null = null;
+// Bumped on every clear so a response that was in flight cannot repopulate the cache.
+let csrfGeneration = 0;
 
 export function clearCsrfToken() {
+  csrfGeneration += 1;
   csrfToken = null;
   csrfRequest = null;
 }
 
 function getCsrfToken(): Promise<string> {
   if (csrfToken) return Promise.resolve(csrfToken);
-  csrfRequest ??= apiFetch<{ token: string }>('/csrf', { skipUnauthorized: true })
+  if (csrfRequest) return csrfRequest;
+
+  const generation = csrfGeneration;
+  const request: Promise<string> = apiFetch<{ token: string }>('/csrf', {
+    skipUnauthorized: true,
+  })
     .then(({ token }) => {
-      csrfToken = token;
+      if (generation === csrfGeneration) csrfToken = token;
       return token;
     })
     .finally(() => {
-      csrfRequest = null;
+      if (csrfRequest === request) csrfRequest = null;
     });
-  return csrfRequest;
+  csrfRequest = request;
+  return request;
 }
 
 async function toApiError(response: Response): Promise<ApiError> {

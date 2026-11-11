@@ -137,4 +137,43 @@ describe('apiFetch', () => {
       apiFetch('/password_resets', { method: 'POST', json: { email: 'a@b.c' } }),
     ).resolves.toBeUndefined();
   });
+
+  it('fetches the CSRF token once for concurrent POSTs', async () => {
+    const csrf = vi.fn();
+    server.use(
+      http.get('/api/v1/csrf', async () => {
+        csrf();
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        return HttpResponse.json({ token: 't' });
+      }),
+      http.post('/api/v1/things', () => HttpResponse.json({ ok: true })),
+    );
+    await Promise.all([
+      apiFetch('/things', { method: 'POST' }),
+      apiFetch('/things', { method: 'POST' }),
+    ]);
+    expect(csrf).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not let a token fetched before a clear repopulate the cache', async () => {
+    const tokens = ['old', 'new'];
+    const seen: (string | null)[] = [];
+    server.use(
+      http.get('/api/v1/csrf', async () => {
+        const token = tokens.shift();
+        if (token === 'old') await new Promise((resolve) => setTimeout(resolve, 30));
+        return HttpResponse.json({ token });
+      }),
+      http.post('/api/v1/things', ({ request }) => {
+        seen.push(request.headers.get('X-CSRF-Token'));
+        return HttpResponse.json({ ok: true });
+      }),
+    );
+    const first = apiFetch('/things', { method: 'POST' }); // gets the slow "old" token
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    clearCsrfToken(); // e.g. logout while that fetch is in flight
+    await first;
+    await apiFetch('/things', { method: 'POST' });
+    expect(seen).toEqual(['old', 'new']);
+  });
 });

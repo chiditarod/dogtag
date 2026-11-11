@@ -18,7 +18,7 @@ export function UserMenu() {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="hidden font-semibold sm:inline">{user.first_name}</span>
+      <span className="max-w-[8rem] truncate font-semibold">{user.first_name}</span>
       <Link to="/teams" className="font-semibold text-link hover:underline">
         {t('layout.myTeams')}
       </Link>
