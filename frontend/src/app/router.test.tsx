@@ -31,6 +31,7 @@ describe('router', () => {
       http.get('/api/v1/races/1', () => HttpResponse.json({ race: buildRace() })),
       http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
       http.get('/api/v1/teams/5', () => HttpResponse.json({ team: buildTeam({ id: 5 }) })),
+      http.get('/api/v1/teams/5/past_racers', () => HttpResponse.json({ past_racers: [] })),
     );
   });
 

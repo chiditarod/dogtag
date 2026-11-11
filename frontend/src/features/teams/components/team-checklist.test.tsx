@@ -12,6 +12,7 @@ beforeEach(() => {
   server.use(
     http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })),
     http.get('/api/v1/me', () => HttpResponse.json({ user })),
+    http.get('/api/v1/teams/9/past_racers', () => HttpResponse.json({ past_racers: [] })),
   );
 });
 afterEach(() => {

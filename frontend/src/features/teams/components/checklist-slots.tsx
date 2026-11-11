@@ -1,3 +1,4 @@
+import { RosterCard } from '@/features/roster/components/roster-card';
 import type { Team } from '@/types/api';
 
 /**
@@ -13,8 +14,7 @@ interface SlotProps {
 }
 
 export function RosterCardSlot({ team }: SlotProps) {
-  void team;
-  return null;
+  return <RosterCard team={team} />;
 }
 
 export function QuestionsCardSlot({ team }: SlotProps) {

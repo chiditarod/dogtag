@@ -1,4 +1,4 @@
-import type { Checklist, Race, Team } from '@/types/api';
+import type { Checklist, Person, Race, Team } from '@/types/api';
 
 export const user = {
   id: 1,
@@ -55,6 +55,20 @@ export function buildTeam(overrides: Partial<Team> = {}): Team {
     race: buildRace(),
     people: [],
     checklist: buildChecklist(),
+    ...overrides,
+  };
+}
+
+export function buildPerson(overrides: Partial<Person> = {}): Person {
+  return {
+    id: 1,
+    first_name: 'Ada',
+    last_name: 'L',
+    email: 'ada@example.com',
+    phone: '312-555-0100',
+    zipcode: '60601',
+    experience: 1,
+    twitter: null,
     ...overrides,
   };
 }

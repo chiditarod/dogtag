@@ -84,6 +84,7 @@ describe('CreateTeamForm', () => {
         return HttpResponse.json({ team: buildTeam({ id: 9 }) }, { status: 201 });
       }),
       http.get('/api/v1/teams/9', () => HttpResponse.json({ team: buildTeam({ id: 9 }) })),
+      http.get('/api/v1/teams/9/past_racers', () => HttpResponse.json({ past_racers: [] })),
     );
     const { router } = renderApp('/races/1/teams/new');
     await fillAndSubmit();
