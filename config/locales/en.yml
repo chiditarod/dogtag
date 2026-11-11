@@ -153,6 +153,10 @@ en:
     missing: There is no card on a customer that is being charged.
     processing_error: An error occurred while processing the card
 
+  api:
+    errors:
+      registration_closed: Registration is closed for this race.
+
   people:
     index:
       title: People

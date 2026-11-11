@@ -111,6 +111,9 @@ Rails.application.routes.draw do
       resources :users, only: [:create]
       resources :password_resets, only: [:create]
       resources :races, only: [:index, :show]
+      resources :teams, only: [:index, :show, :create, :update] do
+        resources :people, only: [:create, :update, :destroy]
+      end
       match "*path", to: "base#route_not_found", via: :all
     end
   end

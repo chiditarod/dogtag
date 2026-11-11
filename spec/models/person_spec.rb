@@ -135,6 +135,22 @@ describe 'validation' do
     end
   end
 
+  describe ".normalize_phone" do
+    it "normalizes common formats to ddd-ddd-dddd" do
+      ["+1 (312) 555-0144", "312.555.0144", "13125550144", "312 555 0144"].each do |input|
+        expect(Person.normalize_phone(input)).to eq("312-555-0144")
+      end
+    end
+
+    it "returns unusable input unchanged so validation fails" do
+      person = FactoryBot.build(:person)
+      person.phone = "555-0144"
+      expect(person.phone).to eq("555-0144")
+      expect(person).to be_invalid
+      expect(person.errors[:phone]).to be_present
+    end
+  end
+
   it 'fails with poorly formed zipcode' do
     person = FactoryBot.build(:person)
     person.zipcode = "a"
