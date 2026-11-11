@@ -8,7 +8,7 @@
         dogtag
         .lead
           = t('.chiditarod_registration_system')
-      = link_to t('.get_started'), races_url, :class => ['btn', 'btn-success']
+      = link_to t('.get_started'), (RegistrationUi.spa? ? "/register" : races_url), :class => ['btn', 'btn-success']
       %br
       %br
 

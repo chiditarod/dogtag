@@ -122,6 +122,10 @@ Rails.application.routes.draw do
     end
   end
 
+  # React registration SPA (client-side routing; served by SpaController)
+  get "register", to: "spa#index"
+  get "register/*path", to: "spa#index"
+
   # Catch-all route for unmatched paths - returns 404 without raising exception
   # This prevents ActionController::RoutingError from being logged to Rollbar
   # Must be last route in the file

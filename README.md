@@ -130,6 +130,21 @@ This will also create the `dogtag_test` and `dogtag_development` databases and w
 The `mailcatcher` gem gets built into a docker image and deployed in the
 docker compose cluster. It exposes an SMTP port on `1025` and a web UI on `1080`.
 
+## Registration SPA (React)
+
+The new registration UI lives in `frontend/` (Vite + React + Tailwind) and is served by Rails under `/register`.
+
+```bash
+npm --prefix frontend ci            # install
+npm --prefix frontend test -- --run # unit tests (Vitest)
+npm --prefix frontend run build     # builds into public/register (gitignored)
+npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
+```
+
+- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link point at `/register` (default is the legacy UI).
+- Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
+- In production, set `RAILS_SERVE_STATIC_FILES` so `/register/assets/*` is served. Heroku builds the SPA via the `heroku-postbuild` script.
+
 ## Database
 
 ### Create and Migrate

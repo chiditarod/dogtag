@@ -311,6 +311,13 @@ curl -o file.dump `heroku pg:backups:url --app dogtag`
 pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development file.dump
 ```
 
+## Registration SPA
+
+- React SPA in `frontend/` (Vite, `base: "/register/"`, builds to `public/register`, gitignored). `SpaController#index` serves the build, 503 if missing, redirects to Vite only when `VITE_DEV_SERVER` is set.
+- Routes `register` and `register/*path` sit above the catch-all in `config/routes.rb`. `REGISTRATION_UI=spa` switches the homepage link (see `RegistrationUi`).
+- Frontend tests: `npm --prefix frontend test -- --run` (Vitest + jsdom + MSW; export `server` from `src/test/server.ts`). Strings via `t()` in `src/locales/en.ts`. Router exports `routes`/`BASENAME` so tests can use `createMemoryRouter`.
+- Heroku builds the SPA via root `heroku-postbuild`; local Node may differ from the pinned 24.x (ignore engine warnings).
+
 ## Known Quirks
 
 1. **JSONForm whitelist hack**: New jsonform fields must be added to `HACK_PARAM_WHITELIST` in `app/controllers/questions_controller.rb`

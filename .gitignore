@@ -50,3 +50,7 @@ playwright/.cache/
 .playwright/
 
 test.log*
+
+# React registration SPA
+/public/register
+/frontend/node_modules

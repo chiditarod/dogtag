@@ -6,6 +6,7 @@
     "node": "24.x"
   },
   "scripts": {
+    "heroku-postbuild": "npm --prefix frontend ci && npm --prefix frontend run build",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
