@@ -211,6 +211,11 @@ describe RacesController do
           expect(response).to redirect_to(edit_race_url race.id)
         end
 
+        it "accepts experience_labels_text" do
+          patch :update, params: { :id => race.id, :race => { :experience_labels_text => "Rookie\nVet" } }
+          expect(race.reload.experience_labels).to eq(%w[Rookie Vet])
+        end
+
         it 'converts filter_field array into comma-separated list' do
           race = FactoryBot.create :race
           patch :update, params: { :id => race.id, :race => { :filter_field => ['field1', 'field2', 'field3'] } }

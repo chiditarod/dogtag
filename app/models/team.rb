@@ -38,31 +38,6 @@ class Team < ApplicationRecord
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
   scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
 
-  EXPERIENCE_LEVELS = [
-    "Zero. Fresh meat",
-    "1st year veterans",
-    "2nd year sophmorons",
-    "3rd year's a charm",
-    "4th year senioritis",
-    "5th year repeat offenders",
-    "6th year and we're still drunk",
-    "7th years of good luck",
-    "8th year elite",
-    "9th year elders",
-    "10th year anniversary",
-    "11th year OGs",
-    "12th year sages",
-    "13th year fingers crossed",
-    "14th year clumsy adolescents",
-    "15th year student drivers",
-    "Sweet 16th",
-    "17th year.. wait, what?",
-    "18th year I'M AN ADULT",
-    "19th year wait are you seriously still doing this?",
-    "XX",
-    "21st year finally legal"
-  ]
-
   def unfinalized
     ! finalized
   end
@@ -207,7 +182,7 @@ class Team < ApplicationRecord
         end)
 
         # team basics
-        row.concat cols.map{ |n| team[n] }
+        row.concat cols.map{ |n| n == "experience" ? race.experience_label(team[n]) : team[n] }
 
         # race-specific details
         row.concat race.question_fields.map{ |n| team.jsonform_value(n) }
@@ -217,7 +192,13 @@ class Team < ApplicationRecord
 
         # racers
         race.people_per_team.times do |i|
-          row.concat person_keys.map{ |k| team.people[i].present? ? team.people[i][k] : '' }
+          person = team.people[i]
+          row.concat person_keys.map { |k|
+            if person.blank? then ""
+            elsif k == "experience" then race.experience_label(person[k])
+            else person[k]
+            end
+          }
         end
 
         memo << row

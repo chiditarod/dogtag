@@ -336,6 +336,14 @@ describe Team do
       expect(team_row).to include(team.description)
     end
 
+    it "emits experience labels rather than raw integers" do
+      race.update!(experience_labels: %w[Zero One Two Three Four Five Six])
+      result = Team.export(race.id)
+      header, team_row = result
+      expect(team_row[header.index("experience")]).to eq(race.experience_label(team.experience))
+      expect(team_row[header.index("dawg_0_experience")]).to eq(race.experience_label(team.people.first.experience))
+    end
+
     context 'with finalized option' do
       let!(:unfinalized_team) { FactoryBot.create :team, race: race }
       let!(:finalized_team) { FactoryBot.create :finalized_team, race: race }

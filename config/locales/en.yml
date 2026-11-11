@@ -308,6 +308,8 @@ en:
       manage_race: Manage Race
       classy_campaign_id: Classy Campaign ID
       classy_default_goal: Classy default goal in whole dollars
+      experience_labels: Years-racing labels
+      experience_labels_help: One label per line. The first line is zero years, the second is one year, and so on. Leave blank for the defaults.
     show:
       race_datetime: Race begins on
       max_teams: Maximum Teams

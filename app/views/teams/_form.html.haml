@@ -18,7 +18,7 @@
 
         .form-group
           .col-sm-6.col-md-5.control-label= label_tag :experience, t('.experience')
-          .col-sm-6.col-md-3= f.select :experience, Team::EXPERIENCE_LEVELS.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
+          .col-sm-6.col-md-3= f.select :experience, @team.race.experience_labels.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
 
         .form-group
           .col-sm-6.col-sm-offset-6.col-md-offset-5.col-md-8

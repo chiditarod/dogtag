@@ -40,6 +40,50 @@ class Race < ApplicationRecord
   # to be fulfilled before a team is fully registered.
   has_many :requirements
 
+  DEFAULT_EXPERIENCE_LABELS = [
+    "Zero. Fresh meat",
+    "1st year veterans",
+    "2nd year sophmorons",
+    "3rd year's a charm",
+    "4th year senioritis",
+    "5th year repeat offenders",
+    "6th year and we're still drunk",
+    "7th years of good luck",
+    "8th year elite",
+    "9th year elders",
+    "10th year anniversary",
+    "11th year OGs",
+    "12th year sages",
+    "13th year fingers crossed",
+    "14th year clumsy adolescents",
+    "15th year student drivers",
+    "Sweet 16th",
+    "17th year.. wait, what?",
+    "18th year I'M AN ADULT",
+    "19th year wait are you seriously still doing this?",
+    "XX",
+    "21st year finally legal",
+    "22nd year: old enough to know better"
+  ].freeze
+
+  # Labels for the "years racing" select; the index is the number of years.
+  def experience_labels
+    super.presence || DEFAULT_EXPERIENCE_LABELS
+  end
+
+  def experience_label(index)
+    i = index.to_i
+    (experience_labels[i] if i >= 0) || "#{index} years"
+  end
+
+  def experience_labels_text
+    experience_labels.join("\n")
+  end
+
+  def experience_labels_text=(text)
+    self.experience_labels = text.to_s.lines.map(&:strip).reject(&:blank?)
+  end
+
   def question_fields
     return [] unless jsonform.present?
     JSON.parse(jsonform)['schema']['properties'].keys
