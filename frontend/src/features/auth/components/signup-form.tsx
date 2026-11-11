@@ -1,5 +1,9 @@
-import type { FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { EmailInput } from '@/components/inputs/email-input';
+import { toApiPhone } from '@/components/inputs/format';
+import { PhoneInput } from '@/components/inputs/phone-input';
+import { useAutoAdvance } from '@/components/inputs/use-auto-advance';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { useSignup, type SignupInput } from '@/features/auth/api/use-signup';
@@ -11,6 +15,10 @@ export function SignupForm() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const signup = useSignup();
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const advance = useAutoAdvance();
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,8 +28,8 @@ export function SignupForm() {
       {
         first_name: value('first_name'),
         last_name: value('last_name'),
-        email: value('email'),
-        phone: value('phone'),
+        email,
+        phone: toApiPhone(phone),
         password: value('password'),
         password_confirmation: value('password_confirmation'),
       },
@@ -65,10 +73,16 @@ export function SignupForm() {
         </Field>
       </div>
       <Field label={t('auth.email')} name="email" error={errorsFor('email')}>
-        <Input type="email" autoComplete="email" required />
+        <EmailInput value={email} onChange={setEmail} required />
       </Field>
       <Field label={t('signup.phone')} name="phone" error={errorsFor('phone')}>
-        <Input type="tel" autoComplete="tel" required />
+        <PhoneInput
+          ref={phoneRef}
+          value={phone}
+          onChange={setPhone}
+          onComplete={() => advance(phoneRef.current)}
+          required
+        />
       </Field>
       <Field
         label={t('auth.password')}

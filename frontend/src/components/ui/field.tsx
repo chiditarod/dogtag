@@ -2,7 +2,7 @@ import {
   cloneElement,
   isValidElement,
   useId,
-  type InputHTMLAttributes,
+  type ComponentPropsWithRef,
   type ReactElement,
   type ReactNode,
 } from 'react';
@@ -32,7 +32,7 @@ const inputClass =
 export function Input({
   className = '',
   ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
+}: ComponentPropsWithRef<'input'>) {
   return <input className={`${inputClass} ${className}`} {...props} />;
 }
 
