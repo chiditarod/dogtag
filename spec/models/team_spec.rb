@@ -539,6 +539,14 @@ describe Team do
       expect(@reg.completed_all_requirements?).to eq(false)
     end
 
+    it "does not depend on the order requirements were completed in" do
+      other = FactoryBot.create :enabled_payment_requirement, :race => @race
+      FactoryBot.create :completed_requirement, :requirement => other, :team => @reg
+      @reg.reload
+      allow(@reg).to receive(:requirements).and_return(@reg.requirements.to_a.reverse)
+      expect(@reg.completed_all_requirements?).to eq(true)
+    end
+
     it "ignores a race's requirement when requirement.enabled? == false" do
       FactoryBot.create :payment_requirement, :race => @race
       expect(@reg.completed_all_requirements?).to eq(true)

@@ -37,6 +37,16 @@ export function buildChecklist(overrides: Partial<Checklist> = {}): Checklist {
       paid_cents: 0,
       next_tier: null,
       requirement_id: 3,
+      items: [
+        {
+          requirement_id: 3,
+          name: 'Registration fee',
+          done: false,
+          amount_due_cents: 15000,
+          paid_cents: 0,
+          next_tier: null,
+        },
+      ],
     },
     finalized: false,
     remaining: 2,

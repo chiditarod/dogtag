@@ -4,10 +4,16 @@ import type { Checklist } from '@/types/api';
 
 /**
  * Before any pricing tier is active the backend reports `fee.done` with no
- * amount due and a `next_tier`; that is "opens later", not "paid".
+ * amount due and a `next_tier`; that is "opens later", not "paid". Once
+ * something has been paid, a requirement opening later does not undo "paid".
  */
 export function isFeeOpensLater(fee: Checklist['fee']): boolean {
-  return fee.done && fee.amount_due_cents === null && fee.next_tier !== null;
+  return (
+    fee.done &&
+    fee.paid_cents === 0 &&
+    fee.amount_due_cents === null &&
+    fee.next_tier !== null
+  );
 }
 
 export function formatCents(cents: number): string {

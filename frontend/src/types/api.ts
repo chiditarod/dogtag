@@ -40,6 +40,18 @@ export interface ChecklistNextTier {
   begins_at: string;
 }
 
+/** One payment requirement of the fee, e.g. a cart deposit or the race registration. */
+export interface FeeItem {
+  requirement_id: number;
+  name: string;
+  done: boolean;
+  /** Current price; null once paid or before its first tier opens. */
+  amount_due_cents: number | null;
+  paid_cents: number;
+  /** Upcoming price change; null once paid. */
+  next_tier: ChecklistNextTier | null;
+}
+
 export interface Checklist {
   racers: { filled: number; total: number; done: boolean };
   questions: { required: boolean; done: boolean };
@@ -49,6 +61,7 @@ export interface Checklist {
     paid_cents: number;
     next_tier: ChecklistNextTier | null;
     requirement_id: number | null;
+    items: FeeItem[];
   };
   finalized: boolean;
   remaining: number;

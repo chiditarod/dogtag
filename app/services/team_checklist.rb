@@ -39,27 +39,54 @@ class TeamChecklist
   end
 
   def fee_item
-    requirement = payment_requirement
-    return { done: true, amount_due_cents: nil, paid_cents: 0, next_tier: nil, requirement_id: nil } unless requirement
+    requirements = payment_requirements
+    if requirements.empty?
+      return { done: true, amount_due_cents: nil, paid_cents: 0, next_tier: nil, requirement_id: nil, items: [] }
+    end
+
+    unpaid = requirements.reject { |requirement| completed.key?(requirement.id) }
+    payable = unpaid.select(&:enabled?)
 
     {
       done: team.completed_all_requirements?,
-      amount_due_cents: requirement.amount_due_cents,
+      amount_due_cents: (payable.sum(&:amount_due_cents) if payable.any?),
       paid_cents: team.money_paid_in_cents,
-      next_tier: next_tier(requirement),
-      requirement_id: requirement.id
+      next_tier: tier_hash(unpaid.flat_map(&:next_tiers).min_by(&:begin_at)),
+      requirement_id: payable.first&.id,
+      items: requirements.select { |requirement| listed?(requirement) }.map { |requirement| fee_line(requirement) }
     }
   end
 
-  # First enabled payment requirement (including MockPaymentRequirement),
-  # falling back to the first one so a not-yet-open fee still has an id and next tier.
-  def payment_requirement
-    payment_requirements = race.requirements.select { |requirement| requirement.is_a?(PaymentRequirement) }
-    payment_requirements.find(&:enabled?) || payment_requirements.first
+  # One payable line of the fee; a completed line has nothing due and no upcoming price.
+  def fee_line(requirement)
+    completed_requirement = completed[requirement.id]
+    done = completed_requirement.present?
+
+    {
+      requirement_id: requirement.id,
+      name: requirement.name,
+      done: done,
+      amount_due_cents: done ? nil : requirement.amount_due_cents,
+      paid_cents: completed_requirement&.metadata&.fetch("amount", nil).to_i,
+      next_tier: done ? nil : tier_hash(requirement.next_tiers.first)
+    }
   end
 
-  def next_tier(requirement)
-    tier = requirement.next_tiers.first
+  # Listed once it has a price now or a price coming.
+  def listed?(requirement)
+    requirement.enabled? || requirement.next_tiers.any?
+  end
+
+  # Payment requirements (including MockPaymentRequirement), ordered by id.
+  def payment_requirements
+    race.requirements.select { |requirement| requirement.is_a?(PaymentRequirement) }.sort_by(&:id)
+  end
+
+  def completed
+    @completed ||= team.completed_requirements.index_by(&:requirement_id)
+  end
+
+  def tier_hash(tier)
     { price_cents: tier.price, begins_at: tier.begin_at } if tier
   end
 

@@ -5,7 +5,7 @@ import { APP_HOST } from '../helpers/server-env';
 
 /**
  * SPA end-to-end: sign up, create a team, add racers, answer the race
- * questions, mock-pay, and receive the welcome and confirmation emails.
+ * questions, mock-pay both fees, and receive the welcome and confirmation emails.
  */
 
 interface Credentials {
@@ -90,9 +90,18 @@ test.describe('SPA registration: sign up through finalization', () => {
       await expect(questions.getByText('4 of 4 questions answered')).toBeVisible();
     });
 
-    await test.step('Mock pay and get confirmed', async () => {
+    await test.step('Mock pay both fees and get confirmed', async () => {
       const fee = page.getByRole('group', { name: 'Registration fee' });
-      await fee.getByRole('button', { name: 'Mock pay' }).click();
+      const deposit = fee.getByRole('listitem').filter({ hasText: 'Cart Deposit' });
+      const registration = fee.getByRole('listitem').filter({ hasText: 'Race Registration' });
+      await expect(deposit.getByText('$88', { exact: true })).toBeVisible();
+      await expect(registration.getByText('$130', { exact: true })).toBeVisible();
+
+      await deposit.getByRole('button', { name: 'Mock pay' }).click();
+      await expect(deposit.getByText('Paid $88')).toBeVisible();
+      await expect(page.getByRole('group', { name: "You're in!" }).getByText(/^Team #\d+$/)).toHaveCount(0);
+
+      await registration.getByRole('button', { name: 'Mock pay' }).click();
 
       const done = page.getByRole('group', { name: "You're in!" });
       await expect(done.getByText(/^Team #\d+$/)).toBeVisible();

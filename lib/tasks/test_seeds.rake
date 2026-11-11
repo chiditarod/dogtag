@@ -7,7 +7,7 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
-#   rails test_seeds:spa_registration          (open race with questions + mock fee for the SPA registration flow)
+#   rails test_seeds:spa_registration          (open race with questions + two mock fees for the SPA registration flow)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:cleanup                   (clean up all test data)
@@ -420,8 +420,12 @@ namespace :test_seeds do
       max_teams: 100,
       jsonform: SPA_TEST_JSONFORM
     )
-    requirement = MockPaymentRequirement.create!(name: "Registration Fee", race: race)
-    tier = Tier.create!(requirement: requirement, price: 5000, begin_at: 10.days.ago)
+    # Two payments, like a real race: a cart deposit and a tiered registration fee.
+    deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    deposit_tier = Tier.create!(requirement: deposit, price: 8800, begin_at: 10.days.ago)
+    registration = MockPaymentRequirement.create!(name: "Race Registration", race: race)
+    registration_tier = Tier.create!(requirement: registration, price: 13000, begin_at: 10.days.ago)
+    Tier.create!(requirement: registration, price: 15000, begin_at: 30.days.from_now)
 
     write_test_credentials(unique_id,
       first_name: "Spa",
@@ -432,7 +436,7 @@ namespace :test_seeds do
       race_id: race.id,
       race_name: race.name,
       people_per_team: race.people_per_team,
-      fee_cents: tier.price
+      fee_cents: deposit_tier.price + registration_tier.price
     )
     puts "✅ Seeded race #{race.name} (ID: #{race.id})"
   end

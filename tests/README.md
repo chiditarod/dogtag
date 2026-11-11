@@ -37,7 +37,7 @@ SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
 
 Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the rows are removed by `test_seeds:cleanup` at the next global setup, not by the spec itself):
 
-- **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay, "You're in!", confirmation email.
+- **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay the cart deposit and race registration, "You're in!", confirmation email.
 - **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer chip, the form pre-fills, Save fills the slot.
 - **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
 - **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.

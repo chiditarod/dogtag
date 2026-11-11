@@ -53,7 +53,17 @@ describe('TeamChecklist header', () => {
         amount_due_cents: null,
         paid_cents: 0,
         next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
-        requirement_id: 3,
+        requirement_id: null,
+        items: [
+          {
+            requirement_id: 3,
+            name: 'Registration fee',
+            done: false,
+            amount_due_cents: null,
+            paid_cents: 0,
+            next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+          },
+        ],
       },
     });
     renderApp('/teams/9');
@@ -82,7 +92,7 @@ describe('TeamChecklist header', () => {
     serveTeam({
       racers: { filled: 5, total: 5, done: true },
       questions: { required: false, done: true },
-      fee: { done: false, amount_due_cents: 15000, paid_cents: 0, next_tier: null, requirement_id: 3 },
+      fee: buildChecklist().fee,
     });
     renderApp('/teams/9');
     await screen.findByRole('heading', { level: 1 });
@@ -98,7 +108,7 @@ describe('TeamChecklist cards', () => {
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
     expect(headings).toEqual(['Racers', 'Registration fee', "You're in!"]);
     expect(screen.getByText('2 of 5')).toBeInTheDocument();
-    expect(screen.getByText('$150')).toBeInTheDocument();
+    expect(screen.getByText('$150', { selector: 'span' })).toBeInTheDocument(); // the pill
     expect(screen.getByText(/Finish the steps above/)).toBeInTheDocument();
   });
 
@@ -116,10 +126,33 @@ describe('TeamChecklist cards', () => {
   });
 
   it('shows Paid once the fee is done', async () => {
-    serveTeam({ fee: { done: true, amount_due_cents: 0, paid_cents: 15000, next_tier: null, requirement_id: 3 } });
+    serveTeam({ fee: { done: true, amount_due_cents: null, paid_cents: 15000, next_tier: null, requirement_id: null, items: [] } });
     renderApp('/teams/9');
     const card = (await screen.findByRole('heading', { level: 2, name: 'Registration fee' })).closest('[role="group"]') as HTMLElement;
     expect(within(card).getByText('Paid')).toBeInTheDocument();
+  });
+
+  it('shows Paid (not Opens) once every open requirement is paid and another opens later', async () => {
+    const opens = { price_cents: 13000, begins_at: '2026-12-01T06:00:00.000Z' };
+    serveTeam({
+      remaining: 0,
+      fee: {
+        done: true,
+        amount_due_cents: null,
+        paid_cents: 8800,
+        next_tier: opens,
+        requirement_id: null,
+        items: [
+          { requirement_id: 3, name: 'Cart Deposit', done: true, amount_due_cents: null, paid_cents: 8800, next_tier: null },
+          { requirement_id: 4, name: 'Race Registration', done: false, amount_due_cents: null, paid_cents: 0, next_tier: opens },
+        ],
+      },
+    });
+    renderApp('/teams/9');
+    const card = (await screen.findByRole('heading', { level: 2, name: 'Registration fee' })).closest('[role="group"]') as HTMLElement;
+    expect(within(card).getByText('Paid')).toBeInTheDocument();
+    expect(within(card).queryByText(/^Opens/)).toBeNull();
+    expect(screen.queryByText(/Nothing to do yet/)).toBeNull();
   });
 
   it('shows Opens <date> (not Done) before any tier is active', async () => {
@@ -129,7 +162,17 @@ describe('TeamChecklist cards', () => {
         amount_due_cents: null,
         paid_cents: 0,
         next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
-        requirement_id: 3,
+        requirement_id: null,
+        items: [
+          {
+            requirement_id: 3,
+            name: 'Registration fee',
+            done: false,
+            amount_due_cents: null,
+            paid_cents: 0,
+            next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+          },
+        ],
       },
     });
     renderApp('/teams/9');

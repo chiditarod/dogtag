@@ -117,7 +117,7 @@ class Team < ApplicationRecord
 
   def completed_all_requirements?
     return true if race.requirements.blank?
-    race.requirements.select(&:enabled?) == requirements
+    race.requirements.select(&:enabled?).map(&:id).sort == requirements.map(&:id).sort
   end
 
   def meets_finalization_requirements?

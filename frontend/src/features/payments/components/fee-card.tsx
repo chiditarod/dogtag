@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/features/auth/api/use-me';
 import { usePay, type PayVariables } from '@/features/payments/api/use-pay';
@@ -10,11 +10,17 @@ import { ApiError } from '@/lib/api-client';
 import { formatDate } from '@/lib/dates';
 import { openStripeCheckout } from '@/lib/stripe-checkout';
 import { t } from '@/locales/en';
-import type { Team } from '@/types/api';
+import type { FeeItem, Team } from '@/types/api';
 
 type Phase = 'idle' | 'popup' | 'posting';
 
 const MOCK_TYPE = 'MockPaymentRequirement';
+
+/** A message shown on the row of the requirement it is about. */
+interface RowMessage {
+  requirementId: number;
+  text: string;
+}
 
 export function FeeCard({ team }: { team: Team }) {
   const { checklist, race } = team;
@@ -25,32 +31,30 @@ export function FeeCard({ team }: { team: Team }) {
   const { reportError, clearError } = useTeamPageError();
 
   const [phase, setPhase] = useState<Phase>('idle');
-  const [message, setMessage] = useState<string | null>(null);
+  // The requirement being paid; only one payment at a time across the card.
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [message, setMessage] = useState<RowMessage | null>(null);
   // Synchronous guard: state updates are async, so a fast double-click would
   // otherwise open two Checkout popups.
   const busy = useRef(false);
-  // Set while a payment is in flight so the paid summary takes focus when it appears.
-  const focusPaid = useRef(false);
-
-  const requirement =
-    race.payment_requirements.find((item) => item.id === fee.requirement_id) ??
-    race.payment_requirements[0];
-  const mock = requirement?.type === MOCK_TYPE;
+  // The requirement whose payment is in flight, so its paid text (or the card's
+  // paid summary) takes focus when it appears.
+  const focusPaid = useRef<number | null>(null);
 
   if (checklist.finalized || (fee.done && fee.paid_cents > 0)) {
     return (
       <p
         tabIndex={-1}
         ref={(element) => {
-          if (element && focusPaid.current) {
-            focusPaid.current = false;
+          if (element && focusPaid.current !== null) {
+            focusPaid.current = null;
             element.focus();
           }
         }}
         className="text-base font-semibold text-navy focus:outline-none"
       >
         {fee.paid_cents > 0
-          ? t('fee.paid', { amount: formatCents(fee.paid_cents) })
+          ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
           : t('fee.paidNoAmount')}
       </p>
     );
@@ -68,7 +72,7 @@ export function FeeCard({ team }: { team: Team }) {
   if (race.full) {
     return <p className="text-base text-navy">{t('fee.waitlist')}</p>;
   }
-  if (fee.amount_due_cents === null || !requirement) {
+  if (fee.done || fee.items.length === 0) {
     return (
       <p className="text-base text-navy">
         {fee.done ? t('fee.noneDue') : t('fee.notAvailable')}
@@ -76,10 +80,12 @@ export function FeeCard({ team }: { team: Team }) {
     );
   }
 
-  const amountCents = fee.amount_due_cents;
-  const amount = formatCents(amountCents);
+  const isMock = (item: FeeItem) =>
+    race.payment_requirements.find(
+      (requirement) => requirement.id === item.requirement_id,
+    )?.type === MOCK_TYPE;
 
-  function handleError(error: unknown) {
+  function handleError(item: FeeItem, error: unknown) {
     if (reportError(error)) return; // 403: page banner, which also refetches.
     const card = error instanceof ApiError && error.status === 402;
     // Anything but a card decline may have been a lost success (or an
@@ -87,63 +93,77 @@ export function FeeCard({ team }: { team: Team }) {
     if (!card) {
       void queryClient.invalidateQueries({ queryKey: teamQueryKey(team.id) });
     }
-    setMessage(
-      error instanceof ApiError && error.error
-        ? error.error
-        : t('common.genericError'),
-    );
+    setMessage({
+      requirementId: item.requirement_id,
+      text:
+        error instanceof ApiError && error.error
+          ? error.error
+          : t('common.genericError'),
+    });
   }
 
-  async function submit(variables: PayVariables) {
+  async function submit(item: FeeItem, variables: PayVariables) {
     setPhase('posting');
-    focusPaid.current = true;
+    focusPaid.current = item.requirement_id;
     try {
       await pay.mutateAsync(variables);
       clearError();
     } catch (error) {
-      focusPaid.current = false;
-      handleError(error);
+      focusPaid.current = null;
+      handleError(item, error);
     }
   }
 
   /**
-   * The server charges the tier active right now, so confirm the displayed
-   * price is still current before showing a Checkout popup for it. Returns the
-   * amount to charge, or null when the card changed and the user must review.
+   * The server charges the tier active right now, so confirm this row's
+   * displayed price is still current before showing a Checkout popup for it.
+   * Returns the amount to charge, or null when it changed and the user must review.
    */
-  async function confirmedAmount(): Promise<number | null> {
+  async function confirmedAmount(item: FeeItem, amountCents: number): Promise<number | null> {
     const fresh = await queryClient.fetchQuery({
       queryKey: teamQueryKey(team.id),
       queryFn: () => fetchTeam(team.id),
       staleTime: 0,
     });
-    const next = fresh.checklist.fee;
+    const next = fresh.checklist.fee.items.find(
+      (line) => line.requirement_id === item.requirement_id,
+    );
+    if (!next || next.done) return null;
     if (next.amount_due_cents === amountCents) return amountCents;
-    if (next.amount_due_cents !== null && !next.done) {
-      setMessage(t('fee.changed', { amount: formatCents(next.amount_due_cents) }));
+    if (next.amount_due_cents !== null) {
+      setMessage({
+        requirementId: item.requirement_id,
+        text: t('fee.changed', {
+          name: item.name,
+          amount: formatCents(next.amount_due_cents),
+        }),
+      });
     }
     return null;
   }
 
-  async function handlePay() {
-    if (busy.current || !requirement) return;
+  async function handlePay(item: FeeItem) {
+    const amountCents = item.amount_due_cents;
+    if (busy.current || amountCents === null) return;
     busy.current = true;
+    const mock = isMock(item);
     setMessage(null);
+    setActiveId(item.requirement_id);
     setPhase(mock ? 'posting' : 'popup');
     try {
       if (mock) {
-        await submit({ requirementId: requirement.id, mock: true });
+        await submit(item, { requirementId: item.requirement_id, mock: true });
         return;
       }
       if (!race.stripe_publishable_key) {
-        setMessage(t('fee.unavailable'));
+        setMessage({ requirementId: item.requirement_id, text: t('fee.unavailable') });
         return;
       }
       let current;
       try {
-        current = await confirmedAmount();
+        current = await confirmedAmount(item, amountCents);
       } catch (error) {
-        handleError(error);
+        handleError(item, error);
         return;
       }
       if (current === null) return;
@@ -154,17 +174,17 @@ export function FeeCard({ team }: { team: Team }) {
           key: race.stripe_publishable_key,
           amountCents: current,
           email: me.data?.email ?? '',
-          description: `${requirement.name} for ${team.name} | ${race.name}`,
+          description: item.name,
           name: race.name,
         });
       } catch {
-        setMessage(t('fee.unavailable'));
+        setMessage({ requirementId: item.requirement_id, text: t('fee.unavailable') });
         return;
       }
       // Popup closed without paying: quietly allow another try.
       if (!result) return;
-      await submit({
-        requirementId: requirement.id,
+      await submit(item, {
+        requirementId: item.requirement_id,
         stripeToken: result.token,
         stripeEmail: result.email,
         expectedAmountCents: current,
@@ -172,38 +192,112 @@ export function FeeCard({ team }: { team: Team }) {
     } finally {
       busy.current = false;
       setPhase('idle');
+      setActiveId(null);
     }
   }
 
   const processing = phase !== 'idle';
 
   return (
-    <div className="space-y-3">
-      <p className="font-display text-3xl font-bold text-navy">{amount}</p>
-      {fee.next_tier && (
-        <p className="text-sm text-navy/80">
-          {t('fee.nextTier', {
-            amount: formatCents(fee.next_tier.price_cents),
-            date: formatDate(fee.next_tier.begins_at),
-          })}
-        </p>
-      )}
+    <ul className="divide-y divide-flag">
+      {fee.items.map((item) => (
+        <FeeRow
+          key={item.requirement_id}
+          item={item}
+          mock={isMock(item)}
+          disabled={processing}
+          processing={processing && activeId === item.requirement_id}
+          message={
+            message?.requirementId === item.requirement_id ? message.text : null
+          }
+          focusPaid={focusPaid}
+          onPay={() => void handlePay(item)}
+        />
+      ))}
+    </ul>
+  );
+}
+
+function FeeRow({
+  item,
+  mock,
+  disabled,
+  processing,
+  message,
+  focusPaid,
+  onPay,
+}: {
+  item: FeeItem;
+  mock: boolean;
+  disabled: boolean;
+  processing: boolean;
+  message: string | null;
+  focusPaid: RefObject<number | null>;
+  onPay: () => void;
+}) {
+  let body;
+  if (item.done) {
+    body = (
+      <p
+        tabIndex={-1}
+        ref={(element) => {
+          if (element && focusPaid.current === item.requirement_id) {
+            focusPaid.current = null;
+            element.focus();
+          }
+        }}
+        className="text-base font-semibold text-navy focus:outline-none"
+      >
+        {item.paid_cents > 0
+          ? t('fee.paid', { amount: formatCents(item.paid_cents) })
+          : t('team.pillPaid')}
+      </p>
+    );
+  } else if (item.amount_due_cents === null) {
+    body = (
+      <p className="text-base text-navy">
+        {item.next_tier
+          ? t('fee.itemOpens', { date: formatDate(item.next_tier.begins_at) })
+          : t('fee.notAvailable')}
+      </p>
+    );
+  } else {
+    const amount = formatCents(item.amount_due_cents);
+    body = (
+      <>
+        <p className="font-display text-3xl font-bold text-navy">{amount}</p>
+        {item.next_tier && (
+          <p className="text-sm text-navy/80">
+            {t('fee.nextTier', {
+              amount: formatCents(item.next_tier.price_cents),
+              date: formatDate(item.next_tier.begins_at),
+            })}
+          </p>
+        )}
+        <Button
+          disabled={disabled}
+          aria-busy={processing || undefined}
+          onClick={onPay}
+        >
+          {processing
+            ? t('fee.processing')
+            : mock
+              ? t('fee.mockPay')
+              : t('fee.pay', { amount })}
+        </Button>
+      </>
+    );
+  }
+
+  return (
+    <li className="space-y-2 py-3 first:pt-0 last:pb-0">
+      <p className="font-semibold text-navy">{item.name}</p>
+      {body}
       {message && (
         <p role="alert" className="text-sm text-starText">
           {message}
         </p>
       )}
-      <Button
-        disabled={processing}
-        aria-busy={processing || undefined}
-        onClick={() => void handlePay()}
-      >
-        {processing
-          ? t('fee.processing')
-          : mock
-            ? t('fee.mockPay')
-            : t('fee.pay', { amount })}
-      </Button>
-    </div>
+    </li>
   );
 }
