@@ -64,6 +64,13 @@
 
   .form-group
     .col-sm-4.control-label
+      = label_tag :experience_labels_text, t('.experience_labels')
+    .col-sm-8
+      = f.text_area :experience_labels_text, :rows => 10, :class => 'form-control'
+      %small= t('.experience_labels_help')
+
+  .form-group
+    .col-sm-4.control-label
       = label_tag :classy_campaign_id, t('.classy_campaign_id')
     .col-xs-2
       = f.text_field :classy_campaign_id, :class => 'form-control'

@@ -1,8 +1,7 @@
 - if req.completed?(team)
   -# todo: this is now my least favorite part of this codebase. put this somewhere better.
   - cr = req.cr_for(team)
-  - charge = Stripe::Charge.retrieve(cr.metadata['charge_id'])
-  - if charge.refunded
+  - if cr.metadata["refunded"]
     %span.label.label-primary
       = t('refunded')
   - else
@@ -13,9 +12,9 @@
     = t('completed')
 
     - if current_user.is_any_of? [:refunder, :admin]
-      = button_to t('refund'), charge_refund_url(charge.id), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
+      = button_to t('refund'), charge_refund_url(cr.metadata['charge_id']), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
     - if current_user.is? :admin
-      = button_to t('refund_and_invalidate'), charge_refund_url(charge.id), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
+      = button_to t('refund_and_invalidate'), charge_refund_url(cr.metadata['charge_id']), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
 
 - else
 

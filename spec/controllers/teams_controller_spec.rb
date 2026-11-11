@@ -336,7 +336,8 @@ describe TeamsController do
 
           it 'sets flash notice and redirects to team#questions' do
             expect(response).to redirect_to(team_questions_url(team.id))
-            expect(flash[:notice]).to eq(I18n.t 'teams.update.success_fill_out_questions')
+            expect(flash[:notice]).to eq(I18n.t('teams.update.success_fill_out_questions', raise: true))
+            expect(flash[:notice]).not_to match(/translation missing/i)
           end
         end
 

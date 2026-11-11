@@ -13,10 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
-unless Rails.env.test?
-  unless ENV['STRIPE_PUBLISHABLE_KEY'] && ENV['STRIPE_SECRET_KEY']
-    raise ArgumentError, "Must provide 'STRIPE_PUBLISHABLE_KEY' and 'STRIPE_SECRET_KEY' environment variables to use Stripe"
-  end
+# Warn rather than raise so rake tasks, asset precompile, and console work without Stripe keys.
+unless Rails.env.test? || (ENV["STRIPE_PUBLISHABLE_KEY"] && ENV["STRIPE_SECRET_KEY"])
+  Rails.logger.warn "STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY are not set; Stripe payments will not work."
 end
 
 Rails.configuration.stripe = {

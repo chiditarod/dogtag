@@ -20,6 +20,14 @@ describe JsonForm do
   let(:race) { FactoryBot.create :race_with_jsonform }
   let(:auth_token) { 'fake_token' }
 
+  describe ".filter_answers" do
+    it "keeps schema keys and drops unknown and blank keys" do
+      key = race.question_fields.first
+      params = ActionController::Parameters.new(key => "v", "evil" => "x", race.question_fields.second => "")
+      expect(JsonForm.filter_answers(race, params)).to eq({ key => "v" })
+    end
+  end
+
   describe "add_csrf" do
     let(:result) { JsonForm.add_csrf(JSON.parse(race.jsonform), auth_token) }
 

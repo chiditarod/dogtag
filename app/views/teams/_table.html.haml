@@ -37,7 +37,7 @@
             = time_ago_in_words(team.updated_at)
 
       %td
-        = pluralize(team.experience, 'year')
+        = @race.experience_label(team.experience)
 
       %td
         = pluralize(team.person_experience, 'year')

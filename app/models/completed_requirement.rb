@@ -36,6 +36,15 @@ class CompletedRequirement < ApplicationRecord
     return JSON.load(m)
   end
 
+  # flag the completed requirement for a stripe charge as refunded, so views need not ask Stripe.
+  def self.mark_refunded_by_charge(charge_id)
+    where("metadata LIKE ?", "%#{sanitize_sql_like(charge_id.to_s)}%").find_each do |cr|
+      next unless cr.metadata["charge_id"] == charge_id
+
+      cr.update!(metadata: cr.metadata.merge("refunded" => true))
+    end
+  end
+
   # lookup a completed requirement by a stripe charge and delete it.
   def self.delete_by_charge(charge)
 

@@ -18,6 +18,52 @@ require 'spec_helper'
 describe ClassyUser do
 
   describe "#link_user_to_classy!" do
+    # Issue #162: a returning captain changes their dogtag email to one that is already a
+    # classy member and already a supporter of the org, but is missing from the local cache.
+    context "when the email is already a classy member and supporter, and the cache has no record" do
+      let(:user) { FactoryBot.create :user }
+      let(:race) { FactoryBot.create :race, :with_classy_data }
+      let(:api) { "#{ClassyClient::API_HOST}/#{ClassyClient::API_VERSION}" }
+      let(:json_headers) { { "Content-Type" => "application/json" } }
+
+      before do
+        ENV["CLASSY_CLIENT_ID"] = "some_id"
+        ENV["CLASSY_CLIENT_SECRET"] = "some_secret"
+        stub_request(:post, ClassyClient::AUTH_ENDPOINT).to_return(
+          status: 200, headers: json_headers,
+          body: { "access_token" => "123abc", "token_type" => "bearer", "expires_in" => 3600 }.to_json
+        )
+        stub_request(:get, "#{api}/campaigns/#{race.classy_campaign_id}").to_return(
+          status: 200, headers: json_headers, body: { "organization_id" => 99 }.to_json
+        )
+        stub_request(:post, "#{api}/organizations/99/members").to_return(
+          status: 400, headers: json_headers,
+          body: { "error" => { "email_address" => ["This email address is already used."] } }.to_json
+        )
+        stub_request(:post, "#{api}/organizations/99/supporters").to_return(
+          status: 400, headers: json_headers,
+          body: { "error" => { "member_id" => ["Member 777 is already a supporter for Organization 99"] } }.to_json
+        )
+      end
+
+      it "looks up the member by email when the cache misses" do
+        stub_request(:get, "#{api}/members/#{user.email}").to_return(
+          status: 200, headers: json_headers, body: { "id" => 777 }.to_json
+        )
+
+        ClassyUser.link_user_to_classy!(user, race)
+
+        expect(user.reload.classy_id).to eq(777)
+      end
+
+      it "raises TransientError when the member cannot be found" do
+        stub_request(:get, "#{api}/members/#{user.email}").to_return(status: 404)
+
+        expect { ClassyUser.link_user_to_classy!(user, race) }.to raise_error(TransientError)
+        expect(user.reload.classy_id).to be_nil
+      end
+    end
+
     # let(:user) { FactoryBot.create :user, :with_classy_id }
     # let(:race)   { FactoryBot.create :race }
     # let(:result) { ClassyUser.link_user_to_classy!(user, race) }

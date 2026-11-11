@@ -71,8 +71,14 @@ class ClassyUser
         # select the most recent record for this email and use that classy member id
         record = ClassyCacheOrgMember.where(email: user.email).order(classy_updated_at: :desc).limit(1).first
         if record.nil?
-          Rails.logger.info "did not find classy member_id in cache for email: #{user.email}"
-          return
+          Rails.logger.info "did not find classy member_id in cache for email: #{user.email}, looking up member by email"
+          member = cc.get_member(user.email)
+          raise TransientError.new("error: could not find classy member for email: #{user.email}") if member.nil?
+
+          user.classy_id = member["id"].to_i
+          user.save!
+          Rails.logger.info "found classy member_id: #{user.classy_id} via classy api for email: #{user.email}"
+          return user
         end
         Rails.logger.info "found classy member_id: #{record.classy_member_id} in classy cache for email: #{user.email}"
         user.classy_id = record.classy_member_id

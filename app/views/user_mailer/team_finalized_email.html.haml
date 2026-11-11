@@ -21,8 +21,9 @@
             = p.last_name
     %p
       You can update your team information at
-      %a{:href=>"http://dogtag.chiditarod.org"}
-        dogtag.chiditarod.org
+      - team_link = RegistrationUi.team_url(@team)
+      %a{:href=>team_link}
+        = team_link
       until
       = @team.race.registration_close.strftime("%B %e, %Y")
       when registration closes.

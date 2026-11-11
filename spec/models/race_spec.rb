@@ -418,4 +418,36 @@ describe Race do
       end
     end
   end
+
+  describe "experience labels" do
+    it "defaults to the built-in labels incl. 22nd year" do
+      expect(Race.new.experience_labels.size).to eq(23)
+      expect(Race.new.experience_labels.last).to start_with("22nd year")
+    end
+
+    it "uses admin-entered labels" do
+      race = FactoryBot.create(:race)
+      race.update!(experience_labels_text: "Rookie\nVet\n")
+      expect(race.reload.experience_labels).to eq(%w[Rookie Vet])
+      expect(race.experience_labels_text).to eq("Rookie\nVet")
+    end
+
+    it "strips whitespace and drops blank lines" do
+      race = FactoryBot.build(:race, experience_labels_text: "  Rookie \r\n\n \nVet")
+      expect(race.experience_labels).to eq(%w[Rookie Vet])
+    end
+
+    it "falls back to the defaults when the text is blank" do
+      race = FactoryBot.build(:race, experience_labels_text: "\n ")
+      expect(race.experience_labels).to eq(Race::DEFAULT_EXPERIENCE_LABELS)
+    end
+
+    it "returns the label for an index" do
+      expect(FactoryBot.build(:race, experience_labels: %w[a b]).experience_label(1)).to eq("b")
+    end
+
+    it "falls back for out-of-range index" do
+      expect(FactoryBot.build(:race, experience_labels: ["a"]).experience_label(4)).to eq("4 years")
+    end
+  end
 end
