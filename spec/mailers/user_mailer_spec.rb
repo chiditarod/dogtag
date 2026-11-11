@@ -119,6 +119,10 @@ describe UserMailer do
     let(:payment) { FactoryBot.create(:payment_requirement_with_tier, race: race) }
     let(:details) { { dedupe_key: "close-24h" } }
 
+    def mail_subject(team, details)
+      UserMailer.registration_reminder(team, "closing_week", details).subject
+    end
+
     before do
       payment
       FactoryBot.create(:person, team: team)
@@ -142,6 +146,7 @@ describe UserMailer do
       FactoryBot.create(:completed_requirement, team: team, requirement: payment)
       body = UserMailer.registration_reminder(team.reload, "closing_week", details).body.encoded
 
+      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
       expect(body).not_to include("of 3")
       expect(body).not_to include("team questions")
       expect(body).not_to include("registration fee")
@@ -151,7 +156,7 @@ describe UserMailer do
       begins_at = Time.zone.now + 47.hours
       mail = UserMailer.registration_reminder(team, "tier_change", new_price_cents: 7500, begins_at: begins_at, dedupe_key: "tier-1")
 
-      expect(mail.subject).to eq("#{race.name}: Registration price is going up soon")
+      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
       expect(mail.body.encoded).to include("$75")
     end
 
