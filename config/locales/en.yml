@@ -152,6 +152,12 @@ en:
     card_declined: The card was declined
     missing: There is no card on a customer that is being charged.
     processing_error: An error occurred while processing the card
+    already_paid: This requirement has already been paid for this team, so your card was not charged.
+    wrong_race: This payment does not belong to this team's race, so your card was not charged.
+    invalid_request: "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: %{reason}"
+    api_connection: "There is an issue connecting to the Stripe API: %{reason}"
+    stripe_error: An error occured connecting to Stripe. Please email dogtag@chiditarod.org.
+    unexpected: An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org.
 
   api:
     errors:

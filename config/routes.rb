@@ -115,6 +115,8 @@ Rails.application.routes.draw do
         resources :people, only: [:create, :update, :destroy]
         resources :past_racers, only: [:index]
         resource :questions, only: [:show, :update]
+        resources :payments, only: [:create]
+        resources :mock_payments, only: [:create] if Rails.env.development? || Rails.env.test?
       end
       match "*path", to: "base#route_not_found", via: :all
     end
