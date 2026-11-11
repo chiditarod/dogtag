@@ -18,7 +18,7 @@ class MockPaymentsController < ApplicationController
         current_user,
         {
           'charge_id' => "mock_ch_#{SecureRandom.hex(12)}",
-          'amount' => params[:amount].to_i,
+          'amount' => requirement.amount_due_cents,
           'mock' => true
         }
       )

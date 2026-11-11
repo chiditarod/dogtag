@@ -139,6 +139,7 @@ en:
 
 
   charges:
+    no_active_price: There is no active price for this payment requirement right now, so your card was not charged.
     unable_to_get_customer: Unable to find or save your data in Stripe, our payment gateway. Email chiditarod@gmail.com ASAP!
     card_declined: The card was declined
     incorrect_number: The card number is incorrect

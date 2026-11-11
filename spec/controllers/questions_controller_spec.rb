@@ -35,6 +35,32 @@ describe QuestionsController do
     end
   end
 
+  context '[logged in as a different non-admin user]' do
+    let(:team) { FactoryBot.create :team, race: FactoryBot.create(:race_with_jsonform) }
+    let(:other_user) { FactoryBot.create :user }
+
+    before do
+      activate_authlogic
+      login_user! other_user
+    end
+
+    it "forbids saving answers to another user's team" do
+      expect { post :create, params: { team_id: team.id, 'racer-type' => 'Racer' } }.to raise_error(CanCan::AccessDenied)
+      expect(team.reload.jsonform).to be_nil
+    end
+
+    it "forbids viewing another user's team questions" do
+      expect { get :show, params: { team_id: team.id } }.to raise_error(CanCan::AccessDenied)
+    end
+
+    it "lets the team's owner save answers" do
+      login_user! team.user
+      post :create, params: { team_id: team.id, 'racer-type' => 'Racer' }
+      expect(response).to redirect_to(team_path(team))
+      expect(team.reload.jsonform).to include('Racer')
+    end
+  end
+
   context '[logged in]' do
 
     let (:valid_user) { FactoryBot.create :admin_user }

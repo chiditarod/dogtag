@@ -35,6 +35,7 @@ class QuestionsController < ApplicationController
   def show
     authorize! :show, :questions
     @team = Team.find params[:team_id]
+    authorize! :show, @team
 
     unless @team.race.jsonform.present?
       flash[:info] = I18n.t('questions.none_defined')
@@ -51,6 +52,7 @@ class QuestionsController < ApplicationController
   def create
     authorize! :create, :questions
     @team = Team.find(params[:team_id])
+    authorize! :show, @team
 
     # todo: move this validation logic into model
     unless @team.race.open_for_registration?

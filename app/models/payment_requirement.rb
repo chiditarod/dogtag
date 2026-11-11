@@ -33,6 +33,11 @@ class PaymentRequirement < Requirement
     }
   end
 
+  # price in cents of the currently active tier, or nil if no tier is active
+  def amount_due_cents
+    active_tier.presence&.price
+  end
+
   def enabled?
     active_tier.present?
   end

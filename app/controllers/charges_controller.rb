@@ -36,9 +36,20 @@ class ChargesController < ApplicationController
 
     metadata = JSON.parse params[:metadata]
 
+    # the amount is never taken from the client; it comes from the requirement's active tier
+    req = Requirement.find(metadata['requirement_id'])
+    amount = req.amount_due_cents
+
+    if amount.nil?
+      Rails.logger.error "No active price for requirement ID: #{req.id}, User ID: #{current_user.id}"
+      flash[:error] = I18n.t('charges.no_active_price')
+      url = session.delete(:prior_url)
+      return redirect_to(url)
+    end
+
     charge = Stripe::Charge.create(
       :customer    => @customer.id,
-      :amount      => params[:amount],
+      :amount      => amount,
       :description => params[:description],
       :metadata    => metadata,
       :currency    => 'usd'
@@ -50,9 +61,8 @@ class ChargesController < ApplicationController
     @cr_metadata = {
       'customer_id' => @customer.id,
       'charge_id' => charge.id,
-      'amount' => params[:amount]
+      'amount' => amount
     }
-    req = Requirement.find(metadata['requirement_id'])
     req.complete(metadata['team_id'], current_user, @cr_metadata)
 
     # finally, redirect

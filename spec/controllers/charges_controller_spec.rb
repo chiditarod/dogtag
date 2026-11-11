@@ -103,7 +103,7 @@ describe ChargesController do
       end
 
       context "when Charge is successful" do
-        let(:requirement) { FactoryBot.create :payment_requirement }
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
         let(:team) { FactoryBot.create :team, race: requirement.race }
 
         let(:customer) do
@@ -131,12 +131,12 @@ describe ChargesController do
           })
         end
 
-        let(:amount) { '7000' }
+        let(:amount) { '100' }
 
         before do
           StripeMock.start
           expect(Customer).to receive(:get).and_return(customer)
-          expect(Stripe::Charge).to receive(:create).and_return(charge)
+          expect(Stripe::Charge).to receive(:create).with(hash_including(amount: 5000)).and_return(charge)
           session[:prior_url] = '/prior_url/'
 
           expect(CompletedRequirement.count).to eq(0)
@@ -152,7 +152,7 @@ describe ChargesController do
           cr_metadata = {
             'customer_id' => customer.id,
             'charge_id' => charge.id,
-            'amount' => amount
+            'amount' => 5000
           }
           expect(assigns(:cr_metadata)).to eq(cr_metadata)
         end
@@ -164,6 +164,27 @@ describe ChargesController do
 
         it 'renders flash notice' do
           expect(flash[:notice]).to eq('Your card has been charged successfully.')
+        end
+
+        include_examples "redirects to prior url"
+      end
+
+      context "when the requirement has no active price" do
+        let(:requirement) { FactoryBot.create :payment_requirement }
+        let(:team) { FactoryBot.create :team, race: requirement.race }
+
+        before do
+          expect(Customer).to receive(:get).and_return(double_customer)
+          expect(Stripe::Charge).not_to receive(:create)
+          session[:prior_url] = '/prior_url/'
+          post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+        end
+        let(:double_customer) { Stripe::Customer.construct_from(id: "cus_123") }
+
+        it "flashes an error and does not charge" do
+          expect(flash[:error]).to eq(I18n.t("charges.no_active_price"))
+          expect(CompletedRequirement.count).to eq(0)
         end
 
         include_examples "redirects to prior url"
@@ -184,6 +205,10 @@ describe ChargesController do
         end
         after { StripeMock.stop }
 
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:stripe_metadata) { { team_id: team.id, requirement_id: requirement.id }.to_json }
+
         let(:customer) do
           Stripe::Customer.create({
             card: stripe_helper.generate_card_token,
@@ -197,7 +222,7 @@ describe ChargesController do
         context "Stripe returns invalid request" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::InvalidRequestError.new(I18n.t("foo"), :foo))
-            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
           end
 
           let(:expected_flash_error) { /Invalid parameters supplied to Stripe API/ }
@@ -207,7 +232,7 @@ describe ChargesController do
         context "Stripe returns API connection error" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("foo", :foo))
-            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
           end
 
           let(:expected_flash_error) { /There is an issue connecting to the Stripe API/ }
@@ -217,7 +242,7 @@ describe ChargesController do
         context "Stripe returns generic StripeError" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise(Stripe::StripeError.new("foo", :foo))
-            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
           end
 
           let(:expected_flash_error) { "An error occured connecting to Stripe. Please email dogtag@chiditarod.org." }
@@ -227,7 +252,7 @@ describe ChargesController do
         context "Something raises an uncaught error" do
           before do
             expect(Stripe::Charge).to receive(:create).and_raise
-            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
+            post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
           end
 
           let(:expected_flash_error) { "An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org." }
@@ -242,7 +267,7 @@ describe ChargesController do
           context "when Stripe::CardError #{e}" do
             before do
               StripeMock.prepare_card_error(e)
-              post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: {bat: :baz}.to_json }
+              post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
             end
 
             it 'assigns customer' do

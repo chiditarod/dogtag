@@ -195,6 +195,23 @@ describe UsersController do
           expect(response).to redirect_to(some_user)
         end
       end
+
+      context 'roles' do
+        it 'lets an admin set roles' do
+          patch :update, params: { id: some_user.id, user: { roles: ['operator'] } }
+          expect(some_user.reload.is?(:operator)).to be(true)
+        end
+
+        context 'when a non-admin updates themselves' do
+          let(:valid_user) { FactoryBot.create :user }
+
+          it 'ignores roles' do
+            patch :update, params: { id: valid_user.id, user: { first_name: 'X', roles: ['admin'] } }
+            expect(valid_user.reload.is?(:admin)).to be(false)
+            expect(valid_user.first_name).to eq('X')
+          end
+        end
+      end
     end
 
     describe '#destroy' do
