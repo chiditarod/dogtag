@@ -71,6 +71,7 @@ class Ability
       can [:index, :search, :show, :edit, :update], [Team, Person]
       can [:index, :show, :edit, :update, :create], [Race, PaymentRequirement, Tier]
       can [:refund], :charges
+      can :index, SentEmail
     end
 
     if user.is? :admin

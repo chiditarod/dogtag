@@ -42,6 +42,9 @@ Rails.application.routes.draw do
   # sidekiq
   mount Sidekiq::Web => '/sidekiq'
 
+  resources :sent_emails, only: [:index]
+  post "webhooks/sendgrid", to: "webhooks/sendgrid#create"
+
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
 
   # The priority is based upon order of creation: first created -> highest priority.
