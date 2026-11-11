@@ -31,6 +31,7 @@ CLASSY_CLIENT_SECRET=          # optional
 CLASSY_ORGS=                   # comma-separated list of classy organization ids the client has access to. used to cache org members
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
+REGISTRATION_UI                # spa | legacy. where racer entry points send people (see below)
 SMTP_DOMAIN                    # e.g. heroku.com
 SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
@@ -114,21 +115,37 @@ cp .env.example .env
 
 ## Local Development
 
-### Build and run all containers
+### Start the backing services
 
-This will also create the `dogtag_test` and `dogtag_development` databases and will build and boot mailcatcher.
+Postgres, Redis and [Mailpit](https://mailpit.axllent.org) (local mail catcher) are all you need to run Rails and the specs from the console. The `db` container also creates the `dogtag_test` and `dogtag_development` databases.
 
-    docker-compose up -d
+    docker compose up -d db redis mailpit
+
+To run the whole stack in containers instead, use `docker compose up -d`.
 
 ### Run the test suite
 
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
 
-### Mailcatcher
+### Mailpit
 
-The `mailcatcher` gem gets built into a docker image and deployed in the
-docker compose cluster. It exposes an SMTP port on `1025` and a web UI on `1080`.
+Mailpit runs in the docker compose cluster. It exposes SMTP on port `1025` and a web UI at http://localhost:8025.
+
+### Registration SPA (`frontend/`)
+
+The racer registration UI is a Vite + React + TypeScript app in `frontend/`. It is built into `public/register` and served by Rails under `/register`.
+
+    npm --prefix frontend install
+    npm --prefix frontend run dev      # Vite dev server on http://localhost:5173 (proxies /api to :3000)
+    npm --prefix frontend run build    # builds into public/register
+    npm --prefix frontend run test     # Vitest
+
+The redirect from Rails to the Vite dev server is opt-in: set `VITE_DEV_SERVER=http://localhost:5173`.
+
+### `REGISTRATION_UI` switch
+
+`REGISTRATION_UI=spa|legacy` controls where the homepage "Get started" button and racer-facing entry points send people: `spa` goes to `/register`, `legacy` (the default) uses the original HAML flow. Setting it to `legacy` is the fallback if the SPA has a problem.
 
 ## Database
 
@@ -169,7 +186,7 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Do a development cycle to incorporate any new features.
 1. Update the jsonform with any new questions and expected responses for the specific race.
 1. Launch it all locally, make sure Stripe payments are functioning and a team can finalize their registration successfully.
-1. Use mailcatcher to ensure emails are being created and sent.
+1. Use Mailpit to ensure emails are being created and sent.
 1. Check that the SSL certificate for dogtag.chiditarod.org is up to date and working
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed
