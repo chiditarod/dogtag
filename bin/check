@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# Run the test suites quietly: one summary line per step, failure details only
+# when a step fails. Full output is kept in tmp/check/<step>.log.
+#
+#   bin/check            # rspec, frontend (vitest + typecheck), build
+#   bin/check rspec      # one or more steps: rspec frontend build e2e
+#   bin/check e2e        # Playwright (needs: docker compose up -d db redis mailpit)
+#
+# Steps run one at a time (running rspec and vitest together causes flaky
+# timeouts). Exit status is non-zero if any step fails.
+
+set -u
+cd "$(dirname "$0")/.."
+
+LOG_DIR="tmp/check"
+MAX_LINES="${CHECK_MAX_LINES:-60}"
+mkdir -p "$LOG_DIR"
+
+has_frontend() { [ -f frontend/package.json ]; }
+
+failed=0
+
+# run_step NAME SUMMARY_PATTERN FAILURE_FILTER COMMAND...
+run_step() {
+  local name="$1" summary="$2" filter="$3"
+  shift 3
+  local log="$LOG_DIR/$name.log" start end status line
+  start=$(date +%s)
+  "$@" >"$log" 2>&1
+  status=$?
+  end=$(date +%s)
+
+  line=$(grep -E "$summary" "$log" | tail -1 | sed -E 's/\x1b\[[0-9;]*m//g; s/^[[:space:]]+//')
+  [ -z "$line" ] && { [ "$status" -eq 0 ] && line="clean" || line="(no summary line)"; }
+
+  if [ "$status" -eq 0 ]; then
+    printf "ok    %-9s %s (%ss)\n" "$name" "$line" "$((end - start))"
+  else
+    failed=1
+    printf "FAIL  %-9s %s (%ss) - full log: %s\n" "$name" "$line" "$((end - start))" "$log"
+    eval "$filter" <"$log" | sed -E 's/\x1b\[[0-9;]*m//g' | head -n "$MAX_LINES"
+  fi
+}
+
+step_rspec() {
+  run_step rspec "examples?, [0-9]+ failures?" \
+    "sed -n '/^Failures:/,/^Finished in/p; /^rspec \.\//p'" \
+    bundle exec rspec --format progress --no-color
+}
+
+step_frontend() {
+  if ! has_frontend; then echo "skip  frontend  (no frontend/package.json)"; return; fi
+  run_step vitest "Tests[[:space:]]+[0-9]+" \
+    "grep -E -A12 '(FAIL|AssertionError|Error:)'" \
+    npm --prefix frontend test --silent -- --run --reporter=dot
+  run_step tsc "error TS" \
+    "grep -E 'error TS'" \
+    sh -c "cd frontend && npx --no-install tsc --noEmit"
+}
+
+step_build() {
+  if ! has_frontend; then echo "skip  build     (no frontend/package.json)"; return; fi
+  run_step build "built in|error" \
+    "tail -n 40" \
+    npm --prefix frontend run build --silent
+}
+
+step_e2e() {
+  run_step e2e "[0-9]+ (passed|failed)" \
+    "grep -E -A15 '^[[:space:]]+[0-9]+\) |Error:'" \
+    npx --no-install playwright test --reporter=line
+}
+
+steps=("$@")
+[ ${#steps[@]} -eq 0 ] && steps=(rspec frontend build)
+
+for step in "${steps[@]}"; do
+  case "$step" in
+    rspec | frontend | build | e2e) "step_$step" ;;
+    *) echo "unknown step: $step (use rspec, frontend, build, e2e)" >&2; exit 2 ;;
+  esac
+done
+
+exit "$failed"
