@@ -56,15 +56,17 @@ describe Workers::ClassyCacheOrgMemberCacher do
         ENV["CLASSY_ORGS"] = "1"
         stub_supporters(1, page: 1, last_page: 1, data: [supporter(10, "a@example.com", "2024-01-01 10:00:00")])
         worker.perform
-        stub_supporters(1, page: 1, last_page: 1, data: [supporter(10, "a@example.com", "2024-06-01 10:00:00")])
+        stub_supporters(1, page: 1, last_page: 1, data: [supporter(99, "a@example.com", "2024-06-01 10:00:00")])
       end
 
-      it "keeps both versions, and the latest classy_updated_at is the newest row" do
+      # Characterizes current behavior: the upsert's conflict target includes
+      # classy_updated_at, so an updated record adds a row instead of replacing
+      # the old one. ClassyUser reads the newest row, so lookups stay correct.
+      it "keeps both versions, and the newest classy_updated_at wins on lookup" do
         expect { worker.perform }.to change(ClassyCacheOrgMember, :count).by(1)
 
-        rows = ClassyCacheOrgMember.where(email: "a@example.com")
-        expect(rows.maximum(:classy_updated_at)).to eq(Time.utc(2024, 6, 1, 10))
-        expect(rows.order(:classy_updated_at).last.classy_member_id).to eq(10)
+        newest = ClassyCacheOrgMember.where(email: "a@example.com").order(classy_updated_at: :desc).first
+        expect(newest).to have_attributes(classy_member_id: 99, classy_updated_at: Time.utc(2024, 6, 1, 10))
       end
     end
 
@@ -80,8 +82,14 @@ describe Workers::ClassyCacheOrgMemberCacher do
       end
 
       it "skips them" do
+        allow(Rails.logger).to receive(:debug)
+        allow(Rails.logger).to receive(:info)
+
         worker.perform
+
         expect(ClassyCacheOrgMember.pluck(:email)).to eq(["ok@example.com"])
+        expect(Rails.logger).to have_received(:debug)
+          .with(hash_including(message: "skipping record; missing data")).exactly(3).times
       end
     end
 
@@ -99,18 +107,22 @@ describe Workers::ClassyCacheOrgMemberCacher do
 
       it "is a no-op" do
         expect { worker.perform }.not_to change(ClassyCacheOrgMember, :count)
+        expect(WebMock).not_to have_requested(:get, /api\.classy\.org/)
       end
     end
 
-    context "when Classy responds with a 500" do
+    context "when Classy responds with a 500 after an earlier org succeeded" do
       before do
-        ENV["CLASSY_ORGS"] = "1"
-        stub_request(:get, "#{ClassyClient::API_HOST}/#{ClassyClient::API_VERSION}/organizations/1/supporters?page=1")
+        ENV["CLASSY_ORGS"] = "1,2"
+        stub_supporters(1, page: 1, last_page: 1, data: [supporter(10, "a@example.com", "2024-01-01 10:00:00")])
+        stub_request(:get, "#{ClassyClient::API_HOST}/#{ClassyClient::API_VERSION}/organizations/2/supporters?page=1")
           .to_return(status: 500, body: "boom")
       end
 
       # 500 is not in RETRIABLE_STATUS_CODES, so ClassyClient raises TransientError
       # immediately and Workers::Common#perform logs the error and re-raises it.
+      # Records are imported once after every org is fetched, so org 1's
+      # members are not stored either.
       it "logs the error, re-raises, and stores nothing" do
         expect(Rails.logger).to receive(:error).with(hash_including(message: "error", error: hash_including(klass: TransientError)))
         allow(Rails.logger).to receive(:info)
@@ -118,7 +130,7 @@ describe Workers::ClassyCacheOrgMemberCacher do
 
         expect { worker.perform }.to raise_error(TransientError, /500/)
         expect(ClassyCacheOrgMember.count).to eq(0)
-        expect(WebMock).to have_requested(:get, /supporters\?page=1/).once
+        expect(WebMock).to have_requested(:get, %r{organizations/2/supporters\?page=1}).once
       end
     end
   end

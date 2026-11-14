@@ -4,7 +4,7 @@ describe Workers::ClassyFundraisingTeamEmail do
   let(:worker) { described_class.new }
 
   describe "#perform" do
-    let!(:team) { FactoryBot.create :team, :with_classy_fundraising_page }
+    let(:team) { FactoryBot.create :team, :with_classy_fundraising_page }
 
     it "delivers one email to the captain announcing fundraising is ready" do
       expect { worker.perform("team_id" => team.id) }
