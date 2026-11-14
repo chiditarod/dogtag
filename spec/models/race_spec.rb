@@ -313,6 +313,32 @@ describe Race do
     end
   end
 
+  describe ".preload_registration_data" do
+    let(:full_race) { FactoryBot.create(:race) }
+    let(:open_race) { FactoryBot.create(:race) }
+    let!(:requirement) { FactoryBot.create(:payment_requirement_with_tier, race: open_race) }
+
+    before do
+      FactoryBot.create_list(:finalized_team, full_race.max_teams, race: full_race)
+      FactoryBot.create(:finalized_team, race: open_race)
+    end
+
+    it "gives the same full? answers and prices without further queries" do
+      races = Race.where(id: [full_race.id, open_race.id]).includes(:requirements).index_by(&:id)
+      described_class.preload_registration_data(races.values)
+
+      queries = []
+      callback = ->(*, payload) { queries << payload[:sql] unless payload[:cached] }
+      full, price = ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        [[races[full_race.id].full?, races[open_race.id].full?], races[open_race.id].requirements.first.amount_due_cents]
+      end
+
+      expect(full).to eq([true, false])
+      expect(price).to eq(Race.find(open_race.id).requirements.first.amount_due_cents)
+      expect(queries).to be_empty
+    end
+  end
+
   describe '#spots_remaining' do
     before do
       @race = FactoryBot.create :race

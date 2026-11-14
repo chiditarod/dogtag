@@ -101,6 +101,21 @@ class Race < ApplicationRecord
     requirements.select(&:enabled?)
   end
 
+  # Loads what the API's race JSON needs for many races in a fixed number of queries:
+  # payment tiers (not preloadable through `requirements`, which mixes STI types) and the
+  # finalized team counts behind `full?`. Expects `requirements` to be loaded already.
+  def self.preload_registration_data(races)
+    races = races.uniq
+    payment_requirements = races.flat_map(&:requirements).grep(PaymentRequirement)
+    ActiveRecord::Associations::Preloader.new(records: payment_requirements, associations: :tiers).call
+
+    counts = Team.all_finalized.where(race_id: races.map(&:id)).group(:race_id).count
+    races.each { |race| race.finalized_teams_count = counts.fetch(race.id, 0) }
+  end
+
+  # Set only by preload_registration_data, for the lifetime of one request's objects.
+  attr_writer :finalized_teams_count
+
   def finalized_teams
     Team.all_finalized.where(race_id: id)
   end
@@ -130,7 +145,7 @@ class Race < ApplicationRecord
   end
 
   def full?
-    finalized_teams.size >= max_teams
+    (@finalized_teams_count || finalized_teams.size) >= max_teams
   end
 
   def not_full?
