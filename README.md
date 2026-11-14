@@ -64,6 +64,8 @@ Each race has a `jsonform` field. This field can contain a [jsonform](https://gi
 
 Each race has a `time_zone` (an IANA id, default `America/Chicago`), chosen on the race form. Datetimes are stored in UTC, but the race and tier forms read and show their date fields in the race's zone, and every page, email and the SPA display race dates in that zone. Pick the zone first, then enter dates as local wall-clock times (e.g. `00:00` on Dec 15 for a midnight opening).
 
+Changing the zone of an existing race keeps the wall-clock times on the form and reads them in the new zone, so the stored moments move. The save notice says so; check the dates afterwards.
+
 A deadline (registration close, final edits close) set at exactly local midnight is shown as 11:59 PM on the previous day, so a close of Feb 15 00:00 reads "February 14 ... 11:59 PM".
 
 ## Developer Setup

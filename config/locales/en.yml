@@ -292,6 +292,8 @@ en:
       tiers: tiers
 
   races:
+    update:
+      time_zone_changed: "Time zone changed from %{from} to %{to}. The dates on the form were read as %{to} times, so check that each one is still right."
     registrations:
       registrations_for: "Registrations for %{name}"
       finalized_teams: Finalized Teams

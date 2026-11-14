@@ -237,6 +237,20 @@ describe RacesController do
           expect(race.registration_open).to eq(Time.utc(2026, 12, 15, 8))
         end
 
+        it "says when the time zone changed" do
+          patch :update, params: { id: race.id, race: { time_zone: "America/Los_Angeles", registration_open: "2026-12-15 00:00:00" } }
+
+          expect(flash[:notice]).to start_with(I18n.t("update_success"))
+          expect(flash[:notice]).to include("from Central Time (CST/CDT) to Pacific Time (PST/PDT)")
+          expect(response).to redirect_to(edit_race_url(race))
+        end
+
+        it "does not mention the time zone when it is unchanged" do
+          patch :update, params: { id: race.id, race: { time_zone: "America/Chicago", registration_open: "2026-12-15 00:00:00" } }
+
+          expect(flash[:notice]).to eq(I18n.t("update_success"))
+        end
+
         it "parses submitted datetimes in the race's stored zone when no zone is submitted" do
           race.update!(time_zone: "America/New_York")
           patch :update, params: { id: race.id, race: { registration_open: "2026-12-15 00:00:00" } }
@@ -335,7 +349,7 @@ describe RacesController do
         end.to change(Race, :count).by 1
       end
 
-      context "with time_zone=America/Chicago" do
+      context "with a submitted time_zone" do
         let(:dates) do
           { registration_open: "2026-12-15 00:00:00", registration_close: "2027-02-15 00:00:00",
             final_edits_close: "2027-02-20 00:00:00", race_datetime: "2027-03-06 10:00:00" }
