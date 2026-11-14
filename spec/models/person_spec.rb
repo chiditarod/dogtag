@@ -135,10 +135,10 @@ describe 'validation' do
     end
   end
 
-  describe ".normalize_phone" do
+  describe "phone normalization" do
     it "normalizes common formats to ddd-ddd-dddd" do
       ["+1 (312) 555-0144", "312.555.0144", "13125550144", "312 555 0144"].each do |input|
-        expect(Person.normalize_phone(input)).to eq("312-555-0144")
+        expect(FactoryBot.build(:person, phone: input).phone).to eq("312-555-0144")
       end
     end
 

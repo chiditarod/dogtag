@@ -189,6 +189,7 @@ describe "API v1 payments", type: :request do
     it "returns 402 for a mock decline" do
       post mock_path, params: { requirement_id: requirement.id, mock_behavior: "decline" }, as: :json
       expect(response).to have_http_status(:payment_required)
+      expect(json).to include("error" => I18n.t("charges.mock_declined"), "code" => "card_error")
       expect(CompletedRequirement.count).to eq(0)
     end
 

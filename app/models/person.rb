@@ -29,16 +29,8 @@ class Person < ApplicationRecord
 
   belongs_to :team
 
-  # Strips formatting and a leading country code; a 10-digit result becomes
-  # "ddd-ddd-dddd". Anything else is returned unchanged so validation rejects it.
-  def self.normalize_phone(value)
-    digits = value.to_s.gsub(/\D/, "")
-    digits = digits.delete_prefix("1") if digits.length == 11
-    digits.length == 10 ? "#{digits[0, 3]}-#{digits[3, 3]}-#{digits[6, 4]}" : value.to_s
-  end
-
   def phone=(val)
-    super(val.nil? ? nil : self.class.normalize_phone(val))
+    super(PhoneNumber.normalize(val))
   end
 
   def self.registered_for_race(race_id)

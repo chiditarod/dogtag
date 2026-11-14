@@ -157,6 +157,8 @@ en:
     not_payable: This requirement cannot be paid by card.
     already_paid: This requirement has already been paid for this team, so your card was not charged.
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
+    mock_declined: Mock payment declined
+    mock_not_saved: Mock payment failed to save
     invalid_request: "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: %{reason}"
     api_connection: "There is an issue connecting to the Stripe API: %{reason}"
     stripe_error: An error occured connecting to Stripe. Please email dogtag@chiditarod.org.
