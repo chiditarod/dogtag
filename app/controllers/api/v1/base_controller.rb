@@ -51,14 +51,23 @@ class Api::V1::BaseController < ActionController::Base
     render_errors("not_authenticated", status: :unauthorized) unless current_user
   end
 
-  # Renders { error:, errors: } where errors maps field => [short messages].
-  def render_errors(record_or_message, status: :unprocessable_entity)
+  # Owners are only refused an update because registration has closed, so they are told that;
+  # anyone else (e.g. a refunder who can view the team) gets CanCan's default message.
+  def authorize_update!(subject, team)
+    message = I18n.t("api.errors.registration_closed") if team.user_id == current_user.id
+    authorize!(:update, subject, message:)
+  end
+
+  # Renders { error:, errors: } where errors maps field => [short messages]. When `code` is
+  # given it is added as a stable machine-readable key, for errors whose `error` is a sentence.
+  def render_errors(record_or_message, status: :unprocessable_entity, code: nil)
     body =
       if record_or_message.respond_to?(:errors)
         { error: "invalid", errors: record_or_message.errors.to_hash.transform_keys(&:to_s) }
       else
         { error: record_or_message.to_s, errors: {} }
       end
+    body[:code] = code.to_s if code
     render json: body, status: status
   end
 end

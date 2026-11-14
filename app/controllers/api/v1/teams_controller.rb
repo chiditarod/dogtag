@@ -33,7 +33,7 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def update
     @team = Team.find(params[:id])
     authorize!(:show, @team)
-    authorize!(:update, @team, message: I18n.t("api.errors.registration_closed"))
+    authorize_update!(@team, @team)
     @team.subscribe(TeamAuditor.new)
 
     if @team.update(params.expect(team: [:name, :description, :experience]))
