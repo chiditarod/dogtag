@@ -343,7 +343,7 @@ en:
     registration_reminder:
       subject_tier_change: "Registration price changes %{date}"
       subject_closing_week: "Registration closes %{date}"
-      subject_closing_day: Registration closes in 24 hours
+      subject_closing_day: Registration closes within 24 hours
       racers: "racers (%{count} of %{total})"
       questions: team questions
       fee: registration fee

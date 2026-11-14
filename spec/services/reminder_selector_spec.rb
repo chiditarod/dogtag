@@ -24,7 +24,7 @@ describe ReminderSelector do
       reminder = due.find { |r| r.kind == "tier_change" }
 
       expect(reminder.team).to eq(team)
-      expect(reminder.dedupe_key).to eq("tier-#{upcoming.id}")
+      expect(reminder.dedupe_key).to eq("tier-#{upcoming.id}-#{upcoming.begin_at.to_i}")
       expect(reminder.details).to include(new_price_cents: 7000, begins_at: upcoming.begin_at)
     end
 
@@ -38,13 +38,29 @@ describe ReminderSelector do
       FactoryBot.create(:completed_requirement, team: team, requirement: payment)
       expect(due.select { |r| r.kind == "tier_change" }).to be_empty
     end
+
+    it "skips a tier that begins at or after registration closes" do
+      race.update!(registration_close: now + 20.hours)
+      FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 30.hours)
+      FactoryBot.create(:tier, requirement: payment, price: 8000, begin_at: now + 20.hours)
+      expect(due.map(&:kind)).to eq(["closing_day"])
+    end
+
+    it "reminds again when the tier start moves" do
+      upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 47.hours)
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: due.first.dedupe_key, status: "sent")
+      expect(due).to be_empty
+
+      upcoming.update!(begin_at: now + 46.hours)
+      expect(due.map(&:dedupe_key)).to eq(["tier-#{upcoming.id}-#{upcoming.begin_at.to_i}"])
+    end
   end
 
   it "uses the injected clock rather than the real one" do
     add_tiers([now - 1.week])
     upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 10.days)
     expect(due).to be_empty
-    expect(due(now + 10.days - 47.hours).map(&:dedupe_key)).to eq(["tier-#{upcoming.id}"])
+    expect(due(now + 10.days - 47.hours).map(&:dedupe_key)).to eq(["tier-#{upcoming.id}-#{upcoming.begin_at.to_i}"])
   end
 
   it "sends no reminders of any kind for waitlisted teams in a full race" do
@@ -59,24 +75,33 @@ describe ReminderSelector do
       race.update!(registration_close: now + 6.5.days)
       reminder = due.find { |r| r.kind == "closing_week" }
       expect(reminder.team).to eq(team)
-      expect(reminder.dedupe_key).to eq("close-7d")
+      expect(reminder.dedupe_key).to eq("close-7d-#{race.registration_close.to_i}")
       expect(due.map(&:kind)).not_to include("closing_day")
     end
 
     it "closing_day at 23h" do
       race.update!(registration_close: now + 23.hours)
       reminder = due.find { |r| r.kind == "closing_day" }
-      expect(reminder.dedupe_key).to eq("close-24h")
+      expect(reminder.dedupe_key).to eq("close-24h-#{race.registration_close.to_i}")
       expect(due.map(&:kind)).not_to include("closing_week")
     end
 
     it "catches up: closing_week is selected with 3 days left, but not again once sent" do
       race.update!(registration_close: now + 3.days)
       reminder = due.first
-      expect(reminder.dedupe_key).to eq("close-7d")
+      expect(reminder.dedupe_key).to eq("close-7d-#{race.registration_close.to_i}")
 
-      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-7d", status: "sent")
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: reminder.dedupe_key, status: "sent")
       expect(due(now + 1.day)).to be_empty
+    end
+
+    it "reminds again for a new week when the deadline is extended" do
+      race.update!(registration_close: now + 3.days)
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: due.first.dedupe_key, status: "sent")
+      expect(due).to be_empty
+
+      race.update!(registration_close: now + 17.days)
+      expect(due(now + 11.days).map(&:dedupe_key)).to eq(["close-7d-#{race.registration_close.to_i}"])
     end
 
     it "selects nothing between the closing_day and closing_week windows" do
@@ -104,13 +129,23 @@ describe ReminderSelector do
     end
 
     it "skips when already sent" do
-      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h", status: "sent")
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h-#{race.registration_close.to_i}", status: "sent")
       expect(due).to be_empty
     end
 
     it "retries when the earlier attempt failed" do
-      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h", status: "failed")
-      expect(due.map(&:dedupe_key)).to eq(["close-24h"])
+      key = "close-24h-#{race.registration_close.to_i}"
+      SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: key, status: "failed")
+      expect(due.map(&:dedupe_key)).to eq([key])
+    end
+
+    it "retries a reminder abandoned while queued, but not one still in flight" do
+      key = "close-24h-#{race.registration_close.to_i}"
+      sent = SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: key, status: "queued")
+      expect(due).to be_empty
+
+      sent.update_column(:updated_at, now - MailTracking::STALE_QUEUED_AFTER - 1.minute)
+      expect(due.map(&:dedupe_key)).to eq([key])
     end
   end
 end
