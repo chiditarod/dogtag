@@ -50,6 +50,12 @@ Each race has a `jsonform` field. This field can contain a [jsonform](https://gi
 - Answer keys are taken from the race's schema, so new questions need no code changes.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
+## Race time zones
+
+Each race has a `time_zone` (an IANA id, default `America/Chicago`), chosen on the race form. Datetimes are stored in UTC, but the race and tier forms read and show their date fields in the race's zone, and every page, email and the SPA display race dates in that zone. Pick the zone first, then enter dates as local wall-clock times (e.g. `00:00` on Dec 15 for a midnight opening).
+
+A deadline (registration close, final edits close) set at exactly local midnight is shown as 11:59 PM on the previous day, so a close of Feb 15 00:00 reads "February 14 ... 11:59 PM".
+
 ## Developer Setup
 
 *Tested against MacOS Mojave (10.14.2)*
