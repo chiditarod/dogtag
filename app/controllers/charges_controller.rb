@@ -21,71 +21,34 @@ class ChargesController < ApplicationController
 
   STRIPE_PARAMS = %i{amount stripeToken stripeEmail description metadata}
 
-  # TODO: add safely_call_stripe into this method and rip out all the rescue stuff.
   def create
     authorize! :create, :charges
 
-    @customer = Customer.get(current_user, params[:stripeToken], params[:stripeEmail])
-
-    unless @customer
-      Rails.logger.error "Unable to create/retrieve customer from Stripe, User ID: #{current_user.id}"
-      flash[:error] = I18n.t('charges.unable_to_get_customer')
-      url = session.delete(:prior_url)
-      return redirect_to(url)
-    end
-
+    # the amount is never taken from the client; Payments::ChargeTeam derives it from the requirement's active tier
     metadata = JSON.parse params[:metadata]
+    team = Team.find(metadata["team_id"])
+    authorize! :edit, team
+    requirement = Requirement.find(metadata["requirement_id"])
 
-    # the amount is never taken from the client; it comes from the requirement's active tier
-    req = Requirement.find(metadata['requirement_id'])
-    amount = req.amount_due_cents
-
-    if amount.nil?
-      Rails.logger.error "No active price for requirement ID: #{req.id}, User ID: #{current_user.id}"
-      flash[:error] = I18n.t('charges.no_active_price')
-      url = session.delete(:prior_url)
-      return redirect_to(url)
-    end
-
-    charge = Stripe::Charge.create(
-      :customer    => @customer.id,
-      :amount      => amount,
-      :description => params[:description],
-      :metadata    => metadata,
-      :currency    => 'usd'
+    result = Payments::ChargeTeam.call(
+      user: current_user,
+      team: team,
+      requirement: requirement,
+      stripe_token: params[:stripeToken],
+      stripe_email: params[:stripeEmail]
     )
 
-    # if we're here, we have a successful charge.
-    # create a completed_requirement object and save it.
-    # TODO: move away from instance variable
-    @cr_metadata = {
-      'customer_id' => @customer.id,
-      'charge_id' => charge.id,
-      'amount' => amount
-    }
-    req.complete(metadata['team_id'], current_user, @cr_metadata)
+    if result.ok
+      flash[:notice] = "Your card has been charged successfully."
+    else
+      flash[:error] = result.message
+    end
+    redirect_to session.delete(:prior_url)
 
-    # finally, redirect
-    flash[:notice] = "Your card has been charged successfully."
-    url = session.delete(:prior_url)
-    redirect_to url
-
-  rescue Stripe::CardError => e
-    flash[:error] = e.message
-    log_and_redirect(e)
-  rescue Stripe::InvalidRequestError => e
-    error = StripeHelper.exception_to_hash(e)
-    flash[:error] = "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: #{error[:reason]}"
-    log_and_redirect(e)
-  rescue Stripe::APIConnectionError => e
-    error = StripeHelper.exception_to_hash(e)
-    flash[:error] = "There is an issue connecting to the Stripe API: #{error[:reason]}"
-    log_and_redirect(e)
-  rescue Stripe::StripeError => e
-    flash[:error] = 'An error occured connecting to Stripe. Please email dogtag@chiditarod.org.'
-    log_and_redirect(e)
+  rescue CanCan::AccessDenied
+    raise
   rescue => e
-    flash[:error] = 'An error unrelated to processing your credit card has occured. Please email dogtag@chiditarod.org.'
+    flash[:error] = I18n.t("charges.unexpected")
     log_and_redirect(e)
   end
 

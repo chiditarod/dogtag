@@ -31,6 +31,7 @@ CLASSY_CLIENT_SECRET=          # optional
 CLASSY_ORGS=                   # comma-separated list of classy organization ids the client has access to. used to cache org members
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
+APP_HOST                       # public host for links in emails (e.g. password resets), e.g. register.yourdomain.tld. Defaults to localhost:3000, so set it in production
 REGISTRATION_UI                # spa | legacy. where racer entry points send people (see below)
 SMTP_DOMAIN                    # e.g. heroku.com
 SMTP_HOST                      # e.g. smtp.foo.tld

@@ -123,6 +123,12 @@ class Race < ApplicationRecord
     race_datetime < Time.zone.now
   end
 
+  # Captains can start a team only while registration is open; admins and operators
+  # can add one at any time (e.g. a late entry). Shared by the legacy and API flows.
+  def accepts_new_teams_from?(user)
+    open_for_registration? || user.is_any_of?(:admin, :operator)
+  end
+
   def full?
     finalized_teams.size >= max_teams
   end

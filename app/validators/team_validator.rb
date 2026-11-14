@@ -22,6 +22,6 @@ class TeamValidator < ActiveModel::Validator
     schema = JSON.parse(record.race.jsonform)['schema']
     data = record.jsonform
     errors = JSON::Validator.fully_validate(schema, data)
-    record.errors[:questions] = errors if errors.any?
+    errors.each { |message| record.errors.add(:questions, message) }
   end
 end

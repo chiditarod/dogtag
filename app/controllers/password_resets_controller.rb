@@ -30,7 +30,8 @@ class PasswordResetsController < ApplicationController
     @user = User.find_by_email(params[:email].downcase)
 
     if @user
-      @user.reset_password!(request.host_with_port)
+      # never derive the link host from the request (Host header poisoning)
+      @user.reset_password!(ActionMailer::Base.default_url_options[:host])
       flash[:notice] = "Instructions to reset your password have been emailed to you"
       redirect_to home_url
     else

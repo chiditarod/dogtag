@@ -1,0 +1,279 @@
+require "spec_helper"
+require "stripe_mock"
+
+describe Payments::ChargeTeam do
+  let(:stripe_helper) { StripeMock.create_test_helper }
+  let(:requirement) { FactoryBot.create(:payment_requirement_with_tier) }
+  let(:team) { FactoryBot.create(:team, race: requirement.race) }
+  let(:user) { team.user }
+  let(:token) { stripe_helper.generate_card_token }
+
+  before { StripeMock.start }
+  after { StripeMock.stop }
+
+  def call(overrides = {})
+    described_class.call(
+      **{ user: user, team: team, requirement: requirement, stripe_token: token, stripe_email: user.email }.merge(overrides)
+    )
+  end
+
+  it "charges the active tier amount and records a completed requirement" do
+    expect(Stripe::Charge).to receive(:create)
+      .with(hash_including(amount: 5000, currency: "usd", metadata: hash_including("team_id" => team.id, "requirement_id" => requirement.id)))
+      .and_call_original
+
+    result = call
+
+    expect(result.ok).to be(true)
+    expect(result.error_code).to be_nil
+    cr = result.completed_requirement
+    expect(cr).to be_persisted
+    expect(cr.team).to eq(team)
+    expect(cr.requirement).to eq(requirement)
+    expect(cr.user).to eq(user)
+    expect(cr.metadata).to include("amount" => 5000, "charge_id" => a_string_starting_with("test_ch"), "customer_id" => user.reload.stripe_customer_id)
+  end
+
+  it "does not call Stripe and returns :already_paid when the requirement is already completed" do
+    expect(call.ok).to be(true)
+
+    expect(Stripe::Charge).not_to receive(:create)
+    expect(Customer).not_to receive(:get)
+    result = call
+
+    expect(result.ok).to be(false)
+    expect(result.error_code).to eq(:already_paid)
+    expect(result.message).to eq(I18n.t("charges.already_paid"))
+    expect(CompletedRequirement.count).to eq(1)
+  end
+
+  it "rejects a requirement from another race without calling Stripe" do
+    other = FactoryBot.create(:payment_requirement_with_tier)
+    expect(Stripe::Charge).not_to receive(:create)
+    expect(Customer).not_to receive(:get)
+
+    result = call(requirement: other)
+
+    expect(result.error_code).to eq(:wrong_race)
+    expect(result.ok).to be(false)
+    expect(CompletedRequirement.count).to eq(0)
+  end
+
+  it "returns :no_active_tier without calling Stripe when no tier is active" do
+    bare = FactoryBot.create(:payment_requirement, race: team.race)
+    expect(Stripe::Charge).not_to receive(:create)
+    expect(Customer).not_to receive(:get)
+
+    result = call(requirement: bare)
+
+    expect(result.error_code).to eq(:no_active_tier)
+    expect(result.message).to eq(I18n.t("charges.no_active_price"))
+  end
+
+  it "returns :customer_failed when no Stripe customer can be found or created" do
+    allow(Customer).to receive(:get).and_return(nil)
+    expect(Stripe::Charge).not_to receive(:create)
+
+    result = call
+
+    expect(result.error_code).to eq(:customer_failed)
+    expect(result.message).to eq(I18n.t("charges.unable_to_get_customer"))
+  end
+
+  it "returns :card_error with Stripe's message and records nothing" do
+    StripeMock.prepare_card_error(:card_declined)
+
+    result = call
+
+    expect(result.ok).to be(false)
+    expect(result.error_code).to eq(:card_error)
+    expect(result.message).to eq("The card was declined")
+    expect(CompletedRequirement.count).to eq(0)
+  end
+
+  {
+    "an invalid request" => [Stripe::InvalidRequestError.new("bad", :foo), /Invalid parameters supplied to Stripe API.*bad/],
+    "an API connection error" => [Stripe::APIConnectionError.new("down"), /issue connecting to the Stripe API: down/],
+    "a generic Stripe error" => [Stripe::StripeError.new("boom"), /error occured connecting to Stripe/]
+  }.each do |name, (error, message)|
+    it "returns :stripe_error for #{name}" do
+      allow(Stripe::Charge).to receive(:create).and_raise(error)
+
+      result = call
+
+      expect(result.error_code).to eq(:stripe_error)
+      expect(result.message).to match(message)
+      expect(CompletedRequirement.count).to eq(0)
+    end
+  end
+
+  describe "when the outcome of the charge is unknown" do
+    before { allow(Rails.logger).to receive(:error) }
+
+    it "logs the team, requirement and user so the charge can be reconciled" do
+      allow(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("timed out"))
+
+      expect(call.error_code).to eq(:stripe_error)
+      expect(Rails.logger).to have_received(:error)
+        .with(/Charge outcome unknown.*team #{team.id}, requirement #{requirement.id}, user #{user.id}/)
+    end
+
+    it "does not flag failures that happen before the charge is attempted" do
+      allow(Customer).to receive(:get).and_raise(Stripe::APIConnectionError.new("down"))
+
+      expect(call.error_code).to eq(:stripe_error)
+      expect(Rails.logger).not_to have_received(:error).with(/Charge outcome unknown/)
+    end
+
+    it "does not flag a declined card" do
+      StripeMock.prepare_card_error(:card_declined)
+
+      expect(call.error_code).to eq(:card_error)
+      expect(Rails.logger).not_to have_received(:error).with(/Charge outcome unknown/)
+    end
+  end
+
+  it "returns :unexpected for any other error" do
+    allow(Stripe::Charge).to receive(:create).and_raise("kaboom")
+
+    result = call
+
+    expect(result.error_code).to eq(:unexpected)
+    expect(result.message).to match(/unrelated to processing your credit card/)
+  end
+
+  describe "when the completed requirement cannot be saved after a successful charge" do
+    it "logs the charge id loudly and returns :duplicate_charge on a unique index violation" do
+      allow_any_instance_of(CompletedRequirement).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+      allow(Rails.logger).to receive(:error)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:duplicate_charge)
+      expect(result.message).to eq(I18n.t("charges.duplicate_charge"))
+      expect(Rails.logger).to have_received(:error).with(/duplicate charge.*test_ch/i)
+    end
+
+    it "returns :duplicate_charge when a concurrent request recorded the requirement first" do
+      allow(requirement).to receive(:completed?).and_return(false, true)
+      allow(requirement).to receive(:complete).and_return(false)
+      allow(Rails.logger).to receive(:error)
+
+      result = call
+
+      expect(result.error_code).to eq(:duplicate_charge)
+      expect(result.message).to eq(I18n.t("charges.duplicate_charge"))
+      expect(Rails.logger).to have_received(:error).with(/duplicate charge.*test_ch/i)
+    end
+
+    it "returns :unexpected and logs the charge id when the record is not saved for another reason" do
+      allow(requirement).to receive(:complete).and_return(false)
+      allow(Rails.logger).to receive(:error)
+
+      result = call
+
+      expect(result.error_code).to eq(:unexpected)
+      expect(Rails.logger).to have_received(:error).with(/charged but not recorded.*test_ch/i)
+    end
+  end
+
+  describe "when a step after saving raises but the completed requirement was committed" do
+    it "returns success without a refund instruction" do
+      allow_any_instance_of(CompletedRequirementAuditor).to receive(:create_completed_requirement_successful).and_raise("redis down")
+      allow(Rails.logger).to receive(:error)
+
+      result = call
+
+      expect(result.ok).to be(true)
+      expect(result.completed_requirement).to eq(CompletedRequirement.find_by!(team: team, requirement: requirement))
+      expect(CompletedRequirement.count).to eq(1)
+      expect(Rails.logger).to have_received(:error).with(/charge test_ch\w* was recorded.*redis down/i)
+      expect(Rails.logger).not_to have_received(:error).with(/refund/i)
+    end
+  end
+
+  describe "requirement types" do
+    it "returns :not_payable for a plain requirement without touching Stripe" do
+      plain = FactoryBot.create(:requirement, race: team.race)
+      expect(Customer).not_to receive(:get)
+      expect(Stripe::Charge).not_to receive(:create)
+
+      result = call(requirement: plain)
+
+      expect(result.error_code).to eq(:not_payable)
+      expect(result.message).to eq(I18n.t("charges.not_payable"))
+    end
+
+    it "returns :not_payable for a mock payment requirement" do
+      mock = MockPaymentRequirement.create!(name: "Mock", race: team.race)
+      FactoryBot.create(:tier, requirement_id: mock.id)
+      expect(Customer).not_to receive(:get)
+      expect(Stripe::Charge).not_to receive(:create)
+
+      expect(call(requirement: mock).error_code).to eq(:not_payable)
+    end
+  end
+
+  describe "per-team advisory lock" do
+    it "returns :in_progress without calling Stripe while another session holds the lock" do
+      # a raw connection: pooled connections are shared with the example's transaction
+      other = PG.connect(ActiveRecord::Base.connection.raw_connection.conninfo_hash.compact)
+      begin
+        expect(other.exec("SELECT pg_try_advisory_lock(#{team.id}, #{requirement.id})").getvalue(0, 0)).to eq("t")
+        expect(Customer).not_to receive(:get)
+        expect(Stripe::Charge).not_to receive(:create)
+
+        result = call
+
+        expect(result.ok).to be(false)
+        expect(result.error_code).to eq(:in_progress)
+        expect(result.message).to eq(I18n.t("charges.in_progress"))
+        expect(CompletedRequirement.count).to eq(0)
+      ensure
+        other.close
+      end
+    end
+
+    describe "when releasing the lock goes wrong" do
+      let(:connection) { ActiveRecord::Base.connection }
+
+      before do
+        allow(Rails.logger).to receive(:error)
+        allow(connection).to receive(:select_value).and_call_original
+      end
+
+      # the stubbed unlock leaves the session lock held on the shared test connection
+      after { connection.execute("SELECT pg_advisory_unlock_all()") }
+
+      it "keeps a successful payment successful and logs the failed unlock" do
+        allow(connection).to receive(:select_value).with(/pg_advisory_unlock/).and_raise(PG::ConnectionBad, "gone")
+
+        result = call
+
+        expect(result.ok).to be(true)
+        expect(CompletedRequirement.count).to eq(1)
+        expect(Rails.logger).to have_received(:error).with(/Failed to release payment advisory lock.*PG::ConnectionBad: gone/)
+      end
+
+      it "alerts when the lock was not held at release" do
+        allow(connection).to receive(:select_value).with(/pg_advisory_unlock/).and_return(false)
+
+        expect(call.ok).to be(true)
+        expect(Rails.logger).to have_received(:error).with(/advisory lock .* was not held at release/)
+      end
+    end
+
+    it "releases the lock after a failed charge" do
+      StripeMock.prepare_card_error(:card_declined)
+      expect(call.error_code).to eq(:card_error)
+
+      other = PG.connect(ActiveRecord::Base.connection.raw_connection.conninfo_hash.compact)
+      begin
+        expect(other.exec("SELECT pg_try_advisory_lock(#{team.id}, #{requirement.id})").getvalue(0, 0)).to eq("t")
+      ensure
+        other.close
+      end
+    end
+  end
+end

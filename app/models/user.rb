@@ -57,9 +57,8 @@ class User < ApplicationRecord
 
   # ---------------------------------------------------------------
 
-  include ActionView::Helpers::NumberHelper
   def phone=(val)
-    super(number_to_phone(val, area_code: false, delimiter: '-'))
+    super(PhoneNumber.normalize(val))
   end
 
   def gets_admin_menu?

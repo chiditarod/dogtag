@@ -65,10 +65,14 @@ describe ChargesController do
       end
 
       context 'when stripe cannot find or create a customer' do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+
         before do
           expect(Customer).to receive(:get).and_return nil
           session[:prior_url] = '/prior_url/'
-          post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi', metadata: {bat: :baz} }
+          post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
         end
 
         it 'renders flash error' do
@@ -104,7 +108,7 @@ describe ChargesController do
 
       context "when Charge is successful" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
 
         let(:customer) do
           Stripe::Customer.create({
@@ -148,13 +152,13 @@ describe ChargesController do
         end
         after { StripeMock.stop }
 
-        it 'stores the charge details in cr_metadata' do
+        it 'stores the charge details on the completed_requirement' do
           cr_metadata = {
             'customer_id' => customer.id,
             'charge_id' => charge.id,
             'amount' => 5000
           }
-          expect(assigns(:cr_metadata)).to eq(cr_metadata)
+          expect(CompletedRequirement.last.metadata).to eq(cr_metadata)
         end
 
         it 'creates and saves the completed_requirement' do
@@ -171,20 +175,93 @@ describe ChargesController do
 
       context "when the requirement has no active price" do
         let(:requirement) { FactoryBot.create :payment_requirement }
-        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
 
         before do
-          expect(Customer).to receive(:get).and_return(double_customer)
           expect(Stripe::Charge).not_to receive(:create)
           session[:prior_url] = '/prior_url/'
           post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
                                   metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
         end
-        let(:double_customer) { Stripe::Customer.construct_from(id: "cus_123") }
 
         it "flashes an error and does not charge" do
           expect(flash[:error]).to eq(I18n.t("charges.no_active_price"))
           expect(CompletedRequirement.count).to eq(0)
+        end
+
+        include_examples "redirects to prior url"
+      end
+
+      context "when the team belongs to another user" do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, race: requirement.race }
+
+        it "raises AccessDenied and does not charge" do
+          session[:prior_url] = '/prior_url/'
+          expect(Customer).not_to receive(:get)
+          expect(Stripe::Charge).not_to receive(:create)
+          expect {
+            post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                    metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+          }.to raise_error(CanCan::AccessDenied)
+          expect(CompletedRequirement.count).to eq(0)
+        end
+      end
+
+      context "when the user may edit the team as an operator" do
+        let(:the_user) { FactoryBot.create :operator_user }
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, race: requirement.race }
+
+        before { StripeMock.start }
+        after { StripeMock.stop }
+
+        it "charges" do
+          session[:prior_url] = '/prior_url/'
+          customer = Stripe::Customer.create(card: stripe_helper.generate_card_token, email: 'a@b.co')
+          expect(Customer).to receive(:get).and_return(customer)
+          post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+          expect(CompletedRequirement.count).to eq(1)
+        end
+      end
+
+      context "when the requirement belongs to another race" do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, user: the_user }
+
+        before do
+          expect(Customer).not_to receive(:get)
+          expect(Stripe::Charge).not_to receive(:create)
+          session[:prior_url] = '/prior_url/'
+          post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+        end
+
+        it "flashes an error and does not charge" do
+          expect(flash[:error]).to eq(I18n.t("charges.wrong_race"))
+          expect(CompletedRequirement.count).to eq(0)
+        end
+
+        include_examples "redirects to prior url"
+      end
+
+      context "when the requirement is already paid for the team" do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+
+        before do
+          requirement.complete(team.id, the_user, { 'charge_id' => 'ch_1', 'amount' => 5000 })
+          expect(Customer).not_to receive(:get)
+          expect(Stripe::Charge).not_to receive(:create)
+          session[:prior_url] = '/prior_url/'
+          post :create, params: { amount: 100, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+        end
+
+        it "flashes an error and does not charge again" do
+          expect(flash[:error]).to eq(I18n.t("charges.already_paid"))
+          expect(CompletedRequirement.count).to eq(1)
         end
 
         include_examples "redirects to prior url"
@@ -206,7 +283,7 @@ describe ChargesController do
         after { StripeMock.stop }
 
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
         let(:stripe_metadata) { { team_id: team.id, requirement_id: requirement.id }.to_json }
 
         let(:customer) do
@@ -270,8 +347,12 @@ describe ChargesController do
               post :create, params: { amount: 10, stripeToken: 'foo', stripeEmail: customer.email, description: 'hi', metadata: stripe_metadata }
             end
 
-            it 'assigns customer' do
-              expect(assigns(:customer)).to eq(customer)
+            it 'does not record a completed_requirement' do
+              expect(CompletedRequirement.count).to eq(0)
+            end
+
+            it 'flashes the Stripe message' do
+              expect(flash[:error]).to be_present
             end
 
             let(:expected_flash_error) { I18n.t "charges.#{e}" }

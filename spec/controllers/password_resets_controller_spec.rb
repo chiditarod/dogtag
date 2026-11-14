@@ -171,6 +171,15 @@ describe PasswordResetsController do
           expect(response).to redirect_to(home_url)
         end
 
+        it 'uses the configured host, not the request Host header, for the reset link' do
+          Workers::PasswordResetEmail.jobs.clear
+          request.host = 'evil.example'
+          post :create, params: { email: user.email }
+          host = Workers::PasswordResetEmail.jobs.first['args'].first['host']
+          expect(host).to eq(ActionMailer::Base.default_url_options[:host])
+          expect(host).not_to include('evil.example')
+        end
+
         it 'finds user with case-insensitive email lookup' do
           mixed_case_email = user.email.upcase
           expect(User).to receive(:find_by_email).with(mixed_case_email.downcase).and_return(user)

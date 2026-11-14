@@ -29,9 +29,8 @@ class Person < ApplicationRecord
 
   belongs_to :team
 
-  include ActionView::Helpers::NumberHelper
   def phone=(val)
-    super(number_to_phone(val, area_code: false, delimiter: '-'))
+    super(PhoneNumber.normalize(val))
   end
 
   def self.registered_for_race(race_id)
