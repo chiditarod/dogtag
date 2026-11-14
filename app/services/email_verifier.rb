@@ -1,5 +1,6 @@
 # Checks the SentEmail log for every email a team is expected to have received
-# and reports whether each one was delivered.
+# and reports whether each one was sent. Mail goes out through MXRoute SMTP,
+# which has no event webhooks, so "delivered" means "logged as sent".
 #
 # Emails that would have gone out before tracking started (the earliest
 # SentEmail row) have no log row; those are reported as UNTRACKED and do not
@@ -9,7 +10,7 @@ class EmailVerifier
     @team = team
   end
 
-  # => [{ kind: "welcome", status: "delivered" | nil, ok: true | false, untracked: true | false }, ...]
+  # => [{ kind: "welcome", status: "sent" | nil, ok: true | false, untracked: true | false }, ...]
   def report
     @report ||= expected_rows + reminder_rows
   end
@@ -83,6 +84,6 @@ class EmailVerifier
   end
 
   def ok_status?(status)
-    status == "delivered" || (status == "sent" && ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"].blank?)
+    status == "sent"
   end
 end

@@ -8,14 +8,6 @@ describe "emails:verify" do
 
   let(:team) { FactoryBot.create(:team) }
 
-  around do |example|
-    saved = ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"]
-    ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"] = nil
-    example.run
-  ensure
-    ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"] = saved
-  end
-
   # Tracking started before the team was created.
   before do
     SentEmail.create!(kind: "password_reset", status: "sent", mailer: "UserMailer", recipient: "x@b.com", created_at: 1.day.ago)

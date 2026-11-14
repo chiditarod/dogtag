@@ -1,5 +1,5 @@
 # ActionMailer interceptor + observer that logs every outgoing email to
-# sent_emails and tags it with a SendGrid correlation id.
+# sent_emails.
 #
 # Mailers pass context to the interceptor through X-Dogtag-* headers (see
 # UserMailer#track). The interceptor reads and strips them so they never leave
@@ -87,7 +87,6 @@ class MailTracking
 
   def self.attach(message, sent_email)
     message.instance_variable_set(ID_IVAR, sent_email.id)
-    message["X-SMTPAPI"] = { unique_args: { sent_email_id: sent_email.id.to_s } }.to_json # SendGrid custom args are strings
   end
   private_class_method :attach
 end
