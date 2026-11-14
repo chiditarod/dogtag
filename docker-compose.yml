@@ -21,7 +21,7 @@ services:
       - STRIPE_PUBLISHABLE_KEY="${STRIPE_PUBLISHABLE_KEY}"
       - STRIPE_SECRET_KEY="${STRIPE_SECRET_KEY}"
         # TODO: SMTP_HOST might not be needed here
-      - SMTP_HOST=mailcatcher
+      - SMTP_HOST=mailpit
     ports:
       - "3000:3000"
 
@@ -30,7 +30,7 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres@db:5432
       - REDIS_URL=redis://redis:6379/0
-      - SMTP_HOST=mailcatcher
+      - SMTP_HOST=mailpit
       - SMTP_PORT=1025
     command: bundle exec sidekiq -t 10 -C ./config/sidekiq.yml
 
@@ -57,17 +57,13 @@ services:
     volumes:
       - redis_cache:/data
 
-  mailcatcher:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.mailcatcher
+  mailpit:
+    image: axllent/mailpit:v1.21
     networks:
       - web
-    volumes:
-      - bundle_cache:/bundle_cache
     ports:
-      - "1025:1025"
-      - "1080:1080"
+      - "1025:1025" # SMTP
+      - "8025:8025" # web UI and API
 
 networks:
   web:

@@ -31,14 +31,16 @@ CLASSY_CLIENT_SECRET=          # optional
 CLASSY_ORGS=                   # comma-separated list of classy organization ids the client has access to. used to cache org members
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
-APP_HOST                       # public host for links in emails (e.g. password resets), e.g. register.yourdomain.tld. Defaults to localhost:3000, so set it in production
-REGISTRATION_UI                # spa | legacy. where racer entry points send people (see below)
 SMTP_DOMAIN                    # e.g. heroku.com
 SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
-SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional; base64 key from SendGrid's Signed Event Webhook. Without it the webhook returns 401
+APP_HOST                       # host (and :port, if any) used in email links; production defaults to dogtag.chiditarod.org, so staging must set it
+REGISTRATION_UI=spa            # optional: use the React SPA under /register (only takes effect once the SPA is built, or VITE_DEV_SERVER is set)
+SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional: base64 verification key from SendGrid's Signed Event Webhook (POST /webhooks/sendgrid); when unset, the webhook returns 401 and "sent" counts as delivered
+SIDEKIQ_INLINE=true            # dev/e2e only: run jobs in-process without a Sidekiq worker (ignored in production)
+VITE_DEV_SERVER=http://localhost:5173  # dev only: redirect /register/* to the Vite dev server
 ```
 
 ## Email delivery tracking
@@ -55,7 +57,7 @@ Every outgoing email is logged to `sent_emails` and tagged with an `X-SMTPAPI` h
 
 Each race has a `jsonform` field. This field can contain a [jsonform](https://github.com/jsonform/jsonform) schema that is consumed and rendered as questions to the end-user during their team signup. Their responses are then saved into their team record and are included when exporting a CSV.
 
-- __NOTE:__ There's a hack that requires addition to `HACK_PARAM_WHITELIST` any time a new jsonform question is added.  See [https://github.com/chiditarod/dogtag/issues/40](https://github.com/chiditarod/dogtag/issues/40).
+- Answer keys are taken from the race's schema, so new questions need no code changes.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
 ## Developer Setup
@@ -133,7 +135,7 @@ Postgres, Redis and [Mailpit](https://mailpit.axllent.org) (local mail catcher) 
 
     docker compose up -d db redis mailpit
 
-To run the whole stack in containers instead, use `docker compose up -d`.
+The Playwright suite needs the same three services. To run the whole stack in containers instead, use `docker compose up -d`.
 
 ### Run the test suite
 
@@ -142,22 +144,37 @@ To run the whole stack in containers instead, use `docker compose up -d`.
 
 ### Mailpit
 
-Mailpit runs in the docker compose cluster. It exposes SMTP on port `1025` and a web UI at http://localhost:8025.
+[Mailpit](https://mailpit.axllent.org) runs in the docker compose cluster
+(`axllent/mailpit`). It accepts SMTP on `1025` and serves the inbox UI at
+http://localhost:8025. In development Rails delivers mail over SMTP to
+`SMTP_HOST` (default `localhost`) and `SMTP_PORT` (default `1025`), so every
+email dogtag sends shows up in the Mailpit inbox.
 
-### Registration SPA (`frontend/`)
+### End-to-end tests (Playwright)
 
-The racer registration UI is a Vite + React + TypeScript app in `frontend/`. It is built into `public/register` and served by Rails under `/register`.
+    docker compose up -d db redis mailpit
+    npm ci && npx playwright install chromium
+    npm test                                  # all specs; builds the SPA first (SPA_BUILD=skip to reuse the build)
+    npx playwright test tests/spa             # only the SPA suite
 
-    npm --prefix frontend install
-    npm --prefix frontend run dev      # Vite dev server on http://localhost:5173 (proxies /api to :3000)
-    npm --prefix frontend run build    # builds into public/register
-    npm --prefix frontend run test     # Vitest
+Playwright boots Rails with `SIDEKIQ_INLINE=true` (jobs run in-process, no
+Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. See
+`tests/README.md` for details.
 
-The redirect from Rails to the Vite dev server is opt-in: set `VITE_DEV_SERVER=http://localhost:5173`.
+## Registration SPA (React)
 
-### `REGISTRATION_UI` switch
+The new registration UI lives in `frontend/` (Vite + React + Tailwind) and is served by Rails under `/register`.
 
-`REGISTRATION_UI=spa|legacy` controls where the homepage "Get started" button and racer-facing entry points send people: `spa` goes to `/register`, `legacy` (the default) uses the original HAML flow. Setting it to `legacy` is the fallback if the SPA has a problem.
+```bash
+npm --prefix frontend ci            # install
+npm --prefix frontend test -- --run # unit tests (Vitest)
+npm --prefix frontend run build     # builds into public/register (gitignored)
+npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
+```
+
+- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link and emails point at `/register` (default is the legacy UI). It only takes effect when the SPA is built (or `VITE_DEV_SERVER` is set), so a missing build falls back to the legacy UI instead of linking to a 503. Setting it back to `legacy` is the fallback if the SPA has a problem.
+- Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
+- Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
 ## Database
 
@@ -198,7 +215,7 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Do a development cycle to incorporate any new features.
 1. Update the jsonform with any new questions and expected responses for the specific race.
 1. Launch it all locally, make sure Stripe payments are functioning and a team can finalize their registration successfully.
-1. Use Mailpit to ensure emails are being created and sent.
+1. Use Mailpit (http://localhost:8025) to ensure emails are being created and sent.
 1. Check that the SSL certificate for dogtag.chiditarod.org is up to date and working
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed
@@ -213,11 +230,6 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
 rbenv install 2.7.5
 ```
-
-### Jsonform hacks
-
-When you add fields to the jsonform, they won't persist unless you
-allowlist them in `app/controllers/questions_controller.rb`.
 
 ### Scratch Ruby Upgrade notes
 

@@ -87,7 +87,7 @@ class MailTracking
 
   def self.attach(message, sent_email)
     message.instance_variable_set(ID_IVAR, sent_email.id)
-    message["X-SMTPAPI"] = { unique_args: { sent_email_id: sent_email.id } }.to_json
+    message["X-SMTPAPI"] = { unique_args: { sent_email_id: sent_email.id.to_s } }.to_json # SendGrid custom args are strings
   end
   private_class_method :attach
 end

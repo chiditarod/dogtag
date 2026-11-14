@@ -34,6 +34,18 @@ describe Payments::ChargeTeam do
     expect(cr.metadata).to include("amount" => 5000, "charge_id" => a_string_starting_with("test_ch"), "customer_id" => user.reload.stripe_customer_id)
   end
 
+  it "creates a new Stripe customer when the saved one no longer exists" do
+    user.update!(stripe_customer_id: "cus_gone")
+
+    result = call
+
+    expect(result.ok).to be(true)
+    expect(CompletedRequirement.count).to eq(1)
+    new_id = user.reload.stripe_customer_id
+    expect(new_id).not_to eq("cus_gone")
+    expect(result.completed_requirement.metadata).to include("customer_id" => new_id)
+  end
+
   it "does not call Stripe and returns :already_paid when the requirement is already completed" do
     expect(call.ok).to be(true)
 
@@ -45,6 +57,80 @@ describe Payments::ChargeTeam do
     expect(result.error_code).to eq(:already_paid)
     expect(result.message).to eq(I18n.t("charges.already_paid"))
     expect(CompletedRequirement.count).to eq(1)
+  end
+
+  context "when registration is closed" do
+    before { requirement.race.update_column(:registration_close, 1.week.ago) }
+
+    it "returns :registration_closed without calling Stripe" do
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:registration_closed)
+      expect(result.message).to eq(I18n.t("api.errors.registration_closed"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "still allows an operator to take payment" do
+      operator = FactoryBot.create(:operator_user)
+
+      result = call(user: operator)
+
+      expect(result.ok).to be(true)
+      expect(CompletedRequirement.count).to eq(1)
+    end
+  end
+
+  context "when the race is full and the team is waitlisted" do
+    before { requirement.race.update_column(:max_teams, 0) }
+
+    it "returns :race_full without calling Stripe" do
+      expect(requirement.race.reload).to be_full
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:race_full)
+      expect(result.message).to eq(I18n.t("charges.race_full"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "still allows an operator to take payment" do
+      result = call(user: FactoryBot.create(:operator_user))
+
+      expect(result.ok).to be(true)
+      expect(CompletedRequirement.count).to eq(1)
+    end
+  end
+
+  describe "expected_amount_cents" do
+    it "returns :price_changed with the current price when it differs, without calling Stripe" do
+      expect(Stripe::Charge).not_to receive(:create)
+      expect(Customer).not_to receive(:get)
+
+      result = call(expected_amount_cents: 4000)
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:price_changed)
+      expect(result.message).to eq(I18n.t("charges.price_changed", amount: "$50.00"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "charges when it matches the current price" do
+      result = call(expected_amount_cents: 5000)
+
+      expect(result.ok).to be(true)
+      expect(result.completed_requirement.metadata["amount"]).to eq(5000)
+    end
+
+    it "charges when it is absent" do
+      expect(call(expected_amount_cents: nil).ok).to be(true)
+    end
   end
 
   it "rejects a requirement from another race without calling Stripe" do

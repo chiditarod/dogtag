@@ -50,3 +50,10 @@ if ENV['SIDEKIQ_USER'] && ENV['SIDEKIQ_PASS']
     [user, password] == [ENV['SIDEKIQ_USER'], ENV['SIDEKIQ_PASS']]
   end
 end
+
+# Run jobs synchronously in-process so end-to-end tests need no worker dyno.
+# Never enabled in production, even if the variable is set.
+if ENV["SIDEKIQ_INLINE"] == "true" && !Rails.env.production?
+  require "sidekiq/testing"
+  Sidekiq::Testing.inline!
+end

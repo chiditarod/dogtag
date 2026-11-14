@@ -286,7 +286,7 @@ Required for production:
 - `STRIPE_PUBLISHABLE_KEY` / `STRIPE_SECRET_KEY` - Stripe API keys
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_DOMAIN`
 - `DEFAULT_FROM_EMAIL`
-- `APP_HOST` - Public host for links in emails (password resets, welcome). Falls back to `localhost:3000`, which breaks those links in production
+- `APP_HOST` - Public host for links in emails (password resets, welcome). Production falls back to `dogtag.chiditarod.org`, so staging must set it
 
 Optional:
 - `REGISTRATION_UI` - `spa` or `legacy` (see above)
@@ -310,8 +310,9 @@ bundle exec rspec                           # All tests
 bundle exec rspec spec/models/              # Model tests only
 bundle exec rspec spec/path/to_spec.rb:42   # Single test at line
 
-# Run integration tests (Playwright)
+# Run integration tests (Playwright). Needs: docker compose up -d db redis mailpit
 npm test
+npx playwright test tests/spa   # SPA suite only (Mailpit inbox at http://localhost:8025)
 
 # Frontend (SPA)
 npm --prefix frontend run dev     # Vite dev server on :5173
@@ -370,9 +371,16 @@ curl -o file.dump `heroku pg:backups:url --app dogtag`
 pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development file.dump
 ```
 
+## Registration SPA
+
+- React SPA in `frontend/` (Vite, `base: "/register/"`, builds to `public/register`, gitignored). `SpaController#index` serves the build, 503 if missing, redirects to Vite only when `VITE_DEV_SERVER` is set.
+- Routes `register` and `register/*path` sit above the catch-all in `config/routes.rb`. `REGISTRATION_UI=spa` switches the homepage link (see `RegistrationUi`).
+- Frontend tests: `npm --prefix frontend test -- --run` (Vitest + jsdom + MSW; export `server` from `src/test/server.ts`). Strings via `t()` in `src/locales/en.ts`. Router exports `routes`/`BASENAME` so tests can use `createMemoryRouter`.
+- Heroku builds the SPA via root `heroku-postbuild`; local Node may differ from the pinned 24.x (ignore engine warnings).
+
 ## Known Quirks
 
-1. **JSONForm whitelist hack**: New jsonform fields must be added to `HACK_PARAM_WHITELIST` in `app/controllers/questions_controller.rb`
+1. **JSONForm answers**: Permitted answer keys come from the race's JSONForm schema; no allowlist to maintain
 
 2. **Classy ID type**: `teams.classy_id` is an integer column - ensure proper type casting when working with Classy API responses
 
@@ -380,9 +388,16 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 
 4. **Authlogic 6.x**: Password validations are explicit (not automatic) - see User model for the pattern
 
-5. **JSON API (`/api/v1`)**: Controllers inherit `Api::V1::BaseController < ActionController::Base` (not `ApplicationController`). Authlogic is activated automatically by its railtie; CSRF token comes from `GET /api/v1/csrf` and is sent as `X-CSRF-Token`. Errors render `{ error, errors }` via `render_errors`; payment errors add a stable `code` (`already_paid`, `in_progress`, `duplicate_charge`, `card_error`, ...) because their `error` is a translated sentence. Use `authorize_update!(subject, team)` for update checks so only the team's owner is told "registration closed". New teams (legacy and API) go through `Race#accepts_new_teams_from?(user)`: open registration, or any time for admins/operators. In request specs, `UserSession.find` is not usable after the request (Authlogic is deactivated); use `session_user_id` from `spec/support/api_helpers.rb`. Index endpoints that render race JSON for many races call `Race.preload_registration_data(races)` (tiers can't be preloaded through `race.requirements` because of STI); `spec/requests/api/v1/query_count_spec.rb` fails if a list endpoint adds queries per row. In request specs, `UserSession.find` is not usable after the request (Authlogic is deactivated); use `session_user_id` from `spec/support/api_helpers.rb`.
+5. **JSON API (`/api/v1`)**: Controllers inherit `Api::V1::BaseController < ActionController::Base` (not `ApplicationController`). Authlogic is activated automatically by its railtie; CSRF token comes from `GET /api/v1/csrf` and is sent as `X-CSRF-Token`. Errors render `{ error, errors }` via `render_errors`; payment errors add a stable `code` (`already_paid`, `in_progress`, `duplicate_charge`, `card_error`, ...) because their `error` is a translated sentence. Use `authorize_update!(subject, team)` for update checks so only the team's owner is told "registration closed". New teams (legacy and API) go through `Race#accepts_new_teams_from?(user)`: open registration, or any time for admins/operators. In request specs, `UserSession.find` is not usable after the request (Authlogic is deactivated); use `session_user_id` from `spec/support/api_helpers.rb`. Index endpoints that render race JSON for many races call `Race.preload_registration_data(races)` (tiers can't be preloaded through `race.requirements` because of STI); `spec/requests/api/v1/query_count_spec.rb` fails if a list endpoint adds queries per row.
 
 6. **Payments**: All card charges (legacy `ChargesController#create` and `POST /api/v1/teams/:id/payments`) go through `Payments::ChargeTeam`, which rejects a requirement from another race (`:wrong_race`), checks `requirement.completed?(team)` before touching Stripe, and always charges `requirement.amount_due_cents`. Callers must `authorize! :edit, team` first. Payments for one team+requirement are serialized with a session-level Postgres advisory lock (`:in_progress` when held); non-`PaymentRequirement` and `MockPaymentRequirement` are `:not_payable`. If the completed requirement cannot be saved after a successful charge, the charge id is logged (and sent to Rollbar) so it can be refunded by hand; a concurrent request that already recorded it yields `:duplicate_charge` (card charged, refund needed), distinct from `:already_paid` (card not charged). A Stripe error raised by `Stripe::Charge.create` itself (e.g. a timeout) logs the team/requirement/user ids since the card may have been charged. A failed or no-op advisory unlock is alerted but never changes the payment result. The lock is incompatible with PgBouncer transaction pooling. `POST /api/v1/teams/:id/mock_payments` is routed only in development/test.
+
+## E2E Learnings
+
+- Playwright boots Rails in **development** (delivery_method :smtp to Mailpit) with `SIDEKIQ_INLINE=true` (config/initializers/sidekiq.rb; ignored in production), `REGISTRATION_UI=spa`, `APP_HOST=localhost:3099`; `VITE_DEV_SERVER` must be unset. CircleCI runs the same with `RAILS_ENV=development` against the `dogtag_test` DB, since the test env uses in-memory mail delivery.
+- Each Playwright spec seeds with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) via `tests/helpers/seed.ts`; `test_seeds:cleanup` sweeps users, teams, `Race %` races and `@example.com` SentEmail rows.
+- Person records can only be created while their race is open; seed past races by moving dates with `update_columns` afterwards.
+- Roster slots repeat past-racer chips in every empty slot, so use exact text matches in locators.
 
 ## Technical Debt
 

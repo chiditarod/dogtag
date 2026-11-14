@@ -16,6 +16,32 @@ npm install
 npx playwright install
 ```
 
+## SPA end-to-end suite (`tests/spa/`)
+
+These specs drive the React registration app at `/register` and check the emails Rails sends.
+
+Prerequisites:
+
+```bash
+docker compose up -d db redis mailpit   # Postgres, Redis, and the Mailpit SMTP sink
+```
+
+- Mailpit receives mail on SMTP `localhost:1025`; browse the inbox at http://localhost:8025. Specs read it over its HTTP API via `tests/helpers/mailpit.ts` (`clearInbox`, `waitForEmail`, `countEmails`).
+- `playwright.config.ts` boots Rails (development environment, port 3099) with `APP_HOST=localhost:3099`, `SIDEKIQ_INLINE=true` (jobs run in-process, no Sidekiq worker needed), `REGISTRATION_UI=spa` and `SMTP_HOST=localhost SMTP_PORT=1025`. `VITE_DEV_SERVER` is intentionally unset so Rails serves the built SPA. An already-running server on the port is reused, so stop any dev server started without these variables.
+- `tests/global-setup.ts` builds the SPA (`npm --prefix frontend ci` if `frontend/node_modules` is missing, then `npm --prefix frontend run build`). Set `SPA_BUILD=skip` to reuse the existing `public/register` build.
+
+```bash
+npx playwright test tests/spa                 # just the SPA suite
+SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
+```
+
+Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the rows are removed by `test_seeds:cleanup` at the next global setup, not by the spec itself):
+
+- **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay the cart deposit and race registration, "You're in!", confirmation email.
+- **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer chip, the form pre-fills, Save fills the slot.
+- **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
+- **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.
+
 ## Running Tests
 
 ### Local Development
@@ -61,20 +87,23 @@ BASE_URL=https://dogtag-staging.herokuapp.com npm test
 BASE_URL=https://dogtag.herokuapp.com npm test
 ```
 
-**Note:** Before running tests against deployed environments, seed the test data:
+**Note:** Before running tests against deployed environments, seed the test data.
+All `test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern)
+abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set:
 
 ```bash
-# Staging
-heroku run rails test_seeds:basic -r staging
+# Staging (a Heroku staging app normally runs RAILS_ENV=production, so the flag is needed there too)
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r staging
 
 # Production (use with caution!)
-heroku run rails test_seeds:basic -r heroku
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r heroku
 ```
 
 ## Test Structure
 
 ### Current Tests
 
+- **`spa/*.spec.ts`**: SPA registration, past racers, password reset and reminder emails (see above).
 - **`user-joins-team.spec.ts`**: Tests the happy path where a 5th user joins a team with 4 members, triggering team finalization.
 
 ### Writing New Tests
@@ -107,8 +136,8 @@ After running tests, clean up test data:
 # Local
 bundle exec rails test_seeds:cleanup
 
-# Staging
-heroku run rails test_seeds:cleanup -r staging
+# Staging (needs the production opt-in flag, see above)
+heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:cleanup -r staging
 ```
 
 ## Debugging
@@ -142,6 +171,9 @@ To run tests in CI:
 npm ci
 npx playwright install --with-deps
 
+# Services: Postgres, Redis, and Mailpit (SMTP on 1025, API on 8025)
+# Build the SPA (or let tests/global-setup.ts do it): npm --prefix frontend ci && npm --prefix frontend run build
+
 # Seed test data
 bundle exec rails test_seeds:basic
 
@@ -160,6 +192,7 @@ Edit `playwright.config.ts` to:
 - Modify retry logic
 - Configure reporters
 - Set base URL
+- Change the environment the Rails server boots with (`serverEnv`)
 
 ## Common Issues
 

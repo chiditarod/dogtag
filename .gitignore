@@ -51,5 +51,9 @@ playwright/.cache/
 
 test.log*
 
+# React registration SPA
+/public/register
+/frontend/node_modules
+
 # Brainstorming companion mockups (local only)
 .superpowers/

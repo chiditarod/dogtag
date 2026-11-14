@@ -13,7 +13,7 @@ describe MailTracking do
     expect(e.subject).to eq("Welcome to dogTag")
     expect(e.message_id).to be_present
     expect(e.status_changed_at).to be_present
-    expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => e.id } })
+    expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => e.id.to_s } })
     expect(deliveries.last["X-Dogtag-Kind"]).to be_nil
     expect(deliveries.last["X-Dogtag-User-Id"]).to be_nil
   end
@@ -73,7 +73,7 @@ describe MailTracking do
       expect(SentEmail.count).to eq(1)
       existing.reload
       expect([existing.status, existing.error]).to eq(["sent", nil])
-      expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => existing.id } })
+      expect(JSON.parse(deliveries.last["X-SMTPAPI"].value)).to eq({ "unique_args" => { "sent_email_id" => existing.id.to_s } })
     end
 
     it "suppresses delivery while a recent row is still queued" do

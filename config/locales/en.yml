@@ -157,6 +157,8 @@ en:
     not_payable: This requirement cannot be paid by card.
     already_paid: This requirement has already been paid for this team, so your card was not charged.
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
+    race_full: This race is full. Your team is on the waitlist and can't pay yet, so your card was not charged.
+    price_changed: "The registration fee has changed to %{amount}, so your card was not charged. Please review the new price and try again."
     mock_declined: Mock payment declined
     mock_not_saved: Mock payment failed to save
     invalid_request: "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: %{reason}"

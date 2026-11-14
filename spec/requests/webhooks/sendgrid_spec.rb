@@ -24,6 +24,21 @@ describe "POST /webhooks/sendgrid" do
     post "/webhooks/sendgrid", params: body, headers: headers
   end
 
+  it "does not log the event batch (recipient emails) in the request parameters" do
+    io = StringIO.new
+    original = ActionController::Base.logger
+    ActionController::Base.logger = ActiveSupport::Logger.new(io)
+    begin
+      post_events([{ event: "delivered", email: "racer@example.com", sent_email_id: email.id }])
+    ensure
+      ActionController::Base.logger = original
+    end
+
+    expect(response).to have_http_status(:ok)
+    expect(io.string).to include("Parameters:")
+    expect(io.string).not_to include("racer@example.com")
+  end
+
   it "returns 401 and changes nothing when unsigned" do
     post_events([{ event: "delivered", sent_email_id: email.id }], signed: false)
 

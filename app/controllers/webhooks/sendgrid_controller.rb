@@ -15,6 +15,8 @@ class Webhooks::SendgridController < ActionController::Base
   NON_TERMINAL_EVENT_STATUSES = %w[sent deferred].freeze
 
   skip_forgery_protection
+  # The body is read from raw_post; don't also copy it into params.
+  wrap_parameters false
 
   def create
     payload = request.raw_post
@@ -30,6 +32,15 @@ class Webhooks::SendgridController < ActionController::Base
   end
 
   private
+
+  # Event batches arrive as a top-level JSON array (params["_json"]) full of recipient
+  # email addresses. Filter it from the "Parameters:" log line for this controller only;
+  # an app-wide :_json filter would also partially match other keys.
+  def process_action(*)
+    filters = Array(request.get_header("action_dispatch.parameter_filter")) + [/\A_json\z/]
+    request.set_header("action_dispatch.parameter_filter", filters)
+    super
+  end
 
   def signature_valid?(payload)
     SendgridSignature.valid?(
