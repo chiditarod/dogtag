@@ -112,4 +112,63 @@ describe UserMailer do
     end
     include_examples "common tests"
   end
+
+  describe "#registration_reminder" do
+    let(:race) { FactoryBot.create(:race_with_jsonform, people_per_team: 3) }
+    let(:team) { FactoryBot.create(:team, race: race, jsonform: nil) }
+    let(:payment) { FactoryBot.create(:payment_requirement_with_tier, race: race) }
+    let(:details) { { dedupe_key: "close-24h" } }
+
+    def mail_subject(team, details)
+      UserMailer.registration_reminder(team, "closing_week", details).subject
+    end
+
+    before do
+      payment
+      FactoryBot.create(:person, team: team)
+    end
+
+    it "lists what is missing and links to the team page" do
+      mail = UserMailer.registration_reminder(team, "closing_day", details)
+      body = mail.body.encoded
+
+      expect(mail.to).to eq([team.user.email])
+      expect(mail.subject).to eq("#{race.name}: Registration closes within 24 hours")
+      expect(body).to include("1 of 3")
+      expect(body).to include("team questions")
+      expect(body).to include("registration fee")
+      expect(body).to include(RegistrationUi.team_url(team))
+    end
+
+    it "omits items that are done" do
+      FactoryBot.create_list(:person, 2, team: team)
+      team.update!(jsonform: "{}")
+      FactoryBot.create(:completed_requirement, team: team, requirement: payment)
+      body = UserMailer.registration_reminder(team.reload, "closing_week", details).body.encoded
+
+      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
+      expect(body).not_to include("of 3")
+      expect(body).not_to include("team questions")
+      expect(body).not_to include("registration fee")
+    end
+
+    it "includes the new price for tier changes" do
+      begins_at = Time.zone.now + 47.hours
+      mail = UserMailer.registration_reminder(team, "tier_change", new_price_cents: 7500, begins_at: begins_at, dedupe_key: "tier-1")
+
+      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
+      expect(mail.body.encoded).to include("$75")
+    end
+
+    it "tracks the reminder with its dedupe key" do
+      UserMailer.registration_reminder(team, "closing_day", details).deliver_now
+
+      sent = SentEmail.find_by!(team_id: team.id, kind: "registration_reminder")
+      expect(sent.dedupe_key).to eq("close-24h")
+    end
+
+    it "does not expose formatting helpers as mailer actions" do
+      expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
+    end
+  end
 end
