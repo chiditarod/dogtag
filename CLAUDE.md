@@ -92,7 +92,7 @@ public/             # Public assets
 - Prefer iteration and modularization over code duplication
 - Use descriptive variable and method names (e.g., user_signed_in?, calculate_total)
 - Structure files according to Rails conventions (MVC, concerns, helpers, etc.)
-- NEVER modify the Gemfile, Rails configuration or initializers, nor RSpec configuration or test support files. All instructions are intended to be implemented within the existing application configuration and dependencies. If something appears to be missing or misconfigured, stop.
+- Ask before changing the Gemfile/Gemfile.lock, `config/initializers`, `config/environments`, `config/application.rb`, or `spec/spec_helper.rb`. Routes, locales and `config/schedule.yml` are fine to change. New helpers under `spec/support/` are fine; changes to existing ones need a reason. If something appears to be missing or misconfigured, stop and ask rather than working around it.
 
 ### Common Patterns
 - If a form url or controller redirect is to an action in the same controller, use a hash with the action name as the key e.g. `{ action: :new }`
