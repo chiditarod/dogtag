@@ -276,6 +276,18 @@ describe Race do
     end
   end
 
+  describe "#accepts_new_teams_from?" do
+    let(:closed_race) { FactoryBot.build(:race, :registration_closed) }
+
+    it "lets captains in only while registration is open, and staff any time" do
+      expect(FactoryBot.build(:race).accepts_new_teams_from?(FactoryBot.build(:user))).to be(true)
+      expect(closed_race.accepts_new_teams_from?(FactoryBot.build(:user))).to be(false)
+      expect(closed_race.accepts_new_teams_from?(FactoryBot.build(:refunder_user))).to be(false)
+      expect(closed_race.accepts_new_teams_from?(FactoryBot.build(:operator_user))).to be(true)
+      expect(closed_race.accepts_new_teams_from?(FactoryBot.build(:admin_user))).to be(true)
+    end
+  end
+
   describe '#full?' do
     before do
       @race = FactoryBot.create :race

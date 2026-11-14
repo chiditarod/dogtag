@@ -232,6 +232,39 @@ describe TeamsController do
       # edit is aliased to show, so no need to spec.
     end
 
+    describe "closed registration" do
+      let(:closed_race) { FactoryBot.create(:race, :registration_closed) }
+      let(:team_hash) { FactoryBot.attributes_for(:team).merge(race_id: closed_race.id) }
+
+      context "as a regular user" do
+        let(:the_user) { normal_user }
+
+        it "redirects #new to the race with an error" do
+          get :new, params: { race_id: closed_race.id }
+          expect(response).to redirect_to(race_path(closed_race))
+          expect(flash[:error]).to eq(I18n.t("teams.registration_closed"))
+        end
+
+        it "does not create a team" do
+          expect do
+            post :create, params: { team: team_hash }
+          end.not_to change(Team, :count)
+          expect(response).to redirect_to(race_path(closed_race))
+          expect(flash[:error]).to eq(I18n.t("teams.registration_closed"))
+        end
+      end
+
+      context "as an operator" do
+        let(:the_user) { FactoryBot.create(:operator_user) }
+
+        it "still creates the team" do
+          expect do
+            post :create, params: { team: team_hash }
+          end.to change(Team, :count).by(1)
+        end
+      end
+    end
+
     describe '#create' do
       let(:the_user) { valid_user }
 

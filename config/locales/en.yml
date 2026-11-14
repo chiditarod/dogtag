@@ -180,6 +180,7 @@ en:
       phone: Mobile Phone
       we_will_sms: Please be accurate; we will send you important texts on race day
   teams:
+    registration_closed: Registration is closed for this race, so new teams can't be created.
     new:
       title: Team Creation
 
@@ -343,7 +344,7 @@ en:
     registration_reminder:
       subject_tier_change: "Registration price changes %{date}"
       subject_closing_week: "Registration closes %{date}"
-      subject_closing_day: Registration closes in 24 hours
+      subject_closing_day: Registration closes within 24 hours
       racers: "racers (%{count} of %{total})"
       questions: team questions
       fee: registration fee

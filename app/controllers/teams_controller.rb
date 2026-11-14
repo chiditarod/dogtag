@@ -50,8 +50,10 @@ class TeamsController < ApplicationController
       return redirect_to races_path
     end
 
-    session[:signup_race_id] = params[:race_id]
     @race = Race.find(params[:race_id])
+    return redirect_registration_closed(@race) unless @race.accepts_new_teams_from?(current_user)
+
+    session[:signup_race_id] = params[:race_id]
     @team = Team.new
     @team.race = @race
   end
@@ -65,6 +67,7 @@ class TeamsController < ApplicationController
     @team.user = current_user
     race_id = params[:race_id] || session[:signup_race_id]
     @team.race ||= Race.find(race_id)
+    return redirect_registration_closed(@team.race) unless @team.race.accepts_new_teams_from?(current_user)
 
     if @team.save
       flash.now[:notice] = I18n.t('create_success')
@@ -122,6 +125,11 @@ class TeamsController < ApplicationController
   end
 
   private
+
+  def redirect_registration_closed(race)
+    flash[:error] = I18n.t("teams.registration_closed")
+    redirect_to race_path(race)
+  end
 
   def team_params
     params
