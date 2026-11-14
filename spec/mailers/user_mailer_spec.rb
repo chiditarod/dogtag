@@ -133,7 +133,7 @@ describe UserMailer do
       body = mail.body.encoded
 
       expect(mail.to).to eq([team.user.email])
-      expect(mail.subject).to eq("#{race.name}: Registration closes in 24 hours")
+      expect(mail.subject).to eq("#{race.name}: Registration closes within 24 hours")
       expect(body).to include("1 of 3")
       expect(body).to include("team questions")
       expect(body).to include("registration fee")
@@ -146,7 +146,7 @@ describe UserMailer do
       FactoryBot.create(:completed_requirement, team: team, requirement: payment)
       body = UserMailer.registration_reminder(team.reload, "closing_week", details).body.encoded
 
-      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
+      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
       expect(body).not_to include("of 3")
       expect(body).not_to include("team questions")
       expect(body).not_to include("registration fee")
@@ -156,7 +156,7 @@ describe UserMailer do
       begins_at = Time.zone.now + 47.hours
       mail = UserMailer.registration_reminder(team, "tier_change", new_price_cents: 7500, begins_at: begins_at, dedupe_key: "tier-1")
 
-      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
+      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
       expect(mail.body.encoded).to include("$75")
     end
 
@@ -165,6 +165,10 @@ describe UserMailer do
 
       sent = SentEmail.find_by!(team_id: team.id, kind: "registration_reminder")
       expect(sent.dedupe_key).to eq("close-24h")
+    end
+
+    it "does not expose formatting helpers as mailer actions" do
+      expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
     end
   end
 end

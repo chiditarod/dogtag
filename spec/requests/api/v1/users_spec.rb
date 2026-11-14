@@ -35,6 +35,7 @@ describe "API v1 users", type: :request do
 
     it "ignores roles" do
       valid_params[:user][:roles] = ["admin"]
+      valid_params[:user][:roles_mask] = 1
       post "/api/v1/users", params: valid_params, as: :json
       expect(response).to have_http_status(:created)
       expect(User.find_by!(email: "ada@example.com").is?(:admin)).to be(false)

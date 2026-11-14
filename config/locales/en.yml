@@ -159,6 +159,8 @@ en:
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
     race_full: This race is full. Your team is on the waitlist and can't pay yet, so your card was not charged.
     price_changed: "The registration fee has changed to %{amount}, so your card was not charged. Please review the new price and try again."
+    mock_declined: Mock payment declined
+    mock_not_saved: Mock payment failed to save
     invalid_request: "Invalid parameters supplied to Stripe API. Please email dogtag@chiditarod.org with this info: %{reason}"
     api_connection: "There is an issue connecting to the Stripe API: %{reason}"
     stripe_error: An error occured connecting to Stripe. Please email dogtag@chiditarod.org.
@@ -180,6 +182,7 @@ en:
       phone: Mobile Phone
       we_will_sms: Please be accurate; we will send you important texts on race day
   teams:
+    registration_closed: Registration is closed for this race, so new teams can't be created.
     new:
       title: Team Creation
 
@@ -343,7 +346,7 @@ en:
     registration_reminder:
       subject_tier_change: "Registration price changes %{date}"
       subject_closing_week: "Registration closes %{date}"
-      subject_closing_day: Registration closes in 24 hours
+      subject_closing_day: Registration closes within 24 hours
       racers: "racers (%{count} of %{total})"
       questions: team questions
       fee: registration fee

@@ -4,7 +4,7 @@ namespace :emails do
     abort "Usage: rake emails:verify[team_id]" if args[:team_id].blank?
 
     verifier = EmailVerifier.new(Team.find(args[:team_id]))
-    verifier.print
+    verifier.print_report
     exit 1 unless verifier.ok?
   end
 end

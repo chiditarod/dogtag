@@ -63,6 +63,15 @@ describe "API v1 people", type: :request do
       expect(json["error"]).to eq("Registration is closed for this race.")
     end
 
+    it "does not tell a refunder that registration is closed while it is open" do
+      api_login(FactoryBot.create(:refunder_user))
+      expect do
+        post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
+      end.not_to change(Person, :count)
+      expect(response).to have_http_status(:forbidden)
+      expect(json["error"]).not_to eq(I18n.t("api.errors.registration_closed"))
+    end
+
     it "returns 403 after the final edit date" do
       late_team = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race, :after_final_edits_window))
       post "/api/v1/teams/#{late_team.id}/people", params: { person: person_params }, as: :json

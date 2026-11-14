@@ -15,9 +15,9 @@ class PastRacers
       .order(updated_at: :desc)
       .to_a
 
-    current_emails = @team.people.pluck(:email).map(&:downcase)
+    current_emails = @team.people.pluck(:email).compact.map(&:downcase)
     people
-      .reject { |person| person.email.match?(PLACEHOLDER_EMAIL) || current_emails.include?(person.email.downcase) }
+      .reject { |person| person.email.blank? || person.email.match?(PLACEHOLDER_EMAIL) || current_emails.include?(person.email.downcase) }
       .uniq { |person| person.email.downcase }
   end
 end

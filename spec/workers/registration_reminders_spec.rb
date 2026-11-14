@@ -10,7 +10,7 @@ describe Workers::RegistrationReminders do
     worker.run({})
     expect(deliveries.count).to eq(1)
     expect(deliveries.first.to).to eq([team.user.email])
-    expect(SentEmail.where(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h").count).to eq(1)
+    expect(SentEmail.where(team_id: team.id, kind: "registration_reminder", dedupe_key: "close-24h-#{race.registration_close.to_i}").count).to eq(1)
 
     worker.run({})
     expect(deliveries.count).to eq(1)
