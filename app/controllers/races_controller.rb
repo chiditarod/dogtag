@@ -76,7 +76,11 @@ class RacesController < ApplicationController
 
   def update
     @race = Race.find params[:id]
+    previous_zone = @race.time_zone
     try_to_update(@race, prepare_params(race_params), edit_race_url(@race))
+    return unless @race.saved_change_to_time_zone?
+
+    flash[:notice] = "#{t('update_success')} #{t('.time_zone_changed', from: helpers.time_zone_label(previous_zone), to: helpers.time_zone_label(@race.time_zone))}"
   end
 
   def destroy
