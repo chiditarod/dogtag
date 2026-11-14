@@ -28,6 +28,7 @@ class TiersController < ApplicationController
 
   def update
     @tier = Tier.find(params[:id])
+    @requirement = @tier.requirement
     try_to_update(@tier, tier_params, edit_race_requirement_url(race_id: @tier.requirement.race.id, id: @tier.requirement.id))
   end
 
@@ -77,6 +78,6 @@ class TiersController < ApplicationController
   end
 
   def tier_params
-    params.require(:tier).permit(:price, :begin_at, :requirement_id)
+    params.expect(tier: [:price, :begin_at, :requirement_id])
   end
 end

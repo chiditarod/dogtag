@@ -271,6 +271,42 @@ describe RacesController do
         expect(response.body).to include("Central Time (CST/CDT)")
         expect(page.at_css("#race_time_zone option[selected]")["value"]).to eq("America/Chicago")
       end
+
+      it "labels the zone select and lets the field labels follow the selected zone" do
+        get :edit, params: { id: FactoryBot.create(:race).id }
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("label[for=race_time_zone]")).to be_present
+        expect(page.css(".js-time-zone-label").map(&:text).uniq).to eq(["Central Time (CST/CDT)"])
+        expect(page.at_css("#race_time_zone option[value='America/Los_Angeles']")["data-zone-label"]).to eq("Pacific Time (PST/PDT)")
+      end
+    end
+
+    describe "#create re-rendering after a failed save" do
+      render_views
+
+      def datetime_fields(name, year, month, day)
+        { "#{name}(1i)" => year.to_s, "#{name}(2i)" => month.to_s, "#{name}(3i)" => day.to_s,
+          "#{name}(4i)" => "00", "#{name}(5i)" => "00", "#{name}(6i)" => "00" }
+      end
+
+      it "shows the submitted local times in the chosen zone" do
+        race = { name: "", max_teams: 10, people_per_team: 5, time_zone: "America/Los_Angeles" }
+          .merge(datetime_fields("registration_open", 2026, 12, 15))
+          .merge(datetime_fields("registration_close", 2027, 2, 15))
+          .merge(datetime_fields("final_edits_close", 2027, 2, 20))
+          .merge(datetime_fields("race_datetime", 2027, 3, 6))
+
+        expect { post :create, params: { race: race } }.not_to change(Race, :count)
+
+        expect(response.status).to eq(200)
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#race_registration_open_3i option[selected]")["value"]).to eq("15")
+        expect(page.at_css("#race_registration_open_4i option[selected]")["value"]).to eq("00")
+        expect(page.at_css("#race_registration_close_3i option[selected]")["value"]).to eq("15")
+        expect(page.at_css("#race_time_zone option[selected]")["value"]).to eq("America/Los_Angeles")
+        expect(page.css(".js-time-zone-label").map(&:text).uniq).to eq(["Pacific Time (PST/PDT)"])
+      end
     end
 
     describe '#create' do
