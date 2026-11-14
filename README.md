@@ -148,6 +148,9 @@ The Playwright suite needs the same three services. To run the whole stack in co
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
 
+    bin/check                                  # quiet run of rspec, vitest, tsc and the SPA build
+    bin/check e2e                              # Playwright (needs db, redis, mailpit running)
+
 ### Mailpit
 
 [Mailpit](https://mailpit.axllent.org) runs in the docker compose cluster

@@ -89,6 +89,7 @@ public/             # Public assets
 ### Running Tests
 - Use `bundle exec rspec` to run all tests (there is no `bin/rspec`)
 - Use `bundle exec rspec [path]` for specific tests
+- Prefer `bin/check` (all suites, quiet: one summary line per step, failure details only, full logs in `tmp/check/`); `bin/check rspec|frontend|build|e2e` runs one step
 
 ## Coding Guidelines
 
