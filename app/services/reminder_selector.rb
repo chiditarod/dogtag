@@ -2,7 +2,8 @@
 # races that are open for registration and not full (teams in a full race are
 # waitlisted and are contacted when registration closes). A reminder is skipped once a
 # SentEmail exists for its (team, "registration_reminder", dedupe_key) unless
-# that delivery failed, in which case it is retried.
+# that delivery failed or was abandoned while queued (see
+# MailTracking::STALE_QUEUED_AFTER), in which case it is retried.
 class ReminderSelector
   Reminder = Data.define(:team, :kind, :dedupe_key, :details)
 
@@ -77,6 +78,8 @@ class ReminderSelector
 
   def already_sent?(reminder)
     SentEmail.where(team_id: reminder.team.id, kind: "registration_reminder", dedupe_key: reminder.dedupe_key)
-      .where.not(status: "failed").exists?
+      .where.not(status: "failed")
+      .where.not("status = 'queued' AND updated_at < ?", now - MailTracking::STALE_QUEUED_AFTER)
+      .exists?
   end
 end

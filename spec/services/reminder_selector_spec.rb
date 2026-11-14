@@ -138,5 +138,14 @@ describe ReminderSelector do
       SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: key, status: "failed")
       expect(due.map(&:dedupe_key)).to eq([key])
     end
+
+    it "retries a reminder abandoned while queued, but not one still in flight" do
+      key = "close-24h-#{race.registration_close.to_i}"
+      sent = SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: key, status: "queued")
+      expect(due).to be_empty
+
+      sent.update_column(:updated_at, now - MailTracking::STALE_QUEUED_AFTER - 1.minute)
+      expect(due.map(&:dedupe_key)).to eq([key])
+    end
   end
 end
