@@ -14,6 +14,8 @@
       = label_tag :begin_at, t('.begin_at')
     .col-sm-8
       = f.datetime_select :begin_at, :class => 'form-control'
+      - if (race = @tier.requirement&.race)
+        = time_zone_label(race.time_zone)
       %br
       %small= t('.begin_at_instructions')
 

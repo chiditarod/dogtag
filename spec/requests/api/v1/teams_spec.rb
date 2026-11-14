@@ -42,7 +42,7 @@ describe "API v1 teams", type: :request do
         expect(team.user).to eq(user)
         expect(team.race).to eq(race)
         expect(json["team"]).to include("id" => team.id, "name" => "Cart Wheelers", "description" => "We roll", "experience" => 2)
-        expect(json["team"]["race"]["id"]).to eq(race.id)
+        expect(json["team"]["race"]).to include("id" => race.id, "time_zone" => "America/Chicago")
         expect(json["team"]["people"]).to eq([])
         expect(json["team"]["checklist"]["racers"]).to include("filled" => 0, "total" => race.people_per_team)
       end

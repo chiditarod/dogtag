@@ -34,7 +34,7 @@
                   $
                   = price_in_dollars_and_cents(tier.price)
                   \:
-                  = tier.begin_at.strftime("%b %e, %Y")
+                  = human_date_short(req.race.local(tier.begin_at))
 
     - if @race.full?
       %h4.text-warning

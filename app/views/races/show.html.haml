@@ -9,7 +9,7 @@
             %li.fa.fa-edit
         = @race.name
         %small
-          = human_readable @race.race_datetime
+          = human_readable @race.local(@race.race_datetime)
       = link_to race_registrations_url(:race_id => @race.id) do
         = @race.finalized_teams.size
         = t('.teams_registered')

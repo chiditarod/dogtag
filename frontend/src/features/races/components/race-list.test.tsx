@@ -24,12 +24,31 @@ describe('RaceList', () => {
     const card = (await screen.findByText('CHIditarod 2027')).closest('li')!;
     expect(within(card).getByText('Sat, Mar 6, 2027')).toBeInTheDocument();
     expect(
-      within(card).getByText('Registration closes Sat, Feb 20, 2027'),
+      within(card).getByText('Registration closes Fri, Feb 19, 2027'),
     ).toBeInTheDocument();
     expect(within(card).getByText(t('races.open'))).toBeInTheDocument();
     expect(
       within(card).getByRole('link', { name: t('races.start') }),
     ).toHaveAttribute('href', '/register/races/1/teams/new');
+  });
+
+  it("shows dates in the race's own time zone", async () => {
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2027-01-10T12:00:00Z') });
+    mockRaces(
+      buildRace({
+        time_zone: 'America/Los_Angeles',
+        // 00:00 Mar 6 in Chicago, still Mar 5 in Los Angeles.
+        race_datetime: '2027-03-06T06:00:00.000Z',
+        // Midnight Feb 15 in Los Angeles: a deadline, so shown as Feb 14.
+        registration_close: '2027-02-15T08:00:00.000Z',
+      }),
+    );
+    renderApp('/');
+    const card = (await screen.findByText('CHIditarod 2027')).closest('li')!;
+    expect(within(card).getByText('Fri, Mar 5, 2027')).toBeInTheDocument();
+    expect(
+      within(card).getByText('Registration closes Sun, Feb 14, 2027'),
+    ).toBeInTheDocument();
   });
 
   it('shows a closed race with the closed badge and no start button', async () => {

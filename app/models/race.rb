@@ -26,7 +26,16 @@ class Race < ApplicationRecord
     allow_nil: true
   }
   validates :name, uniqueness: true
+  validate :time_zone_must_be_iana
   validates_with RaceValidator
+
+  # Datetimes are stored in UTC; the race's IANA time zone is how admins
+  # enter them and how racers see them.
+  DEFAULT_TIME_ZONE = "America/Chicago".freeze
+
+  def self.valid_time_zone?(name)
+    name.is_a?(String) && name.present? && ActiveSupport::TimeZone[name]&.tzinfo&.name == name
+  end
 
   # todo: validate filter_field based on contents of jsonform schema
 
@@ -65,6 +74,9 @@ class Race < ApplicationRecord
     "21st year finally legal",
     "22nd year: old enough to know better"
   ].freeze
+
+  # The given time in this race's zone, e.g. race.local(race.registration_close).
+  def local(time) = time&.in_time_zone(time_zone)
 
   # Labels for the "years racing" select; the index is the number of years.
   def experience_labels
@@ -192,5 +204,11 @@ class Race < ApplicationRecord
     {
       'money_raised' => money_raised
     }
+  end
+
+  private
+
+  def time_zone_must_be_iana
+    errors.add(:time_zone, "must be an IANA time zone, e.g. #{DEFAULT_TIME_ZONE}") unless Race.valid_time_zone?(time_zone)
   end
 end

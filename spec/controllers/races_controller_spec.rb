@@ -222,6 +222,91 @@ describe RacesController do
           expect(race.reload.filter_field).to eq('field1,field2,field3')
         end
       end
+
+      context "with datetimes" do
+        let(:race) do
+          FactoryBot.create :race, registration_open: Time.utc(2026, 11, 1), registration_close: Time.utc(2027, 2, 15),
+            final_edits_close: Time.utc(2027, 2, 20), race_datetime: Time.utc(2027, 3, 6)
+        end
+
+        it "parses submitted datetimes in the submitted time zone" do
+          patch :update, params: { id: race.id, race: { time_zone: "America/Los_Angeles", registration_open: "2026-12-15 00:00:00" } }
+
+          race.reload
+          expect(race.time_zone).to eq("America/Los_Angeles")
+          expect(race.registration_open).to eq(Time.utc(2026, 12, 15, 8))
+        end
+
+        it "parses submitted datetimes in the race's stored zone when no zone is submitted" do
+          race.update!(time_zone: "America/New_York")
+          patch :update, params: { id: race.id, race: { registration_open: "2026-12-15 00:00:00" } }
+
+          expect(race.reload.registration_open).to eq(Time.utc(2026, 12, 15, 5))
+        end
+
+        it "parses datetime_select fields in the race's zone" do
+          patch :update, params: { id: race.id, race: {
+            time_zone: "America/Chicago",
+            "registration_open(1i)" => "2026", "registration_open(2i)" => "12", "registration_open(3i)" => "15",
+            "registration_open(4i)" => "00", "registration_open(5i)" => "00", "registration_open(6i)" => "00"
+          } }
+
+          expect(race.reload.registration_open).to eq(Time.utc(2026, 12, 15, 6))
+        end
+      end
+    end
+
+    describe "#edit with a time zone" do
+      render_views
+
+      it "shows datetime fields in the race's zone and names the zone" do
+        race = FactoryBot.create :race, registration_open: Time.utc(2026, 12, 15, 6), registration_close: Time.utc(2027, 2, 15, 3),
+          final_edits_close: Time.utc(2027, 2, 20, 6), race_datetime: Time.utc(2027, 3, 6, 16)
+        get :edit, params: { id: race.id }
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#race_registration_open_3i option[selected]")["value"]).to eq("15")
+        expect(page.at_css("#race_registration_open_4i option[selected]")["value"]).to eq("00")
+        expect(page.at_css("#race_registration_close_3i option[selected]")["value"]).to eq("14")
+        expect(response.body).to include("Central Time (CST/CDT)")
+        expect(page.at_css("#race_time_zone option[selected]")["value"]).to eq("America/Chicago")
+      end
+
+      it "labels the zone select and lets the field labels follow the selected zone" do
+        get :edit, params: { id: FactoryBot.create(:race).id }
+
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("label[for=race_time_zone]")).to be_present
+        expect(page.css(".js-time-zone-label").map(&:text).uniq).to eq(["Central Time (CST/CDT)"])
+        expect(page.at_css("#race_time_zone option[value='America/Los_Angeles']")["data-zone-label"]).to eq("Pacific Time (PST/PDT)")
+      end
+    end
+
+    describe "#create re-rendering after a failed save" do
+      render_views
+
+      def datetime_fields(name, year, month, day)
+        { "#{name}(1i)" => year.to_s, "#{name}(2i)" => month.to_s, "#{name}(3i)" => day.to_s,
+          "#{name}(4i)" => "00", "#{name}(5i)" => "00", "#{name}(6i)" => "00" }
+      end
+
+      it "shows the submitted local times in the chosen zone" do
+        race = { name: "", max_teams: 10, people_per_team: 5, time_zone: "America/Los_Angeles" }
+          .merge(datetime_fields("registration_open", 2026, 12, 15))
+          .merge(datetime_fields("registration_close", 2027, 2, 15))
+          .merge(datetime_fields("final_edits_close", 2027, 2, 20))
+          .merge(datetime_fields("race_datetime", 2027, 3, 6))
+
+        expect { post :create, params: { race: race } }.not_to change(Race, :count)
+
+        expect(response.status).to eq(200)
+        page = Nokogiri::HTML(response.body)
+        expect(page.at_css("#race_registration_open_3i option[selected]")["value"]).to eq("15")
+        expect(page.at_css("#race_registration_open_4i option[selected]")["value"]).to eq("00")
+        expect(page.at_css("#race_registration_close_3i option[selected]")["value"]).to eq("15")
+        expect(page.at_css("#race_time_zone option[selected]")["value"]).to eq("America/Los_Angeles")
+        expect(page.css(".js-time-zone-label").map(&:text).uniq).to eq(["Pacific Time (PST/PDT)"])
+      end
     end
 
     describe '#create' do
@@ -248,6 +333,46 @@ describe RacesController do
         expect do
           post :create, params: { :race => valid_race_hash }
         end.to change(Race, :count).by 1
+      end
+
+      context "with time_zone=America/Chicago" do
+        let(:dates) do
+          { registration_open: "2026-12-15 00:00:00", registration_close: "2027-02-15 00:00:00",
+            final_edits_close: "2027-02-20 00:00:00", race_datetime: "2027-03-06 10:00:00" }
+        end
+
+        it "stores a winter midnight as 06:00 UTC" do
+          post :create, params: { race: valid_race_hash.merge(dates).merge(time_zone: "America/Chicago") }
+
+          race = Race.order(:created_at).last
+          expect(race.time_zone).to eq("America/Chicago")
+          expect(race.registration_open).to eq(Time.utc(2026, 12, 15, 6))
+          expect(race.registration_close).to eq(Time.utc(2027, 2, 15, 6))
+          expect(race.race_datetime).to eq(Time.utc(2027, 3, 6, 16))
+        end
+
+        it "stores a summer midnight as 05:00 UTC" do
+          summer = { registration_open: "2027-07-01 00:00:00", registration_close: "2027-08-01 00:00:00",
+                     final_edits_close: "2027-08-15 00:00:00", race_datetime: "2027-09-01 00:00:00" }
+          post :create, params: { race: valid_race_hash.merge(summer).merge(time_zone: "America/Chicago") }
+
+          expect(Race.order(:created_at).last.registration_open).to eq(Time.utc(2027, 7, 1, 5))
+        end
+
+        it "honors a different zone" do
+          post :create, params: { race: valid_race_hash.merge(dates).merge(time_zone: "America/Los_Angeles") }
+
+          race = Race.order(:created_at).last
+          expect(race.time_zone).to eq("America/Los_Angeles")
+          expect(race.registration_open).to eq(Time.utc(2026, 12, 15, 8))
+        end
+
+        it "rejects an unknown zone" do
+          expect do
+            post :create, params: { race: valid_race_hash.merge(dates).merge(time_zone: "Mars/Olympus_Mons") }
+          end.not_to change(Race, :count)
+          expect(response.status).to eq(200)
+        end
       end
 
       context 'upon success' do

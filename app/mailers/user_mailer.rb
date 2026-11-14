@@ -18,8 +18,6 @@ class UserMailer < ActionMailer::Base
 
   helper MoneyHelper, DateHelper
 
-  CENTRAL_TIME = "Central Time (US & Canada)".freeze
-
   # Record delivery failures on the tracked sent_emails row, then re-raise so
   # job retries still happen.
   rescue_from StandardError do |e|
@@ -60,7 +58,7 @@ class UserMailer < ActionMailer::Base
     @team = team
     @kind = kind
     @price = "$#{view_context.price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
-    @date = central_time_label(details[:begins_at] || team.race.registration_close)
+    @date = reminder_date(team.race, details[:begins_at])
     @missing = missing_items(team)
     @team_url = RegistrationUi.team_url(team)
     track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
@@ -69,10 +67,12 @@ class UserMailer < ActionMailer::Base
 
   private
 
-  # e.g. "November 13, 2026 at 5:59 PM CST"
-  def central_time_label(time)
-    central = time.in_time_zone(CENTRAL_TIME)
-    "#{view_context.human_readable(central)} #{central.strftime("%Z")}".squish
+  # A tier change shows when the new price begins; otherwise the reminder is
+  # about the registration deadline.
+  def reminder_date(race, begins_at)
+    return view_context.human_readable(race.local(begins_at)) if begins_at
+
+    view_context.deadline_readable(race.local(race.registration_close))
   end
 
   def missing_items(team)

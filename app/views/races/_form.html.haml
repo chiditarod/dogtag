@@ -12,31 +12,38 @@
 
   .form-group
     .col-sm-4.control-label
+      = f.label :time_zone, t(".time_zone")
+    .col-sm-8
+      = f.select :time_zone, time_zone_options(@race.time_zone), {}, class: "form-control"
+      %small= t(".time_zone_help")
+
+  .form-group
+    .col-sm-4.control-label
       = label_tag :registration_open, t('.registration_open')
     .col-sm-8
       = f.datetime_select :registration_open, :include_seconds => true, :class => 'form-control'
-      = Time.zone
+      %span.js-time-zone-label= time_zone_label(@race.time_zone)
 
   .form-group
     .col-sm-4.control-label
       = label_tag :registration_close, t('.registration_close')
     .col-sm-8
       = f.datetime_select :registration_close, :include_seconds => true, :class => 'form-control'
-      = Time.zone
+      %span.js-time-zone-label= time_zone_label(@race.time_zone)
 
   .form-group
     .col-sm-4.control-label
       = label_tag :final_edits_close, t('.final_edits_close')
     .col-sm-8
       = f.datetime_select :final_edits_close, :include_seconds => true, :class => 'form-control'
-      = Time.zone
+      %span.js-time-zone-label= time_zone_label(@race.time_zone)
 
   .form-group
     .col-sm-4.control-label
       = label_tag :race_datetime, t('.race_datetime')
     .col-sm-8
       = f.datetime_select :race_datetime, :class => 'form-control'
-      = Time.zone
+      %span.js-time-zone-label= time_zone_label(@race.time_zone)
 
   .form-group
     .col-sm-4.control-label

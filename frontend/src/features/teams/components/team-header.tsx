@@ -1,16 +1,19 @@
 import { ProgressSegments } from '@/components/ui/progress-segments';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
-import { formatDate } from '@/lib/dates';
+import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
 import { isFeeOpensLater } from '@/features/teams/utils';
 
 function remainingText(team: Team): string {
   const { remaining, finalized, fee } = team.checklist;
+  const { time_zone } = team.race;
   if (finalized) return t('team.youreIn');
   if (remaining === 0) {
     return isFeeOpensLater(fee)
-      ? t('team.nothingYet', { date: formatDate(fee.next_tier!.begins_at) })
+      ? t('team.nothingYet', {
+          date: formatDate(fee.next_tier!.begins_at, time_zone),
+        })
       : t('team.almostThere');
   }
   const unit = remaining === 1 ? 'teams.thingsLeft_one' : 'teams.thingsLeft_other';
@@ -37,9 +40,9 @@ export function TeamHeader({ team }: { team: Team }) {
       <div>
         <h1 className="font-display text-2xl font-semibold">{team.name}</h1>
         <p className="font-semibold">{race.name}</p>
-        <p className="text-sm">{formatDate(race.race_datetime)}</p>
+        <p className="text-sm">{formatDate(race.race_datetime, race.time_zone)}</p>
         <p className="text-sm text-navy/70">
-          {`${t('team.closes')} ${formatDate(race.registration_close)}`}
+          {`${t('team.closes')} ${formatDeadline(race.registration_close, race.time_zone)}`}
         </p>
       </div>
       <p

@@ -110,6 +110,13 @@ describe TiersController do
           expect(response).to redirect_to(edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id)
         end
       end
+
+      it "parses begin_at in the race's time zone" do
+        @tier.requirement.race.update!(time_zone: "America/Los_Angeles")
+        patch :update, params: { id: @tier.id, tier: { begin_at: "2027-01-01 00:00:00" } }
+
+        expect(@tier.reload.begin_at).to eq(Time.utc(2027, 1, 1, 8))
+      end
     end
 
     describe '#edit' do
@@ -130,6 +137,20 @@ describe TiersController do
           expect(assigns(:tier)).to eq(@tier)
           expect(assigns(:requirement)).to eq(@tier.requirement)
           expect(response.status).to eq(200)
+        end
+      end
+
+      context "rendering the form" do
+        render_views
+
+        it "shows begin_at in the race's zone and names the zone" do
+          @tier.update!(begin_at: Time.utc(2027, 1, 1, 6))
+          get :edit, params: { id: @tier.id }
+
+          page = Nokogiri::HTML(response.body)
+          expect(page.at_css("#tier_begin_at_3i option[selected]")["value"]).to eq("1")
+          expect(page.at_css("#tier_begin_at_4i option[selected]")["value"]).to eq("00")
+          expect(response.body).to include("Central Time (CST/CDT)")
         end
       end
     end
@@ -171,6 +192,21 @@ describe TiersController do
         expect do
           post :create, params: { :tier => valid_tier_hash.merge(:requirement_id => @req.id) }
         end.to change(Tier, :count).by 1
+      end
+
+      it "parses begin_at in the race's time zone" do
+        post :create, params: { tier: { price: 6000, begin_at: "2026-12-15 00:00:00", requirement_id: @req.id } }
+
+        expect(Tier.order(:created_at).last.begin_at).to eq(Time.utc(2026, 12, 15, 6))
+      end
+
+      it "parses datetime_select fields in the race's time zone" do
+        post :create, params: { tier: {
+          price: 6000, requirement_id: @req.id,
+          "begin_at(1i)" => "2027", "begin_at(2i)" => "1", "begin_at(3i)" => "1", "begin_at(4i)" => "00", "begin_at(5i)" => "00"
+        } }
+
+        expect(Tier.order(:created_at).last.begin_at).to eq(Time.utc(2027, 1, 1, 6))
       end
 
       context 'when saving fails' do

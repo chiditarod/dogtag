@@ -16,7 +16,10 @@
 require 'csv'
 
 class RacesController < ApplicationController
+  include RaceTimeZone
+
   before_action :require_user, :except => [:index, :show]
+  around_action :use_race_time_zone, only: [:new, :create, :edit, :update]
   load_and_authorize_resource
 
   def index
@@ -83,6 +86,15 @@ class RacesController < ApplicationController
 
   private
 
+  # The zone selected on the submitted form wins, so datetimes are read in
+  # the zone the admin saw selected.
+  def race_time_zone
+    submitted = params[:race][:time_zone] if params[:race].is_a?(ActionController::Parameters)
+    return submitted if Race.valid_time_zone?(submitted)
+
+    Race.find_by(id: params[:id])&.time_zone || Race::DEFAULT_TIME_ZONE
+  end
+
   def prepare_params(hash)
     if hash[:filter_field].present?
       hash[:filter_field] = hash[:filter_field].reject{|f| f.empty?}.join(',')
@@ -95,7 +107,7 @@ class RacesController < ApplicationController
       race: [:name, :max_teams, :people_per_team,
              :race_datetime, :registration_open, :registration_close, :final_edits_close,
              :classy_campaign_id, :classy_default_goal, :experience_labels_text,
-             :jsonform, { filter_field: [] }]
+             :jsonform, :time_zone, { filter_field: [] }]
     )
   end
 end

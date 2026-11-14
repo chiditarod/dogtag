@@ -34,7 +34,7 @@ describe('TeamChecklist header', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' })).toBeInTheDocument();
     expect(screen.getByText('CHIditarod 2027')).toBeInTheDocument();
     expect(screen.getByText(/Sat, Mar 6, 2027/)).toBeInTheDocument();
-    expect(screen.getByText('Registration closes Sat, Feb 20, 2027')).toBeInTheDocument();
+    expect(screen.getByText('Registration closes Fri, Feb 19, 2027')).toBeInTheDocument();
     expect(screen.getByText('2 things left')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '4');
   });

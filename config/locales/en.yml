@@ -321,6 +321,8 @@ en:
       race_datetime: Race start time
       registration_open: Registration opens on
       registration_close: Registration closes on
+      time_zone: Time zone
+      time_zone_help: "Dates and times below are entered and shown to racers in this zone. Pick the zone before entering them."
       max_teams: Maximum teams
       people_per_team: People per team
       manage_race: Manage Race
