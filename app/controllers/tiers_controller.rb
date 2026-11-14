@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TiersController < ApplicationController
+  include RaceTimeZone
+
   before_action :require_user
+  around_action :use_race_time_zone, only: [:new, :create, :edit, :update]
   load_and_authorize_resource
 
   def destroy
@@ -60,6 +63,18 @@ class TiersController < ApplicationController
   end
 
   private
+
+  def race_time_zone
+    requirement =
+      if params[:id]
+        Tier.find_by(id: params[:id])&.requirement
+      else
+        requirement_id = params[:requirement_id]
+        requirement_id ||= params[:tier][:requirement_id] if params[:tier].is_a?(ActionController::Parameters)
+        Requirement.find_by(id: requirement_id)
+      end
+    requirement&.race&.time_zone
+  end
 
   def tier_params
     params.require(:tier).permit(:price, :begin_at, :requirement_id)

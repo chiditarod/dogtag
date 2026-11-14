@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_11_090237) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_14_181755) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -64,6 +64,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_11_090237) do
     t.integer "classy_default_goal"
     t.datetime "final_edits_close", precision: nil, null: false
     t.text "experience_labels", default: [], null: false, array: true
+    t.text "time_zone", default: "America/Chicago", null: false
   end
 
   create_table "requirements", force: :cascade do |t|

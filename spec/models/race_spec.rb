@@ -71,6 +71,34 @@ describe Race do
         expect(race.errors.messages[:registration_close]).to include 'must come before final_edits_close'
       end
     end
+
+    it "is not valid with an unknown time zone" do
+      expect(FactoryBot.build(:race, time_zone: "Mars/Olympus_Mons")).not_to be_valid
+      expect(FactoryBot.build(:race, time_zone: "")).not_to be_valid
+    end
+
+    it "is not valid with a Rails zone name instead of an IANA id" do
+      expect(FactoryBot.build(:race, time_zone: "Central Time (US & Canada)")).not_to be_valid
+    end
+  end
+
+  describe "#time_zone" do
+    it "defaults to America/Chicago" do
+      expect(Race.new.time_zone).to eq("America/Chicago")
+    end
+  end
+
+  describe "#local" do
+    it "converts a time into the race's zone" do
+      race = FactoryBot.build(:race, time_zone: "America/Los_Angeles")
+      local = race.local(Time.utc(2026, 12, 15, 6))
+
+      expect(local.strftime("%Y-%m-%d %H:%M %Z")).to eq("2026-12-14 22:00 PST")
+    end
+
+    it "returns nil for a nil time" do
+      expect(FactoryBot.build(:race).local(nil)).to be_nil
+    end
   end
 
   describe '#question_fields' do
