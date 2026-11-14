@@ -3,7 +3,9 @@ class Api::V1::TeamsController < Api::V1::BaseController
 
   def index
     authorize!(:index, Team)
-    @teams = Team.where(user: current_user).order(created_at: :desc).includes(:people, race: :requirements)
+    @teams = Team.where(user: current_user).order(created_at: :desc)
+      .includes(:people, :completed_requirements, :requirements, race: :requirements).to_a
+    Race.preload_registration_data(@teams.map(&:race))
   end
 
   def show
@@ -14,9 +16,7 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def create
     authorize!(:create, Team)
     @race = Race.find(params[:race_id])
-    unless @race.open_for_registration? || current_user.is_any_of?(:admin, :operator)
-      raise CanCan::AccessDenied.new(I18n.t("api.errors.registration_closed"))
-    end
+    raise CanCan::AccessDenied.new(I18n.t("api.errors.registration_closed")) unless @race.accepts_new_teams_from?(current_user)
 
     @team = Team.new(params.expect(team: [:name, :description, :experience]))
     @team.subscribe(TeamAuditor.new)
@@ -33,7 +33,7 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def update
     @team = Team.find(params[:id])
     authorize!(:show, @team)
-    authorize!(:update, @team, message: I18n.t("api.errors.registration_closed"))
+    authorize_update!(@team, @team)
     @team.subscribe(TeamAuditor.new)
 
     if @team.update(params.expect(team: [:name, :description, :experience]))

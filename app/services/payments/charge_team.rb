@@ -27,10 +27,13 @@ module Payments
     rescue Stripe::InvalidRequestError => e
       stripe_failure(:stripe_error, e, I18n.t("charges.invalid_request", reason: StripeHelper.exception_to_hash(e)[:reason]))
     rescue Stripe::APIConnectionError => e
+      flag_unknown_charge_outcome(e)
       stripe_failure(:stripe_error, e, I18n.t("charges.api_connection", reason: StripeHelper.exception_to_hash(e)[:reason]))
     rescue Stripe::StripeError => e
+      flag_unknown_charge_outcome(e)
       stripe_failure(:stripe_error, e, I18n.t("charges.stripe_error"))
     rescue => e
+      flag_unknown_charge_outcome(e)
       stripe_failure(:unexpected, e, I18n.t("charges.unexpected"))
     end
 
@@ -59,9 +62,20 @@ module Payments
         begin
           yield
         ensure
-          connection.select_value("SELECT pg_advisory_unlock(#{keys})")
+          release_advisory_lock(connection, keys)
         end
       end
+    end
+
+    # Never lets a failed unlock replace the payment's result. A lock that was not held at release
+    # (e.g. the session changed under a transaction-pooling proxy) may be stuck on another
+    # connection, which would block this team's payments with :in_progress, so it is alerted.
+    def release_advisory_lock(connection, keys)
+      return if connection.select_value("SELECT pg_advisory_unlock(#{keys})")
+
+      alert("Payment advisory lock (#{keys}) for team #{team.id}, requirement #{requirement.id} was not held at release. Check for a stuck lock.")
+    rescue => e
+      alert("Failed to release payment advisory lock (#{keys}) for team #{team.id}, requirement #{requirement.id}: #{e.class}: #{e.message}")
     end
 
     def charge_and_record
@@ -81,6 +95,7 @@ module Payments
 
     def charge_card(customer, amount)
       params = requirement.stripe_params(team)
+      @charge_attempted = true
       Stripe::Charge.create(
         customer: customer.id,
         amount: amount,
@@ -98,14 +113,14 @@ module Payments
 
       if requirement.completed?(team)
         log_duplicate_charge(charge)
-        failure(:already_paid, I18n.t("charges.duplicate_charge"))
+        failure(:duplicate_charge)
       else
         alert("Charged but not recorded: charge #{charge.id} for team #{team.id}, requirement #{requirement.id}, user #{user.id}. Refund or record it manually.")
         failure(:unexpected)
       end
     rescue ActiveRecord::RecordNotUnique
       log_duplicate_charge(charge)
-      failure(:already_paid, I18n.t("charges.duplicate_charge"))
+      failure(:duplicate_charge)
     rescue => e
       # An after_commit listener (e.g. team finalization) can raise after the record was committed.
       if (recorded = recorded_for(charge))
@@ -123,6 +138,14 @@ module Payments
       cr if cr&.metadata&.dig("charge_id") == charge.id
     rescue StandardError
       nil
+    end
+
+    # A timeout or connection error during Stripe::Charge.create does not tell us whether the card was
+    # charged. Nothing is recorded, so a retry would charge again; log enough to reconcile in Stripe.
+    def flag_unknown_charge_outcome(exception)
+      return unless @charge_attempted
+
+      alert("Charge outcome unknown (#{exception.class}: #{exception.message}) for team #{team.id}, requirement #{requirement.id}, user #{user.id}. Check Stripe for a charge with this team_id/requirement_id metadata and record or refund it.")
     end
 
     def log_duplicate_charge(charge)

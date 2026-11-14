@@ -132,6 +132,32 @@ describe Payments::ChargeTeam do
     end
   end
 
+  describe "when the outcome of the charge is unknown" do
+    before { allow(Rails.logger).to receive(:error) }
+
+    it "logs the team, requirement and user so the charge can be reconciled" do
+      allow(Stripe::Charge).to receive(:create).and_raise(Stripe::APIConnectionError.new("timed out"))
+
+      expect(call.error_code).to eq(:stripe_error)
+      expect(Rails.logger).to have_received(:error)
+        .with(/Charge outcome unknown.*team #{team.id}, requirement #{requirement.id}, user #{user.id}/)
+    end
+
+    it "does not flag failures that happen before the charge is attempted" do
+      allow(Customer).to receive(:get).and_raise(Stripe::APIConnectionError.new("down"))
+
+      expect(call.error_code).to eq(:stripe_error)
+      expect(Rails.logger).not_to have_received(:error).with(/Charge outcome unknown/)
+    end
+
+    it "does not flag a declined card" do
+      StripeMock.prepare_card_error(:card_declined)
+
+      expect(call.error_code).to eq(:card_error)
+      expect(Rails.logger).not_to have_received(:error).with(/Charge outcome unknown/)
+    end
+  end
+
   it "returns :unexpected for any other error" do
     allow(Stripe::Charge).to receive(:create).and_raise("kaboom")
 
@@ -142,26 +168,26 @@ describe Payments::ChargeTeam do
   end
 
   describe "when the completed requirement cannot be saved after a successful charge" do
-    it "logs the charge id loudly and returns :already_paid on a unique index violation" do
+    it "logs the charge id loudly and returns :duplicate_charge on a unique index violation" do
       allow_any_instance_of(CompletedRequirement).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
       allow(Rails.logger).to receive(:error)
 
       result = call
 
       expect(result.ok).to be(false)
-      expect(result.error_code).to eq(:already_paid)
+      expect(result.error_code).to eq(:duplicate_charge)
       expect(result.message).to eq(I18n.t("charges.duplicate_charge"))
       expect(Rails.logger).to have_received(:error).with(/duplicate charge.*test_ch/i)
     end
 
-    it "returns :already_paid when a concurrent request recorded the requirement first" do
+    it "returns :duplicate_charge when a concurrent request recorded the requirement first" do
       allow(requirement).to receive(:completed?).and_return(false, true)
       allow(requirement).to receive(:complete).and_return(false)
       allow(Rails.logger).to receive(:error)
 
       result = call
 
-      expect(result.error_code).to eq(:already_paid)
+      expect(result.error_code).to eq(:duplicate_charge)
       expect(result.message).to eq(I18n.t("charges.duplicate_charge"))
       expect(Rails.logger).to have_received(:error).with(/duplicate charge.*test_ch/i)
     end
@@ -231,6 +257,35 @@ describe Payments::ChargeTeam do
         expect(CompletedRequirement.count).to eq(0)
       ensure
         other.close
+      end
+    end
+
+    describe "when releasing the lock goes wrong" do
+      let(:connection) { ActiveRecord::Base.connection }
+
+      before do
+        allow(Rails.logger).to receive(:error)
+        allow(connection).to receive(:select_value).and_call_original
+      end
+
+      # the stubbed unlock leaves the session lock held on the shared test connection
+      after { connection.execute("SELECT pg_advisory_unlock_all()") }
+
+      it "keeps a successful payment successful and logs the failed unlock" do
+        allow(connection).to receive(:select_value).with(/pg_advisory_unlock/).and_raise(PG::ConnectionBad, "gone")
+
+        result = call
+
+        expect(result.ok).to be(true)
+        expect(CompletedRequirement.count).to eq(1)
+        expect(Rails.logger).to have_received(:error).with(/Failed to release payment advisory lock.*PG::ConnectionBad: gone/)
+      end
+
+      it "alerts when the lock was not held at release" do
+        allow(connection).to receive(:select_value).with(/pg_advisory_unlock/).and_return(false)
+
+        expect(call.ok).to be(true)
+        expect(Rails.logger).to have_received(:error).with(/advisory lock .* was not held at release/)
       end
     end
 

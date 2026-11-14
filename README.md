@@ -31,12 +31,25 @@ CLASSY_CLIENT_SECRET=          # optional
 CLASSY_ORGS=                   # comma-separated list of classy organization ids the client has access to. used to cache org members
 ROLLBAR_ACCESS_TOKEN=          # optional
 DEFAULT_FROM_EMAIL             # e.g. info@yourdomain.tld
+APP_HOST                       # public host for links in emails (e.g. password resets), e.g. register.yourdomain.tld. Defaults to localhost:3000, so set it in production
+REGISTRATION_UI                # spa | legacy. where racer entry points send people (see below)
 SMTP_DOMAIN                    # e.g. heroku.com
 SMTP_HOST                      # e.g. smtp.foo.tld
 SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
+SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional; base64 key from SendGrid's Signed Event Webhook. Without it the webhook returns 401
 ```
+
+## Email delivery tracking
+
+Every outgoing email is logged to `sent_emails` and tagged with an `X-SMTPAPI` header (`unique_args.sent_email_id`). SendGrid delivery events then update each row's status.
+
+- **SendGrid setup:** go to Mail Settings → Event Webhook and set the POST URL to `https://<host>/webhooks/sendgrid`. Enable the processed, delivered, deferred, bounce, dropped and spam report events. Turn on **Signed Event Webhook** and copy the verification key into `SENDGRID_WEBHOOK_PUBLIC_KEY`. Set this up on staging first.
+- **Admin log:** operators and admins can browse `/sent_emails`, filtered by team, status, kind or recipient. Each team page also links to its emails.
+- **Verify a team:** `bundle exec rake "emails:verify[<team_id>]"` (on Heroku: `heroku run rake "emails:verify[<team_id>]"`) prints each expected email with a label of `OK`, `MISSING`, `NOT DELIVERED` or `UNTRACKED`. It exits 1 if any is `MISSING` or `NOT DELIVERED`.
+  - `UNTRACKED` means the email would have been sent before logging began. It does not fail the check.
+  - Until `SENDGRID_WEBHOOK_PUBLIC_KEY` is set, `sent` counts as OK. After that, only `delivered` does.
 
 ## Custom questions using jsonform
 
@@ -114,21 +127,22 @@ cp .env.example .env
 
 ## Local Development
 
-### Build and run all containers
+### Start the backing services
 
-This will also create the `dogtag_test` and `dogtag_development` databases and will build and boot mailcatcher.
+Postgres, Redis and [Mailpit](https://mailpit.axllent.org) (local mail catcher) are all you need to run Rails and the specs from the console. The `db` container also creates the `dogtag_test` and `dogtag_development` databases.
 
-    docker-compose up -d
+    docker compose up -d db redis mailpit
+
+To run the whole stack in containers instead, use `docker compose up -d`.
 
 ### Run the test suite
 
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
 
-### Mailcatcher
+### Mailpit
 
-The `mailcatcher` gem gets built into a docker image and deployed in the
-docker compose cluster. It exposes an SMTP port on `1025` and a web UI on `1080`.
+Mailpit runs in the docker compose cluster. It exposes SMTP on port `1025` and a web UI at http://localhost:8025.
 
 ## Registration SPA (React)
 
@@ -141,7 +155,7 @@ npm --prefix frontend run build     # builds into public/register (gitignored)
 npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
 ```
 
-- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link point at `/register` (default is the legacy UI).
+- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link point at `/register` (default is the legacy UI). Setting it back to `legacy` is the fallback if the SPA has a problem.
 - Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
 - Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
@@ -184,7 +198,7 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 1. Do a development cycle to incorporate any new features.
 1. Update the jsonform with any new questions and expected responses for the specific race.
 1. Launch it all locally, make sure Stripe payments are functioning and a team can finalize their registration successfully.
-1. Use mailcatcher to ensure emails are being created and sent.
+1. Use Mailpit to ensure emails are being created and sent.
 1. Check that the SSL certificate for dogtag.chiditarod.org is up to date and working
 1. Turn on SSL in heroku and apply the cert.
 1. Upgrade PostgreSQL if needed

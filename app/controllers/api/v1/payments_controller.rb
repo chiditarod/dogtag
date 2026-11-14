@@ -5,6 +5,7 @@ class Api::V1::PaymentsController < Api::V1::BaseController
     registration_closed: :forbidden,
     already_paid: :conflict,
     in_progress: :conflict,
+    duplicate_charge: :conflict,
     card_error: :payment_required,
     no_active_tier: :unprocessable_entity,
     wrong_race: :unprocessable_entity,
@@ -32,7 +33,7 @@ class Api::V1::PaymentsController < Api::V1::BaseController
       team.reload
       render json: { checklist: TeamChecklist.new(team).to_h }, status: :created
     else
-      render_errors(result.message, status: STATUSES.fetch(result.error_code))
+      render_errors(result.message, status: STATUSES.fetch(result.error_code), code: result.error_code)
     end
   end
 end
