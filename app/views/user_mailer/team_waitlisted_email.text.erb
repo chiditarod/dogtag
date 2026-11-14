@@ -13,7 +13,7 @@ Racers:
 <% end %>
 
 You can update your team information at your Registration Page
-until <%= @team.race.registration_close.strftime("%B %e, %Y") %>, when registration closes.
+until <%= deadline_readable(@team.race.local(@team.race.registration_close)) %>, when registration closes.
 
 
 

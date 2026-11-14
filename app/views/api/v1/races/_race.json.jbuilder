@@ -1,5 +1,5 @@
 json.extract! race, :id, :name, :race_datetime, :registration_open, :registration_close, :final_edits_close,
-              :people_per_team, :experience_labels
+              :people_per_team, :experience_labels, :time_zone
 json.open_for_registration race.open_for_registration?
 json.full race.full?
 jsonform =

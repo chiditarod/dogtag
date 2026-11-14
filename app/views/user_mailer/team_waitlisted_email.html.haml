@@ -21,7 +21,7 @@
             = p.last_name
     %p
       You can update your team information until
-      = @team.race.registration_close.strftime("%B %e, %Y")
+      = deadline_readable(@team.race.local(@team.race.registration_close))
       when registration closes.
     %p
       Now, go out and read our freshly-updated

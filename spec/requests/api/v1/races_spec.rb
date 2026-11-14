@@ -41,7 +41,8 @@ describe "API v1 races", type: :request do
         "full" => false,
         "people_per_team" => race.people_per_team,
         "experience_labels" => ["Rookie", "Veteran"],
-        "stripe_publishable_key" => Rails.configuration.stripe[:publishable_key]
+        "stripe_publishable_key" => Rails.configuration.stripe[:publishable_key],
+        "time_zone" => "America/Chicago"
       )
       %w[race_datetime registration_open registration_close final_edits_close].each do |field|
         expect(Time.iso8601(body[field])).to be_within(1.second).of(race.public_send(field))

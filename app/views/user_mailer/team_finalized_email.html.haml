@@ -25,7 +25,7 @@
       %a{:href=>team_link}
         = team_link
       until
-      = @team.race.registration_close.strftime("%B %e, %Y")
+      = deadline_readable(@team.race.local(@team.race.registration_close))
       when registration closes.
 
     %p

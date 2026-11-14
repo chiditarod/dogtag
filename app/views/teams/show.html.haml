@@ -38,10 +38,10 @@
 
       - if @team.race.open_for_registration?
         %i.lead.text-success
-          = t('.can_change_until', :date => @race.registration_close.strftime('%B %e, %Y'))
+          = t('.can_change_until', :date => deadline_readable(@race.local(@race.registration_close)))
       - elsif @team.race.in_final_edits_window?
         %i.lead.text-warning
-          = t('.final_edits_until', :date => @race.final_edits_close.strftime('%B %e, %Y'))
+          = t('.final_edits_until', :date => deadline_readable(@race.local(@race.final_edits_close)))
       - else
         %i.lead.text-danger
           = t('.registration_closed')

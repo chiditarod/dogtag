@@ -17,8 +17,7 @@ class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
   include MoneyHelper, DateHelper
-
-  CENTRAL_TIME = "Central Time (US & Canada)".freeze
+  helper DateHelper
 
   # Record delivery failures on the tracked sent_emails row, then re-raise so
   # job retries still happen.
@@ -60,7 +59,7 @@ class UserMailer < ActionMailer::Base
     @team = team
     @kind = kind
     @price = "$#{price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
-    @date = human_readable((details[:begins_at] || team.race.registration_close).in_time_zone(CENTRAL_TIME)).squish
+    @date = reminder_date(team.race, details[:begins_at])
     @missing = missing_items(team)
     @team_url = RegistrationUi.team_url(team)
     track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
@@ -68,6 +67,14 @@ class UserMailer < ActionMailer::Base
   end
 
   private
+
+  # A tier change shows when the new price begins; otherwise the reminder is
+  # about the registration deadline.
+  def reminder_date(race, begins_at)
+    return human_readable(race.local(begins_at)) if begins_at
+
+    deadline_readable(race.local(race.registration_close))
+  end
 
   def missing_items(team)
     race = team.race

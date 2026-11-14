@@ -146,7 +146,7 @@ describe UserMailer do
       FactoryBot.create(:completed_requirement, team: team, requirement: payment)
       body = UserMailer.registration_reminder(team.reload, "closing_week", details).body.encoded
 
-      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
+      expect(mail_subject(team, details)).to eq("#{race.name}: Registration closes #{race.registration_close.in_time_zone("America/Chicago").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
       expect(body).not_to include("of 3")
       expect(body).not_to include("team questions")
       expect(body).not_to include("registration fee")
@@ -156,8 +156,43 @@ describe UserMailer do
       begins_at = Time.zone.now + 47.hours
       mail = UserMailer.registration_reminder(team, "tier_change", new_price_cents: 7500, begins_at: begins_at, dedupe_key: "tier-1")
 
-      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("Central Time (US & Canada)").strftime("%B %-d, %Y at %-l:%M %p")}")
+      expect(mail.subject).to eq("#{race.name}: Registration price changes #{begins_at.in_time_zone("America/Chicago").strftime("%B %-d, %Y at %-l:%M %p %Z")}")
       expect(mail.body.encoded).to include("$75")
+    end
+
+    context "with fixed race dates" do
+      around { |example| Timecop.travel(Time.utc(2027, 1, 10)) { example.run } }
+
+      let(:race) do
+        FactoryBot.create(:race_with_jsonform, people_per_team: 3,
+          registration_open: Time.utc(2026, 12, 15, 6), registration_close: Time.utc(2027, 2, 15, 6),
+          final_edits_close: Time.utc(2027, 2, 20, 6), race_datetime: Time.utc(2027, 3, 6, 16))
+      end
+
+      it "shows a midnight close as 11:59 PM the previous day in the race's zone" do
+        mail = UserMailer.registration_reminder(team, "closing_week", details)
+
+        expect(mail.subject).to eq("#{race.name}: Registration closes February 14, 2027 at 11:59 PM CST")
+        expect(mail.body.encoded).to include("Registration closes on February 14, 2027 at 11:59 PM CST.")
+      end
+
+      it "shows a tier change at its real start, in the race's zone" do
+        race.update!(time_zone: "America/Los_Angeles")
+        mail = UserMailer.registration_reminder(team, "tier_change", new_price_cents: 7500, begins_at: Time.utc(2027, 1, 1, 8), dedupe_key: "tier-1")
+
+        expect(mail.subject).to eq("#{race.name}: Registration price changes January 1, 2027 at 12:00 AM PST")
+      end
+
+      it "shows the close date in the finalized and waitlisted emails using the deadline rule" do
+        finalized = UserMailer.team_finalized_email(team.user, team)
+        waitlisted = UserMailer.team_waitlisted_email(team.user, team)
+
+        [finalized, waitlisted].each do |mail|
+          expect(mail.html_part.body.decoded).to include("February 14, 2027")
+          expect(mail.text_part.body.decoded).to include("February 14, 2027")
+          expect(mail.text_part.body.decoded).not_to include("February 15, 2027")
+        end
+      end
     end
 
     it "tracks the reminder with its dedupe key" do
