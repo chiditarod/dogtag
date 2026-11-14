@@ -6,7 +6,7 @@ module TimeZoneHelper
 
     names = ActiveSupport::TimeZone::MAPPING.select { |_name, id| id == iana }.keys
     name = names.any? ? names.join(", ").delete_suffix(" (US & Canada)") : iana
-    year = Time.now.utc.year
+    year = Time.current.year
     abbreviations = [1, 7].map { |month| zone.period_for_utc(Time.utc(year, month, 1)).abbreviation }.uniq
     "#{name} (#{abbreviations.join("/")})"
   end
