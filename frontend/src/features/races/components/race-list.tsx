@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { useRaces } from '@/features/races/api/use-races';
-import { formatDate } from '@/lib/dates';
+import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Race } from '@/types/api';
 
@@ -20,7 +20,7 @@ function RaceStatus({ race }: { race: Race }) {
       <Badge tone="danger">{t('races.closed')}</Badge>
       {opensLater && (
         <span className="text-sm">
-          {t('races.opens')} {formatDate(race.registration_open)}
+          {t('races.opens')} {formatDate(race.registration_open, race.time_zone)}
         </span>
       )}
     </>
@@ -40,9 +40,10 @@ export function RaceList() {
         <li key={race.id}>
           <Card className="space-y-2">
             <h2 className="font-display text-xl font-semibold">{race.name}</h2>
-            <p>{formatDate(race.race_datetime)}</p>
+            <p>{formatDate(race.race_datetime, race.time_zone)}</p>
             <p className="text-sm">
-              {t('races.closes')} {formatDate(race.registration_close)}
+              {t('races.closes')}{' '}
+              {formatDeadline(race.registration_close, race.time_zone)}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <RaceStatus race={race} />

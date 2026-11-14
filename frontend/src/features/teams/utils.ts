@@ -21,9 +21,9 @@ export function formatCents(cents: number): string {
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
 
-export function feePill(fee: Checklist['fee']): string {
+export function feePill(fee: Checklist['fee'], timeZone: string): string {
   if (isFeeOpensLater(fee)) {
-    return `${t('team.pillOpens')} ${formatDate(fee.next_tier!.begins_at)}`;
+    return `${t('team.pillOpens')} ${formatDate(fee.next_tier!.begins_at, timeZone)}`;
   }
   if (fee.done) return t('team.pillPaid');
   return fee.amount_due_cents === null

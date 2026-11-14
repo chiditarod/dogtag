@@ -16,6 +16,7 @@ export function buildRace(overrides: Partial<Race> = {}): Race {
     registration_open: '2026-12-01T06:00:00.000Z',
     registration_close: '2027-02-20T06:00:00.000Z',
     final_edits_close: '2027-02-27T06:00:00.000Z',
+    time_zone: 'America/Chicago',
     open_for_registration: true,
     full: false,
     people_per_team: 5,

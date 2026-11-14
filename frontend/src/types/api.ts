@@ -15,6 +15,8 @@ export interface Race {
   registration_open: string;
   registration_close: string;
   final_edits_close: string;
+  /** IANA zone the race's dates are shown in, e.g. America/Chicago. */
+  time_zone: string;
   open_for_registration: boolean;
   full: boolean;
   people_per_team: number;

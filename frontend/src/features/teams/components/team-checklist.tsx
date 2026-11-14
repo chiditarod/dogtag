@@ -76,7 +76,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
               ? 'done'
               : 'todo'
           }
-          pill={feePill(checklist.fee)}
+          pill={feePill(checklist.fee, team.race.time_zone)}
         >
           <FeeCardSlot team={team} />
         </ChecklistCard>

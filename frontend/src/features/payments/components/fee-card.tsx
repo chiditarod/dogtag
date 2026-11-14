@@ -65,7 +65,9 @@ export function FeeCard({ team }: { team: Team }) {
   if (isFeeOpensLater(fee)) {
     return (
       <p className="text-base text-navy">
-        {t('fee.opensLater', { date: formatDate(fee.next_tier!.begins_at) })}
+        {t('fee.opensLater', {
+          date: formatDate(fee.next_tier!.begins_at, race.time_zone),
+        })}
       </p>
     );
   }
@@ -211,6 +213,7 @@ export function FeeCard({ team }: { team: Team }) {
             message?.requirementId === item.requirement_id ? message.text : null
           }
           focusPaid={focusPaid}
+          timeZone={race.time_zone}
           onPay={() => void handlePay(item)}
         />
       ))}
@@ -225,6 +228,7 @@ function FeeRow({
   processing,
   message,
   focusPaid,
+  timeZone,
   onPay,
 }: {
   item: FeeItem;
@@ -233,6 +237,7 @@ function FeeRow({
   processing: boolean;
   message: string | null;
   focusPaid: RefObject<number | null>;
+  timeZone: string;
   onPay: () => void;
 }) {
   let body;
@@ -257,7 +262,9 @@ function FeeRow({
     body = (
       <p className="text-base text-navy">
         {item.next_tier
-          ? t('fee.itemOpens', { date: formatDate(item.next_tier.begins_at) })
+          ? t('fee.itemOpens', {
+              date: formatDate(item.next_tier.begins_at, timeZone),
+            })
           : t('fee.notAvailable')}
       </p>
     );
@@ -270,7 +277,7 @@ function FeeRow({
           <p className="text-sm text-navy/80">
             {t('fee.nextTier', {
               amount: formatCents(item.next_tier.price_cents),
-              date: formatDate(item.next_tier.begins_at),
+              date: formatDate(item.next_tier.begins_at, timeZone),
             })}
           </p>
         )}
