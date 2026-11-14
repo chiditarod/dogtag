@@ -3,7 +3,9 @@ class Api::V1::TeamsController < Api::V1::BaseController
 
   def index
     authorize!(:index, Team)
-    @teams = Team.where(user: current_user).order(created_at: :desc).includes(:people, race: :requirements)
+    @teams = Team.where(user: current_user).order(created_at: :desc)
+      .includes(:people, :completed_requirements, :requirements, race: :requirements).to_a
+    Race.preload_registration_data(@teams.map(&:race))
   end
 
   def show
