@@ -140,6 +140,9 @@ To run the whole stack in containers instead, use `docker compose up -d`.
     docker-compose run web bundle exec rspec   # from within the container
     bundle exec rspec                          # or from the console
 
+    bin/check                                  # quiet run of rspec, vitest, tsc and the SPA build
+    bin/check e2e                              # Playwright (needs db, redis, mailpit running)
+
 ### Mailpit
 
 Mailpit runs in the docker compose cluster. It exposes SMTP on port `1025` and a web UI at http://localhost:8025.
