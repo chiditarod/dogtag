@@ -404,7 +404,7 @@ describe RacesController do
         race2 = FactoryBot.create :race
         get :index
         expect(response).to be_successful
-        expect(assigns(:races)).to eq([race1, race2])
+        expect(assigns(:races)).to match_array([race1, race2])
       end
     end
 

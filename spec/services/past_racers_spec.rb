@@ -24,6 +24,15 @@ describe PastRacers do
     expect(result).to eq([racer])
   end
 
+  it "skips legacy racers without an email instead of raising" do
+    old_team = past_team
+    FactoryBot.create(:person, team: old_team).update_column(:email, nil)
+    FactoryBot.create(:person, team: current_team).update_column(:email, nil)
+    racer = FactoryBot.create(:person, team: old_team)
+
+    expect(result).to eq([racer])
+  end
+
   it "excludes unknown placeholder emails" do
     old_team = past_team
     FactoryBot.create(:person, team: old_team, email: "Unknown@example.com")

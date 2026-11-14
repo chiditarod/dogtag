@@ -133,7 +133,7 @@ describe UserMailer do
       body = mail.body.encoded
 
       expect(mail.to).to eq([team.user.email])
-      expect(mail.subject).to eq("#{race.name}: Registration closes in 24 hours")
+      expect(mail.subject).to eq("#{race.name}: Registration closes within 24 hours")
       expect(body).to include("1 of 3")
       expect(body).to include("team questions")
       expect(body).to include("registration fee")
@@ -200,6 +200,10 @@ describe UserMailer do
 
       sent = SentEmail.find_by!(team_id: team.id, kind: "registration_reminder")
       expect(sent.dedupe_key).to eq("close-24h")
+    end
+
+    it "does not expose formatting helpers as mailer actions" do
+      expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
     end
   end
 end

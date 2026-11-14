@@ -50,6 +50,13 @@ describe User do
           expect(user).to be_valid
         end
       end
+
+      it "normalizes formatted input the same way as racers' phones" do
+        ["+1 (312) 555-0144", "312.555.0144", "13125550144"].each do |input|
+          user.phone = input
+          expect(user.phone).to eq("312-555-0144")
+        end
+      end
     end
 
     describe 'email' do

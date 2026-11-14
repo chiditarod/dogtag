@@ -44,7 +44,7 @@ describe "API v1 payments", type: :request do
       post path, params: params, as: :json
 
       expect(response).to have_http_status(:conflict)
-      expect(json).to eq("error" => I18n.t("charges.already_paid"), "errors" => {})
+      expect(json).to eq("error" => I18n.t("charges.already_paid"), "code" => "already_paid", "errors" => {})
       expect(CompletedRequirement.count).to eq(1)
     end
 
@@ -54,7 +54,7 @@ describe "API v1 payments", type: :request do
       post path, params: params, as: :json
 
       expect(response).to have_http_status(:payment_required)
-      expect(json).to eq("error" => "The card was declined", "errors" => {})
+      expect(json).to eq("error" => "The card was declined", "code" => "card_error", "errors" => {})
       expect(CompletedRequirement.count).to eq(0)
     end
 
@@ -162,7 +162,16 @@ describe "API v1 payments", type: :request do
       post path, params: params, as: :json
 
       expect(response).to have_http_status(:conflict)
-      expect(json["error"]).to eq(I18n.t("charges.in_progress"))
+      expect(json).to include("error" => I18n.t("charges.in_progress"), "code" => "in_progress")
+    end
+
+    it "returns 409 with a duplicate_charge code when a concurrent request recorded the payment first" do
+      allow_any_instance_of(CompletedRequirement).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+
+      post path, params: params, as: :json
+
+      expect(response).to have_http_status(:conflict)
+      expect(json).to include("error" => I18n.t("charges.duplicate_charge"), "code" => "duplicate_charge")
     end
 
     it "returns 502 when Stripe fails" do
@@ -249,6 +258,7 @@ describe "API v1 payments", type: :request do
     it "returns 402 for a mock decline" do
       post mock_path, params: { requirement_id: requirement.id, mock_behavior: "decline" }, as: :json
       expect(response).to have_http_status(:payment_required)
+      expect(json).to include("error" => I18n.t("charges.mock_declined"), "code" => "card_error")
       expect(CompletedRequirement.count).to eq(0)
     end
 

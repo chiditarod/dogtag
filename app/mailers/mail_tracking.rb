@@ -18,6 +18,9 @@ class MailTracking
     action: "X-Dogtag-Action"
   }.freeze
   ID_IVAR = :@dogtag_sent_email_id
+  # A deduped row left "queued" this long is treated as abandoned (e.g. the
+  # process was killed mid-send) and may be claimed by a retry.
+  STALE_QUEUED_AFTER = 15.minutes
 
   def self.delivering_email(message)
     attrs = HEADERS.transform_values { |name| message[name]&.value.presence }
@@ -30,7 +33,8 @@ class MailTracking
     }
 
     sent_email = begin
-      SentEmail.create!(attrs.merge(details))
+      # Savepoint so a duplicate insert doesn't abort a caller's transaction.
+      SentEmail.transaction(requires_new: true) { SentEmail.create!(attrs.merge(details)) }
     rescue ActiveRecord::RecordNotUnique
       claim_duplicate(message, attrs, details)
     end
@@ -63,18 +67,21 @@ class MailTracking
     Rails.logger.error("MailTracking.delivery_failed failed: #{e.class}: #{e.message}")
   end
 
-  # A row already exists for this (team, kind, dedupe_key). Retry it if the
-  # previous attempt failed; otherwise suppress this delivery.
+  # A row already exists for this (team, kind, dedupe_key). Claim it for a
+  # retry if the previous attempt failed or was abandoned while queued;
+  # otherwise suppress this delivery. The claim is a conditional update so two
+  # concurrent senders can't both take the same row.
   def self.claim_duplicate(message, attrs, details)
     existing = SentEmail.find_by!(attrs.slice(:team_id, :kind, :dedupe_key))
-    if existing.status == "failed"
-      existing.update!(details.merge(status: "queued", error: nil, status_changed_at: Time.current))
-      existing
-    else
-      message.perform_deliveries = false
-      Rails.logger.info("MailTracking: suppressed duplicate #{attrs[:kind]} email (dedupe_key=#{attrs[:dedupe_key]}, team_id=#{attrs[:team_id]})")
-      nil
-    end
+    now = Time.current
+    claimed = SentEmail.where(id: existing.id)
+      .where("status = 'failed' OR (status = 'queued' AND updated_at < ?)", now - STALE_QUEUED_AFTER)
+      .update_all(details.merge(status: "queued", error: nil, status_changed_at: now, updated_at: now))
+    return existing if claimed == 1
+
+    message.perform_deliveries = false
+    Rails.logger.info("MailTracking: suppressed duplicate #{attrs[:kind]} email (dedupe_key=#{attrs[:dedupe_key]}, team_id=#{attrs[:team_id]})")
+    nil
   end
   private_class_method :claim_duplicate
 

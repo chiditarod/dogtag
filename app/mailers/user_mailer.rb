@@ -16,8 +16,7 @@
 class UserMailer < ActionMailer::Base
   default from: "dogtag <dogtag@chiditarod.org>"
 
-  include MoneyHelper, DateHelper
-  helper DateHelper
+  helper MoneyHelper, DateHelper
 
   # Record delivery failures on the tracked sent_emails row, then re-raise so
   # job retries still happen.
@@ -58,7 +57,7 @@ class UserMailer < ActionMailer::Base
   def registration_reminder(team, kind, details)
     @team = team
     @kind = kind
-    @price = "$#{price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
+    @price = "$#{view_context.price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
     @date = reminder_date(team.race, details[:begins_at])
     @missing = missing_items(team)
     @team_url = RegistrationUi.team_url(team)
@@ -71,9 +70,9 @@ class UserMailer < ActionMailer::Base
   # A tier change shows when the new price begins; otherwise the reminder is
   # about the registration deadline.
   def reminder_date(race, begins_at)
-    return human_readable(race.local(begins_at)) if begins_at
+    return view_context.human_readable(race.local(begins_at)) if begins_at
 
-    deadline_readable(race.local(race.registration_close))
+    view_context.deadline_readable(race.local(race.registration_close))
   end
 
   def missing_items(team)

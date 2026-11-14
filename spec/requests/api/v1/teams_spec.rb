@@ -158,6 +158,14 @@ describe "API v1 teams", type: :request do
         expect(response).to have_http_status(:forbidden)
         expect(json["error"]).to eq("Registration is closed for this race.")
       end
+
+      it "does not tell a refunder that registration is closed while it is open" do
+        api_login(FactoryBot.create(:refunder_user))
+        patch "/api/v1/teams/#{team.id}", params: { team: { name: "Hax" } }, as: :json
+        expect(response).to have_http_status(:forbidden)
+        expect(json["error"]).not_to eq(I18n.t("api.errors.registration_closed"))
+        expect(team.reload.name).not_to eq("Hax")
+      end
     end
   end
 end

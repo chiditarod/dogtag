@@ -4,6 +4,6 @@ classy_org_member_cacher:
   queue: default
 
 registration_reminders:
-  cron: "0 15 * * *" # 15:00 UTC = 9am CST / 10am CDT
+  cron: "0 9 * * * America/Chicago" # 9am Chicago time, follows DST
   class: "Workers::RegistrationReminders"
   queue: default

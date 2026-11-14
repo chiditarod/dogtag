@@ -38,10 +38,20 @@ SMTP_USERNAME
 SMTP_PASSWORD
 APP_HOST                       # host (and :port, if any) used in email links; production defaults to dogtag.chiditarod.org, so staging must set it
 REGISTRATION_UI=spa            # optional: use the React SPA under /register (only takes effect once the SPA is built, or VITE_DEV_SERVER is set)
-SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional: verification key for the SendGrid event webhook (POST /webhooks/sendgrid); when unset, the webhook is rejected and "sent" counts as delivered
+SENDGRID_WEBHOOK_PUBLIC_KEY=   # optional: base64 verification key from SendGrid's Signed Event Webhook (POST /webhooks/sendgrid); when unset, the webhook returns 401 and "sent" counts as delivered
 SIDEKIQ_INLINE=true            # dev/e2e only: run jobs in-process without a Sidekiq worker (ignored in production)
 VITE_DEV_SERVER=http://localhost:5173  # dev only: redirect /register/* to the Vite dev server
 ```
+
+## Email delivery tracking
+
+Every outgoing email is logged to `sent_emails` and tagged with an `X-SMTPAPI` header (`unique_args.sent_email_id`). SendGrid delivery events then update each row's status.
+
+- **SendGrid setup:** go to Mail Settings → Event Webhook and set the POST URL to `https://<host>/webhooks/sendgrid`. Enable the processed, delivered, deferred, bounce, dropped and spam report events. Turn on **Signed Event Webhook** and copy the verification key into `SENDGRID_WEBHOOK_PUBLIC_KEY`. Set this up on staging first.
+- **Admin log:** operators and admins can browse `/sent_emails`, filtered by team, status, kind or recipient. Each team page also links to its emails.
+- **Verify a team:** `bundle exec rake "emails:verify[<team_id>]"` (on Heroku: `heroku run rake "emails:verify[<team_id>]"`) prints each expected email with a label of `OK`, `MISSING`, `NOT DELIVERED` or `UNTRACKED`. It exits 1 if any is `MISSING` or `NOT DELIVERED`.
+  - `UNTRACKED` means the email would have been sent before logging began. It does not fail the check.
+  - Until `SENDGRID_WEBHOOK_PUBLIC_KEY` is set, `sent` counts as OK. After that, only `delivered` does.
 
 ## Custom questions using jsonform
 
@@ -125,15 +135,13 @@ cp .env.example .env
 
 ## Local Development
 
-### Build and run all containers
+### Start the backing services
 
-This will also create the `dogtag_test` and `dogtag_development` databases and boot Mailpit.
-
-    docker compose up -d
-
-To run only the services needed when Rails runs on the host (and for the Playwright suite):
+Postgres, Redis and [Mailpit](https://mailpit.axllent.org) (local mail catcher) are all you need to run Rails and the specs from the console. The `db` container also creates the `dogtag_test` and `dogtag_development` databases.
 
     docker compose up -d db redis mailpit
+
+The Playwright suite needs the same three services. To run the whole stack in containers instead, use `docker compose up -d`.
 
 ### Run the test suite
 
@@ -170,7 +178,7 @@ npm --prefix frontend run build     # builds into public/register (gitignored)
 npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
 ```
 
-- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link and emails point at `/register` (default is the legacy UI). It only takes effect when the SPA is built (or `VITE_DEV_SERVER` is set), so a missing build falls back to the legacy UI instead of linking to a 503.
+- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link and emails point at `/register` (default is the legacy UI). It only takes effect when the SPA is built (or `VITE_DEV_SERVER` is set), so a missing build falls back to the legacy UI instead of linking to a 503. Setting it back to `legacy` is the fallback if the SPA has a problem.
 - Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
 - Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
