@@ -5,14 +5,6 @@ describe EmailVerifier do
   let(:user) { team.user }
   let(:verifier) { EmailVerifier.new(team) }
 
-  around do |example|
-    saved = ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"]
-    ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"] = nil
-    example.run
-  ensure
-    ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"] = saved
-  end
-
   def track(kind, status: "sent", **attrs)
     SentEmail.create!({ kind: kind, status: status, mailer: "UserMailer", recipient: "a@b.com" }.merge(attrs))
   end
@@ -74,18 +66,6 @@ describe EmailVerifier do
 
     expect(verifier.report.map { |r| r[:kind] }).to eq(%w[welcome team_finalized])
     expect(verifier.ok?).to be true
-  end
-
-  context "when the sendgrid webhook is configured" do
-    before { ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"] = "key" }
-
-    it "requires delivered status" do
-      track("welcome", user_id: user.id, status: "sent")
-      expect(verifier.ok?).to be false
-
-      SentEmail.where(kind: "welcome").update_all(status: "delivered")
-      expect(EmailVerifier.new(team).ok?).to be true
-    end
   end
 
   it "is not ok for bounced or queued rows" do

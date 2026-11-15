@@ -43,7 +43,6 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => '/sidekiq'
 
   resources :sent_emails, only: [:index]
-  post "webhooks/sendgrid", to: "webhooks/sendgrid#create"
 
   #resources :foos, :only => [:index, :new, :create, :show, :edit, :update, :delete]
 

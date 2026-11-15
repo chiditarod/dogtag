@@ -299,7 +299,7 @@ The page has a header and four numbered cards. Each card shows a status pill and
    - **`dogtag` is production** (`dogtag.chiditarod.org`, `heroku` remote) and **`dogtag-staging` is staging**.
    - Delete the `dogtag-22` app and remove its git remote. Deleting the app is irreversible, so confirm with the owner right before doing it.
    - Provision Postgres, Redis, a web dyno, and a worker dyno on `dogtag`.
-   - Set config vars: Stripe live keys, Classy, SMTP (SendGrid), SendGrid event-webhook verification key, Rollbar, `REDIS_URL`, Sidekiq web auth.
+   - Set config vars: Stripe live keys, Classy, SMTP (SendGrid), SendGrid event-webhook verification key, Rollbar, `REDIS_URL`, Sidekiq web auth. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
    - Restore `postgres_dump-20260409.dump`, run migrations, and smoke test.
    - Stage first on `dogtag-staging`.
 5. **Live test (production):**
@@ -350,7 +350,7 @@ Build in this order. Cut from the bottom.
    - layer 2 Mailpit e2e
    - layer 3 `sent_emails` log + `emails:verify`
 
-   These are needed before the live test. The SendGrid webhook, admin page, and delivered/bounced status may follow shortly after Dec 1 if time is short.
+   These are needed before the live test. The SendGrid webhook, admin page, and delivered/bounced status may follow shortly after Dec 1 if time is short. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
 4. **Past-racer picker.**
 5. **#162 fix** (see below).
 6. **Reminder emails.** These may ship after Dec 1, but must be live before the first tier change.
@@ -362,6 +362,8 @@ Build in this order. Cut from the bottom.
 Fix it for launch, not just reproduce it. Returning captains who changed their email hit "This email address is already used" in `ClassyUser#link_user_to_classy!`, and returning captains are exactly who the picker serves. Reproduce it in a spec first, then make the smallest change in `ClassyUser`/`ClassyClient`, for example looking up the existing Classy member by the old email or linking by Classy id. Avoid a broader Classy rewrite.
 
 ## Email delivery verification (owner decision: all three layers)
+
+> 2026-11-14: superseded, MXRoute only, SendGrid layer removed.
 
 Production sends through **SendGrid** over SMTP (existing `SMTP_*` config). Emails must be verifiable programmatically at every level, not by "check your inbox".
 
@@ -392,6 +394,8 @@ Each spec runs with `Sidekiq::Testing.inline!` and asserts on `ActionMailer::Bas
 
 ### Layer 3: Outgoing log + SendGrid event webhook (staging/production)
 
+> 2026-11-14: superseded, MXRoute only, SendGrid layer removed.
+
 - **`sent_emails` table:**
   - Columns:
     - mailer
@@ -405,11 +409,11 @@ Each spec runs with `Sidekiq::Testing.inline!` and asserts on `ActionMailer::Bas
     - error
     - timestamps
   - Written by an ActionMailer delivery observer/interceptor, so every mailer is covered without per-mailer code. Delivery exceptions record `failed`.
-- **Correlation with SendGrid:**
+- **Correlation with SendGrid:** (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
   - Each outgoing message gets an `X-SMTPAPI` header with `unique_args: { sent_email_id: <id> }`.
   - SendGrid echoes this in event webhook payloads.
   - This avoids relying on SendGrid's own message id, which differs from the SMTP Message-ID.
-- **Webhook endpoint (`POST /webhooks/sendgrid`):**
+- **Webhook endpoint (`POST /webhooks/sendgrid`):** (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
   - Verifies SendGrid's **signed event webhook** (ECDSA public key in a config var) and rejects unsigned requests.
   - Updates `sent_emails.status` from `processed`, `delivered`, `deferred`, `bounce`, `dropped` and `spamreport` events.
   - Must be idempotent, because SendGrid retries and batches events.
@@ -432,7 +436,7 @@ Each spec runs with `Sidekiq::Testing.inline!` and asserts on `ActionMailer::Bas
 All must be true to launch on the SPA:
 - The full racer path passes in Playwright: signup, team, roster with picker, questions, payment, finalization.
 - On staging with Stripe test mode, finalization triggers the Classy team creation job and the emails. A Classy sandbox is used if available; otherwise this step is verified in the production live test.
-- Email layers 1 and 2 pass in CI and locally. On staging, `emails:verify` reports the test team's emails as at least `sent`, and as `delivered` once the SendGrid webhook is configured.
+- Email layers 1 and 2 pass in CI and locally. On staging, `emails:verify` reports the test team's emails as at least `sent`, and as `delivered` once the SendGrid webhook is configured. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
 - No regressions in the RSpec suite. The legacy flow still works.
 - The owner has clicked through it on a phone and a desktop.
 

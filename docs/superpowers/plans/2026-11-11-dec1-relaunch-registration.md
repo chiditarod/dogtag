@@ -98,7 +98,7 @@
 - `app/controllers/api/v1/{csrf,sessions,users,password_resets,races,teams,people,past_racers,questions,payments,mock_payments}_controller.rb`
 - `app/views/api/v1/**/*.json.jbuilder`
 - `app/controllers/spa_controller.rb`: serves `public/register/index.html`
-- `app/controllers/webhooks/sendgrid_controller.rb`
+- `app/controllers/webhooks/sendgrid_controller.rb` (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
 - `app/controllers/sent_emails_controller.rb`: admin email log
 - `app/models/sent_email.rb`
 - `app/services/team_checklist.rb`, `app/services/past_racers.rb`, `app/services/payments/charge_team.rb`, `app/services/email_verifier.rb`, `app/services/reminder_selector.rb`, `app/services/sendgrid_signature.rb`, `app/services/registration_ui.rb`
@@ -383,6 +383,8 @@ gh pr create --repo chiditarod/dogtag --base main --head ometa:fix/launch-harden
 
 ### Task 7: `sent_emails` log, mail tracking, SendGrid correlation header
 
+> 2026-11-14: superseded, MXRoute only, SendGrid layer removed.
+
 **Files:**
 - Create: migration `CreateSentEmails`
 - Create: `app/models/sent_email.rb`
@@ -453,7 +455,7 @@ it "rejects a duplicate dedupe_key for the same team and kind" # second create! 
 - Produces:
   - `EmailVerifier.new(team).report -> Array<{kind: String, status: String|nil, ok: Boolean}>`
     - Expected kinds: `welcome` (captain), `team_finalized` if `team.finalized`, and `classy_fundraising` if `team.classy_id` is present. Plus one row per `registration_reminder` sent for the team.
-    - `ok` is true only when status is `delivered`, or when status is `sent` and `ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"]` is blank.
+    - `ok` is true only when status is `delivered`, or when status is `sent` and `ENV["SENDGRID_WEBHOOK_PUBLIC_KEY"]` is blank. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
   - `EmailVerifier#ok? -> Boolean`
   - Rake task `emails:verify[team_id]` prints one line per row (`kind  status  OK|MISSING|NOT DELIVERED`) and calls `exit 1` unless `ok?`.
 
@@ -470,6 +472,8 @@ it "rejects a duplicate dedupe_key for the same team and kind" # second create! 
 - [ ] **Step 5: Commit.** Message: `Add email chain specs and emails:verify rake task`
 
 ### Task 9: SendGrid signed event webhook + admin email log
+
+> 2026-11-14: superseded, MXRoute only, SendGrid layer removed.
 
 **Files:**
 - Create: `app/services/sendgrid_signature.rb`
@@ -1122,13 +1126,13 @@ it "rejects a duplicate dedupe_key for the same team and kind" # second create! 
   - Validate it: `ruby -rjson -e 'JSON.parse(File.read(ARGV[0]))' <file>`, and check it renders in the SPA renderer test by temporarily pointing the fixture at it.
 - [ ] **Step 2: Bring up staging (`dogtag-staging`).**
   - Check `heroku apps:info -a dogtag-staging`, then add Postgres, Redis, a web dyno and a worker dyno.
-  - Set config vars: `APP_HOST`, `REGISTRATION_UI=spa`, Stripe **test** keys, `CLASSY_*`, `SMTP_*` (SendGrid), `SENDGRID_WEBHOOK_PUBLIC_KEY`, `SIDEKIQ_USER/PASS` and `ROLLBAR_ACCESS_TOKEN`.
+  - Set config vars: `APP_HOST`, `REGISTRATION_UI=spa`, Stripe **test** keys, `CLASSY_*`, `SMTP_*` (SendGrid), `SENDGRID_WEBHOOK_PUBLIC_KEY`, `SIDEKIQ_USER/PASS` and `ROLLBAR_ACCESS_TOKEN`. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
   - Restore the April dump: upload `postgres_dump-20260409.dump` to a temporary signed URL and run `heroku pg:backups:restore <url> DATABASE_URL -a dogtag-staging --confirm dogtag-staging`. **Confirm with the owner first.**
   - Deploy the merged `main`, then run `heroku run rails db:migrate -a dogtag-staging`.
 - [ ] **Step 3: Create race XXII on staging.**
   - Use the admin UI: copy race XXI's settings, shifting dates +1 year, with 3 tiers copied from XXI shifted +1 year. Add the 22nd-year label and paste the JSONForm.
   - The owner confirms the final dates and prices.
-  - The owner configures the SendGrid event webhook URL `https://<staging-host>/webhooks/sendgrid` with signing enabled.
+  - The owner configures the SendGrid event webhook URL `https://<staging-host>/webhooks/sendgrid` with signing enabled. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
 - [ ] **Step 4: Run the staging verification.**
   - Register a team on a phone and on a desktop through `/register`, paying with Stripe test card `4242…`.
   - Check finalization, the Classy team creation (or the Classy sandbox), and the emails.
@@ -1137,7 +1141,7 @@ it "rejects a duplicate dedupe_key for the same team and kind" # second create! 
 - [ ] **Step 6: Bring up production (`dogtag`).**
   - Repeat Step 2 with the live keys, `APP_HOST=dogtag.chiditarod.org`, and the chosen `REGISTRATION_UI` value.
   - The restore needs **owner confirmation**.
-  - Point the SendGrid webhook at production.
+  - Point the SendGrid webhook at production. (2026-11-14: superseded, MXRoute only, SendGrid layer removed)
   - Create race XXII in production.
 - [ ] **Step 7: Run the production live test (with the owner).**
   - Register a real team on a hidden test race with a $1 tier (or the owner's chosen low-price requirement).

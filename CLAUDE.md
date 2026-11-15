@@ -271,7 +271,7 @@ include Wisper.model
    - `dogtag` is production (`dogtag.chiditarod.org`, `heroku` remote) and `dogtag-staging` is staging. Stage first on `dogtag-staging`.
    - Delete the previous year's app (e.g. `dogtag-22`) and remove its git remote. Deleting an app is irreversible, so confirm with the owner right before doing it.
    - Provision Postgres, Redis, a web dyno, and a worker dyno.
-   - Set config vars: Stripe live keys, Classy, SMTP (SendGrid), SendGrid event-webhook verification key, Rollbar, `REDIS_URL`, Sidekiq web auth, `APP_HOST`, `REGISTRATION_UI`.
+   - Set config vars: Stripe live keys, Classy, SMTP (MXRoute), Rollbar, `REDIS_URL`, Sidekiq web auth, `APP_HOST`, `REGISTRATION_UI`.
    - Restore the production dump, run migrations, and smoke test.
 5. **Live test (production):**
    - Register a real team using production Stripe on a test race or a low-price requirement.
@@ -285,7 +285,7 @@ include Wisper.model
 Required for production:
 - `DATABASE_URL` - PostgreSQL connection string
 - `STRIPE_PUBLISHABLE_KEY` / `STRIPE_SECRET_KEY` - Stripe API keys
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_DOMAIN`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_DOMAIN` - all mail goes through MXRoute SMTP. MXRoute has no event webhooks, so email "delivery verification" (`rake emails:verify`) means "logged as sent" in `sent_emails`
 - `DEFAULT_FROM_EMAIL`
 - `APP_HOST` - Public host for links in emails (password resets, welcome). Production falls back to `dogtag.chiditarod.org`, so staging must set it
 
@@ -294,7 +294,6 @@ Optional:
 - `VITE_DEV_SERVER` - dev only; redirect SPA routes to the Vite dev server
 - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `CLASSY_ORGS` - Classy integration
 - `ROLLBAR_ACCESS_TOKEN` - Error tracking
-- `SENDGRID_WEBHOOK_PUBLIC_KEY` - Verifies `POST /webhooks/sendgrid` (401 when unset). See README "Email delivery tracking"
 
 ## Development Commands
 
