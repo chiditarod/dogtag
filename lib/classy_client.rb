@@ -150,8 +150,6 @@ class ClassyClient
       'client_secret' => ENV['CLASSY_CLIENT_SECRET']
     }
 
-    client = HTTPClient.new
-    client.connect_timeout = DEFAULT_TIMEOUT
     response = wrapper(:post, "/oauth2/auth", { body: credentials })
 
     @access_token = response['access_token']
@@ -209,9 +207,7 @@ class ClassyClient
     args[:header]['User-Agent'] = 'dogtag'
     args[:follow_redirect] = true
 
-    http = HTTPClient.new
-    http.connect_timeout = DEFAULT_TIMEOUT
-    http.send(verb, "#{API_HOST}#{uri}", args)
+    http_client.send(verb, "#{API_HOST}#{uri}", args)
   end
 
   # docs for httpclient gem: http://www.rubydoc.info/gems/httpclient/HTTPClient
@@ -231,9 +227,7 @@ class ClassyClient
 
     retries = 0
     begin
-      http = HTTPClient.new
-      http.connect_timeout = DEFAULT_TIMEOUT
-      response = http.send(verb, "#{API_HOST}#{uri}", args)
+      response = http_client.send(verb, "#{API_HOST}#{uri}", args)
 
       unless response.ok?
         if retriable_status?(response.status) && retries < MAX_RETRIES
@@ -255,6 +249,12 @@ class ClassyClient
       end
       raise
     end
+  end
+
+  # One client per ClassyClient: each HTTPClient builds its own OpenSSL context in native memory,
+  # so a new one per request ratchets worker RSS. Retries reuse it; HTTPClient handles dead keep-alives.
+  def http_client
+    @http_client ||= HTTPClient.new.tap { |http| http.connect_timeout = DEFAULT_TIMEOUT }
   end
 
   def retriable_status?(status)
