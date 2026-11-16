@@ -23,6 +23,7 @@ function Page({
 }) {
   return (
     <>
+      <button type="button">Page</button>
       {targets.map((id) => (
         <div key={id} data-tour={id}>
           {id}
@@ -106,13 +107,25 @@ describe('GuidedTour', () => {
   it('keeps Tab inside the popup', async () => {
     const { user } = renderTour();
     await user.click(screen.getByRole('button', { name: 'Next' }));
+    const page = screen.getByRole('button', { name: 'Page' });
+
     screen.getByRole('button', { name: 'Next' }).focus();
     await user.tab();
     expect(screen.getByRole('button', { name: 'End tour' })).toHaveFocus();
+    expect(page).not.toHaveFocus();
 
     screen.getByRole('heading', { name: 'Add your racers' }).focus();
     await user.tab({ shift: true });
-    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
+    expect(page).not.toHaveFocus();
+  });
+
+  it('brings Tab back into the popup when focus has fallen to the page', async () => {
+    const { user } = renderTour();
+    (document.activeElement as HTMLElement).blur();
+    expect(document.body).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'End tour' })).toHaveFocus();
   });
 
   it('renders nothing and does not end when no target is on the page', async () => {
@@ -132,6 +145,34 @@ describe('GuidedTour', () => {
     });
     expect(ring().style.top).toBe('394px');
     expect(ring().style.left).toBe('294px');
+  });
+
+  it('keeps the highlight exactly on the target while the page scrolls', () => {
+    renderTour();
+    rects.flag = new DOMRect(120, 10, 200, 40);
+    act(() => {
+      fireEvent.scroll(window);
+    });
+    expect(ring().style.top).toBe('4px');
+    expect(ring().style.left).toBe('114px');
+    expect(ring().className).not.toMatch(/transition/);
+    expect(screen.getByRole('dialog').className).not.toMatch(/transition/);
+  });
+
+  it('hides the highlight when the target leaves the page', () => {
+    const tourStops = stops();
+    const onEnd = vi.fn();
+    const { rerender } = render(
+      <Page targets={['flag', 'racers', 'fee']} tourStops={tourStops} onEnd={onEnd} />,
+    );
+    expect(ring()).toBeInTheDocument();
+    // Same stops array, so the tour does not look for targets again.
+    rerender(<Page targets={['racers', 'fee']} tourStops={tourStops} onEnd={onEnd} />);
+    act(() => {
+      fireEvent.scroll(window);
+    });
+    expect(screen.queryByTestId('tour-ring')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Four stars, four steps' })).toBeInTheDocument();
   });
 
   it('places the popup next to the target from lg and pins it to the bottom below', () => {

@@ -69,7 +69,8 @@ interface TourPopupProps {
 }
 
 interface Layout {
-  ring: CSSProperties;
+  /** Null while the target is not in the document. */
+  ring: CSSProperties | null;
   /** Null below `lg`, where CSS pins the popup to the bottom. */
   popup: { top: number; left: number } | null;
 }
@@ -97,7 +98,11 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
   const measure = useCallback(() => {
     const target = targetOf(stop.id);
     const popup = popupRef.current;
-    if (!target || !popup) return;
+    if (!target) {
+      setLayout((prev) => prev && { ...prev, ring: null });
+      return;
+    }
+    if (!popup) return;
     const rect = target.getBoundingClientRect();
     const size = popup.getBoundingClientRect();
     setLayout({
@@ -121,7 +126,7 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
     const reduced = mediaMatches('(prefers-reduced-motion: reduce)', false);
     targetOf(stop.id)?.scrollIntoView?.({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
     measure();
-    titleRef.current?.focus();
+    titleRef.current?.focus({ preventScroll: true });
   }, [stop.id, measure]);
 
   useEffect(() => {
@@ -137,11 +142,11 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
     <>
       {/* Keeps clicks off the page behind the tour. */}
       <div aria-hidden="true" className="fixed inset-0 z-40" />
-      {layout && (
+      {layout?.ring && (
         <div
           data-testid="tour-ring"
           aria-hidden="true"
-          className="pointer-events-none fixed z-40 rounded-lg shadow-[0_0_0_3px_theme(colors.link),0_0_0_9999px_theme(colors.navy/50%)] motion-safe:transition-[top,left,width,height] motion-safe:duration-200"
+          className="pointer-events-none fixed z-40 rounded-lg shadow-[0_0_0_3px_theme(colors.link),0_0_0_9999px_theme(colors.navy/50%)]"
           style={layout.ring}
         />
       )}
@@ -151,7 +156,7 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-flag bg-white p-4 font-sans text-navy shadow-lg motion-safe:transition-[top,left] motion-safe:duration-200 lg:inset-x-auto lg:bottom-auto lg:w-[22.5rem]"
+        className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-flag bg-white p-4 font-sans text-navy shadow-lg lg:inset-x-auto lg:bottom-auto lg:w-[22.5rem]"
         style={layout?.popup ?? undefined}
       >
         <h2
