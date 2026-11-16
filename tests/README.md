@@ -85,7 +85,7 @@ The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.her
 | `E2E_EMAIL_BASE` | Test mailbox (`user@domain`). Racers are plus-addressed: `<user>+<runId>@<domain>` |
 | `E2E_IMAP_PASSWORD` | Mailbox password; needed only with `E2E_CHECK_EMAIL=1` |
 | `E2E_OPERATOR_EMAIL`, `E2E_OPERATOR_PASSWORD` | Staging **operator** login used to create the race. Never an admin |
-| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Optional Classy check; the campaign must be on the allowlist in `target.ts` (867400) |
+| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Optional Classy check, staging only (ignored locally); the campaign must be on the allowlist in `target.ts` (867400) |
 
 The suite never logs in as an admin, so admin credentials do not belong in `.env.e2e`. `bin/rails staging:seed` (run on the staging dyno, not by the suite) reads its own `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and `SEED_PASSWORD` (optional `SEED_EMAIL_BASE`, `SEED_CLASSY_CAMPAIGN_ID`); pass those to that command, not to Playwright.
 

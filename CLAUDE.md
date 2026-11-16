@@ -273,7 +273,7 @@ The 2026 production runbook with exact commands is `docs/runbooks/2026-productio
    - `dogtag` is production (`dogtag.chiditarod.org`, `heroku` remote) and `dogtag-staging` is staging. Stage first on `dogtag-staging`.
    - Delete the previous year's app (e.g. `dogtag-22`) and remove its git remote. Deleting an app is irreversible, so confirm with the owner right before doing it.
    - Provision Postgres, Redis, a web dyno, and a worker dyno.
-   - Set config vars: Stripe live keys, Classy, SMTP (MXRoute), Rollbar, `REDIS_URL`, Sidekiq web auth, `APP_HOST`, `REGISTRATION_UI`.
+   - Set config vars: Stripe live keys, Classy, SMTP (MXRoute), Rollbar, `REDIS_URL`, Sidekiq web auth, `APP_HOST`, `REGISTRATION_UI`, `MALLOC_ARENA_MAX=2`, `NPM_CONFIG_OMIT=dev` (keeps root test devDependencies out of the build).
    - Restore the production dump, run migrations, and smoke test.
 5. **Live test (production):**
    - Register a real team using production Stripe on a test race or a low-price requirement.
@@ -412,7 +412,7 @@ The `Procfile` has no `release:` phase, so a push does not migrate. When a deplo
 
 - Playwright boots Rails in **development** (delivery_method :smtp to Mailpit) with `SIDEKIQ_INLINE=true` (config/initializers/sidekiq.rb; ignored in production), `REGISTRATION_UI=spa`, `APP_HOST=localhost:3099`; `VITE_DEV_SERVER` must be unset. CircleCI runs the same with `RAILS_ENV=development` against the `dogtag_test` DB, since the test env uses in-memory mail delivery.
 - Each Playwright spec seeds with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) via `tests/helpers/seed.ts`; `test_seeds:cleanup` sweeps users, teams, `Race %` races and `@example.com` SentEmail rows.
-- E2E targets (`tests/e2e/`, `E2E_TARGET`): `npm run e2e` = local, mock payments, Mailpit; `npm run e2e:stripe` = local, Stripe test card; `npm run e2e:staging` = `dogtag-staging.herokuapp.com`, Stripe test card, optional IMAP/Classy checks (`E2E_CHECK_EMAIL=1`). Settings live in the gitignored `.env.e2e`; see `tests/README.md`.
+- E2E targets (`tests/e2e/`, `E2E_TARGET`): `npm run e2e` = local, mock payments, Mailpit; `npm run e2e:stripe` = local, Stripe test card; `npm run e2e:staging` = `dogtag-staging.herokuapp.com`, Stripe test card, optional IMAP/Classy checks (`E2E_CHECK_EMAIL=1`). The Classy check is staging-only: the local server reads `CLASSY_*` from `.env`, so a local race with a campaign would create real Classy teams. Settings live in the gitignored `.env.e2e`; see `tests/README.md`.
 - The host guard (`tests/e2e/target.ts`) allows only `localhost`, `127.0.0.1` and `dogtag-staging.herokuapp.com`, and refuses `dogtag.chiditarod.org`, `dogtag.herokuapp.com` and `*.chiditarod.org` first; no env var extends the lists, and a `BASE_URL` host must belong to the chosen target. Nothing under `tests/` may use the `heroku` CLI, the Heroku API or `heroku run`. Never pay unless the race's publishable key starts with `pk_test_`.
 - The staging run logs in as an **operator**, never an admin, and builds its own `Race E2E <runId>` through the admin UI. Races are retired (dates moved to the past, ` [retired]` appended), not deleted; the next run sweeps any open leftover. Classy teams are deleted only if named `Test Team E2E *` on the allowlisted campaign.
 - On staging, racers are IMAP plus-addresses (`<user>+<runId>@<domain>` from `E2E_EMAIL_BASE`); only mail to this run's address is deleted from the shared mailbox. Locally, mail goes through Mailpit.

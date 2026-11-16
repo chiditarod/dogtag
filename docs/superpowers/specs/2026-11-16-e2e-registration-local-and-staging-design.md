@@ -37,8 +37,8 @@ before the Nov 24 go/no-go and before every later release.
   - `local`: Rails booted by Playwright, mock payments.
   - `staging`: `https://dogtag-staging.herokuapp.com`, Stripe test mode.
 - **Optional checks, off unless configured:**
-  - Classy: query the Classy API for the team's fundraising team (staging,
-    or locally if Classy creds and a campaign are given).
+  - Classy: query the Classy API for the team's fundraising team (staging
+    only; a local race never gets a Classy campaign).
   - Email: the welcome and confirmation emails arrive. Locally they are read
     from Mailpit, and on staging from the owner's test mailbox over IMAP. The
     same assertions run on both.
@@ -120,7 +120,7 @@ The work focuses on testing and integration.
 | Staff login (operator) | `test+operator@example.com` (local `test_seeds:operator`) | `E2E_OPERATOR_EMAIL` / `E2E_OPERATOR_PASSWORD` (seeded operator) |
 | Racer email | `e2e+<runId>@example.com` | `<user>+<runId>@<domain>` from `E2E_EMAIL_BASE` (required; the owner's test mailbox) |
 | Email check (`E2E_CHECK_EMAIL=1`) | Mailpit (`tests/helpers/mailpit.ts`) | IMAP on the test mailbox (`monday.mxrouting.net:993`) |
-| Classy check | when `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID` are set | same |
+| Classy check | never (the local server reads `.env` Classy creds, so a campaign would create real Classy teams) | when `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID` are set |
 
 Guard, evaluated when `playwright.config.ts` loads, before any test or web server
 starts:

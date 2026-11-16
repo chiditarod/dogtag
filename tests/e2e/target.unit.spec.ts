@@ -78,13 +78,16 @@ test.describe('resolveTarget', () => {
   });
   test('unknown target is an error', () =>
     expect(() => resolveTarget({ E2E_TARGET: 'production' })).toThrow(/E2E_TARGET/));
+  const classyEnv = { CLASSY_CLIENT_ID: 'x', CLASSY_CLIENT_SECRET: 'y', E2E_CLASSY_CAMPAIGN_ID: '867400' };
   test('classy campaign must be on the allowlist', () =>
-    expect(() => resolveTarget({ CLASSY_CLIENT_ID: 'x', CLASSY_CLIENT_SECRET: 'y', E2E_CLASSY_CAMPAIGN_ID: '999' })).toThrow(/campaign/));
+    expect(() => resolveTarget({ ...staging, ...classyEnv, E2E_CLASSY_CAMPAIGN_ID: '999' })).toThrow(/campaign/));
   test('classy is null unless fully configured', () => {
-    expect(resolveTarget({ CLASSY_CLIENT_ID: 'x' }).classy).toBeNull();
-    expect(resolveTarget({ CLASSY_CLIENT_ID: 'x', CLASSY_CLIENT_SECRET: 'y', E2E_CLASSY_CAMPAIGN_ID: '867400' }).classy)
+    expect(resolveTarget({ ...staging, CLASSY_CLIENT_ID: 'x' }).classy).toBeNull();
+    expect(resolveTarget({ ...staging, ...classyEnv }).classy)
       .toEqual({ clientId: 'x', clientSecret: 'y', campaignId: 867400 });
   });
+  test('classy is always null for the local target', () =>
+    expect(resolveTarget(classyEnv).classy).toBeNull());
   test('error messages never contain secret values', () => {
     let message = '';
     try { resolveTarget({ ...staging, E2E_CHECK_EMAIL: '1', E2E_OPERATOR_PASSWORD: 'hunter2-secret' }); } catch (e) {

@@ -16,11 +16,13 @@ const STAFF_STATE = 'playwright/.auth/staff.json';
 const staffRecording = staging ? { trace: 'off' as const, video: 'off' as const } : {};
 
 /**
- * The local Rails server and the seed subprocesses must never see real Classy
- * credentials. Playwright launches the webServer with {...process.env, ...env},
- * and Rails treats an empty string as a credential, so the keys have to be
- * removed from process.env itself. run.ts has already captured target.classy
- * (for the live specs), and workers re-load this config, so it holds per process.
+ * The .env.e2e values (staging secrets, Classy credentials) must not reach the
+ * local Rails server or the seed subprocesses. Playwright launches the
+ * webServer with {...process.env, ...env}, and Rails treats an empty string as
+ * a credential, so the keys have to be removed from process.env itself.
+ * Workers re-load this config, so it holds per process. Rails may still read
+ * CLASSY_* from .env (dotenv-rails), which is why the local target never sets
+ * a Classy campaign on its race (target.classy is null locally).
  */
 if (!staging) {
   for (const key of new Set([...e2eFileKeys, 'CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET'])) delete process.env[key];

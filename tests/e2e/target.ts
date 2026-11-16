@@ -96,7 +96,10 @@ export function resolveTarget(env: Env): Target {
 
   const payments = resolvePayments(env, name);
   const checkEmail = env.E2E_CHECK_EMAIL === '1';
-  const classy = resolveClassy(env);
+  // Classy is staging-only. A local race with a campaign id would make the
+  // local server (which reads CLASSY_* from .env through dotenv-rails) create
+  // real Classy members and fundraising teams.
+  const classy = name === 'staging' ? resolveClassy(env) : null;
   const requirementType = payments === 'stripe' ? 'PaymentRequirement' : 'MockPaymentRequirement';
 
   let target: Target;
