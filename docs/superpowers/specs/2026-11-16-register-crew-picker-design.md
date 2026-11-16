@@ -1,7 +1,7 @@
 # Registration SPA: Crew Picker and Team Page Polish: Design
 
 **Date:** 2026-11-16
-**Status:** Draft for approval
+**Status:** Approved by the owner, 2026-11-16
 **Branch:** `feat/register-crew-picker` (from `main`)
 
 ## Intent
@@ -25,7 +25,7 @@ Registration for CHIditarod XXII opens Dec 1, 2026. The work is in the SPA, with
 
 - No server change beyond the Instagram field in section 8. No change to the Gemfile, initializers or config.
 - No change to the legacy HAML flow beyond that one field.
-- The team-level Twitter question is not touched. It lives in the `teams.twitter` column and in each year's JSONForm payload, which the owner edits.
+- The yearly JSONForm payload is not touched. `chiditarod_21.json` and `chiditarod_22.json` in `../dogtag-private/jsonform/` already ask "Got Instagram?" for the team. The old `teams.twitter` column is left alone.
 - No redesign of login, signup, forgot password, the race list, the create-team form, the questions renderer or the payment logic. They keep today's look.
 - No new colors or fonts. The Chicago Flag tokens and Oswald/Inter stay.
 
@@ -173,6 +173,7 @@ The owner chose a real Instagram field over relabelling the old one.
 - **Past racers:** nobody has an Instagram handle on file yet, so this year every past racer's Instagram line reads "None". Old Twitter handles are never shown as Instagram. From next year the saved handle carries over like any other detail.
 - **Legacy flow:** the people form asks for Instagram in place of Twitter, the legacy controller permits `instagram`, and the people table shows an Instagram column in place of Twitter.
 - **Export:** `Team.export` lists `instagram` in place of `twitter` for each racer.
+- **Test fixture:** `spec/fixtures/files/valid_jsonform.json` is the one place a team-level "Got Twitter?" question remains. It gets the "Got Instagram?" wording and key from `chiditarod_22.json`, so no Twitter question is left anywhere the new flow can render.
 
 ## Testing
 
