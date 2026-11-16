@@ -1,4 +1,4 @@
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { ChicagoStar } from '@/components/ui/chicago-star';
 
 type Steps = [boolean, boolean, boolean, boolean];
@@ -14,13 +14,23 @@ interface FlagProgressProps {
  * the fourth lands, all four pulse once in order.
  */
 export function FlagProgress({ steps, label }: FlagProgressProps) {
-  const previous = useRef(steps);
-  useEffect(() => {
-    previous.current = steps;
+  // The animation is derived from the last change of steps and kept until the
+  // steps change again, so re-renders with equal steps do not cut it short.
+  const [shown, setShown] = useState({
+    steps,
+    landed: steps.map(() => false),
+    salute: false,
   });
-
-  const landed = steps.map((done, i) => done && !previous.current[i]);
-  const salute = steps.every(Boolean) && !previous.current.every(Boolean);
+  let current = shown;
+  if (steps.some((done, i) => done !== shown.steps[i])) {
+    current = {
+      steps,
+      landed: steps.map((done, i) => done && !shown.steps[i]),
+      salute: steps.every(Boolean) && !shown.steps.every(Boolean),
+    };
+    setShown(current);
+  }
+  const { landed, salute } = current;
 
   return (
     <div
