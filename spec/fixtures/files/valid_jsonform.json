@@ -2,10 +2,10 @@
   "schema":{
     "type":"object",
     "properties":{
-      "twitter":{
-        "title":"Got <a href='https://twitter.com/chiditarod' target='_blank'>Twitter</a>?",
+      "instagram":{
+        "title":"Got <a href='https://www.instagram.com/chiditarod/' target='_blank'>Instagram</a>?",
         "type":"string",
-        "description":"Does your team (or prominent team member have a twitter username or hashtag? Include @ or #, respectively.",
+        "description":"Does your team (or prominent team member have an instagram username or hashtag? Include @ or #, respectively.",
           "required":false,
           "pattern":"^[#@][A-Za-z0-9_]+$",
           "maxLength":16
@@ -235,7 +235,7 @@
         },
         "primary-inspiration",
         "secondary-inspiration",
-        "twitter",
+        "instagram",
         "buddies"
       ]
     },

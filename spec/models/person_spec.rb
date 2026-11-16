@@ -122,9 +122,23 @@ describe 'validation' do
     end
   end
 
-  it 'passes when twitter starts with an @ sign' do
-    expect(FactoryBot.build(:person, :twitter => 'bad')).to be_invalid
-    expect(FactoryBot.build(:person, :twitter => '@good')).to be_valid
+  describe "instagram" do
+    it "saves a handle lowercased with a leading @" do
+      expect(FactoryBot.create(:person, instagram: " Sam.Okafor ").instagram).to eq("@sam.okafor")
+      expect(FactoryBot.create(:person, instagram: "@Cart_Pusher9").instagram).to eq("@cart_pusher9")
+    end
+
+    it "stores a blank handle as nil" do
+      expect(FactoryBot.create(:person, instagram: "  ").instagram).to be_nil
+    end
+
+    it "is invalid for a URL, spaces, or more than 30 characters" do
+      ["https://instagram.com/sam", "sam okafor", "@#{'a' * 31}"].each do |handle|
+        person = FactoryBot.build(:person, instagram: handle)
+        expect(person).not_to be_valid
+        expect(person.errors[:instagram]).to eq(["should look like @handle (letters, numbers, periods and underscores)"])
+      end
+    end
   end
 
   it 'converts phone numbers into the right format' do

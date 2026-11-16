@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Person < ApplicationRecord
-  before_validation :downcase_email
+  before_validation :downcase_email, :normalize_instagram
 
   validates :first_name, :last_name, :email, :phone, :zipcode, presence: true
   validates :email, format: { :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i }
   validate :email_must_be_lowercase
-  validates :twitter, format: { :with => /\A^@\w+\z/i, :allow_nil => true, :allow_blank => true, :message => 'needs to begin with @ and be one word' }
+  validates :instagram, format: { with: /\A@[a-z0-9._]{1,30}\z/, allow_nil: true,
+                                  message: "should look like @handle (letters, numbers, periods and underscores)" }
   validates :zipcode, format: { :with => /\A\d{5}(-\d{4})?\z/, :message => "should be in the form 12345 or 12345-1234" }
   validates :phone, format: { :with => /\A\d{3}-\d{3}-\d{4}\z/, :message => "should be in the form 555-867-5309" }
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
@@ -44,6 +45,11 @@ class Person < ApplicationRecord
 
   def downcase_email
     self.email = email.downcase if email.present?
+  end
+
+  def normalize_instagram
+    handle = instagram.to_s.strip.downcase.delete_prefix("@")
+    self.instagram = handle.empty? ? nil : "@#{handle}"
   end
 
   def email_must_be_lowercase

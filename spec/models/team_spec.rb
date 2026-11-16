@@ -321,7 +321,7 @@ describe Team do
 
       # People columns (dawg_0_*, dawg_1_*, etc. based on people_per_team)
       race.people_per_team.times do |i|
-        expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_twitter", "dawg_#{i}_experience")
+        expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_instagram", "dawg_#{i}_experience")
       end
     end
 

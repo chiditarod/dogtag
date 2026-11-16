@@ -178,7 +178,7 @@ en:
       team_complete: Cannot remove a racer from a complete team. Please contact support if needed.
     form:
       experience: How many years has this person participated at Chiditarod?
-      twitter: Got twitter? Please include the @ sign
+      instagram: Got Instagram? Add your handle
       phone: Mobile Phone
       we_will_sms: Please be accurate; we will send you important texts on race day
   teams:
