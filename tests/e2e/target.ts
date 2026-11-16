@@ -68,11 +68,18 @@ function requireVars(env: Env, keys: string[]): Record<string, string> {
   return Object.fromEntries(keys.map((key) => [key, read(env, key) as string]));
 }
 
+/**
+ * The Classy check runs only when asked for (E2E_CHECK_CLASSY=1), on either
+ * target: it gives the race a real campaign, so the server under test creates
+ * a real Classy member and fundraising team. Having credentials is not enough.
+ */
 function resolveClassy(env: Env): Target['classy'] {
-  const clientId = read(env, 'CLASSY_CLIENT_ID');
-  const clientSecret = read(env, 'CLASSY_CLIENT_SECRET');
-  const rawCampaign = read(env, 'E2E_CLASSY_CAMPAIGN_ID');
-  if (!clientId || !clientSecret || !rawCampaign) return null;
+  if (env.E2E_CHECK_CLASSY !== '1') return null;
+  const {
+    CLASSY_CLIENT_ID: clientId,
+    CLASSY_CLIENT_SECRET: clientSecret,
+    E2E_CLASSY_CAMPAIGN_ID: rawCampaign,
+  } = requireVars(env, ['CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET', 'E2E_CLASSY_CAMPAIGN_ID']);
   const campaignId = /^\d+$/.test(rawCampaign) ? Number(rawCampaign) : NaN;
   if (!ALLOWED_CLASSY_CAMPAIGNS.includes(campaignId)) {
     throw new Error('E2E_CLASSY_CAMPAIGN_ID is not on the Classy campaign allowlist');
@@ -96,10 +103,7 @@ export function resolveTarget(env: Env): Target {
 
   const payments = resolvePayments(env, name);
   const checkEmail = env.E2E_CHECK_EMAIL === '1';
-  // Classy is staging-only. A local race with a campaign id would make the
-  // local server (which reads CLASSY_* from .env through dotenv-rails) create
-  // real Classy members and fundraising teams.
-  const classy = name === 'staging' ? resolveClassy(env) : null;
+  const classy = resolveClassy(env);
   const requirementType = payments === 'stripe' ? 'PaymentRequirement' : 'MockPaymentRequirement';
 
   let target: Target;

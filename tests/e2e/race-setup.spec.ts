@@ -5,8 +5,8 @@
  *   TZ=UTC npx playwright test --project=race-setup
  *
  * Tests in this file run in order on one worker. The sweep test comes first:
- * it retires every current `Race E2E *` race, so running it after test A would
- * retire this run's race too.
+ * a sweep retires this run's own `Race E2E *` races (and other runs' older
+ * than two hours), so running it after test A would retire this run's race too.
  */
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { readFileSync } from 'fs';
@@ -17,6 +17,7 @@ import {
   addTier,
   createRace,
   currentE2ERaceIds,
+  e2eRaceName,
   loggedInRoles,
   requirementTypeLabel,
   sweepLeftoverRaces,
@@ -58,11 +59,12 @@ async function apiRaces(request: APIRequestContext): Promise<any[]> {
 test('sweepLeftoverRaces retires a leftover open E2E race', async ({ page, request }) => {
   test.skip(target.name === 'staging', 'Creates a decoy race; the sweep itself runs in test A on staging');
 
-  const decoyName = `Race E2E sweep-${runId()}`;
+  // Named as if another run created it three hours ago.
+  const decoyName = e2eRaceName(`sweep-${runId()}`, new Date(Date.now() - 3 * HOUR));
   const { id } = await createRace(page, raceInput(decoyName, Date.now()));
   expect(await currentE2ERaceIds(page)).toContain(id);
 
-  expect(await sweepLeftoverRaces(page)).toContain(id);
+  expect(await sweepLeftoverRaces(page, runId())).toContain(id);
 
   expect(await currentE2ERaceIds(page)).not.toContain(id);
   const races = await apiRaces(request);
@@ -77,11 +79,11 @@ test('A: the operator sets up the race through the admin UI', async ({ page, req
   expect(roles).not.toContain('Admin');
 
   // An interrupted earlier run may have left its race open (staging).
-  const swept = await sweepLeftoverRaces(page);
+  const swept = await sweepLeftoverRaces(page, runId());
   if (swept.length > 0) console.log(`race-setup: retired leftover race(s) ${swept.join(', ')}`);
 
   const now = Date.now();
-  const raceName = `Race E2E ${runId()}`;
+  const raceName = e2eRaceName(runId(), new Date(now));
   const input = raceInput(raceName, now);
   const { id: raceId } = await createRace(page, input);
   // Written now, not after the assertions, so race-teardown retires the race

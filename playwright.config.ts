@@ -14,18 +14,30 @@ const STAFF_STATE = 'playwright/.auth/staff.json';
  * or the logged-in pages under test-results/). Locally they keep the defaults.
  */
 const staffRecording = staging ? { trace: 'off' as const, video: 'off' as const } : {};
+/**
+ * On staging, registration types the private test mailbox address and the
+ * racer's password. A trace keeps both (evaluate arguments, request bodies,
+ * DOM snapshots) and a video shows the filled fields, so neither is recorded.
+ */
+const registrationRecording = staging ? { trace: 'off' as const, video: 'off' as const } : {};
 
 /**
  * The .env.e2e values (staging secrets, Classy credentials) must not reach the
  * local Rails server or the seed subprocesses. Playwright launches the
  * webServer with {...process.env, ...env}, and Rails treats an empty string as
  * a credential, so the keys have to be removed from process.env itself.
- * Workers re-load this config, so it holds per process. Rails may still read
- * CLASSY_* from .env (dotenv-rails), which is why the local target never sets
- * a Classy campaign on its race (target.classy is null locally).
+ * Workers re-load this config, so it holds per process.
+ *
+ * The exception is E2E_CHECK_CLASSY=1: the local server then gets the same
+ * Classy credentials the check uses. Without it, Rails may still read
+ * CLASSY_* from .env (dotenv-rails), but the race has no Classy campaign, so
+ * no fundraising team is created.
  */
 if (!staging) {
-  for (const key of new Set([...e2eFileKeys, 'CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET'])) delete process.env[key];
+  const keep = target.classy ? ['CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET'] : [];
+  for (const key of new Set([...e2eFileKeys, 'CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET'])) {
+    if (!keep.includes(key)) delete process.env[key];
+  }
 }
 
 // The test port (default 3099, override with TEST_PORT) and the Rails server
@@ -123,7 +135,7 @@ export default defineConfig({
       // Anchored: an unanchored pattern would also match user-registration.spec.ts.
       testMatch: /(^|[\\/])registration\.spec\.ts$/,
       dependencies: ['race-setup'],
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...registrationRecording },
     },
     // Each live spec skips itself when its env vars are not set.
     { name: 'live', testMatch: /\.live\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },

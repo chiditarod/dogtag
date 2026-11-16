@@ -37,8 +37,8 @@ before the Nov 24 go/no-go and before every later release.
   - `local`: Rails booted by Playwright, mock payments.
   - `staging`: `https://dogtag-staging.herokuapp.com`, Stripe test mode.
 - **Optional checks, off unless configured:**
-  - Classy: query the Classy API for the team's fundraising team (staging
-    only; a local race never gets a Classy campaign).
+  - Classy: query the Classy API for the team's fundraising team, on either
+    target, only when asked for with `E2E_CHECK_CLASSY=1`.
   - Email: the welcome and confirmation emails arrive. Locally they are read
     from Mailpit, and on staging from the owner's test mailbox over IMAP. The
     same assertions run on both.
@@ -120,7 +120,7 @@ The work focuses on testing and integration.
 | Staff login (operator) | `test+operator@example.com` (local `test_seeds:operator`) | `E2E_OPERATOR_EMAIL` / `E2E_OPERATOR_PASSWORD` (seeded operator) |
 | Racer email | `e2e+<runId>@example.com` | `<user>+<runId>@<domain>` from `E2E_EMAIL_BASE` (required; the owner's test mailbox) |
 | Email check (`E2E_CHECK_EMAIL=1`) | Mailpit (`tests/helpers/mailpit.ts`) | IMAP on the test mailbox (`monday.mxrouting.net:993`) |
-| Classy check | never (the local server reads `.env` Classy creds, so a campaign would create real Classy teams) | when `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID` are set |
+| Classy check | `E2E_CHECK_CLASSY=1` (requires `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID`; the server gets the same creds) | same |
 
 Guard, evaluated when `playwright.config.ts` loads, before any test or web server
 starts:
@@ -159,7 +159,8 @@ project-level `teardown`:
      with the local `bin/rails`.
 2. `race-setup` = **test A**. Uses the admin storage state. It creates the race
    in the target's time zone (`America/Chicago`):
-   - Name `Race E2E <runId>`. The `Race ` prefix keeps it inside the local
+   - Name `Race E2E <runId> <yyyy-mm-ddThh:mm>Z` (UTC start time, used by the
+     sweep below). The `Race ` prefix keeps it inside the local
      `test_seeds:cleanup` pattern.
    - Registration opens 1 day ago and closes in 14 days. Final edits close in
      14 days and 1 hour (`RaceValidator` requires final edits to close after
@@ -168,8 +169,7 @@ project-level `teardown`:
    - Experience labels: a short fixed list.
    - JSONForm: `tests/e2e/fixtures/jsonform.json`, a copy of the public
      `chiditarod_21.json` fixture.
-   - Classy campaign id and default goal, only when `E2E_CLASSY_CAMPAIGN_ID` is
-     set.
+   - Classy campaign id and default goal, only with `E2E_CHECK_CLASSY=1`.
    - Requirement 1, "Cart Deposit": one tier at $88 that begins at registration
      open.
    - Requirement 2, "Race Registration": tier 1 at $130 beginning at registration
@@ -200,7 +200,7 @@ project-level `teardown`:
 4. `race-teardown` (the teardown of `race-setup`) retires the race instead of
    deleting it, through the admin edit form:
    - It moves `race_datetime` and every window into the past and appends
-     ` [retired]` to the name (`Race E2E <runId> [retired]`).
+     ` [retired]` to the name (`Race E2E <runId> <time>Z [retired]`).
    - That hides the race from the SPA list (`Race.current`) without orphaning
      its teams, people or completed requirements.
 
@@ -209,9 +209,10 @@ project-level `teardown`:
 
    *(Builder's call, settled by the author.)* A teardown can fail, or a run can be
    aborted, leaving an open race behind. So on staging, `race-setup` first sweeps
-   any still-current `Race E2E *` race from the admin race index and retires it
-   the same way. Then a leftover never shows up for people testing by hand for
-   longer than one run.
+   still-current `Race E2E *` races from the admin race index and retires them
+   the same way: this run's own, and other runs' once they are two hours old.
+   The age cutoff keeps two concurrent runs from retiring each other's live
+   race. `retireRace` refuses any race whose name lacks the `Race E2E ` prefix.
 
 ### Payment step (`tests/e2e/payments.ts`)
 

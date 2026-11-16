@@ -21,6 +21,30 @@ export const RETIRED_SUFFIX = ' [retired]';
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
+/** An open E2E race younger than this may belong to a run still in progress. */
+export const SWEEP_MIN_AGE_MS = 2 * HOUR;
+
+/**
+ * `Race E2E <runId> <yyyy-mm-ddThh:mm>Z`. The UTC start time lets a sweep tell a
+ * leftover race from one a concurrent run is still using.
+ */
+export function e2eRaceName(runId: string, createdAt: Date): string {
+  return `${E2E_RACE_PREFIX}${runId} ${createdAt.toISOString().slice(0, 16)}Z`;
+}
+
+/**
+ * Whether a sweep may retire an open race: an E2E race from this run (an
+ * earlier attempt of a retried test) or one created at least SWEEP_MIN_AGE_MS
+ * ago. An E2E name without a readable time counts as old.
+ */
+export function isSweepable(name: string, runId: string, now: number): boolean {
+  if (!name.startsWith(E2E_RACE_PREFIX) || name.includes(RETIRED_SUFFIX.trim())) return false;
+  if (name.startsWith(`${E2E_RACE_PREFIX}${runId} `)) return true;
+  const stamp = name.match(/ (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})Z$/)?.[1];
+  const createdAt = stamp ? Date.parse(`${stamp}:00Z`) : NaN;
+  return Number.isNaN(createdAt) || now - createdAt >= SWEEP_MIN_AGE_MS;
+}
+
 export interface RaceInput {
   name: string;
   timeZone: string;
@@ -175,6 +199,9 @@ export async function retireRace(page: Page, raceId: number): Promise<void> {
   await visit(page, `/races/${raceId}/edit`);
   const name = page.locator('#race_name');
   const current = await name.inputValue();
+  if (!current.startsWith(E2E_RACE_PREFIX)) {
+    throw new Error(`Refusing to retire race ${raceId}: its name does not start with "${E2E_RACE_PREFIX}"`);
+  }
   if (!current.endsWith(RETIRED_SUFFIX)) await name.fill(`${current}${RETIRED_SUFFIX}`);
   const timeZone = await page.getByLabel('Time zone').inputValue();
   const now = Date.now();
@@ -191,8 +218,8 @@ export async function retireRace(page: Page, raceId: number): Promise<void> {
   await saveExpecting(page, 'Successfully updated.');
 }
 
-/** Ids of the not-retired `Race E2E *` races listed under current races on /races. */
-export async function currentE2ERaceIds(page: Page): Promise<number[]> {
+/** The not-retired `Race E2E *` races listed under current races on /races. */
+async function currentE2ERaces(page: Page): Promise<{ id: number; name: string }[]> {
   await visit(page, '/races');
   // The current races' .row.well directly follows the page header; past races
   // come after the "Past races" heading. With no current races there is no
@@ -202,13 +229,23 @@ export async function currentE2ERaceIds(page: Page): Promise<number[]> {
     .evaluateAll((anchors) => anchors.map((a) => ({ name: (a.textContent ?? '').trim(), href: a.getAttribute('href') ?? '' })));
   return links
     .filter(({ name }) => name.startsWith(E2E_RACE_PREFIX) && !name.includes('[retired]'))
-    .map(({ href }) => Number(href.match(/\/races\/(\d+)$/)?.[1]))
-    .filter((id) => id > 0);
+    .map(({ name, href }) => ({ name, id: Number(href.match(/\/races\/(\d+)$/)?.[1]) }))
+    .filter(({ id }) => id > 0);
 }
 
-/** Retires every leftover open E2E race and returns the retired ids. */
-export async function sweepLeftoverRaces(page: Page): Promise<number[]> {
-  const ids = await currentE2ERaceIds(page);
+/** Ids of the not-retired `Race E2E *` races listed under current races on /races. */
+export async function currentE2ERaceIds(page: Page): Promise<number[]> {
+  return (await currentE2ERaces(page)).map(({ id }) => id);
+}
+
+/**
+ * Retires the open E2E races that isSweepable allows (this run's, and other
+ * runs' older than SWEEP_MIN_AGE_MS) and returns their ids. A concurrent run's
+ * fresh race is left alone.
+ */
+export async function sweepLeftoverRaces(page: Page, runId: string): Promise<number[]> {
+  const now = Date.now();
+  const ids = (await currentE2ERaces(page)).filter(({ name }) => isSweepable(name, runId, now)).map(({ id }) => id);
   for (const id of ids) await retireRace(page, id);
   return ids;
 }

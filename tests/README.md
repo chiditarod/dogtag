@@ -78,14 +78,14 @@ npm run test:ui
 
 ### Running against staging
 
-The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId>`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
+The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
 
 | Key | Purpose |
 |---|---|
 | `E2E_EMAIL_BASE` | Test mailbox (`user@domain`). Racers are plus-addressed: `<user>+<runId>@<domain>` |
 | `E2E_IMAP_PASSWORD` | Mailbox password; needed only with `E2E_CHECK_EMAIL=1` |
 | `E2E_OPERATOR_EMAIL`, `E2E_OPERATOR_PASSWORD` | Staging **operator** login used to create the race. Never an admin |
-| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Optional Classy check, staging only (ignored locally); the campaign must be on the allowlist in `target.ts` (867400) |
+| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Classy check; used only with `E2E_CHECK_CLASSY=1`, which then requires all three. The campaign must be on the allowlist in `target.ts` (867400) |
 
 The suite never logs in as an admin, so admin credentials do not belong in `.env.e2e`. `bin/rails staging:seed` (run on the staging dyno, not by the suite) reads its own `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and `SEED_PASSWORD` (optional `SEED_EMAIL_BASE`, `SEED_CLASSY_CAMPAIGN_ID`); pass those to that command, not to Playwright.
 
@@ -93,8 +93,11 @@ The suite never logs in as an admin, so admin credentials do not belong in `.env
 npm run e2e                  # local: mock payments, Mailpit (unit + registration projects)
 npm run e2e:stripe           # local: real Stripe test-card payment
 E2E_CHECK_EMAIL=1 npm run e2e:staging   # staging: Stripe test card, IMAP email check when E2E_CHECK_EMAIL=1
+E2E_CHECK_CLASSY=1 npm run e2e          # any target: also check (then delete) the Classy fundraising team
 E2E_TARGET=staging npx playwright test --project=live   # live IMAP and Classy specs
 ```
+
+The Classy check runs only with `E2E_CHECK_CLASSY=1`, on either target; having the credentials is not enough. It gives the race the Classy campaign, so the server under test creates a real Classy member for the racer and a real fundraising team (the suite deletes the team; the member stays). Locally, the Rails server then gets the Classy credentials from `.env.e2e`; without the flag the local race has no campaign, so the Classy keys in `.env` do nothing. A Rails server already running on the test port is reused as is, so stop it first.
 
 What the guard refuses (`tests/e2e/target.ts`; the lists are hard-coded and no environment variable extends them):
 
@@ -103,7 +106,7 @@ What the guard refuses (`tests/e2e/target.ts`; the lists are hard-coded and no e
 - A Classy campaign other than the allowlisted one; only teams named `Test Team E2E *` are ever deleted.
 - A missing required variable (the error names the variable, never its value).
 
-The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race, which the next run sweeps first. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
+The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race. The next run retires it first once it is two hours old (the UTC start time is in the name), so two runs at the same time leave each other's races alone. On staging, the registration project (like race setup and teardown) keeps no trace or video, because they would hold the test mailbox address and the racer's password; a failure screenshot can still show the address and stays in the local, gitignored `test-results/`. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
 
 ### Seed tasks and deployed environments
 
