@@ -14,6 +14,28 @@ import { imapClear, imapCount, imapWaitForEmail } from './imap';
 
 const imap = target.imap;
 
+function rawClient(): ImapFlow {
+  const client = new ImapFlow({
+    host: imap!.host,
+    port: imap!.port,
+    secure: true,
+    auth: { user: imap!.user, pass: imap!.password },
+    logger: false,
+  });
+  // Connection errors must not become unhandled 'error' events.
+  client.on('error', () => {});
+  return client;
+}
+
+/** Runs one cleanup step; a failure is logged (message only) and never masks the test's own error. */
+async function cleanupStep(name: string, step: () => Promise<unknown>): Promise<void> {
+  try {
+    await step();
+  } catch (error) {
+    console.warn(`imap.live cleanup step "${name}" failed: ${error instanceof Error ? error.message : 'unknown error'}`);
+  }
+}
+
 function message(to: string, subject: string): string {
   return [
     `From: e2e-live@example.com`,
@@ -37,52 +59,57 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
   const A = `${local}+${run}@${domain}`;
   const B = `${local}+other-${run}@${domain}`;
   const C = `${local}+junk-${run}@${domain}`;
-
-  const client = new ImapFlow({ host: imap!.host, port: imap!.port, secure: true, auth: { user, pass: imap!.password }, logger: false });
-  await client.connect();
   let junkPath: string | undefined;
+
+  // The outer try starts before the first APPEND, so whatever was appended is
+  // cleaned even if a later APPEND or an assertion throws.
   try {
-    const boxes = await client.list();
-    junkPath = (boxes.find((b) => b.specialUse === '\\Junk') ?? boxes.find((b) => /^(junk|spam)$/i.test(b.name)))?.path;
-    if (!junkPath) {
-      try {
-        await client.mailboxCreate('Junk');
-        junkPath = 'Junk';
-      } catch {
-        test.info().annotations.push({ type: 'junk', description: 'No Junk/Spam folder and folders cannot be created; Junk sub-case skipped' });
+    const client = rawClient();
+    await client.connect();
+    try {
+      const boxes = await client.list();
+      junkPath = (boxes.find((b) => b.specialUse === '\\Junk') ?? boxes.find((b) => /^(junk|spam)$/i.test(b.name)))?.path;
+      if (!junkPath) {
+        try {
+          await client.mailboxCreate('Junk');
+          junkPath = 'Junk';
+        } catch {
+          test.info().annotations.push({ type: 'junk', description: 'No Junk/Spam folder and folders cannot be created; Junk sub-case skipped' });
+        }
       }
+
+      await client.append('INBOX', message(A, `e2e A ${run}`));
+      await client.append('INBOX', message(B, `e2e B ${run}`));
+      if (junkPath) await client.append(junkPath, message(C, `e2e C ${run}`));
+    } finally {
+      await client.logout().catch(() => client.close());
     }
 
-    await client.append('INBOX', message(A, `e2e A ${run}`));
-    await client.append('INBOX', message(B, `e2e B ${run}`));
-    if (junkPath) await client.append(junkPath, message(C, `e2e C ${run}`));
-  } finally {
-    await client.logout();
-  }
-
-  try {
     expect((await imapWaitForEmail({ to: A, subjectIncludes: 'e2e A' })).subject).toContain('e2e A');
     if (junkPath) await expect(imapWaitForEmail({ to: C, timeoutMs: 3000 })).rejects.toThrow(/Junk|Spam/);
     await imapClear(A);
     expect(await imapCount({ to: A })).toBe(0);
     expect(await imapCount({ to: B })).toBe(1);
   } finally {
-    await imapClear(A);
-    await imapClear(B);
-    if (junkPath) {
-      const cleanup = new ImapFlow({ host: imap!.host, port: imap!.port, secure: true, auth: { user, pass: imap!.password }, logger: false });
-      await cleanup.connect();
-      try {
-        const lock = await cleanup.getMailboxLock(junkPath);
+    await cleanupStep('clear A', () => imapClear(A));
+    await cleanupStep('clear B', () => imapClear(B));
+    const path = junkPath;
+    if (path) {
+      await cleanupStep('delete C from Junk', async () => {
+        const cleanup = rawClient();
+        await cleanup.connect();
         try {
-          const uids = await cleanup.search({ to: C }, { uid: true });
-          if (uids && uids.length > 0) await cleanup.messageDelete(uids, { uid: true });
+          const lock = await cleanup.getMailboxLock(path);
+          try {
+            const uids = await cleanup.search({ to: C }, { uid: true });
+            if (uids && uids.length > 0) await cleanup.messageDelete(uids, { uid: true });
+          } finally {
+            lock.release();
+          }
         } finally {
-          lock.release();
+          await cleanup.logout().catch(() => cleanup.close());
         }
-      } finally {
-        await cleanup.logout();
-      }
+      });
     }
   }
 });
