@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { useMe } from '@/features/auth/api/use-me';
 import {
   usePastRacers,
@@ -10,16 +11,16 @@ import {
   useUpdatePerson,
   type PersonPayload,
 } from '@/features/roster/api/use-person-mutations';
-import { PastRacerList } from '@/features/roster/components/past-racer-list';
+import { CrewPicker } from '@/features/roster/components/crew-picker';
 import { PersonForm } from '@/features/roster/components/person-form';
 import {
-  EmptySlot,
   FilledSlot,
+  OpenSpotsItem,
   SlotItem,
 } from '@/features/roster/components/roster-slot';
 import {
-  draftFromPastRacer,
   draftFromPerson,
+  draftFromUser,
   emptyDraft,
   fullName,
   splitPersonErrors,
@@ -31,8 +32,6 @@ import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
 
 interface ActiveForm {
-  /** Slot index the form is rendered in. */
-  slot: number;
   /** Present when editing an existing person. */
   personId?: number;
   draft: PersonDraft;
@@ -43,15 +42,20 @@ export function RosterCard({ team }: { team: Team }) {
   const me = useMe().data;
   const { reportError, clearError } = useTeamPageError();
   const open = race.open_for_registration;
-  const slotCount = Math.max(race.people_per_team, people.length);
-  const hasEmptySlot = people.length < slotCount;
+  const openSpots = Math.max(race.people_per_team - people.length, 0);
+  const hasEmptySlot = openSpots > 0;
 
   const [active, setActive] = useState<ActiveForm | null>(null);
-  const [picker, setPicker] = useState<{ slot: number } | null>(null);
+  const [picker, setPicker] = useState<{ reviewOnly?: PastRacer } | null>(null);
+  // A roster that is already full when the page loads starts as a summary.
+  const [collapsed, setCollapsed] = useState(() => checklist.racers.done);
   const [removing, setRemoving] = useState<number | null>(null);
   const [status, setStatus] = useState('');
-  const listRef = useRef<HTMLOListElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
   const restoreFocus = useRef<string | null>(null);
+  // A person just added: the cached roster catches up a render after the form
+  // or picker closes, so focus waits for them before looking for its target.
+  const awaitingPerson = useRef<number | null>(null);
 
   const add = useAddPerson(team.id);
   const update = useUpdatePerson(team.id, active?.personId);
@@ -64,22 +68,35 @@ export function RosterCard({ team }: { team: Team }) {
     (racer) => !emailsOnTeam.has(racer.email.toLowerCase()),
   );
 
-  // Put focus back on the control that opened a form or confirmation.
+  // Put focus back on the control that opened a form, confirmation or the
+  // picker. That control may be gone (Add yourself once you are on the team,
+  // the pick button once nobody is left to pick): fall back to "+ Add someone
+  // new", then to the list.
   useEffect(() => {
     const key = restoreFocus.current;
-    if (!key || active || removing !== null) return;
-    const target = listRef.current?.querySelector<HTMLElement>(
-      `[data-focus-key="${key}"]`,
-    );
+    if (!key || active || removing !== null || picker) return;
+    const waitingFor = awaitingPerson.current;
+    if (waitingFor !== null && !people.some((person) => person.id === waitingFor)) return;
+    awaitingPerson.current = null;
+    const find = (focusKey: string) =>
+      rootRef.current?.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`);
+    const target = find(key) ?? find('add') ?? find('list');
     if (target) {
       target.focus();
       restoreFocus.current = null;
     }
-  }, [active, removing, people]);
+  }, [active, removing, picker, collapsed, people]);
+
+  // The last spot was filled: the picker has nothing left to offer.
+  useEffect(() => {
+    if (picker && !hasEmptySlot) setPicker(null);
+  }, [picker, hasEmptySlot]);
 
   const captainId = people.find(
     (person) => person.email.toLowerCase() === me?.email.toLowerCase(),
   )?.id;
+  const addingNew = active !== null && active.personId === undefined;
+  const canAddMe = Boolean(me) && captainId === undefined;
 
   function openForm(next: ActiveForm) {
     add.reset();
@@ -93,9 +110,17 @@ export function RosterCard({ team }: { team: Team }) {
     setActive(null);
   }
 
-  function pickRacer(racer: PastRacer, slot: number) {
-    setPicker(null);
-    openForm({ slot, draft: draftFromPastRacer(racer, race) });
+  function addYourself() {
+    if (!me) return;
+    const mine = available.find(
+      (racer) => racer.email.toLowerCase() === me.email.toLowerCase(),
+    );
+    if (mine) {
+      restoreFocus.current = 'add-me';
+      setPicker({ reviewOnly: mine });
+    } else {
+      openForm({ draft: draftFromUser(me) });
+    }
   }
 
   function submit(person: PersonPayload) {
@@ -109,7 +134,9 @@ export function RosterCard({ team }: { team: Team }) {
             name: fullName(saved),
           }),
         );
-        closeForm(`edit-${saved.id}`);
+        if (!wasEditing) awaitingPerson.current = saved.id;
+        const spotStillOpen = !wasEditing && people.length + 1 < race.people_per_team;
+        closeForm(wasEditing || !spotStillOpen ? `edit-${saved.id}` : 'add');
       },
       onError: (error) => reportError(error),
     });
@@ -151,100 +178,134 @@ export function RosterCard({ team }: { team: Team }) {
       onSubmit={submit}
       onCancel={() =>
         closeForm(
-          active?.personId === undefined
-            ? `add-${active?.slot}`
-            : `edit-${active.personId}`,
+          active?.personId === undefined ? 'add' : `edit-${active.personId}`,
         )
       }
     />
   );
 
+  const rows = people.map((person) =>
+    active?.personId === person.id ? (
+      <SlotItem key={person.id}>
+        {formFor(t('roster.editTitle', { name: fullName(person) }), active.draft)}
+      </SlotItem>
+    ) : (
+      <SlotItem key={person.id}>
+        <FilledSlot
+          person={person}
+          experienceLabel={
+            person.experience === null
+              ? undefined
+              : race.experience_labels[person.experience]
+          }
+          captain={person.id === captainId}
+          canEdit
+          canRemove={canRemove}
+          confirmingRemove={removing === person.id}
+          removing={remove.isPending}
+          removeError={removing === person.id ? removeMessage() : null}
+          onEdit={() =>
+            openForm({ personId: person.id, draft: draftFromPerson(person) })
+          }
+          onAskRemove={() => {
+            remove.reset();
+            setActive(null);
+            setRemoving(person.id);
+          }}
+          onCancelRemove={() => {
+            restoreFocus.current = `remove-${person.id}`;
+            remove.reset();
+            setRemoving(null);
+          }}
+          onConfirmRemove={() => confirmRemove(person.id, person.first_name)}
+        />
+      </SlotItem>
+    ),
+  );
+
+  // A spot can open later (e.g. after a refetch): show the rows, and keep them
+  // shown if the roster fills again during the visit.
+  if (collapsed && hasEmptySlot) setCollapsed(false);
+  if (collapsed && !hasEmptySlot) {
+    return (
+      <div className="space-y-1">
+        <p role="status" className="sr-only">
+          {status}
+        </p>
+        <p>{people.map((person) => person.first_name).join(', ')}</p>
+        <Button
+          variant="ghost"
+          className="-ml-4"
+          onClick={() => {
+            restoreFocus.current = 'list';
+            setCollapsed(false);
+          }}
+        >
+          {t('roster.showRacers')}
+        </Button>
+      </div>
+    );
+  }
+
+  const showActions = open && hasEmptySlot && !addingNew;
+
   return (
-    <div className="space-y-3">
+    <div ref={rootRef} className="space-y-3">
       <p role="status" className="sr-only">
         {status}
       </p>
       <ol
-        ref={listRef}
         aria-label={t('roster.slots')}
         tabIndex={-1}
         data-focus-key="list"
-        className="space-y-2 focus:outline-none"
+        className="focus:outline-none"
       >
-        {Array.from({ length: slotCount }, (_, index) => {
-          const person = people[index];
-          if (person) {
-            if (active?.personId === person.id) {
-              return (
-                <SlotItem key={person.id}>
-                  {formFor(
-                    t('roster.editTitle', { name: fullName(person) }),
-                    active.draft,
-                  )}
-                </SlotItem>
-              );
-            }
-            return (
-              <SlotItem key={person.id}>
-                <FilledSlot
-                  person={person}
-                  experienceLabel={
-                    person.experience === null
-                      ? undefined
-                      : race.experience_labels[person.experience]
-                  }
-                  captain={person.id === captainId}
-                  canEdit
-                  canRemove={canRemove}
-                  confirmingRemove={removing === person.id}
-                  removing={remove.isPending}
-                  removeError={removing === person.id ? removeMessage() : null}
-                  onEdit={() =>
-                    openForm({
-                      slot: index,
-                      personId: person.id,
-                      draft: draftFromPerson(person),
-                    })
-                  }
-                  onAskRemove={() => {
-                    remove.reset();
-                    setActive(null);
-                    setRemoving(person.id);
-                  }}
-                  onCancelRemove={() => {
-                    restoreFocus.current = `remove-${person.id}`;
-                    remove.reset();
-                    setRemoving(null);
-                  }}
-                  onConfirmRemove={() =>
-                    confirmRemove(person.id, person.first_name)
-                  }
-                />
-              </SlotItem>
-            );
-          }
-          return (
-            <SlotItem key={`empty-${index}`}>
-              {active?.personId === undefined && active?.slot === index ? (
-                formFor(t('roster.addTitle'), active.draft)
-              ) : (
-                <EmptySlot
-                  index={index}
-                  canAdd={open}
-                  pastRacers={available}
-                  onAdd={() => openForm({ slot: index, draft: emptyDraft })}
-                  onPick={(racer) => pickRacer(racer, index)}
-                  onShowMore={() => setPicker({ slot: index })}
-                />
-              )}
-            </SlotItem>
-          );
-        })}
+        {rows}
+        {hasEmptySlot && <OpenSpotsItem count={openSpots} open={open} />}
       </ol>
+      {showActions && (
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {available.length > 0 && (
+            <Button
+              data-focus-key="pick"
+              onClick={() => {
+                restoreFocus.current = 'pick';
+                setPicker({});
+              }}
+            >
+              {t('roster.pickFromPast', { count: available.length })}
+            </Button>
+          )}
+          <Button
+            variant={available.length > 0 ? 'secondary' : 'primary'}
+            data-focus-key="add"
+            onClick={() => openForm({ draft: emptyDraft })}
+          >
+            {t('roster.add')}
+          </Button>
+          {canAddMe && (
+            <Button variant="secondary" data-focus-key="add-me" onClick={addYourself}>
+              {t('roster.addYourself')}
+            </Button>
+          )}
+        </div>
+      )}
+      {addingNew && active && formFor(t('roster.addTitle'), active.draft)}
       {picker && (
-        <PastRacerList
+        <CrewPicker
+          team={team}
           racers={available}
-          onPick={(racer) => pickRacer(racer, picker.slot)}
+          openSpots={openSpots}
+          reviewOnly={picker.reviewOnly}
+          onAdded={(person) => {
+            awaitingPerson.current = person.id;
+            clearError();
+            setStatus(t('roster.added', { name: fullName(person) }));
+            if (people.length + 1 >= race.people_per_team) {
+              restoreFocus.current = 'list';
+            }
+          }}
+          onForbidden={reportError}
           onClose={() => setPicker(null)}
         />
       )}

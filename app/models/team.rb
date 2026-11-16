@@ -160,7 +160,7 @@ class Team < ApplicationRecord
     # todo: spec
     def export(race_id, options = {})
       race = Race.find(race_id)
-      person_keys = %w(first_name last_name email phone twitter experience)
+      person_keys = %w(first_name last_name email phone instagram experience)
       user_keys = %w(first_name last_name email phone stripe_customer_id)
 
       table = []

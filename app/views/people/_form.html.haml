@@ -33,9 +33,9 @@
       = f.select :experience, @team.race.experience_labels.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
-      = label_tag :twitter, t('.twitter')
+      = label_tag :instagram, t('.instagram')
     .col-xs-4
-      = f.text_field :twitter, :class => 'form-control'
+      = f.text_field :instagram, :class => 'form-control'
   .form-group
     .col-xs-offset-4.col-xs-8
       = f.submit t('save'), :class => ['btn', 'btn-default']

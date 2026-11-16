@@ -1,6 +1,6 @@
 import { formatDate } from '@/lib/dates';
 import { t } from '@/locales/en';
-import type { Checklist } from '@/types/api';
+import type { Checklist, Team } from '@/types/api';
 
 /**
  * Before any pricing tier is active the backend reports `fee.done` with no
@@ -29,4 +29,16 @@ export function feePill(fee: Checklist['fee'], timeZone: string): string {
   return fee.amount_due_cents === null
     ? t('team.pillTodo')
     : formatCents(fee.amount_due_cents);
+}
+
+/** Order: racers, questions (done when not required), fee (not done while it opens later), finalized. */
+export function stepStates({
+  checklist,
+}: Team): [boolean, boolean, boolean, boolean] {
+  return [
+    checklist.racers.done,
+    !checklist.questions.required || checklist.questions.done,
+    checklist.fee.done && !isFeeOpensLater(checklist.fee),
+    checklist.finalized,
+  ];
 }

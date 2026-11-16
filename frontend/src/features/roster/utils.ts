@@ -1,4 +1,6 @@
-import { formatPhoneDisplay } from '@/components/inputs/format';
+import { formatPhoneDisplay, toApiPhone } from '@/components/inputs/format';
+import type { User } from '@/features/auth/api/use-me';
+import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
 import { ApiError, type FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
@@ -12,7 +14,7 @@ export interface PersonDraft {
   phone: string;
   zipcode: string;
   experience: string;
-  twitter: string;
+  instagram: string;
 }
 
 export const emptyDraft: PersonDraft = {
@@ -22,7 +24,7 @@ export const emptyDraft: PersonDraft = {
   phone: '',
   zipcode: '',
   experience: '',
-  twitter: '',
+  instagram: '',
 };
 
 export const PERSON_FIELDS = [
@@ -32,7 +34,7 @@ export const PERSON_FIELDS = [
   'phone',
   'zipcode',
   'experience',
-  'twitter',
+  'instagram',
 ] as const;
 
 export const fullName = (person: { first_name: string; last_name: string }) =>
@@ -49,7 +51,7 @@ export function draftFromPerson(person: Person): PersonDraft {
     phone: formatPhoneDisplay(person.phone ?? ''),
     zipcode: person.zipcode ?? '',
     experience: person.experience === null ? '' : String(person.experience),
-    twitter: person.twitter ?? '',
+    instagram: person.instagram ?? '',
   };
 }
 
@@ -66,14 +68,36 @@ export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
       racer.experience === null
         ? ''
         : String(Math.min(racer.experience + 1, lastIndex)),
-    twitter: racer.twitter ?? '',
+    instagram: racer.instagram ?? '',
   };
 }
 
-export const racerChipLabel = (racer: PastRacer) =>
-  racer.last_raced_year
-    ? `${fullName(racer)} · ${racer.last_raced_year}`
-    : fullName(racer);
+/** The signed-in captain adding themselves: only what the account knows. */
+export function draftFromUser(user: User): PersonDraft {
+  return {
+    ...emptyDraft,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    phone: formatPhoneDisplay(user.phone ?? ''),
+  };
+}
+
+/**
+ * Trims every field, lowercases the email, converts the phone to ddd-ddd-dddd.
+ * A blank years value is sent as null, so the server rejects it too.
+ */
+export function payloadFromDraft(draft: PersonDraft): PersonPayload {
+  return {
+    first_name: draft.first_name.trim(),
+    last_name: draft.last_name.trim(),
+    email: draft.email.trim().toLowerCase(),
+    phone: toApiPhone(draft.phone),
+    zipcode: draft.zipcode.trim(),
+    experience: draft.experience === '' ? null : Number(draft.experience),
+    instagram: draft.instagram.trim(),
+  };
+}
 
 /**
  * Splits a failed person mutation into per-field messages and form-level

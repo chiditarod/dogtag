@@ -80,7 +80,7 @@ export function buildPerson(overrides: Partial<Person> = {}): Person {
     phone: '312-555-0100',
     zipcode: '60601',
     experience: 1,
-    twitter: null,
+    instagram: null,
     ...overrides,
   };
 }

@@ -57,6 +57,7 @@ export const routes: RouteObject[] = [
           {
             path: '/teams/:teamId',
             element: <TeamRoute />,
+            handle: { wide: true },
           },
         ],
       },

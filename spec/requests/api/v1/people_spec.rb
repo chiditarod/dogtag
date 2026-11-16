@@ -6,7 +6,7 @@ describe "API v1 people", type: :request do
   let!(:team) { FactoryBot.create(:team, user: user, race: race) }
   let(:person_params) do
     { first_name: "Ada", last_name: "Lovelace", email: "ada@example.com", phone: "(312) 555-0144",
-      zipcode: "60614", experience: 1, twitter: "@ada" }
+      zipcode: "60614", experience: 1, instagram: "@ada" }
   end
 
   before { api_login(user) }
@@ -18,9 +18,21 @@ describe "API v1 people", type: :request do
       end.to change { team.people.count }.by(1)
 
       expect(response).to have_http_status(:created)
-      expect(json["person"]).to include("first_name" => "Ada", "phone" => "312-555-0144", "twitter" => "@ada")
-      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone zipcode experience twitter])
+      expect(json["person"]).to include("first_name" => "Ada", "phone" => "312-555-0144", "instagram" => "@ada")
+      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram])
       expect(json["checklist"]["racers"]).to include("filled" => 1, "total" => 2)
+    end
+
+    it "normalizes the instagram handle" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(instagram: "Sam.Okafor") }, as: :json
+      expect(response).to have_http_status(:created)
+      expect(json["person"]["instagram"]).to eq("@sam.okafor")
+    end
+
+    it "returns 422 for an instagram URL" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(instagram: "https://instagram.com/sam") }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["errors"]["instagram"]).to be_present
     end
 
     it "returns 422 with field errors when invalid" do
