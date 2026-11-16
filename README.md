@@ -165,6 +165,9 @@ email dogtag sends shows up in the Mailpit inbox.
     npm ci && npx playwright install chromium
     npm test                                  # all specs; builds the SPA first (SPA_BUILD=skip to reuse the build)
     npx playwright test tests/spa             # only the SPA suite
+    npm run e2e                               # registration flow, local: mock payments, Mailpit
+    npm run e2e:stripe                        # same, with a real Stripe test-card payment
+    npm run e2e:staging                       # against dogtag-staging (needs .env.e2e; see tests/README.md)
 
 Playwright boots Rails with `SIDEKIQ_INLINE=true` (jobs run in-process, no
 Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. See

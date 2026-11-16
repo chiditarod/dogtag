@@ -166,6 +166,7 @@ jobs:
             RAILS_ENV=development \
             DATABASE_URL=postgres://postgres@127.0.0.1:5432/dogtag_test \
             SPA_BUILD=skip \
+            E2E_CHECK_EMAIL=1 \
             npm test
           no_output_timeout: 10m
 

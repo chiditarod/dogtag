@@ -76,29 +76,37 @@ npm run test:debug
 npm run test:ui
 ```
 
-### Against Staging or Production
+### Running against staging
 
-Set the `BASE_URL` environment variable:
+The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId>`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
 
-```bash
-# Against staging
-BASE_URL=https://dogtag-staging.herokuapp.com npm test
-
-# Against production (be careful!)
-BASE_URL=https://dogtag.herokuapp.com npm test
-```
-
-**Note:** Before running tests against deployed environments, seed the test data.
-All `test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern)
-abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set:
+| Key | Purpose |
+|---|---|
+| `E2E_EMAIL_BASE` | Test mailbox (`user@domain`). Racers are plus-addressed: `<user>+<runId>@<domain>` |
+| `E2E_IMAP_PASSWORD` | Mailbox password; needed only with `E2E_CHECK_EMAIL=1` |
+| `E2E_OPERATOR_EMAIL`, `E2E_OPERATOR_PASSWORD` | Staging **operator** login used to create the race. Never an admin |
+| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Optional Classy check; the campaign must be on the allowlist in `target.ts` (867400) |
+| `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `SEED_PASSWORD` | Not used by the specs; for `bin/rails staging:seed` |
 
 ```bash
-# Staging (a Heroku staging app normally runs RAILS_ENV=production, so the flag is needed there too)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r staging
-
-# Production (use with caution!)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r heroku
+npm run e2e                  # local: mock payments, Mailpit (unit + registration projects)
+npm run e2e:stripe           # local: real Stripe test-card payment
+E2E_CHECK_EMAIL=1 npm run e2e:staging   # staging: Stripe test card, IMAP email check when E2E_CHECK_EMAIL=1
+E2E_TARGET=staging npx playwright test --project=live   # live IMAP and Classy specs
 ```
+
+What the guard refuses (`tests/e2e/target.ts`; the lists are hard-coded and no environment variable extends them):
+
+- Any host that is not `localhost`, `127.0.0.1` or `dogtag-staging.herokuapp.com`, and always `dogtag.chiditarod.org`, `dogtag.herokuapp.com` and `*.chiditarod.org`. The `BASE_URL` host is parsed with `URL` (case, trailing dot, userinfo and ports are handled) and must belong to the chosen `E2E_TARGET`; staging must be https.
+- Paying when the race's Stripe publishable key does not start with `pk_test_` (this includes mock mode).
+- A Classy campaign other than the allowlisted one; only teams named `Test Team E2E *` are ever deleted.
+- A missing required variable (the error names the variable, never its value).
+
+The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race, which the next run sweeps first. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
+
+### Seed tasks and deployed environments
+
+`test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern) abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set. Never run them against production, and the e2e suite never runs them against staging.
 
 ## Test Structure
 
@@ -137,8 +145,7 @@ After running tests, clean up test data:
 # Local
 bundle exec rails test_seeds:cleanup
 
-# Staging (needs the production opt-in flag, see above)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:cleanup -r staging
+# Staging: the registration suite retires its own race, no cleanup needed
 ```
 
 ## Debugging

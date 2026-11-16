@@ -8,7 +8,6 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
-#   rails test_seeds:spa_registration          (open race with questions + two mock fees for the SPA registration flow)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:cleanup                   (clean up all test data)
@@ -400,67 +399,10 @@ namespace :test_seeds do
     puts "  Credentials file: #{credentials_file}"
   end
 
-  # Small JSONForm whose answers are all single strings: radios, textarea,
-  # agree checkbox and a select (4+ options).
-  SPA_TEST_JSONFORM = {
-    schema: {
-      type: "object",
-      properties: {
-        "racer-type" => { title: "Team type", type: "string", enum: ["Racer", "Art Cart"], required: true },
-        "explain-theme" => { title: "Your theme", type: "string", required: true },
-        "agree-to-rules" => { title: "I will follow the race rules", type: "string", required: true, pattern: "^Yes$", enum: %w[No Yes] },
-        "fundraising" => { title: "Fundraising plans", type: "string", required: true, enum: ["Yes!", "Probably", "Maybe", "No fundraising for me"] }
-      }
-    },
-    form: [
-      "racer-type",
-      { key: "explain-theme", type: "textarea" },
-      "agree-to-rules",
-      "fundraising",
-      { type: "submit", title: "Save" }
-    ]
-  }.to_json.freeze
-
   def write_test_credentials(unique_id, credentials)
     file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
     File.write(file, credentials.to_json)
     puts "  Credentials file: #{file}"
-  end
-
-  desc "Open race (JSONForm questions, mock fee, 2 racers per team) and credentials for a brand-new SPA user"
-  task spa_registration: [:guard, :environment] do
-    require "factory_bot_rails"
-    require "json"
-    require "securerandom"
-
-    puts "🌱 Seeding SPA registration test..."
-    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
-
-    race = FactoryBot.create(:race,
-      name: "Race #{unique_id[0..7]}",
-      people_per_team: 2,
-      max_teams: 100,
-      jsonform: SPA_TEST_JSONFORM
-    )
-    # Two payments, like a real race: a cart deposit and a tiered registration fee.
-    deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
-    deposit_tier = Tier.create!(requirement: deposit, price: 8800, begin_at: 10.days.ago)
-    registration = MockPaymentRequirement.create!(name: "Race Registration", race: race)
-    registration_tier = Tier.create!(requirement: registration, price: 13000, begin_at: 10.days.ago)
-    Tier.create!(requirement: registration, price: 15000, begin_at: 30.days.from_now)
-
-    write_test_credentials(unique_id,
-      first_name: "Spa",
-      last_name: "Registrant",
-      email: "spa-#{unique_id}@example.com",
-      phone: "3125550100",
-      password: "securepass123",
-      race_id: race.id,
-      race_name: race.name,
-      people_per_team: race.people_per_team,
-      fee_cents: deposit_tier.price + registration_tier.price
-    )
-    puts "✅ Seeded race #{race.name} (ID: #{race.id})"
   end
 
   desc "Captain with a 2025 team of three racers and an empty team in a current open race"
