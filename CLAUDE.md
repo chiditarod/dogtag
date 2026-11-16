@@ -398,6 +398,8 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 
 ## E2E Learnings
 
+- Staging runs on synthetic data, not a production dump: `bin/rails staging:seed` (`lib/staging_seed.rb`) fills an **empty** database. It needs `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and `SEED_PASSWORD`, plus optional `SEED_EMAIL_BASE` (plus-addresses every seeded email into the test mailbox) and `SEED_CLASSY_CAMPAIGN_ID`. It refuses on the production host, with a live Stripe key, or with existing users/races. It covers past racers, a finalized team, a half-paid team, a just-started team, a full race with a waitlist, a not-yet-open race and a closed race. Seeded payments use fake `ch_seed_*` ids, so refunds of them fail.
+
 - Playwright boots Rails in **development** (delivery_method :smtp to Mailpit) with `SIDEKIQ_INLINE=true` (config/initializers/sidekiq.rb; ignored in production), `REGISTRATION_UI=spa`, `APP_HOST=localhost:3099`; `VITE_DEV_SERVER` must be unset. CircleCI runs the same with `RAILS_ENV=development` against the `dogtag_test` DB, since the test env uses in-memory mail delivery.
 - Each Playwright spec seeds with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) via `tests/helpers/seed.ts`; `test_seeds:cleanup` sweeps users, teams, `Race %` races and `@example.com` SentEmail rows.
 - Person records can only be created while their race is open; seed past races by moving dates with `update_columns` afterwards.
