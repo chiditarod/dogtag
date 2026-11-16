@@ -11,7 +11,7 @@ export interface PersonPayload {
   phone: string;
   zipcode: string;
   experience: number | null;
-  twitter: string;
+  instagram: string;
 }
 
 interface PersonResponse {

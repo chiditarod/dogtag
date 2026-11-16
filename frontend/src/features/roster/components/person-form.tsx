@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { EmailInput } from '@/components/inputs/email-input';
-import { toApiPhone } from '@/components/inputs/format';
 import { PhoneInput } from '@/components/inputs/phone-input';
 import { useAutoAdvance } from '@/components/inputs/use-auto-advance';
 import { ZipInput } from '@/components/inputs/zip-input';
@@ -8,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
 import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
-import { emptyDraft, type PersonDraft } from '@/features/roster/utils';
+import { emptyDraft, payloadFromDraft, type PersonDraft } from '@/features/roster/utils';
 import type { FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Race } from '@/types/api';
@@ -59,15 +58,7 @@ export function PersonForm({
       experienceRef.current?.focus();
       return;
     }
-    onSubmit({
-      first_name: draft.first_name.trim(),
-      last_name: draft.last_name.trim(),
-      email: draft.email.trim().toLowerCase(),
-      phone: toApiPhone(draft.phone),
-      zipcode: draft.zipcode.trim(),
-      experience: Number(draft.experience),
-      twitter: draft.twitter.trim(),
-    });
+    onSubmit(payloadFromDraft(draft));
   }
 
   return (
@@ -175,16 +166,16 @@ export function PersonForm({
         )}
       </Field>
       <Field
-        label={t('roster.twitter')}
-        name="twitter"
-        error={fieldErrors.twitter}
+        label={t('roster.instagram')}
+        name="instagram"
+        error={fieldErrors.instagram}
       >
         <Input
           autoComplete="off"
           autoCapitalize="none"
-          placeholder={t('roster.twitterPlaceholder')}
-          value={draft.twitter}
-          onChange={(event) => set('twitter')(event.target.value)}
+          placeholder={t('roster.instagramPlaceholder')}
+          value={draft.instagram}
+          onChange={(event) => set('instagram')(event.target.value)}
         />
       </Field>
       <div className="flex gap-2">

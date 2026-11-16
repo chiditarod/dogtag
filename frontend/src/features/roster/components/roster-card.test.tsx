@@ -15,7 +15,7 @@ const dee = {
   phone: '312-555-0144',
   zipcode: '60614',
   experience: 1,
-  twitter: '@dee',
+  instagram: '@dee',
   last_team_name: 'Cart Pushers',
   last_race_name: 'CHIditarod 2025',
   last_raced_year: 2025,
@@ -111,7 +111,7 @@ describe('RosterCard slots', () => {
   it('shows initials, name, captain marker, contact details and the years label', async () => {
     serve({
       people: [
-        buildPerson({ twitter: '@ada' }),
+        buildPerson({ instagram: '@ada' }),
         buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', experience: 2 }),
       ],
     });
@@ -133,8 +133,8 @@ describe('RosterCard slots', () => {
   it('lays contact details out as separate, non-wrapping items', async () => {
     serve({
       people: [
-        buildPerson({ twitter: '@ada' }),
-        buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', twitter: null }),
+        buildPerson({ instagram: '@ada' }),
+        buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', instagram: null }),
       ],
     });
     renderApp('/teams/9');
@@ -209,7 +209,7 @@ describe('past-racer chips', () => {
   });
 
   it('pre-fills the form from a chip (experience + 1) and posts nothing until Save', async () => {
-    const created = buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com', phone: '312-555-0144', zipcode: '60614', experience: 2, twitter: '@dee' });
+    const created = buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com', phone: '312-555-0144', zipcode: '60614', experience: 2, instagram: '@dee' });
     serve({ people: [buildPerson()], past: [dee] });
     server.use(
       http.post('/api/v1/teams/9/people', async ({ request }) => {
@@ -231,7 +231,7 @@ describe('past-racer chips', () => {
     expect(screen.getByLabelText('Phone')).toHaveValue('(312) 555-0144');
     expect(screen.getByLabelText('ZIP code')).toHaveValue('60614');
     expect(screen.getByLabelText('Years racing')).toHaveDisplayValue('Twice');
-    expect(screen.getByLabelText(/Twitter/)).toHaveValue('@dee');
+    expect(screen.getByLabelText('Instagram (optional)')).toHaveValue('@dee');
     expect(requests).toEqual([]);
 
     await u.click(screen.getByRole('button', { name: 'Save' }));
@@ -244,7 +244,7 @@ describe('past-racer chips', () => {
         phone: '312-555-0144',
         zipcode: '60614',
         experience: 2,
-        twitter: '@dee',
+        instagram: '@dee',
       },
     });
     // The new person fills slot 2 and the checklist pill updates.
@@ -352,7 +352,7 @@ describe('adding someone new', () => {
         phone: '312-555-0144',
         zipcode: '60614',
         experience: 0,
-        twitter: '',
+        instagram: '',
       },
     });
   });
@@ -423,7 +423,7 @@ describe('adding someone new', () => {
 describe('editing and removing', () => {
   const people = [
     buildPerson(),
-    buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', twitter: null }),
+    buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', instagram: null }),
   ];
 
   it('Edit opens a pre-filled form and PATCHes on Save', async () => {

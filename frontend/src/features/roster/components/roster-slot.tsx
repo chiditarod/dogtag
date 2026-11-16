@@ -84,7 +84,7 @@ export function FilledSlot({
                   {person.zipcode}
                 </span>
               )}
-              {person.twitter && <span className="whitespace-nowrap">{person.twitter}</span>}
+              {person.instagram && <span className="whitespace-nowrap">{person.instagram}</span>}
             </div>
             {experienceLabel && <p className="text-xs text-navy/60">{experienceLabel}</p>}
           </div>

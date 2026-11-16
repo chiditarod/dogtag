@@ -15,7 +15,7 @@ function setup(props: Partial<Parameters<typeof PersonForm>[0]> = {}) {
 }
 
 describe('PersonForm', () => {
-  it('has fields in order: first, last, email, phone, zip, years, twitter', () => {
+  it('has fields in order: first, last, email, phone, zip, years, instagram', () => {
     setup();
     const form = document.querySelector('form')!;
     const order = Array.from(form.elements)
@@ -28,7 +28,7 @@ describe('PersonForm', () => {
       'phone',
       'zipcode',
       'experience',
-      'twitter',
+      'instagram',
     ]);
     expect(screen.getByPlaceholderText('@handle')).toBeInTheDocument();
   });
@@ -60,8 +60,23 @@ describe('PersonForm', () => {
       phone: '312-555-0144',
       zipcode: '60601',
       experience: 2,
-      twitter: '',
+      instagram: '',
     });
+  });
+
+  it('submits the Instagram handle and no twitter key', async () => {
+    const { user, onSubmit } = setup();
+    await user.type(screen.getByLabelText('First name'), 'Sam');
+    await user.type(screen.getByLabelText('Last name'), 'Okafor');
+    await user.type(screen.getByLabelText('Email'), 'sam@example.com');
+    await user.type(screen.getByLabelText('Phone'), '3125550144');
+    await user.type(screen.getByLabelText('ZIP code'), '60601');
+    await user.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await user.type(screen.getByLabelText('Instagram (optional)'), '@sam.okafor');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    const submitted = onSubmit.mock.calls[0][0];
+    expect(submitted.instagram).toBe('@sam.okafor');
+    expect(submitted).not.toHaveProperty('twitter');
   });
 
   it('auto-advances after the phone completes but not after the ZIP', async () => {

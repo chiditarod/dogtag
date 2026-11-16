@@ -8,7 +8,7 @@ export interface PastRacer {
   phone: string | null;
   zipcode: string | null;
   experience: number | null;
-  twitter: string | null;
+  instagram: string | null;
   last_team_name: string | null;
   last_race_name: string | null;
   last_raced_year: number | null;
