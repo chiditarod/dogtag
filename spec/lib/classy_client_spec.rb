@@ -315,6 +315,18 @@ describe ClassyClient do
         expect(yielded_data.length).to eq(2)
         expect(yielded_data.map { |d| d["id"] }).to eq([1, 2])
       end
+
+      it "reuses one HTTPClient for the token fetch and every page" do
+        page1 = stub_request(:get, "#{classy_url}/organizations/999/supporters?page=1")
+          .to_return(status: 200, body: page1_response.to_json)
+        page2 = stub_request(:get, "#{classy_url}/organizations/999/supporters?page=2")
+          .to_return(status: 200, body: page2_response.to_json)
+        expect(HTTPClient).to receive(:new).once.and_call_original
+
+        ClassyClient.new.with_supporters(999) { |data| }
+        expect(page1).to have_been_requested
+        expect(page2).to have_been_requested
+      end
     end
 
     context "when API returns an error" do
