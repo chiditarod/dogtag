@@ -258,6 +258,8 @@ include Wisper.model
 
 ## Yearly Launch Checklist
 
+The 2026 production runbook with exact commands is `docs/runbooks/2026-production-launch.md`; copy it for the next year.
+
 1. **Race record:**
    - Copy last year's race record and requirements, shifting dates by one year as a starting point.
    - Three payment tiers.
@@ -363,6 +365,7 @@ git push heroku main
 # Run migrations on Heroku
 heroku run rails db:migrate
 heroku run rails db:migrate -a staging-app-name
+heroku restart -a staging-app-name   # after any migration that adds a column the code reads
 
 # Download a production database and then restore it locally
 # Useful for testing migrations:
@@ -370,6 +373,8 @@ heroku pg:backups:capture --app dogtag
 curl -o file.dump `heroku pg:backups:url --app dogtag`
 pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development file.dump
 ```
+
+The `Procfile` has no `release:` phase, so a push does not migrate. When a deploy adds a column that views or JSON read (e.g. `people.instagram`, read by every person row), pages that read it fail from the push until the migration has run. Dynos that booted before the migration keep the old column list, so `heroku restart` after migrating. Run the migration right after the push, on `dogtag-staging` first.
 
 ## Registration SPA
 
@@ -402,6 +407,8 @@ pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_developm
 8. **Worker memory / Classy HTTP**: `ClassyClient` reuses one memoized `HTTPClient` (`http_client`); never build an `HTTPClient` per request. Each one allocates an OpenSSL context in native memory, and `Workers::ClassyCacheOrgMemberCacher` (every 20 min, ~318 pages) ratcheted the Basic worker's RSS into R14/R15 kills. Ruby `GC.stat[:heap_live_slots]` stayed flat, so check native churn, not just retained objects. Both Heroku apps also need `MALLOC_ARENA_MAX=2`: the worker boots with `RAILS_ENV=production`, so `config/sidekiq.yml` gives it 5 threads, and each thread's glibc arena kept ~70 MB (5 x 70 MB + ~190 MB boot > 512 MB). With both fixes the staging worker levels off at ~340 MB. Staging has `log-runtime-metrics` on (`sample#memory_total` in `heroku logs -d worker`).
 
 ## E2E Learnings
+
+- Staging runs on synthetic data, not a production dump: `bin/rails staging:seed` (`lib/staging_seed.rb`) fills an **empty** database. It needs `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and `SEED_PASSWORD`, plus optional `SEED_EMAIL_BASE` (plus-addresses every seeded email into the test mailbox) and `SEED_CLASSY_CAMPAIGN_ID`. It refuses on the production host, with a live Stripe key, or with existing users/races. It covers past racers, a finalized team, a half-paid team, a just-started team, a full race with a waitlist, a not-yet-open race and a closed race. Seeded payments use fake `ch_seed_*` ids, so refunds of them fail.
 
 - Playwright boots Rails in **development** (delivery_method :smtp to Mailpit) with `SIDEKIQ_INLINE=true` (config/initializers/sidekiq.rb; ignored in production), `REGISTRATION_UI=spa`, `APP_HOST=localhost:3099`; `VITE_DEV_SERVER` must be unset. CircleCI runs the same with `RAILS_ENV=development` against the `dogtag_test` DB, since the test env uses in-memory mail delivery.
 - Each Playwright spec seeds with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) via `tests/helpers/seed.ts`; `test_seeds:cleanup` sweeps users, teams, `Race %` races and `@example.com` SentEmail rows.

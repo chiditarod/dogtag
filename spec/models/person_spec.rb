@@ -132,8 +132,13 @@ describe 'validation' do
       expect(FactoryBot.create(:person, instagram: "  ").instagram).to be_nil
     end
 
-    it "is invalid for a URL, spaces, or more than 30 characters" do
-      ["https://instagram.com/sam", "sam okafor", "@#{'a' * 31}"].each do |handle|
+    it "strips non-breaking spaces pasted around the handle" do
+      expect(FactoryBot.create(:person, instagram: "\u00a0@sam.okafor\u00a0").instagram).to eq("@sam.okafor")
+    end
+
+    it "is invalid for a URL, spaces, more than 30 characters, or misplaced periods" do
+      ["https://instagram.com/sam", "sam okafor", "@#{'a' * 31}",
+       "@.", ".sam", "sam.", "sam..okafor"].each do |handle|
         person = FactoryBot.build(:person, instagram: handle)
         expect(person).not_to be_valid
         expect(person.errors[:instagram]).to eq(["should look like @handle (letters, numbers, periods and underscores)"])

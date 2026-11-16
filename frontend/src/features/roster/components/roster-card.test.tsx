@@ -311,6 +311,41 @@ describe('the crew picker from the roster', () => {
     );
   });
 
+  it('does not offer a racer again after their email was changed in review', async () => {
+    serve({ people: [buildPerson(), bo()], past: eight });
+    server.use(
+      http.post('/api/v1/teams/9/people', async ({ request }) => {
+        await record(request);
+        return HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee.new@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 3, total: 5, done: false } }),
+          },
+          { status: 201 },
+        );
+      }),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRosterWithPicker(8);
+    await u.click(screen.getByRole('button', { name: 'Pick from past teams (8)' }));
+    await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
+    await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
+    await u.click(screen.getByRole('button', { name: 'Change email' }));
+    const email = screen.getByRole('textbox', { name: 'Email' });
+    await u.clear(email);
+    await u.type(email, 'dee.new@example.com');
+    await u.click(screen.getByRole('button', { name: 'Done' }));
+    await fillAll(u);
+    // fillAll ticked Email off again; tick it back on.
+    await u.click(screen.getByRole('checkbox', { name: /^Email: / }));
+    await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(requests[0].body).toMatchObject({ person: { email: 'dee.new@example.com' } });
+    expect(await screen.findByRole('button', { name: 'Pick from past teams (7)' })).toBeInTheDocument();
+  });
+
   it('Escape closes the dialog and returns focus to the picker button', async () => {
     serve({ people: [buildPerson()], past: eight });
     const u = userEvent.setup();

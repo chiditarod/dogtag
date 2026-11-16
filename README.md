@@ -215,7 +215,8 @@ docker-compose exec db pg_restore -U postgres --verbose --clean --no-acl --no-ow
 1. Test locally using TEST Stripe credentials.
 2. Deploy to a Heroku staging environment using TEST credentials.
 3. Deploy to production using PROD credentials.
-4. Tail them logs.
+4. If the deploy has migrations, run them right away (`heroku run rails db:migrate`), then `heroku restart`. Pushing does not migrate (no release phase), and dynos that booted before the migration do not see new columns.
+5. Tail them logs.
 
 ## Yearly SDLC Cycle
 

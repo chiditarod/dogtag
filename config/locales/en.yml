@@ -31,6 +31,13 @@
 en:
   website_title: dogtag
   mush: mush!
+  activerecord:
+    errors:
+      models:
+        person:
+          attributes:
+            instagram:
+              invalid_handle: should look like @handle (letters, numbers, periods and underscores)
   dogpen: dogPen
 
   create_failed: Create failed.
