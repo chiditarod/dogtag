@@ -258,6 +258,8 @@ include Wisper.model
 
 ## Yearly Launch Checklist
 
+The 2026 production runbook with exact commands is `docs/runbooks/2026-production-launch.md`; copy it for the next year.
+
 1. **Race record:**
    - Copy last year's race record and requirements, shifting dates by one year as a starting point.
    - Three payment tiers.
