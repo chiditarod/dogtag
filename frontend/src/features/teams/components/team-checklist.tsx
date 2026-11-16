@@ -44,43 +44,49 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
     <TeamPageErrorProvider teamId={teamId}>
       <div className="space-y-4">
         <TeamErrorBanner />
-        <TeamHeader team={team} />
-        <ChecklistCard
-          number={1}
-          title={t('team.racers')}
-          status={checklist.racers.done ? 'done' : 'todo'}
-          pill={t('team.racersPill', {
-            filled: checklist.racers.filled,
-            total: checklist.racers.total,
-          })}
-        >
-          <RosterCardSlot team={team} />
-        </ChecklistCard>
-        {checklist.questions.required && (
-          <ChecklistCard
-            number={2}
-            title={t('team.questions')}
-            status={checklist.questions.done ? 'done' : 'todo'}
-            pill={
-              checklist.questions.done ? t('team.pillDone') : t('team.pillTodo')
-            }
-          >
-            <QuestionsCardSlot team={team} />
-          </ChecklistCard>
-        )}
-        <ChecklistCard
-          number={3}
-          title={t('team.fee')}
-          status={
-            checklist.fee.done && !isFeeOpensLater(checklist.fee)
-              ? 'done'
-              : 'todo'
-          }
-          pill={feePill(checklist.fee, team.race.time_zone)}
-        >
-          <FeeCardSlot team={team} />
-        </ChecklistCard>
-        <YoureInCard checklist={checklist} />
+        <div className="space-y-6 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0">
+          <div className="lg:sticky lg:top-6">
+            <TeamHeader team={team} />
+          </div>
+          <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
+            <ChecklistCard
+              anchor="step-racers"
+              title={t('team.racers')}
+              status={checklist.racers.done ? 'done' : 'todo'}
+              pill={t('team.racersPill', {
+                filled: checklist.racers.filled,
+                total: checklist.racers.total,
+              })}
+            >
+              <RosterCardSlot team={team} />
+            </ChecklistCard>
+            {checklist.questions.required && (
+              <ChecklistCard
+                anchor="step-questions"
+                title={t('team.questions')}
+                status={checklist.questions.done ? 'done' : 'todo'}
+                pill={
+                  checklist.questions.done ? t('team.pillDone') : t('team.pillTodo')
+                }
+              >
+                <QuestionsCardSlot team={team} />
+              </ChecklistCard>
+            )}
+            <ChecklistCard
+              anchor="step-fee"
+              title={t('team.fee')}
+              status={
+                checklist.fee.done && !isFeeOpensLater(checklist.fee)
+                  ? 'done'
+                  : 'todo'
+              }
+              pill={feePill(checklist.fee, team.race.time_zone)}
+            >
+              <FeeCardSlot team={team} />
+            </ChecklistCard>
+            <YoureInCard checklist={checklist} />
+          </div>
+        </div>
       </div>
     </TeamPageErrorProvider>
   );

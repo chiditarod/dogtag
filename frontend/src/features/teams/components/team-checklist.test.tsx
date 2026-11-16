@@ -211,7 +211,7 @@ describe('TeamChecklist cards', () => {
 });
 
 describe('card pills', () => {
-  it('give screen readers a to do / done suffix and card 4 reads Locked', async () => {
+  it('give screen readers a to do / done suffix; the locked final step has no pill', async () => {
     serveTeam({ racers: { filled: 2, total: 5, done: false } });
     renderApp('/teams/9');
     const racers = (await screen.findByRole('heading', { level: 2, name: 'Racers' })).closest(
@@ -221,8 +221,71 @@ describe('card pills', () => {
     const final = screen.getByRole('heading', { level: 2, name: "You're in!" }).closest(
       '[role="group"]',
     ) as HTMLElement;
-    expect(within(final).getByText('Locked')).toBeInTheDocument();
-    expect(final).toHaveTextContent('Locked, to do');
+    expect(within(final).queryByText('Locked')).toBeNull();
+    expect(within(final).getByText('Finish the steps above to lock in your spot.')).toBeInTheDocument();
+  });
+});
+
+describe("What's left", () => {
+  it('links to each unfinished step', async () => {
+    serveTeam({ racers: { filled: 2, total: 5, done: false } });
+    renderApp('/teams/9');
+    const list = await screen.findByRole('list', { name: "What's left" });
+    const racers = within(list).getByRole('link', { name: 'Add 3 racers' });
+    expect(racers.getAttribute('href')).toMatch(/#step-racers$/);
+    const fee = within(list).getByRole('link', { name: 'Pay the registration fee' });
+    expect(fee.getAttribute('href')).toMatch(/#step-fee$/);
+    expect(within(list).queryByRole('link', { name: 'Answer the team questions' })).toBeNull();
+    expect(document.getElementById('step-racers')).toBe(
+      screen.getByRole('heading', { level: 2, name: 'Racers' }).closest('section'),
+    );
+  });
+
+  it('uses the singular for one open spot and lists unanswered questions', async () => {
+    serveTeam({
+      racers: { filled: 4, total: 5, done: false },
+      questions: { required: true, done: false },
+    });
+    renderApp('/teams/9');
+    const list = await screen.findByRole('list', { name: "What's left" });
+    expect(within(list).getByRole('link', { name: 'Add 1 racer' })).toBeInTheDocument();
+    const questions = within(list).getByRole('link', { name: 'Answer the team questions' });
+    expect(questions.getAttribute('href')).toMatch(/#step-questions$/);
+  });
+
+  it('leaves out the fee while it opens later', async () => {
+    const opens = { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' };
+    serveTeam({
+      racers: { filled: 2, total: 5, done: false },
+      fee: {
+        done: true,
+        amount_due_cents: null,
+        paid_cents: 0,
+        next_tier: opens,
+        requirement_id: null,
+        items: [],
+      },
+    });
+    renderApp('/teams/9');
+    const list = await screen.findByRole('list', { name: "What's left" });
+    expect(within(list).getByRole('link', { name: 'Add 3 racers' })).toBeInTheDocument();
+    expect(within(list).queryByRole('link', { name: 'Pay the registration fee' })).toBeNull();
+  });
+
+  it('is absent once the team is finalized', async () => {
+    serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.queryByRole('list', { name: "What's left" })).toBeNull();
+  });
+
+  it('keeps the four step groups named as before', async () => {
+    serveTeam({ questions: { required: true, done: false } });
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1 });
+    for (const name of ['Racers', 'Team questions', 'Registration fee', "You're in!"]) {
+      expect(screen.getByRole('group', { name })).toBeInTheDocument();
+    }
   });
 });
 

@@ -6,20 +6,20 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
   if (!checklist.finalized) {
     return (
       <ChecklistCard
-        number={4}
+        anchor="step-in"
         title={t('team.youreIn')}
         status="todo"
-        pill={t('team.pillLocked')}
+        pill=""
         locked
       >
-        <p className="text-sm">{t('team.locked')}</p>
+        {t('team.locked')}
       </ChecklistCard>
     );
   }
 
   return (
     <ChecklistCard
-      number={4}
+      anchor="step-in"
       title={t('team.youreIn')}
       status="done"
       pill={t('team.pillDone')}
