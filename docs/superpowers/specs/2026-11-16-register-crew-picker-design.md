@@ -10,7 +10,7 @@ The `/register` SPA works, but the team page is harder to use than it should be.
 
 The named pain is the roster. Every empty slot repeats the same three past-racer chips plus a "+15 more" chip, so a team with five open spots shows that row five times. Picking a chip opens a pre-filled form, one person at a time.
 
-Registration for CHIditarod XXII opens Dec 1, 2026, so this ships as a frontend change with no new server work.
+Registration for CHIditarod XXII opens Dec 1, 2026. The work is in the SPA, with one small server change: racers are asked for Instagram instead of Twitter (section 8).
 
 ## Goals
 
@@ -19,11 +19,13 @@ Registration for CHIditarod XXII opens Dec 1, 2026, so this ships as a frontend 
 - The team page reads at a glance: what is done, what is left, what to do next.
 - The team page uses the width of a desktop screen and still works at 320px with no horizontal scroll.
 - Adding several brand-new people in a row flows from one to the next.
+- Racers give an Instagram handle instead of a Twitter one, in both the SPA and the legacy flow (owner requirement).
 
 ## Non-goals
 
-- No change to the API, models, Gemfile, initializers or config.
-- No change to the legacy HAML flow.
+- No server change beyond the Instagram field in section 8. No change to the Gemfile, initializers or config.
+- No change to the legacy HAML flow beyond that one field.
+- The team-level Twitter question is not touched. It lives in the `teams.twitter` column and in each year's JSONForm payload, which the owner edits.
 - No redesign of login, signup, forgot password, the race list, the create-team form, the questions renderer or the payment logic. They keep today's look.
 - No new colors or fonts. The Chicago Flag tokens and Oswald/Inter stay.
 
@@ -46,7 +48,7 @@ Registration for CHIditarod XXII opens Dec 1, 2026, so this ships as a frontend 
   - button `Save`
   - group names `Racers`, `Team questions`, `Registration fee`, `You're in!`
   - the `{filled} of {total}` pill
-- **Shared resources:** `dogtag_test` is shared between checkouts and `test_seeds:cleanup` sweeps every `@example.com` user. Do not run the Playwright suite or that cleanup without the owner's go-ahead. Use a port other than 3099 for manual browser checks.
+- **Shared resources:** `dogtag_test` is shared between checkouts and `test_seeds:cleanup` sweeps every `@example.com` user. Do not run the Playwright suite or that cleanup without the owner's go-ahead. Use a port other than 3099 for manual browser checks. The Instagram migration adds a column to that shared database, so other checkouts will see `instagram` appear in their `schema.rb` dumps until this merges.
 
 ## Approaches
 
@@ -106,15 +108,15 @@ One dialog with two steps. It is a bottom sheet on phones (at most 90% of the vi
  ○ ZIP           60614               Change
  ○ Years racing  Raced twice         Change
                  was "Raced once before" last time
- ○ Twitter       None                Change
+ ○ Instagram     None                Change
 
  [ Add Ada to the team ]      Skip Ada
 ```
 
-- Six lines: Name (first and last together), Email, Phone, ZIP, Years racing, Twitter.
+- Six lines: Name (first and last together), Email, Phone, ZIP code, Years racing, Instagram.
 - Each line is a checkbox. Unconfirmed lines have a flag-blue tint and an empty circle; confirmed lines are white with a tick. Screen readers hear the label, the value and the checked state.
 - **Change** turns that one line into its input (the existing `EmailInput`, `PhoneInput`, `ZipInput`, the years select, or two text inputs for the name) with a `Done` button. Pressing Done keeps the new value and marks the line confirmed.
-- **Missing values:** a required detail that is blank opens in its input straight away and cannot be confirmed until filled. A blank Twitter shows "None" and can be confirmed.
+- **Missing values:** a required detail that is blank opens in its input straight away and cannot be confirmed until filled. A blank Instagram shows "None" and can be confirmed.
 - **Years racing** is pre-set to last time's value plus one, capped at the race's last label (today's rule). When that changed the value, the line says what it was. A past racer with no value starts in the select.
 - **Add Ada to the team** is disabled until all six lines are confirmed. A line under it says how many are left ("3 details left to confirm").
 - Pressing it saves the person with the existing `useAddPerson` mutation, then moves to the next person, or closes the dialog after the last.
@@ -160,9 +162,22 @@ Only the Racers step changes here (builder's call):
 - **Team questions** and **Registration fee** are untouched. They already shrink to a summary when done ("4 of 4 questions answered" with `Edit answers`; "Paid $218 total"), and existing tests depend on exactly that.
 - **You're in!**, while locked, becomes one quiet line ("Finish the steps above to lock in your spot.") instead of a full card. The group name and the finalized state stay as today.
 
+### 8. Instagram replaces Twitter for racers
+
+The owner chose a real Instagram field over relabelling the old one.
+
+- **Database:** a new nullable `instagram` text column on `people`, added with a generated migration. The `people.twitter` column stays, with its data untouched, and is no longer read or written by any screen.
+- **Model:** `Person` validates `instagram` when present: an `@` followed by 1 to 30 letters, numbers, periods or underscores. Before validation the value is trimmed, lowercased and given a leading `@` if it lacks one, so `Sam.Okafor` and `@sam.okafor` both save as `@sam.okafor`. The `twitter` validation is removed along with the field.
+- **API:** `instagram` replaces `twitter` in the permitted person attributes, the person JSON and the past-racers JSON.
+- **SPA:** the form field is `Instagram (optional)` with the placeholder `@handle`. Types, drafts, payloads, fixtures and the filled row use `instagram`.
+- **Past racers:** nobody has an Instagram handle on file yet, so this year every past racer's Instagram line reads "None". Old Twitter handles are never shown as Instagram. From next year the saved handle carries over like any other detail.
+- **Legacy flow:** the people form asks for Instagram in place of Twitter, the legacy controller permits `instagram`, and the people table shows an Instagram column in place of Twitter.
+- **Export:** `Team.export` lists `instagram` in place of `twitter` for each racer.
+
 ## Testing
 
 - **Vitest:** rewrite `roster-card.test.tsx` around the picker and review (cap at open spots, search, confirm-all gate, Change, missing value, bumped years note, server field error, skip, back, close midway, focus return). Add tests for `FlagProgress`, the full-roster-collapsed-on-load rule, Add yourself, and focus landing on `+ Add someone new` after a save. Update `team-checklist.test.tsx` where headings or progress markup change.
+- **RSpec:** the `Person` model (handle rule and normalizing), the people and past-racers request specs (JSON shape), and the `Team.export` header spec.
 - **Playwright:** rewrite `tests/spa/past-racers.spec.ts` for the new picker and review. `full-registration.spec.ts` should pass unchanged; if it needs a change, say why in the PR.
 - **By eye:** screenshots of the team page and the picker at 320px, 390px and 1280px.
 
