@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { ChicagoStar } from '@/components/ui/chicago-star';
 import { Card } from '@/components/ui/card';
 import { t } from '@/locales/en';
 
@@ -32,18 +33,7 @@ export function ChecklistCard({
       data-locked={locked || undefined}
     >
       <div className="flex items-center gap-3">
-        <span
-          aria-hidden="true"
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-base font-semibold ${
-            done
-              ? 'bg-green-100 text-green-900'
-              : locked
-                ? 'bg-flag/50 text-navy'
-                : 'bg-star text-white'
-          }`}
-        >
-          {done ? '✓' : locked ? '🔒' : number}
-        </span>
+        <ChicagoStar filled={done} className="h-6 w-6 shrink-0" />
         <h2
           id={`checklist-card-${number}`}
           className="min-w-0 flex-1 font-display text-xl font-semibold"

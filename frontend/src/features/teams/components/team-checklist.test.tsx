@@ -28,7 +28,7 @@ function serveTeam(checklist: Partial<Checklist> = {}, overrides: Partial<Team> 
 }
 
 describe('TeamChecklist header', () => {
-  it('shows race, dates, remaining count and four progress segments', async () => {
+  it('shows race, dates, remaining count and a four-star progress bar', async () => {
     serveTeam({ remaining: 2 });
     renderApp('/teams/9');
     expect(await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' })).toBeInTheDocument();
@@ -37,6 +37,7 @@ describe('TeamChecklist header', () => {
     expect(screen.getByText('Registration closes Fri, Feb 19, 2027')).toBeInTheDocument();
     expect(screen.getByText('2 things left')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '4');
+    expect(screen.getByRole('progressbar').querySelectorAll('svg')).toHaveLength(4);
   });
 
   it('uses singular copy for one thing left', async () => {
@@ -97,6 +98,32 @@ describe('TeamChecklist header', () => {
     renderApp('/teams/9');
     await screen.findByRole('heading', { level: 1 });
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
+  });
+});
+
+describe('card stars', () => {
+  function starOf(heading: HTMLElement) {
+    return heading.closest('[role="group"]')!.querySelector('svg[data-filled]')!;
+  }
+
+  it('are outlined while to do and solid when done', async () => {
+    serveTeam({
+      racers: { filled: 5, total: 5, done: true },
+      questions: { required: true, done: false },
+    });
+    renderApp('/teams/9');
+    const racers = await screen.findByRole('heading', { level: 2, name: 'Racers' });
+    expect(starOf(racers)).toHaveAttribute('data-filled', 'true');
+    expect(starOf(screen.getByRole('heading', { level: 2, name: 'Team questions' }))).toHaveAttribute('data-filled', 'false');
+    expect(starOf(screen.getByRole('heading', { level: 2, name: 'Registration fee' }))).toHaveAttribute('data-filled', 'false');
+    expect(starOf(screen.getByRole('heading', { level: 2, name: "You're in!" }))).toHaveAttribute('data-filled', 'false');
+  });
+
+  it('fills the last star once the team is finalized', async () => {
+    serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
+    renderApp('/teams/9');
+    const final = await screen.findByRole('heading', { level: 2, name: "You're in!" });
+    expect(starOf(final)).toHaveAttribute('data-filled', 'true');
   });
 });
 

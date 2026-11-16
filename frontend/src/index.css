@@ -7,3 +7,29 @@
     @apply bg-page font-sans text-navy;
   }
 }
+
+@keyframes star-land {
+  0% {
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .star-land,
+  .flag-salute svg {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: star-land 450ms ease-out;
+  }
+
+  .flag-salute svg {
+    animation-delay: calc(var(--i) * 130ms);
+    animation-fill-mode: backwards;
+  }
+}

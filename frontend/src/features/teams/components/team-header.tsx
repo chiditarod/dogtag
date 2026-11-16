@@ -1,9 +1,9 @@
-import { ProgressSegments } from '@/components/ui/progress-segments';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
+import { FlagProgress } from '@/features/teams/components/flag-progress';
 import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
-import { isFeeOpensLater } from '@/features/teams/utils';
+import { isFeeOpensLater, stepStates } from '@/features/teams/utils';
 
 function remainingText(team: Team): string {
   const { remaining, finalized, fee } = team.checklist;
@@ -18,16 +18,6 @@ function remainingText(team: Team): string {
   }
   const unit = remaining === 1 ? 'teams.thingsLeft_one' : 'teams.thingsLeft_other';
   return `${remaining} ${t(unit)}`;
-}
-
-/** 4 segments: racers, questions (counts as done when not required), fee, finalized. */
-function completedSteps({ checklist }: Team): number {
-  return [
-    checklist.racers.done,
-    !checklist.questions.required || checklist.questions.done,
-    checklist.fee.done && !isFeeOpensLater(checklist.fee),
-    checklist.finalized,
-  ].filter(Boolean).length;
 }
 
 export function TeamHeader({ team }: { team: Team }) {
@@ -52,11 +42,7 @@ export function TeamHeader({ team }: { team: Team }) {
       >
         {remainingText(team)}
       </p>
-      <ProgressSegments
-        total={4}
-        filled={completedSteps(team)}
-        label={t('team.progress')}
-      />
+      <FlagProgress steps={stepStates(team)} label={t('team.progress')} />
       <EditTeamBasics team={team} />
     </section>
   );
