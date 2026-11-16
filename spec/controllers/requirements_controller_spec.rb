@@ -182,6 +182,13 @@ describe RequirementsController do
         end.to change(Requirement, :count).by 1
       end
 
+      it "creates a MockPaymentRequirement when an admin picks the mock type" do
+        expect {
+          post :create, params: { race_id: req.race.id, requirement: { name: "Cart Deposit", type: "MockPaymentRequirement" } }
+        }.to change(MockPaymentRequirement, :count).by(1)
+        expect(response).to have_http_status(:redirect)
+      end
+
       context 'upon success' do
         before do
           post :create, params: { :race_id => req.race.id, :requirement => valid_req_hash }
