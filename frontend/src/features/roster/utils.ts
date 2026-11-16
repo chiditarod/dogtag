@@ -1,4 +1,5 @@
 import { formatPhoneDisplay, toApiPhone } from '@/components/inputs/format';
+import type { User } from '@/features/auth/api/use-me';
 import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
 import { ApiError, type FieldErrors } from '@/lib/api-client';
@@ -71,6 +72,17 @@ export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
   };
 }
 
+/** The signed-in captain adding themselves: only what the account knows. */
+export function draftFromUser(user: User): PersonDraft {
+  return {
+    ...emptyDraft,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    phone: formatPhoneDisplay(user.phone ?? ''),
+  };
+}
+
 /** Trims every field, lowercases the email, converts the phone to ddd-ddd-dddd. */
 export function payloadFromDraft(draft: PersonDraft): PersonPayload {
   return {
@@ -83,11 +95,6 @@ export function payloadFromDraft(draft: PersonDraft): PersonPayload {
     instagram: draft.instagram.trim(),
   };
 }
-
-export const racerChipLabel = (racer: PastRacer) =>
-  racer.last_raced_year
-    ? `${fullName(racer)} · ${racer.last_raced_year}`
-    : fullName(racer);
 
 /**
  * Splits a failed person mutation into per-field messages and form-level

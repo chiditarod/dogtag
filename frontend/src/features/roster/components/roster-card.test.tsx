@@ -82,30 +82,31 @@ async function openRoster() {
   return screen.getByRole('group', { name: 'Racers' });
 }
 
-/** Past racers load after the team; wait for the first chip row. */
-async function openRosterWithChips() {
+/** Past racers load after the team; wait for the picker button. */
+async function openRosterWithPicker(count: number) {
   const roster = await openRoster();
-  await screen.findAllByRole('group', { name: 'Past racers' });
+  await screen.findByRole('button', { name: `Pick from past teams (${count})` });
   return roster;
 }
 
 describe('RosterCard slots', () => {
-  it('renders one slot per people_per_team, filled slots first', async () => {
+  it('lists the people, then one row for all the open spots', async () => {
     serve({ people: [buildPerson(), buildPerson({ id: 2, first_name: 'Bo', email: 'bo@example.com' })] });
     renderApp('/teams/9');
     const roster = await openRoster();
-    expect(slots()).toHaveLength(5);
-    expect(screen.getAllByRole('button', { name: '+ Add someone new' })).toHaveLength(3);
+    expect(slots()).toHaveLength(3);
     expect(within(roster).getAllByRole('button', { name: /^Edit / })).toHaveLength(2);
     expect(slots()[0]).toHaveTextContent('Ada L');
     expect(slots()[1]).toHaveTextContent('Bo L');
+    expect(slots()[2]).toHaveTextContent('3 spots to fill');
   });
 
-  it('respects a different people_per_team', async () => {
+  it('respects a different people_per_team and says 1 spot to fill', async () => {
     serve({ race: { people_per_team: 3 } });
     renderApp('/teams/9');
     await openRoster();
-    expect(slots()).toHaveLength(3);
+    expect(slots()).toHaveLength(1);
+    expect(slots()[0]).toHaveTextContent('3 spots to fill');
   });
 
   it('shows initials, name, captain marker, contact details and the years label', async () => {
@@ -165,159 +166,231 @@ describe('RosterCard slots', () => {
   });
 });
 
-describe('past-racer chips', () => {
-  it('renders no chip row when there are no past racers', async () => {
-    serve({ past: [] });
+const eight = [dee, racer(2), racer(3), racer(4), racer(5), racer(6), racer(7), racer(8)];
+
+const bo = () => buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com' });
+
+describe('the actions under the list', () => {
+  it('offers one picker button, one add button and the open-spots count', async () => {
+    serve({ people: [buildPerson(), bo()], past: eight });
+    renderApp('/teams/9');
+    await openRosterWithPicker(8);
+    expect(screen.getAllByRole('button', { name: /^Pick from past teams/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: '+ Add someone new' })).toHaveLength(1);
+    expect(screen.getByText('3 spots to fill')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Past racers' })).toBeNull();
+    expect(screen.queryByText(/more$/)).toBeNull();
+    expect(slots()).toHaveLength(3);
+  });
+
+  it('hides the picker button when there are no past racers', async () => {
+    serve({ people: [buildPerson()], past: [] });
     const { queryClient } = renderApp('/teams/9');
     await openRoster();
     await waitFor(() =>
       expect(queryClient.getQueryState(['past-racers', '9'])?.status).toBe('success'),
     );
-    expect(screen.queryByRole('group', { name: 'Past racers' })).toBeNull();
-    expect(screen.queryByText(/more$/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.getByRole('button', { name: '+ Add someone new' })).toBeInTheDocument();
   });
 
-  it('shows up to 3 chips (most recent first) per empty slot plus "+N more"', async () => {
-    serve({ past: [racer(1), racer(2), racer(3), racer(4), racer(5)] });
-    renderApp('/teams/9');
-    await openRosterWithChips();
-    const rows = screen.getAllByRole('group', { name: 'Past racers' });
-    expect(rows).toHaveLength(5);
-    const chips = within(rows[0]).getAllByRole('button');
-    expect(chips.map((c) => c.textContent)).toEqual([
-      'Racer1 Num1 · 2024',
-      'Racer2 Num2 · 2023',
-      'Racer3 Num3 · 2022',
-      '+2 more',
-    ]);
-  });
-
-  it('shows no "+N more" with 3 or fewer past racers', async () => {
-    serve({ past: [dee, racer(2)] });
-    renderApp('/teams/9');
-    await openRosterWithChips();
-    expect(screen.queryByRole('button', { name: /more$/ })).toBeNull();
-    expect(within(screen.getAllByRole('group', { name: 'Past racers' })[0]).getAllByRole('button')).toHaveLength(2);
-  });
-
-  it('hides chips for people already on the team', async () => {
+  it('does not count people already on the team', async () => {
     serve({ people: [buildPerson({ email: 'DEE@example.com' })], past: [dee, racer(2)] });
     renderApp('/teams/9');
-    await openRosterWithChips();
-    expect(screen.queryByRole('button', { name: /Dee Lamb/ })).toBeNull();
-    expect(screen.getAllByRole('button', { name: /Racer2 Num2/ })).toHaveLength(4);
+    await openRosterWithPicker(1);
   });
 
-  it('pre-fills the form from a chip (experience + 1) and posts nothing until Save', async () => {
-    const created = buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com', phone: '312-555-0144', zipcode: '60614', experience: 2, instagram: '@dee' });
-    serve({ people: [buildPerson()], past: [dee] });
+  it('offers nothing and reads "3 open spots" once registration is closed', async () => {
+    serve({
+      people: [buildPerson(), bo()],
+      past: eight,
+      race: { open_for_registration: false },
+    });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(slots()[2]).toHaveTextContent('3 open spots');
+    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
+  });
+});
+
+describe('the crew picker from the roster', () => {
+  const fillAll = async (u: ReturnType<typeof userEvent.setup>) => {
+    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram']) {
+      await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
+    }
+  };
+
+  it('adds a picked racer, updates the pill and the count, and Escape returns focus', async () => {
+    serve({ people: [buildPerson(), bo()], past: eight });
     server.use(
       http.post('/api/v1/teams/9/people', async ({ request }) => {
         await record(request);
         return HttpResponse.json(
-          { person: created, checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }) },
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 3, total: 5, done: false } }),
+          },
           { status: 201 },
         );
       }),
     );
     const u = userEvent.setup();
     renderApp('/teams/9');
-    await openRosterWithChips();
-    await u.click(screen.getAllByRole('button', { name: 'Dee Lamb · 2025' })[0]);
+    await openRosterWithPicker(8);
+    await u.click(screen.getByRole('button', { name: 'Pick from past teams (8)' }));
+    expect(await screen.findByRole('dialog', { name: 'Pick from past teams' })).toBeInTheDocument();
+    await u.click(screen.getByRole('checkbox', { name: /^Dee Lamb/ }));
+    await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
+    await fillAll(u);
+    await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
 
-    expect(screen.getByLabelText('First name')).toHaveValue('Dee');
-    expect(screen.getByLabelText('Last name')).toHaveValue('Lamb');
-    expect(screen.getByLabelText('Email')).toHaveValue('dee@example.com');
-    expect(screen.getByLabelText('Phone')).toHaveValue('(312) 555-0144');
-    expect(screen.getByLabelText('ZIP code')).toHaveValue('60614');
-    expect(screen.getByLabelText('Years racing')).toHaveDisplayValue('Twice');
-    expect(screen.getByLabelText('Instagram (optional)')).toHaveValue('@dee');
-    expect(requests).toEqual([]);
-
-    await u.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(requests).toHaveLength(1));
-    expect(requests[0].body).toEqual({
-      person: {
-        first_name: 'Dee',
-        last_name: 'Lamb',
-        email: 'dee@example.com',
-        phone: '312-555-0144',
-        zipcode: '60614',
-        experience: 2,
-        instagram: '@dee',
-      },
-    });
-    // The new person fills slot 2 and the checklist pill updates.
-    await waitFor(() => expect(within(slots()[1]).getByText('Dee Lamb')).toBeInTheDocument());
-    expect(screen.queryByLabelText('First name')).toBeNull();
-    expect(screen.queryByRole('button', { name: /Dee Lamb · 2025/ })).toBeNull();
-    expect(screen.getByText('2 of 5')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(within(screen.getByRole('list', { name: 'Racer slots' })).getByText('Dee Lamb')).toBeInTheDocument();
+    expect(screen.getByText('3 of 5')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Pick from past teams (7)' })).toBeInTheDocument();
   });
 
-  it('caps the pre-filled experience at the last label', async () => {
-    serve({ past: [{ ...dee, experience: 2 }] });
+  it('closes itself and moves focus to the list when the last spot is filled', async () => {
+    serve({ people: [buildPerson()], past: [dee], race: { people_per_team: 2 } });
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 2, done: true } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
     const u = userEvent.setup();
     renderApp('/teams/9');
-    await openRosterWithChips();
-    await u.click(screen.getAllByRole('button', { name: 'Dee Lamb · 2025' })[0]);
-    expect(screen.getByLabelText('Years racing')).toHaveDisplayValue('Twice');
+    await openRosterWithPicker(1);
+    await u.click(screen.getByRole('button', { name: 'Pick from past teams (1)' }));
+    await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
+    await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
+    await fillAll(u);
+    await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
+    await screen.findByText('Dee Lamb');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() =>
+      expect(screen.getByRole('list', { name: 'Racer slots' })).toHaveFocus(),
+    );
+    expect(screen.getByRole('status')).toHaveTextContent('Dee Lamb added');
+  });
+
+  it('Escape closes the dialog and returns focus to the picker button', async () => {
+    serve({ people: [buildPerson()], past: eight });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRosterWithPicker(8);
+    const button = screen.getByRole('button', { name: 'Pick from past teams (8)' });
+    await u.click(button);
+    await screen.findByRole('dialog', { name: 'Pick from past teams' });
+    await u.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(button).toHaveFocus();
+    expect(requests).toEqual([]);
   });
 });
 
-describe('PastRacerList', () => {
-  const many = [racer(1), racer(2), racer(3), { ...dee }, racer(5)];
-
-  it('opens from "+N more", filters by name/email, closes on Escape and returns focus', async () => {
-    serve({ past: many });
+describe('Add yourself', () => {
+  it('opens the form filled from the account when you were never a past racer', async () => {
+    server.use(
+      http.get('/api/v1/me', () =>
+        HttpResponse.json({ user: { ...user, first_name: 'Mo', last_name: 'Ng', email: 'mo@example.com', phone: '312-555-0199' } }),
+      ),
+    );
+    serve({ people: [buildPerson()], past: eight });
     const u = userEvent.setup();
     renderApp('/teams/9');
-    await openRosterWithChips();
-    const more = screen.getAllByRole('button', { name: '+2 more' })[0];
-    await u.click(more);
-
-    const dialog = await screen.findByRole('dialog', { name: 'Past racers' });
-    expect(within(dialog).getByRole('searchbox', { name: 'Search past racers' })).toHaveFocus();
-    expect(within(dialog).getAllByRole('button', { name: /· \d{4}/ })).toHaveLength(5);
-
-    await u.type(within(dialog).getByRole('searchbox'), 'dee@');
-    expect(within(dialog).getAllByRole('button', { name: /· \d{4}/ })).toHaveLength(1);
-    await u.clear(within(dialog).getByRole('searchbox'));
-    await u.type(within(dialog).getByRole('searchbox'), 'num5');
-    expect(within(dialog).getByRole('button', { name: /Racer5 Num5/ })).toBeInTheDocument();
-    await u.clear(within(dialog).getByRole('searchbox'));
-    await u.type(within(dialog).getByRole('searchbox'), 'zzz');
-    expect(within(dialog).getByText('No past racers match.')).toBeInTheDocument();
-
-    await u.keyboard('{Escape}');
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(more).toHaveFocus();
+    await openRosterWithPicker(8);
+    await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
+    expect(screen.getByRole('form', { name: 'Add a racer' })).toBeInTheDocument();
+    expect(screen.getByLabelText('First name')).toHaveValue('Mo');
+    expect(screen.getByLabelText('Last name')).toHaveValue('Ng');
+    expect(screen.getByLabelText('Email')).toHaveValue('mo@example.com');
+    expect(screen.getByLabelText('Phone')).toHaveValue('(312) 555-0199');
+    expect(screen.getByLabelText('ZIP code')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
+    expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
   });
 
-  it('traps Tab focus inside the dialog', async () => {
-    serve({ past: many });
+  it('opens the review for your own past-racer record', async () => {
+    server.use(
+      http.get('/api/v1/me', () =>
+        HttpResponse.json({ user: { ...user, first_name: 'Dee', last_name: 'Lamb', email: 'Dee@Example.com' } }),
+      ),
+    );
+    serve({ people: [buildPerson({ email: 'someone@example.com' })], past: eight });
     const u = userEvent.setup();
     renderApp('/teams/9');
-    await openRosterWithChips();
-    await u.click(screen.getAllByRole('button', { name: '+2 more' })[0]);
-    const dialog = await screen.findByRole('dialog');
-    await u.tab({ shift: true });
-    expect(dialog).toContainElement(document.activeElement as HTMLElement);
-    for (let i = 0; i < 9; i += 1) await u.tab();
-    expect(dialog).toContainElement(document.activeElement as HTMLElement);
+    await openRosterWithPicker(8);
+    await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
+    expect(await screen.findByRole('heading', { name: 'Review Dee Lamb' })).toBeInTheDocument();
+    expect(screen.getByText('1 of 1')).toBeInTheDocument();
   });
 
-  it('picking a racer closes the list and opens the pre-filled form', async () => {
-    serve({ past: many });
+  it('is hidden when someone on the team has your email', async () => {
+    serve({ people: [buildPerson({ email: 'ADA@example.com' })], past: eight });
+    renderApp('/teams/9');
+    await openRosterWithPicker(8);
+    expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
+  });
+});
+
+describe('collapsed when full on load', () => {
+  const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
+    buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
+  );
+  const full = { racers: { filled: 5, total: 5, done: true } };
+
+  it('shows the first names and a Show racers button, then the rows', async () => {
+    serve({ people: five, checklist: full });
     const u = userEvent.setup();
     renderApp('/teams/9');
-    await openRosterWithChips();
-    await u.click(screen.getAllByRole('button', { name: '+2 more' })[0]);
-    const dialog = await screen.findByRole('dialog');
-    await u.click(within(dialog).getByRole('button', { name: /Racer5 Num5/ }));
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByLabelText('First name')).toHaveValue('Racer5');
-    expect(screen.getByLabelText('First name')).toHaveFocus();
-    expect(requests).toEqual([]);
+    const roster = await openRoster();
+    expect(within(roster).getByText('Ada, Bo, Cy, Di, Ed')).toBeInTheDocument();
+    expect(within(roster).queryByRole('button', { name: /^Edit / })).toBeNull();
+    expect(screen.queryByRole('list', { name: 'Racer slots' })).toBeNull();
+    await u.click(within(roster).getByRole('button', { name: 'Show racers' }));
+    expect(slots()).toHaveLength(5);
+    expect(within(roster).getAllByRole('button', { name: /^Edit / })).toHaveLength(5);
+    expect(within(roster).queryByRole('button', { name: 'Show racers' })).toBeNull();
+    expect(screen.getByRole('list', { name: 'Racer slots' })).toHaveFocus();
+  });
+
+  it('keeps the rows visible when the team fills up during the visit', async () => {
+    serve({ people: five.slice(0, 4) });
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 9, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 5, total: 5, done: true } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
+    await u.type(screen.getByLabelText('First name'), 'Dee');
+    await u.type(screen.getByLabelText('Last name'), 'Lamb');
+    await u.type(screen.getByLabelText('Email'), 'dee@example.com');
+    await u.type(screen.getByLabelText('Phone'), '3125550144');
+    await u.type(screen.getByLabelText('ZIP code'), '60614');
+    await u.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await u.click(screen.getByRole('button', { name: 'Save' }));
+    await screen.findByText('Dee Lamb');
+    expect(slots()).toHaveLength(5);
+    expect(screen.queryByRole('button', { name: 'Show racers' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Edit Dee Lamb' })).toBeInTheDocument();
   });
 });
 
@@ -333,7 +406,7 @@ describe('adding someone new', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRoster();
-    await u.click(screen.getAllByRole('button', { name: '+ Add someone new' })[0]);
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
     expect(screen.getByLabelText('First name')).toHaveFocus();
     await u.type(screen.getByLabelText('First name'), 'Dee');
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
@@ -358,7 +431,7 @@ describe('adding someone new', () => {
   });
 
   async function fillAndSave(u: ReturnType<typeof userEvent.setup>) {
-    await u.click(screen.getAllByRole('button', { name: '+ Add someone new' })[0]);
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
     await u.type(screen.getByLabelText('First name'), 'Dee');
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
@@ -412,11 +485,68 @@ describe('adding someone new', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRoster();
-    await u.click(screen.getAllByRole('button', { name: '+ Add someone new' })[0]);
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
     await u.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByLabelText('First name')).toBeNull();
     expect(requests).toEqual([]);
-    expect(screen.getAllByRole('button', { name: '+ Add someone new' })).toHaveLength(5);
+    const add = screen.getByRole('button', { name: '+ Add someone new' });
+    expect(add).toBeInTheDocument();
+    expect(add).toHaveFocus();
+  });
+
+  async function addPerson(u: ReturnType<typeof userEvent.setup>) {
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
+    await u.type(screen.getByLabelText('First name'), 'Dee');
+    await u.type(screen.getByLabelText('Last name'), 'Lamb');
+    await u.type(screen.getByLabelText('Email'), 'dee@example.com');
+    await u.type(screen.getByLabelText('Phone'), '3125550144');
+    await u.type(screen.getByLabelText('ZIP code'), '60614');
+    await u.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await u.click(screen.getByRole('button', { name: 'Save' }));
+  }
+
+  it('moves focus to "+ Add someone new" after saving while a spot is still open', async () => {
+    serve({ people: [buildPerson()] });
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await addPerson(u);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '+ Add someone new' })).toHaveFocus(),
+    );
+  });
+
+  it('moves focus to the new person\'s Edit button after saving the last open spot', async () => {
+    serve({ people: [buildPerson()], race: { people_per_team: 2 } });
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 2, done: true } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await addPerson(u);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Edit Dee Lamb' })).toHaveFocus(),
+    );
   });
 });
 
@@ -492,7 +622,8 @@ describe('editing and removing', () => {
     expect(requests[0].method).toBe('DELETE');
     await waitFor(() => expect(screen.queryByText('Bo Z')).toBeNull());
     expect(screen.getByText('1 of 5')).toBeInTheDocument();
-    expect(slots()).toHaveLength(5);
+    expect(slots()).toHaveLength(2);
+    expect(slots()[1]).toHaveTextContent('4 spots to fill');
   });
 
   it('shows the server message when removal is refused (team complete)', async () => {
@@ -524,7 +655,7 @@ describe('editing and removing', () => {
 });
 
 describe('registration closed', () => {
-  it('hides add, chips and remove but still allows Edit', async () => {
+  it('hides the actions and remove but still allows Edit', async () => {
     serve({
       people: [buildPerson(), buildPerson({ id: 2, first_name: 'Bo', email: 'bo@example.com' })],
       past: [dee, racer(2)],
@@ -532,9 +663,9 @@ describe('registration closed', () => {
     });
     renderApp('/teams/9');
     const roster = await openRoster();
-    expect(slots()).toHaveLength(5);
+    expect(slots()).toHaveLength(3);
     expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
-    expect(screen.queryByRole('group', { name: 'Past racers' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     expect(within(roster).getAllByRole('button', { name: /^Edit / })).toHaveLength(2);
   });

@@ -1,8 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { formatPhoneDisplay } from '@/components/inputs/format';
 import { Button } from '@/components/ui/button';
-import type { PastRacer } from '@/features/roster/api/use-past-racers';
-import { PastRacerChips } from '@/features/roster/components/past-racer-chips';
 import { fullName, initials } from '@/features/roster/utils';
 import { t } from '@/locales/en';
 import type { Person } from '@/types/api';
@@ -140,43 +138,26 @@ export function FilledSlot({
   );
 }
 
-interface EmptySlotProps {
-  index: number;
-  /** Registration is open: show add + chips; otherwise a muted placeholder. */
-  canAdd: boolean;
-  pastRacers: PastRacer[];
-  onAdd: () => void;
-  onPick: (racer: PastRacer) => void;
-  onShowMore: () => void;
-}
-
-export function EmptySlot({
-  index,
-  canAdd,
-  pastRacers,
-  onAdd,
-  onPick,
-  onShowMore,
-}: EmptySlotProps) {
-  if (!canAdd) {
-    return <p className="py-2 text-sm text-navy/60">{t('roster.emptyClosed')}</p>;
-  }
-  return (
-    <div className="space-y-2">
-      <Button
-        variant="secondary"
-        data-focus-key={`add-${index}`}
-        onClick={onAdd}
-      >
-        {t('roster.add')}
-      </Button>
-      <PastRacerChips racers={pastRacers} onPick={onPick} onShowMore={onShowMore} />
-    </div>
-  );
-}
+const rowClass = 'border-t border-flag/60 py-3 first:border-t-0 first:pt-0 last:pb-0';
 
 export function SlotItem({ children }: { children: ReactNode }) {
+  return <li className={rowClass}>{children}</li>;
+}
+
+/** One row for every open spot: a dashed circle each, then the count. */
+export function OpenSpotsItem({ count, open }: { count: number; open: boolean }) {
+  const key = open ? 'roster.spotsToFill' : 'roster.openSpots';
   return (
-    <li className="rounded-md border border-flag/70 bg-white p-3">{children}</li>
+    <li className={`${rowClass} flex flex-wrap items-center gap-3 font-semibold`}>
+      <span aria-hidden="true" className="flex gap-1.5">
+        {Array.from({ length: count }, (_, index) => (
+          <span
+            key={index}
+            className="h-6 w-6 rounded-full border-2 border-dashed border-flag"
+          />
+        ))}
+      </span>
+      {t(count === 1 ? `${key}_one` : `${key}_other`, { count })}
+    </li>
   );
 }
