@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { assertHostAllowed, resolveTarget } from './target';
+import { assertTestKey } from './payments';
 
 const staging = {
   E2E_TARGET: 'staging',
@@ -91,4 +92,10 @@ test.describe('resolveTarget', () => {
     expect(message).toContain('E2E_IMAP_PASSWORD');
     expect(message).not.toContain('hunter2-secret');
   });
+});
+
+test('assertTestKey refuses live and missing keys', () => {
+  expect(() => assertTestKey('pk_live_abc')).toThrow(/pk_live_/);
+  expect(() => assertTestKey(undefined)).toThrow(/Refusing to pay/);
+  expect(() => assertTestKey('pk_test_abc')).not.toThrow();
 });
