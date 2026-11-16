@@ -25,7 +25,7 @@
 
 ```
 'tour.flag.title': 'Four stars, four steps',
-'tour.flag.body': 'Each star turns red when its step is done. Fill all four and your team is in.',
+'tour.flag.body': 'Each star turns solid red when its step is done. Fill all four and your team is in.',
 'tour.racers.title': 'Add your racers',
 'tour.racers.body': 'Add each racer here. If you have raced before, you can pick people from your past teams.',
 'tour.questions.title': 'Answer the team questions',
@@ -33,7 +33,7 @@
 'tour.fee.title': 'Pay the registration fee',
 'tour.fee.body': 'Pay by card here. If the price is going up, this step shows the date.',
 'tour.in.title': "You're in",
-'tour.in.body': 'When the first three stars are red, your spot is locked in and you get your team number.',
+'tour.in.body': 'When the first three stars are solid red, your spot is locked in and you get your team number.',
 'tour.counter': '{index} of {total}',
 'tour.prev': 'Prev',
 'tour.next': 'Next',

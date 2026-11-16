@@ -45,15 +45,15 @@ Where "seen" is remembered:
 
 ### Stops
 
-In this order. The Team questions stop is left out when the race has no questions, and the counter adjusts ("1 of 4").
+In this order. The Team questions stop is left out when the race has no questions, and the Registration fee stop is left out when the race has no fee; the counter adjusts ("1 of 4").
 
 | # | Highlights | Title | Body |
 |---|---|---|---|
-| 1 | The flag in the team header | Four stars, four steps | Each star turns red when its step is done. Fill all four and your team is in. |
+| 1 | The flag in the team header | Four stars, four steps | Each star turns solid red when its step is done. Fill all four and your team is in. |
 | 2 | The Racers step heading | Add your racers | Add each racer here. If you have raced before, you can pick people from your past teams. |
 | 3 | The Team questions step heading | Answer the team questions | A few questions about your team and cart. You can change your answers later. |
 | 4 | The Registration fee step heading | Pay the registration fee | Pay by card here. If the price is going up, this step shows the date. |
-| 5 | The You're in! step heading | You're in | When the first three stars are red, your spot is locked in and you get your team number. |
+| 5 | The You're in! step heading | You're in | When the first three stars are solid red, your spot is locked in and you get your team number. |
 
 ### The popup
 
@@ -61,9 +61,9 @@ In this order. The Team questions stop is left out when the race has no question
         ★ ★ ☆ ☆        <- highlighted; the rest of the page is dimmed
  ┌────────────────────────────────────────┐
  │ Four stars, four steps                 │
- │ Each star turns red when its step is   │
- │ done. Fill all four and your team is   │
- │ in.                                    │
+ │ Each star turns solid red when its     │
+ │ step is done. Fill all four and your   │
+ │ team is in.                            │
  │                                        │
  │ 1 of 5          End tour   Prev   Next │
  └────────────────────────────────────────┘
@@ -73,13 +73,13 @@ In this order. The Team questions stop is left out when the race has no question
 - Buttons, left to right: the counter ("1 of 5"), then `End tour` (plain link style), `Prev` (secondary, not shown on the first stop), `Next` (primary). On the last stop `Next` reads `Done`.
 - **Highlight:** the target gets a clear ring; everything else is dimmed with the same navy tint the picker dialog uses. The page behind cannot be clicked while the tour is open.
 - **Desktop (`lg` and up):** the popup sits next to the target, below it when there is room and above it when there is not, kept inside the viewport.
-- **Phones and tablets:** the popup is a card fixed to the bottom of the screen, full width, and the target is scrolled into view above it.
+- **Phones and tablets:** the popup is a card docked at the bottom of the screen, or at the top when it would otherwise cover the target, and the page is scrolled so the target is clear of it.
 - The target is scrolled into view when a stop opens. The highlight follows the target on scroll and resize.
 - Motion is limited to the popup and highlight moving between stops, and is off under `prefers-reduced-motion`.
 
 ### When it starts
 
-- Automatically, once the team page has loaded, when all of these hold: the team is not finalized, this browser has no "seen" mark for this user, and tours are not switched off (below).
+- Automatically, once the team page has loaded, when all of these hold: the race is open for registration, the team is not finalized, this browser has no "seen" mark for this user, and tours are not switched off (below).
 - The "seen" mark is written when the tour ends by any route (Done, End tour, Escape). Key: `dogtag:tour:team:v1:<user id>` in localStorage.
 - If localStorage cannot be read or written, the tour does not start by itself.
 - **Replay:** a `Take the tour` link in the team header starts it from the first stop at any time, including on a finalized team.
