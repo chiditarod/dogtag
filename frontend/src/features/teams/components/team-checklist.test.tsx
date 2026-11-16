@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOUR_OFF_KEY, tourSeenKey } from '@/features/tour/storage';
 import { clearCsrfToken } from '@/lib/api-client';
-import { buildChecklist, buildTeam, user } from '@/test/fixtures';
+import { buildChecklist, buildRace, buildTeam, user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
 import type { Checklist, Team } from '@/types/api';
@@ -564,19 +564,95 @@ describe('guided tour', () => {
 
   it('keeps its stop when the team refetches, and does not reopen after it ends', async () => {
     tourOn();
-    serveTeam();
+    let gets = 0;
+    const team = buildTeam();
+    server.use(
+      http.get('/api/v1/teams/9', () => {
+        gets += 1;
+        return HttpResponse.json({ team });
+      }),
+    );
     const { queryClient } = renderApp('/teams/9');
     await screen.findByRole('dialog', { name: flagTitle });
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('dialog', { name: 'Add your racers' })).toBeInTheDocument();
 
     await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    expect(gets).toBe(2);
     expect(screen.getByRole('dialog', { name: 'Add your racers' })).toBeInTheDocument();
     expect(within(screen.getByRole('dialog')).getByText('2 of 4')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'End tour' }));
     await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('does not start on a closed race, and can still be replayed', async () => {
+    tourOn();
+    serveTeam({}, { race: buildRace({ open_for_registration: false }) });
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(localStorage.getItem(tourSeenKey(user.id))).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(await screen.findByRole('dialog', { name: flagTitle })).toBeInTheDocument();
+  });
+
+  it('lands at the top of the page with Take the tour focused when it ends', async () => {
+    tourOn();
+    vi.stubGlobal('scrollY', 400);
+    const scrollTo = vi.fn();
+    vi.stubGlobal('scrollTo', scrollTo);
+    try {
+      serveTeam();
+      renderApp('/teams/9');
+      await screen.findByRole('dialog', { name: flagTitle });
+      const replay = screen.getByRole('button', { name: 'Take the tour' });
+      const focus = vi.spyOn(replay, 'focus');
+
+      await userEvent.click(screen.getByRole('button', { name: 'End tour' }));
+      await waitFor(() => expect(replay).toHaveFocus());
+      expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+      expect(focus).toHaveBeenLastCalledWith({ preventScroll: true });
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('works by hand, and never starts by itself, when localStorage is blocked', async () => {
+    tourOn();
+    const blocked = () => {
+      throw new Error('blocked');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+    try {
+      serveTeam();
+      renderApp('/teams/9');
+      await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
+      expect(screen.queryByRole('dialog')).toBeNull();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+      expect(await screen.findByRole('dialog', { name: flagTitle })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'End tour' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(screen.getByRole('heading', { level: 1, name: 'Cart Pushers' })).toBeInTheDocument();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('counts three stops when the race has neither questions nor a fee', async () => {
+    tourOn();
+    const fee = buildChecklist().fee;
+    serveTeam({
+      questions: { required: false, done: true },
+      fee: { ...fee, done: true, amount_due_cents: null, requirement_id: null, items: [] },
+    });
+    renderApp('/teams/9');
+    const dialog = await screen.findByRole('dialog', { name: flagTitle });
+    expect(within(dialog).getByText('1 of 3')).toBeInTheDocument();
   });
 
   it('counts four stops when the race has no questions', async () => {

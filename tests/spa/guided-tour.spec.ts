@@ -25,7 +25,7 @@ test.describe('SPA guided tour', () => {
 
   test('opens on the first visit, ends for good and can be replayed', async ({ page }) => {
     const c = seeded.credentials;
-    // The past_racers race has no JSONForm, so there is no questions stop: four stops, not five.
+    // The past_racers race has no JSONForm and no fee, so there is no questions or fee stop: three stops, not five.
     const tour = (title: string) => page.getByRole('dialog', { name: title });
 
     await test.step('Log in and open the team: the tour starts by itself', async () => {
@@ -39,21 +39,17 @@ test.describe('SPA guided tour', () => {
       await expect(page).toHaveURL(new RegExp(`/register/teams/${c.team_id}$`));
 
       await expect(tour('Four stars, four steps')).toBeVisible();
-      await expect(tour('Four stars, four steps').getByText('1 of 4')).toBeVisible();
+      await expect(tour('Four stars, four steps').getByText('1 of 3')).toBeVisible();
     });
 
     await test.step('Next walks the stops', async () => {
       await page.getByRole('dialog').getByRole('button', { name: 'Next' }).click();
       await expect(tour('Add your racers')).toBeVisible();
-      await expect(tour('Add your racers').getByText('2 of 4')).toBeVisible();
-
-      await page.getByRole('dialog').getByRole('button', { name: 'Next' }).click();
-      await expect(tour('Pay the registration fee')).toBeVisible();
-      await expect(tour('Pay the registration fee').getByText('3 of 4')).toBeVisible();
+      await expect(tour('Add your racers').getByText('2 of 3')).toBeVisible();
 
       await page.getByRole('dialog').getByRole('button', { name: 'Next' }).click();
       await expect(tour("You're in")).toBeVisible();
-      await expect(tour("You're in").getByText('4 of 4')).toBeVisible();
+      await expect(tour("You're in").getByText('3 of 3')).toBeVisible();
     });
 
     await test.step('Done closes it, and it stays closed after a reload', async () => {

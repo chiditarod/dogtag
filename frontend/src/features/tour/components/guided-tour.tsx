@@ -5,17 +5,16 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { useFocusTrap } from '@/components/ui/use-focus-trap';
-import { placePopup } from '@/features/tour/placement';
+import { dockPopup, placePopup, RING_PAD } from '@/features/tour/placement';
 import type { TourStop, TourStopId } from '@/features/tour/stops';
 import { t } from '@/locales/en';
 
-/** Space between the target and the highlight ring. */
-const RING_PAD = 6;
+const WIDE = '(min-width: 1024px)';
+const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 const targetOf = (id: TourStopId) => document.querySelector<HTMLElement>(`[data-tour="${id}"]`);
 
@@ -68,11 +67,50 @@ interface TourPopupProps {
   onEnd: () => void;
 }
 
+interface Box {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 interface Layout {
   /** Null while the target is not in the document. */
-  ring: CSSProperties | null;
-  /** Null below `lg`, where CSS pins the popup to the bottom. */
+  ring: Box | null;
+  /** Null below `lg`, where CSS docks the popup to an edge. */
   popup: { top: number; left: number } | null;
+  /** Below `lg`, the screen edge the card is docked to. */
+  dock: 'bottom' | 'top';
+}
+
+const sameBox = (a: Partial<Box> | null, b: Partial<Box> | null) =>
+  a === b ||
+  (a !== null &&
+    b !== null &&
+    a.top === b.top &&
+    a.left === b.left &&
+    a.width === b.width &&
+    a.height === b.height);
+
+const ringAround = (rect: DOMRect): Box => ({
+  top: rect.top - RING_PAD,
+  left: rect.left - RING_PAD,
+  width: rect.width + 2 * RING_PAD,
+  height: rect.height + 2 * RING_PAD,
+});
+
+const viewport = () => ({ width: window.innerWidth, height: window.innerHeight });
+
+/** True when the target and its ring are on screen and the popup at `placed` does not cover them. */
+function clearInView(rect: DOMRect, placed: { top: number; left: number }, size: DOMRect) {
+  const ring = ringAround(rect);
+  const inView = ring.top >= 0 && ring.top + ring.height <= window.innerHeight;
+  const covered =
+    placed.top < ring.top + ring.height &&
+    placed.top + size.height > ring.top &&
+    placed.left < ring.left + ring.width &&
+    placed.left + size.width > ring.left;
+  return inView && !covered;
 }
 
 function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps) {
@@ -95,48 +133,93 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
     };
   }, []);
 
+  /** Moves the ring (and the desktop popup) onto the target. Runs on every scroll. */
   const measure = useCallback(() => {
     const target = targetOf(stop.id);
     const popup = popupRef.current;
     if (!target) {
-      setLayout((prev) => prev && { ...prev, ring: null });
+      setLayout((prev) => (prev?.ring ? { ...prev, ring: null } : prev));
       return;
     }
     if (!popup) return;
     const rect = target.getBoundingClientRect();
-    const size = popup.getBoundingClientRect();
-    setLayout({
-      ring: {
-        top: rect.top - RING_PAD,
-        left: rect.left - RING_PAD,
-        width: rect.width + 2 * RING_PAD,
-        height: rect.height + 2 * RING_PAD,
-      },
-      popup: mediaMatches('(min-width: 1024px)', true)
-        ? placePopup(
-            rect,
-            { width: size.width, height: size.height },
-            { width: window.innerWidth, height: window.innerHeight },
-          )
-        : null,
-    });
+    const ring = ringAround(rect);
+    const placed = mediaMatches(WIDE, true)
+      ? placePopup(rect, popup.getBoundingClientRect(), viewport())
+      : null;
+    setLayout((prev) =>
+      prev && sameBox(prev.ring, ring) && sameBox(prev.popup, placed)
+        ? prev
+        : { ring, popup: placed, dock: prev?.dock ?? 'bottom' },
+    );
   }, [stop.id]);
 
+  /**
+   * Below lg: docks the card and scrolls the target clear of it. From lg, when
+   * `scrollDesktop`: scrolls the target to the middle unless it is already in
+   * view and clear of the popup. Runs when a stop opens and on resize, never on
+   * scroll, so the card does not flip during the stop's own smooth scroll.
+   */
+  const decide = useCallback(
+    (scrollDesktop: boolean) => {
+      const target = targetOf(stop.id);
+      const popup = popupRef.current;
+      if (!target || !popup) return;
+      const rect = target.getBoundingClientRect();
+      const size = popup.getBoundingClientRect();
+      const behavior = mediaMatches(REDUCED_MOTION, false) ? 'auto' : 'smooth';
+      if (mediaMatches(WIDE, true)) {
+        if (scrollDesktop && !clearInView(rect, placePopup(rect, size, viewport()), size)) {
+          target.scrollIntoView?.({ block: 'center', behavior });
+        }
+        return;
+      }
+      const { dock, scrollTop } = dockPopup(
+        rect,
+        size.height,
+        { height: window.innerHeight },
+        {
+          top: window.scrollY,
+          max: document.documentElement.scrollHeight - window.innerHeight,
+        },
+      );
+      setLayout((prev) =>
+        prev?.dock === dock ? prev : { ring: prev?.ring ?? null, popup: prev?.popup ?? null, dock },
+      );
+      if (scrollTop !== window.scrollY && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: scrollTop, behavior });
+      }
+    },
+    [stop.id],
+  );
+
   useLayoutEffect(() => {
-    const reduced = mediaMatches('(prefers-reduced-motion: reduce)', false);
-    targetOf(stop.id)?.scrollIntoView?.({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+    decide(true);
     measure();
     titleRef.current?.focus({ preventScroll: true });
-  }, [stop.id, measure]);
+  }, [decide, measure]);
 
   useEffect(() => {
+    const onResize = () => {
+      decide(false);
+      measure();
+    };
     window.addEventListener('scroll', measure, { capture: true, passive: true });
-    window.addEventListener('resize', measure);
+    window.addEventListener('resize', onResize);
+    // Layout shifts with no scroll or resize: content loading, a banner, a font swap.
+    let observer: ResizeObserver | undefined;
+    if (typeof ResizeObserver === 'function') {
+      observer = new ResizeObserver(() => measure());
+      observer.observe(document.documentElement);
+      const target = targetOf(stop.id);
+      if (target) observer.observe(target);
+    }
     return () => {
       window.removeEventListener('scroll', measure, { capture: true });
-      window.removeEventListener('resize', measure);
+      window.removeEventListener('resize', onResize);
+      observer?.disconnect();
     };
-  }, [measure]);
+  }, [decide, measure, stop.id]);
 
   return createPortal(
     <>
@@ -156,7 +239,9 @@ function TourPopup({ stop, index, total, onPrev, onNext, onEnd }: TourPopupProps
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={bodyId}
-        className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-flag bg-white p-4 font-sans text-navy shadow-lg lg:inset-x-auto lg:bottom-auto lg:w-[22.5rem]"
+        className={`fixed inset-x-3 z-50 rounded-xl border border-flag bg-white p-4 font-sans text-navy shadow-lg lg:inset-x-auto lg:w-[22.5rem] ${
+          layout?.dock === 'top' ? 'top-3 lg:top-auto' : 'bottom-3 lg:bottom-auto'
+        }`}
         style={layout?.popup ?? undefined}
       >
         <h2

@@ -17,7 +17,7 @@ import {
 import { YoureInCard } from '@/features/teams/components/youre-in-card';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
 import { markSeen, shouldAutoStart } from '@/features/tour/storage';
-import { teamTourStops } from '@/features/tour/stops';
+import { noFeeDue, teamTourStops } from '@/features/tour/stops';
 import { feePill, stepStates } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
@@ -33,27 +33,39 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   const autoStartChecked = useRef(false);
   const focusReplayOnClose = useRef(false);
 
-  // Stops depend only on whether the race has questions, so a refetch of the
-  // team (the page polls) hands the open tour the same content.
+  // Stops depend only on whether the race has questions and a fee, so a
+  // refetch of the team (the page polls) hands the open tour the same content.
   const questionsRequired = team?.checklist.questions.required;
+  const feeLeftOut = team ? noFeeDue(team) : undefined;
   const stops = useMemo(
     () => (team ? teamTourStops(team) : []),
-    [questionsRequired],
+    [questionsRequired, feeLeftOut],
   );
 
   // Once per mount, when both the team and the signed-in user are known.
   useEffect(() => {
     if (!team || !me || autoStartChecked.current) return;
     autoStartChecked.current = true;
-    if (!team.checklist.finalized && shouldAutoStart(me.id)) setTourOpen(true);
+    if (
+      team.race.open_for_registration &&
+      !team.checklist.finalized &&
+      shouldAutoStart(me.id)
+    ) {
+      setTourOpen(true);
+    }
   }, [team, me]);
 
   // The tour restores focus to what had it before it opened (the page body on
-  // an auto-start) as it unmounts; this effect runs after that and wins.
+  // an auto-start) as it unmounts; this effect runs after that and wins. On a
+  // phone the last stop is far down the page: go back to the top instead of
+  // letting focus jump the replay button to the screen's top edge.
   useEffect(() => {
     if (!tourOpen && focusReplayOnClose.current) {
       focusReplayOnClose.current = false;
-      replayRef.current?.focus();
+      if (window.scrollY > 0 && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0 });
+      }
+      replayRef.current?.focus({ preventScroll: true });
     }
   }, [tourOpen]);
 

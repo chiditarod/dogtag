@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
 import { teamTourStops, type TourStop } from '@/features/tour/stops';
 import { buildChecklist, buildTeam } from '@/test/fixtures';
@@ -11,6 +11,7 @@ const stops = (): TourStop[] =>
   );
 
 let rects: Record<string, DOMRect>;
+let popupRect: DOMRect;
 
 function Page({
   targets,
@@ -50,8 +51,10 @@ describe('GuidedTour', () => {
       racers: new DOMRect(100, 300, 400, 30),
       fee: new DOMRect(100, 600, 400, 30),
     };
+    popupRect = new DOMRect(0, 0, 360, 200);
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
       function (this: HTMLElement) {
+        if (this.getAttribute('role') === 'dialog') return popupRect;
         return rects[this.dataset.tour ?? ''] ?? new DOMRect();
       },
     );
@@ -175,14 +178,143 @@ describe('GuidedTour', () => {
     expect(screen.getByRole('dialog', { name: 'Four stars, four steps' })).toBeInTheDocument();
   });
 
-  it('places the popup next to the target from lg and pins it to the bottom below', () => {
+  it('places the popup next to the target from lg and docks it to the bottom below', () => {
     const { view } = renderTour();
-    expect(screen.getByRole('dialog').style.top).not.toBe('');
+    // placePopup for the flag (100, 50-90) and a 360x200 popup in a 1024x768 window.
+    expect(screen.getByRole('dialog').style.top).toBe('102px');
+    expect(screen.getByRole('dialog').style.left).toBe('100px');
     view.unmount();
 
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
     renderTour();
     expect(screen.getByRole('dialog').style.top).toBe('');
+    expect(screen.getByRole('dialog')).toHaveClass('bottom-3');
+  });
+
+  describe('scrolling on desktop', () => {
+    let scrollIntoView: Mock;
+    beforeEach(() => {
+      scrollIntoView = vi.fn();
+      HTMLElement.prototype.scrollIntoView = scrollIntoView;
+    });
+    afterEach(() => {
+      delete (HTMLElement.prototype as Partial<HTMLElement>).scrollIntoView;
+    });
+
+    it('does not scroll when the target is in view and clear of the popup', async () => {
+      const { user } = renderTour();
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      expect(scrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('scrolls a target that is out of view to the middle', async () => {
+      rects.racers = new DOMRect(100, 900, 400, 30);
+      const { user } = renderTour();
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: 'center', behavior: 'smooth' });
+    });
+  });
+
+  describe('below lg', () => {
+    let scrollTo: Mock;
+    beforeEach(() => {
+      vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
+      vi.stubGlobal('innerHeight', 745);
+      vi.stubGlobal('scrollY', 0);
+      scrollTo = vi.fn();
+      vi.stubGlobal('scrollTo', scrollTo);
+      // 50px of page below the fold.
+      Object.defineProperty(document.documentElement, 'scrollHeight', {
+        configurable: true,
+        value: 795,
+      });
+      popupRect = new DOMRect(12, 534, 366, 199);
+      rects.fee = new DOMRect(16, 200, 358, 28);
+      rects.in = new DOMRect(16, 730, 358, 28);
+    });
+    afterEach(() => {
+      Reflect.deleteProperty(document.documentElement, 'scrollHeight');
+    });
+
+    it('docks at the top for the last stop and scrolls it clear; Prev docks at the bottom again', async () => {
+      const { user } = renderTour(['fee', 'in']);
+      const dialog = () => screen.getByRole('dialog');
+      expect(dialog()).toHaveClass('bottom-3');
+      expect(scrollTo).not.toHaveBeenCalled();
+
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      expect(screen.getByRole('dialog', { name: "You're in" })).toHaveClass('top-3');
+      expect(dialog()).not.toHaveClass('bottom-3');
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo).toHaveBeenCalledWith({ top: 50, behavior: 'smooth' });
+
+      await user.click(screen.getByRole('button', { name: 'Prev' }));
+      expect(screen.getByRole('dialog', { name: 'Pay the registration fee' })).toHaveClass(
+        'bottom-3',
+      );
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+
+    it('decides the dock again on resize, not on scroll', () => {
+      renderTour(['fee', 'in']);
+      expect(screen.getByRole('dialog')).toHaveClass('bottom-3');
+
+      rects.fee = new DOMRect(16, 730, 358, 28);
+      act(() => {
+        fireEvent.scroll(window);
+      });
+      expect(screen.getByRole('dialog')).toHaveClass('bottom-3');
+
+      act(() => {
+        fireEvent(window, new Event('resize'));
+      });
+      expect(screen.getByRole('dialog')).toHaveClass('top-3');
+      expect(scrollTo).toHaveBeenCalledWith({ top: 50, behavior: 'smooth' });
+    });
+
+    it('scrolls without animation under reduced motion', async () => {
+      vi.stubGlobal('matchMedia', (query: string) => ({
+        matches: query.includes('reduce'),
+        media: query,
+      }));
+      const { user } = renderTour(['fee', 'in']);
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      expect(scrollTo).toHaveBeenCalledWith({ top: 50, behavior: 'auto' });
+    });
+  });
+
+  it('follows a layout shift that neither scrolls nor resizes the window', () => {
+    const observers: { callback: () => void; targets: Element[]; disconnected: boolean }[] = [];
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        entry: (typeof observers)[number];
+        constructor(callback: () => void) {
+          this.entry = { callback, targets: [], disconnected: false };
+          observers.push(this.entry);
+        }
+        observe(target: Element) {
+          this.entry.targets.push(target);
+        }
+        unobserve() {}
+        disconnect() {
+          this.entry.disconnected = true;
+        }
+      },
+    );
+    const { view } = renderTour();
+    const live = observers.filter((observer) => !observer.disconnected);
+    expect(live).toHaveLength(1);
+    expect(live[0].targets).toContain(document.documentElement);
+    expect(live[0].targets).toContain(document.querySelector('[data-tour="flag"]'));
+
+    rects.flag = new DOMRect(100, 250, 200, 40);
+    act(() => live[0].callback());
+    expect(ring().style.top).toBe('244px');
+
+    view.unmount();
+    expect(observers.every((observer) => observer.disconnected)).toBe(true);
   });
 
   it('stays on its stop when the parent re-renders with equal stops', async () => {

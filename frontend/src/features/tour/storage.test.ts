@@ -30,4 +30,28 @@ describe('tour storage', () => {
     });
     expect(() => markSeen(7)).not.toThrow();
   });
+
+  it('does not start when storage can be read but not written', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    expect(shouldAutoStart(7)).toBe(false);
+  });
+
+  it('remembers a tour seen this session even when the seen key cannot be written', () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    markSeen(7);
+    // Writes work again (e.g. the probe succeeds), but the key never landed.
+    setItem.mockRestore();
+    expect(localStorage.getItem('dogtag:tour:team:v1:7')).toBeNull();
+    expect(shouldAutoStart(7)).toBe(false);
+    expect(shouldAutoStart(8)).toBe(true);
+  });
+
+  it('leaves no probe key behind', () => {
+    expect(shouldAutoStart(7)).toBe(true);
+    expect(localStorage.length).toBe(0);
+  });
 });

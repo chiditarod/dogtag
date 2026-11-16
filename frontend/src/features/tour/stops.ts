@@ -11,9 +11,14 @@ export interface TourStop {
 
 const ORDER: TourStopId[] = ['flag', 'racers', 'questions', 'fee', 'in'];
 
-/** In order flag, racers, questions, fee, in; 'questions' is left out when the race has none. */
+/** True when the race asks no fee at all (the fee card reads "No registration fee is due."). */
+export const noFeeDue = ({ checklist }: Team) =>
+  checklist.fee.done && checklist.fee.items.length === 0;
+
+/** In order flag, racers, questions, fee, in; 'questions' and 'fee' are left out when the race has none. */
 export function teamTourStops(team: Team): TourStop[] {
-  return ORDER.filter((id) => id !== 'questions' || team.checklist.questions.required).map(
-    (id) => ({ id, title: t(`tour.${id}.title`), body: t(`tour.${id}.body`) }),
-  );
+  return ORDER.filter(
+    (id) =>
+      (id !== 'questions' || team.checklist.questions.required) && (id !== 'fee' || !noFeeDue(team)),
+  ).map((id) => ({ id, title: t(`tour.${id}.title`), body: t(`tour.${id}.body`) }));
 }
