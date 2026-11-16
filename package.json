@@ -25,8 +25,11 @@
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/dotenv": "^6.1.1",
+    "@types/mailparser": "3.9.0",
     "@types/node": "^20.10.0",
     "dotenv": "^17.2.3",
+    "imapflow": "2.12.1",
+    "mailparser": "3.14.5",
     "typescript": "^5.3.0"
   }
 }
