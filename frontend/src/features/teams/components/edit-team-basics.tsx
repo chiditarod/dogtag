@@ -146,9 +146,12 @@ export function EditTeamBasics({ team }: { team: Team }) {
 
   return (
     <div className="space-y-3">
+      {/* The negative margin cancels the ghost padding, so the text lines up
+          with the rail's edge whether the toggle sits inline or on its own row. */}
       <Button
         ref={toggleRef}
         variant="ghost"
+        className="-mx-4"
         aria-expanded={open}
         aria-controls={open ? formId : undefined}
         onClick={toggle}

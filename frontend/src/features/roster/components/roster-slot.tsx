@@ -60,7 +60,7 @@ export function FilledSlot({
           <Avatar person={person} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="font-semibold">{name}</p>
+              <p className="min-w-0 font-semibold [overflow-wrap:anywhere]">{name}</p>
               {captain && (
                 <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
                   {t('roster.captain')}

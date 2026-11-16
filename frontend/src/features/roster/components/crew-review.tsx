@@ -119,14 +119,14 @@ export function CrewReview({
             id={titleId}
             ref={titleRef}
             tabIndex={-1}
-            className="break-words font-display text-[22px] font-semibold leading-tight focus:outline-none"
+            className="font-display text-[22px] font-semibold leading-tight [overflow-wrap:anywhere] focus:outline-none"
           >
             {t('roster.reviewTitle', {
               name: `${draft.first_name} ${draft.last_name}`.trim() || racer.email,
             })}
           </h2>
           {racer.last_raced_year && racer.last_team_name && (
-            <p className="mt-0.5 break-words text-sm text-navy/70">
+            <p className="mt-0.5 text-sm text-navy/70 [overflow-wrap:anywhere]">
               {t('roster.lastRacedWith', {
                 year: racer.last_raced_year,
                 team: racer.last_team_name,
@@ -143,8 +143,8 @@ export function CrewReview({
           </Button>
         </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-4">
-        <div className="grid gap-2 pb-3.5">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-2 pb-3.5">
           {LINE_KEYS.map((key) => (
             <ReviewLine
               key={key}
@@ -182,7 +182,7 @@ export function CrewReview({
           </div>
         )}
         <Button
-          className="flex-1 sm:flex-none"
+          className="w-full sm:w-auto"
           disabled={left > 0}
           loading={pending}
           onClick={() => {
@@ -309,11 +309,11 @@ function ReviewLine({
         >
           {state.confirmed && <TickIcon />}
         </span>
-        <span className="grid min-w-0">
+        <span className="grid min-w-0 grid-cols-[minmax(0,1fr)]">
           <span className="text-[13px] text-navy/70">{label}</span>
-          <span className="break-words font-semibold">{value}</span>
+          <span className="font-semibold [overflow-wrap:anywhere]">{value}</span>
           {note && (
-            <span id={noteId} className="break-words text-[13px] text-navy/70">
+            <span id={noteId} className="text-[13px] text-navy/70 [overflow-wrap:anywhere]">
               {note}
             </span>
           )}

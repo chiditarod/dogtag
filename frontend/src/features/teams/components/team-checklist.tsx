@@ -13,7 +13,7 @@ import {
   TeamPageErrorProvider,
 } from '@/features/teams/components/team-page-error';
 import { YoureInCard } from '@/features/teams/components/youre-in-card';
-import { feePill, isFeeOpensLater } from '@/features/teams/utils';
+import { feePill, stepStates } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 
@@ -40,19 +40,24 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   }
 
   const { checklist } = team;
+  // The same states drive the flag, so a heading star and the flag agree.
+  const [racersDone, questionsDone, feeDone] = stepStates(team);
+  const status = (done: boolean) => (done ? 'done' : 'todo');
   return (
     <TeamPageErrorProvider teamId={teamId}>
       <div className="space-y-4">
         <TeamErrorBanner />
         <div className="space-y-6 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0">
-          <div className="lg:sticky lg:top-6">
+          {/* Not sticky while the edit form is open: a sticky rail taller than
+              the viewport could never show its Save button. */}
+          <div className="lg:sticky lg:top-6 lg:has-[form]:static">
             <TeamHeader team={team} />
           </div>
           <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
             <ChecklistCard
               anchor="step-racers"
               title={t('team.racers')}
-              status={checklist.racers.done ? 'done' : 'todo'}
+              status={status(racersDone)}
               pill={t('team.racersPill', {
                 filled: checklist.racers.filled,
                 total: checklist.racers.total,
@@ -64,10 +69,8 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
               <ChecklistCard
                 anchor="step-questions"
                 title={t('team.questions')}
-                status={checklist.questions.done ? 'done' : 'todo'}
-                pill={
-                  checklist.questions.done ? t('team.pillDone') : t('team.pillTodo')
-                }
+                status={status(questionsDone)}
+                pill={questionsDone ? t('team.pillDone') : t('team.pillTodo')}
               >
                 <QuestionsCardSlot team={team} />
               </ChecklistCard>
@@ -75,11 +78,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
             <ChecklistCard
               anchor="step-fee"
               title={t('team.fee')}
-              status={
-                checklist.fee.done && !isFeeOpensLater(checklist.fee)
-                  ? 'done'
-                  : 'todo'
-              }
+              status={status(feeDone)}
               pill={feePill(checklist.fee, team.race.time_zone)}
             >
               <FeeCardSlot team={team} />

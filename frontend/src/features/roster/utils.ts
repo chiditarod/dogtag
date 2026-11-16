@@ -83,7 +83,10 @@ export function draftFromUser(user: User): PersonDraft {
   };
 }
 
-/** Trims every field, lowercases the email, converts the phone to ddd-ddd-dddd. */
+/**
+ * Trims every field, lowercases the email, converts the phone to ddd-ddd-dddd.
+ * A blank years value is sent as null, so the server rejects it too.
+ */
 export function payloadFromDraft(draft: PersonDraft): PersonPayload {
   return {
     first_name: draft.first_name.trim(),
@@ -91,7 +94,7 @@ export function payloadFromDraft(draft: PersonDraft): PersonPayload {
     email: draft.email.trim().toLowerCase(),
     phone: toApiPhone(draft.phone),
     zipcode: draft.zipcode.trim(),
-    experience: Number(draft.experience),
+    experience: draft.experience === '' ? null : Number(draft.experience),
     instagram: draft.instagram.trim(),
   };
 }

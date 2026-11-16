@@ -54,7 +54,9 @@ export function TeamHeader({ team }: { team: Team }) {
     <section aria-label={t('team.summary')} className="space-y-3">
       <FlagProgress steps={stepStates(team)} label={t('team.progress')} />
       <div>
-        <h1 className="font-display text-3xl font-bold lg:text-4xl">{team.name}</h1>
+        <h1 className="font-display text-3xl font-bold [overflow-wrap:anywhere] lg:text-4xl">
+          {team.name}
+        </h1>
         <p className="font-semibold">{race.name}</p>
         <p className="text-sm">{formatDate(race.race_datetime, race.time_zone)}</p>
         <p className="text-sm text-navy/70">

@@ -53,6 +53,9 @@ export function RosterCard({ team }: { team: Team }) {
   const [status, setStatus] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
   const restoreFocus = useRef<string | null>(null);
+  // A person just added: the cached roster catches up a render after the form
+  // or picker closes, so focus waits for them before looking for its target.
+  const awaitingPerson = useRef<number | null>(null);
 
   const add = useAddPerson(team.id);
   const update = useUpdatePerson(team.id, active?.personId);
@@ -65,13 +68,19 @@ export function RosterCard({ team }: { team: Team }) {
     (racer) => !emailsOnTeam.has(racer.email.toLowerCase()),
   );
 
-  // Put focus back on the control that opened a form or confirmation.
+  // Put focus back on the control that opened a form, confirmation or the
+  // picker. That control may be gone (Add yourself once you are on the team,
+  // the pick button once nobody is left to pick): fall back to "+ Add someone
+  // new", then to the list.
   useEffect(() => {
     const key = restoreFocus.current;
     if (!key || active || removing !== null || picker) return;
-    const target = rootRef.current?.querySelector<HTMLElement>(
-      `[data-focus-key="${key}"]`,
-    );
+    const waitingFor = awaitingPerson.current;
+    if (waitingFor !== null && !people.some((person) => person.id === waitingFor)) return;
+    awaitingPerson.current = null;
+    const find = (focusKey: string) =>
+      rootRef.current?.querySelector<HTMLElement>(`[data-focus-key="${focusKey}"]`);
+    const target = find(key) ?? find('add') ?? find('list');
     if (target) {
       target.focus();
       restoreFocus.current = null;
@@ -107,6 +116,7 @@ export function RosterCard({ team }: { team: Team }) {
       (racer) => racer.email.toLowerCase() === me.email.toLowerCase(),
     );
     if (mine) {
+      restoreFocus.current = 'add-me';
       setPicker({ reviewOnly: mine });
     } else {
       openForm({ draft: draftFromUser(me) });
@@ -124,6 +134,7 @@ export function RosterCard({ team }: { team: Team }) {
             name: fullName(saved),
           }),
         );
+        if (!wasEditing) awaitingPerson.current = saved.id;
         const spotStillOpen = !wasEditing && people.length + 1 < race.people_per_team;
         closeForm(wasEditing || !spotStillOpen ? `edit-${saved.id}` : 'add');
       },
@@ -212,7 +223,10 @@ export function RosterCard({ team }: { team: Team }) {
     ),
   );
 
-  if (collapsed) {
+  // A spot can open later (e.g. after a refetch): show the rows, and keep them
+  // shown if the roster fills again during the visit.
+  if (collapsed && hasEmptySlot) setCollapsed(false);
+  if (collapsed && !hasEmptySlot) {
     return (
       <div className="space-y-1">
         <p role="status" className="sr-only">
@@ -252,7 +266,13 @@ export function RosterCard({ team }: { team: Team }) {
       {showActions && (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {available.length > 0 && (
-            <Button data-focus-key="pick" onClick={() => setPicker({})}>
+            <Button
+              data-focus-key="pick"
+              onClick={() => {
+                restoreFocus.current = 'pick';
+                setPicker({});
+              }}
+            >
               {t('roster.pickFromPast', { count: available.length })}
             </Button>
           )}
@@ -264,7 +284,7 @@ export function RosterCard({ team }: { team: Team }) {
             {t('roster.add')}
           </Button>
           {canAddMe && (
-            <Button variant="secondary" onClick={addYourself}>
+            <Button variant="secondary" data-focus-key="add-me" onClick={addYourself}>
               {t('roster.addYourself')}
             </Button>
           )}
@@ -278,6 +298,7 @@ export function RosterCard({ team }: { team: Team }) {
           openSpots={openSpots}
           reviewOnly={picker.reviewOnly}
           onAdded={(person) => {
+            awaitingPerson.current = person.id;
             clearError();
             setStatus(t('roster.added', { name: fullName(person) }));
             if (people.length + 1 >= race.people_per_team) {

@@ -5,7 +5,10 @@ import {
   useAddPerson,
   type PersonPayload,
 } from '@/features/roster/api/use-person-mutations';
-import { CrewPickList } from '@/features/roster/components/crew-pick-list';
+import {
+  CrewPickList,
+  SEARCH_THRESHOLD,
+} from '@/features/roster/components/crew-pick-list';
 import { CrewReview, type ReportFieldErrors } from '@/features/roster/components/crew-review';
 import { splitPersonErrors } from '@/features/roster/utils';
 import { ApiError } from '@/lib/api-client';
@@ -97,9 +100,17 @@ export function CrewPicker({
     });
   }
 
+  const picking = step === 'pick' || !current;
+  // A searchable list gets a fixed height so the dialog does not shrink and
+  // jump as the search narrows it.
+  const height =
+    picking && racers.length > SEARCH_THRESHOLD
+      ? 'h-[90dvh] sm:h-[min(40rem,90dvh)]'
+      : undefined;
+
   return (
-    <DialogSheet labelledBy={titleId} onClose={onClose}>
-      {step === 'pick' || !current ? (
+    <DialogSheet labelledBy={titleId} onClose={onClose} className={height}>
+      {picking ? (
         <CrewPickList
           titleId={titleId}
           racers={racers}

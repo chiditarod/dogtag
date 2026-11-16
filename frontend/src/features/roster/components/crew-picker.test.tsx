@@ -65,7 +65,10 @@ beforeEach(() => {
   posts = [];
   server.use(http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })));
 });
-afterEach(() => clearCsrfToken());
+afterEach(() => {
+  clearCsrfToken();
+  vi.unstubAllGlobals();
+});
 
 function serveSave(respond?: (body: { person: PastRacer }) => Response) {
   server.use(
@@ -94,6 +97,7 @@ function setup(props: Partial<Parameters<typeof CrewPicker>[0]> = {}) {
   });
   render(
     <QueryClientProvider client={queryClient}>
+      <button type="button">Page behind</button>
       <CrewPicker
         team={buildTeam({ race: buildRace() })}
         racers={[ada, grace, edsger]}
@@ -170,6 +174,36 @@ describe('pick step', () => {
   it('has no search box with six racers or fewer', () => {
     setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3)] });
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).not.toHaveClass('h-[90dvh]');
+  });
+
+  it('holds a fixed height while the list can be searched, so it does not jump', () => {
+    setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
+    expect(screen.getByRole('dialog')).toHaveClass('h-[90dvh]', 'sm:h-[min(40rem,90dvh)]');
+  });
+
+  it('focuses the search box with a fine pointer', () => {
+    setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
+    expect(screen.getByRole('searchbox', { name: 'Search past racers' })).toHaveFocus();
+  });
+
+  it('focuses the title, not the search box, on a touch screen', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
+    setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
+    expect(screen.getByRole('heading', { name: 'Pick from past teams' })).toHaveFocus();
+  });
+
+  it('brings Tab back into the dialog when focus has fallen to the page', async () => {
+    const { user } = setup();
+    (document.activeElement as HTMLElement).blur();
+    expect(document.body).toHaveFocus();
+
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveFocus();
+
+    (document.activeElement as HTMLElement).blur();
+    await user.tab({ shift: true });
+    expect(row('Edsger')).toHaveFocus();
   });
 
   it('keeps Shift+Tab from the title inside the dialog', async () => {
@@ -321,7 +355,15 @@ describe('review step', () => {
     });
     await reviewOne(user);
     const value = screen.getByText('a.very.long.email.address.for.ada@example-with-a-long-domain.org');
-    expect(value).toHaveClass('break-words');
+    // `break-words` does not shrink a grid track, so the column must be minmax(0,1fr).
+    expect(value).toHaveClass('[overflow-wrap:anywhere]');
+    expect(value.parentElement).toHaveClass('grid-cols-[minmax(0,1fr)]');
+  });
+
+  it('keeps its natural height', async () => {
+    const { user } = setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
+    await reviewOne(user);
+    expect(screen.getByRole('dialog')).not.toHaveClass('h-[90dvh]');
   });
 
   it('skips without saving and goes back with the remaining ticks', async () => {

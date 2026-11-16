@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -282,6 +282,35 @@ describe('the crew picker from the roster', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Dee Lamb added');
   });
 
+  it('moves focus to "+ Add someone new" when the last past racer is picked and spots remain', async () => {
+    serve({ people: [buildPerson()], past: [dee] });
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRosterWithPicker(1);
+    await u.click(screen.getByRole('button', { name: 'Pick from past teams (1)' }));
+    await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
+    await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
+    await fillAll(u);
+    await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '+ Add someone new' })).toHaveFocus(),
+    );
+  });
+
   it('Escape closes the dialog and returns focus to the picker button', async () => {
     serve({ people: [buildPerson()], past: eight });
     const u = userEvent.setup();
@@ -334,6 +363,39 @@ describe('Add yourself', () => {
     expect(screen.getByText('1 of 1')).toBeInTheDocument();
   });
 
+  it('puts focus on "+ Add someone new" once your review is saved and the button is gone', async () => {
+    server.use(
+      http.get('/api/v1/me', () =>
+        HttpResponse.json({ user: { ...user, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' } }),
+      ),
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    serve({ people: [buildPerson({ email: 'someone@example.com' })], past: eight });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRosterWithPicker(8);
+    await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
+    await screen.findByRole('heading', { name: 'Review Dee Lamb' });
+    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram']) {
+      await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
+    }
+    await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: '+ Add someone new' })).toHaveFocus(),
+    );
+  });
+
   it('is hidden when someone on the team has your email', async () => {
     serve({ people: [buildPerson({ email: 'ADA@example.com' })], past: eight });
     renderApp('/teams/9');
@@ -361,6 +423,19 @@ describe('collapsed when full on load', () => {
     expect(within(roster).getAllByRole('button', { name: /^Edit / })).toHaveLength(5);
     expect(within(roster).queryByRole('button', { name: 'Show racers' })).toBeNull();
     expect(screen.getByRole('list', { name: 'Racer slots' })).toHaveFocus();
+  });
+
+  it('shows the rows again when a spot opens later', async () => {
+    serve({ people: five, checklist: full });
+    const { queryClient } = renderApp('/teams/9');
+    const roster = await openRoster();
+    expect(within(roster).getByRole('button', { name: 'Show racers' })).toBeInTheDocument();
+
+    serve({ people: five.slice(0, 4) });
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    expect(await screen.findByText('1 spot to fill')).toBeInTheDocument();
+    expect(slots()).toHaveLength(5);
+    expect(within(roster).queryByRole('button', { name: 'Show racers' })).toBeNull();
   });
 
   it('keeps the rows visible when the team fills up during the visit', async () => {
@@ -624,6 +699,28 @@ describe('editing and removing', () => {
     expect(screen.getByText('1 of 5')).toBeInTheDocument();
     expect(slots()).toHaveLength(2);
     expect(slots()[1]).toHaveTextContent('4 spots to fill');
+  });
+
+  it('reloads the past racers after a removal, so the person can be picked again', async () => {
+    serve({ people, past: [dee] });
+    let pastLoads = 0;
+    server.use(
+      http.get('/api/v1/teams/9/past_racers', () => {
+        pastLoads += 1;
+        return HttpResponse.json({ past_racers: [dee] });
+      }),
+      http.delete('/api/v1/teams/9/people/2', () =>
+        HttpResponse.json({ checklist: buildChecklist({ racers: { filled: 1, total: 5, done: false } }) }),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRosterWithPicker(1);
+    expect(pastLoads).toBe(1);
+    await u.click(screen.getByRole('button', { name: 'Remove Bo Z' }));
+    await u.click(screen.getByRole('button', { name: 'Yes, remove' }));
+    await waitFor(() => expect(screen.queryByText('Bo Z')).toBeNull());
+    await waitFor(() => expect(pastLoads).toBe(2));
   });
 
   it('shows the server message when removal is refused (team complete)', async () => {

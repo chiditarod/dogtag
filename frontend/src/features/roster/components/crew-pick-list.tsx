@@ -7,7 +7,7 @@ import { fullName } from '@/features/roster/utils';
 import { t } from '@/locales/en';
 
 /** More racers than this and the list gets a search box. */
-const SEARCH_THRESHOLD = 6;
+export const SEARCH_THRESHOLD = 6;
 
 interface CrewPickListProps {
   titleId: string;
@@ -18,6 +18,12 @@ interface CrewPickListProps {
   onToggle: (email: string) => void;
   onReview: () => void;
   onClose: () => void;
+}
+
+/** A mouse or trackpad. Without `matchMedia` (jsdom) assume one. */
+function hasFinePointer(): boolean {
+  if (typeof window.matchMedia !== 'function') return true;
+  return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
 
 /** "2025, Cart Pushers", the team alone, or nothing. */
@@ -46,8 +52,11 @@ export function CrewPickList({
   const titleRef = useRef<HTMLHeadingElement>(null);
   const searchable = racers.length > SEARCH_THRESHOLD;
 
+  // On a touch screen, focusing the search box opens the keyboard over the
+  // sheet and hides the list, so focus the title there instead.
   useEffect(() => {
-    (searchRef.current ?? titleRef.current)?.focus();
+    const search = hasFinePointer() ? searchRef.current : null;
+    (search ?? titleRef.current)?.focus();
   }, []);
 
   const matches = useMemo(() => {
@@ -90,7 +99,7 @@ export function CrewPickList({
           />
         </div>
       )}
-      <div className="min-h-0 flex-1 overflow-y-auto px-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4">
         <ul className="divide-y divide-flag/50">
           {matches.map((racer) => {
             const on = picked.includes(racer.email);
@@ -114,10 +123,10 @@ export function CrewPickList({
                   >
                     {on && <TickIcon />}
                   </span>
-                  <span className="grid min-w-0">
-                    <span className="break-words font-semibold">{fullName(racer)}</span>
+                  <span className="grid min-w-0 grid-cols-[minmax(0,1fr)]">
+                    <span className="font-semibold [overflow-wrap:anywhere]">{fullName(racer)}</span>
                     {detail && (
-                      <span className="break-words text-[13px] text-navy/70">{detail}</span>
+                      <span className="text-[13px] text-navy/70 [overflow-wrap:anywhere]">{detail}</span>
                     )}
                   </span>
                 </button>

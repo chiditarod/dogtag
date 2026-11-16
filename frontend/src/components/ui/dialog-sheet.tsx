@@ -10,6 +10,8 @@ interface DialogSheetProps {
   /** Id of the element that names the dialog. */
   labelledBy: string;
   onClose: () => void;
+  /** Extra classes for the dialog box, e.g. a fixed height. */
+  className?: string;
   /** The head, scrolling body and pinned foot, laid out as a flex column. */
   children: ReactNode;
 }
@@ -17,11 +19,19 @@ interface DialogSheetProps {
 const FOCUSABLE =
   'button:not([disabled]), input:not([disabled]), select:not([disabled]), [href]';
 
+const focusableIn = (root: HTMLElement) =>
+  Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE));
+
 /**
  * Modal shell: a bottom sheet below `sm`, a centered dialog from `sm`.
  * Escape closes, Tab stays inside, and focus returns to whatever opened it.
  */
-export function DialogSheet({ labelledBy, onClose, children }: DialogSheetProps) {
+export function DialogSheet({
+  labelledBy,
+  onClose,
+  className = '',
+  children,
+}: DialogSheetProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -36,6 +46,17 @@ export function DialogSheet({ labelledBy, onClose, children }: DialogSheetProps)
     const opener = openerRef.current;
     function onKeyDown(event: globalThis.KeyboardEvent) {
       if (event.key === 'Escape') onCloseRef.current();
+      // Focus can fall to <body> (a click on plain text, or any click in
+      // Safari); Tab from there would walk the page behind the dialog.
+      const dialog = dialogRef.current;
+      if (event.key === 'Tab' && dialog && !dialog.contains(document.activeElement)) {
+        const items = focusableIn(dialog);
+        const target = event.shiftKey ? items[items.length - 1] : items[0];
+        if (target) {
+          event.preventDefault();
+          target.focus();
+        }
+      }
     }
     document.addEventListener('keydown', onKeyDown);
     return () => {
@@ -46,10 +67,8 @@ export function DialogSheet({ labelledBy, onClose, children }: DialogSheetProps)
   }, []);
 
   function trapTab(event: KeyboardEvent<HTMLDivElement>) {
-    if (event.key !== 'Tab') return;
-    const items = Array.from(
-      dialogRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? [],
-    );
+    if (event.key !== 'Tab' || !dialogRef.current) return;
+    const items = focusableIn(dialogRef.current);
     if (items.length === 0) return;
     const first = items[0];
     const last = items[items.length - 1];
@@ -72,7 +91,7 @@ export function DialogSheet({ labelledBy, onClose, children }: DialogSheetProps)
         aria-modal="true"
         aria-labelledby={labelledBy}
         onKeyDown={trapTab}
-        className="flex max-h-[90dvh] w-full flex-col rounded-t-2xl bg-white shadow-lg sm:max-w-lg sm:rounded-xl"
+        className={`flex max-h-[90dvh] w-full flex-col rounded-t-2xl bg-white shadow-lg sm:max-w-lg sm:rounded-xl ${className}`.trim()}
       >
         {children}
       </div>

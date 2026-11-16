@@ -39,10 +39,10 @@ export function FlagProgress({ steps, label }: FlagProgressProps) {
       aria-valuemin={0}
       aria-valuemax={4}
       aria-valuenow={steps.filter(Boolean).length}
-      className={`rounded-lg border border-flag bg-white px-3 py-2 ${salute ? 'flag-salute' : ''}`.trim()}
+      className={`rounded-lg border border-flag bg-white py-1.5 ${salute ? 'flag-salute' : ''}`.trim()}
     >
-      <div className="h-2 rounded-full bg-flag" />
-      <div className="flex items-center justify-center gap-4 py-2">
+      <div className="h-[13px] bg-flag lg:h-4" />
+      <div className="flex items-center justify-center gap-4 py-1.5">
         {steps.map((done, i) => (
           <ChicagoStar
             key={i}
@@ -52,7 +52,7 @@ export function FlagProgress({ steps, label }: FlagProgressProps) {
           />
         ))}
       </div>
-      <div className="h-2 rounded-full bg-flag" />
+      <div className="h-[13px] bg-flag lg:h-4" />
     </div>
   );
 }

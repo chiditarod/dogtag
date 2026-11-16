@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { pastRacersQueryKey } from '@/features/roster/api/use-past-racers';
 import { setTeamChecklist, teamQueryKey } from '@/features/teams/api/use-team';
 import { teamsQueryKey } from '@/features/teams/api/use-teams';
 import { apiFetch } from '@/lib/api-client';
@@ -60,6 +61,7 @@ export function useUpdatePerson(teamId: number, personId: number | undefined) {
 }
 
 export function useRemovePerson(teamId: number) {
+  const queryClient = useQueryClient();
   const applyToCache = usePeopleCache(teamId);
   return useMutation({
     mutationFn: (personId: number) =>
@@ -67,9 +69,12 @@ export function useRemovePerson(teamId: number) {
         `/teams/${teamId}/people/${personId}`,
         { method: 'DELETE' },
       ),
-    onSuccess: ({ checklist }, personId) =>
+    onSuccess: ({ checklist }, personId) => {
       applyToCache(checklist, (people) =>
         people.filter((person) => person.id !== personId),
-      ),
+      );
+      // The removed person can be picked again.
+      void queryClient.invalidateQueries({ queryKey: pastRacersQueryKey(teamId) });
+    },
   });
 }
