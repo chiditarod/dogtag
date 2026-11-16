@@ -413,6 +413,8 @@ The following items were identified during the Rails 8 upgrade and should be add
 
 3. **`sass-rails` gem (~> 5.0)**: Consider migrating to modern CSS tooling (cssbundling-rails, Propshaft, or Dart Sass). Current stylesheets are in `app/assets/stylesheets/`.
 
+4. **Dependabot PRs to close, not merge**: `codeclimate-test-reporter` 1.0.9 pins `simplecov <= 0.13` (it would downgrade simplecov from 0.22 to 0.3.9), and the `stripe` 18 / `stripe-ruby-mock` 2.5 jump is the item 1 migration above, not a drive-by bump. Routine bumps: `bundle update --minor --conservative <gems>` (the Rails gems are pinned `~> 8.0.0` and must move together).
+
 ## Testing External Services
 
 ### Stripe
