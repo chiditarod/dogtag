@@ -37,7 +37,7 @@ test.describe('Registration reminders', () => {
 
     runReminders();
     const reminder = await waitForEmail(query);
-    expect(reminder.subject).toContain('Registration closes in 24 hours');
+    expect(reminder.subject).toContain('Registration closes within 24 hours');
     expect(reminder.links.some((link) => link.includes(`/register/teams/${c.team_id}`))).toBe(true);
 
     runReminders();
