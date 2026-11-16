@@ -149,7 +149,7 @@ export function OpenSpotsItem({ count, open }: { count: number; open: boolean })
   const key = open ? 'roster.spotsToFill' : 'roster.openSpots';
   return (
     <li className={`${rowClass} flex flex-wrap items-center gap-3 font-semibold`}>
-      <span aria-hidden="true" className="flex gap-1.5">
+      <span aria-hidden="true" className="flex flex-wrap gap-1.5">
         {Array.from({ length: count }, (_, index) => (
           <span
             key={index}

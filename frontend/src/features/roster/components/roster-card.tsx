@@ -62,8 +62,15 @@ export function RosterCard({ team }: { team: Team }) {
   const remove = useRemovePerson(team.id);
   const save = active?.personId === undefined ? add : update;
 
+  // Past racers added through the picker, by the email they were listed under,
+  // so one whose email was changed in review is not offered again.
+  const [pickedFrom, setPickedFrom] = useState<ReadonlyMap<string, number>>(new Map());
+
   const pastRacers = usePastRacers(team.id, open && hasEmptySlot);
   const emailsOnTeam = new Set(people.map((person) => person.email.toLowerCase()));
+  for (const [email, personId] of pickedFrom) {
+    if (people.some((person) => person.id === personId)) emailsOnTeam.add(email);
+  }
   const available = (pastRacers.data ?? []).filter(
     (racer) => !emailsOnTeam.has(racer.email.toLowerCase()),
   );
@@ -96,7 +103,8 @@ export function RosterCard({ team }: { team: Team }) {
     (person) => person.email.toLowerCase() === me?.email.toLowerCase(),
   )?.id;
   const addingNew = active !== null && active.personId === undefined;
-  const canAddMe = Boolean(me) && captainId === undefined;
+  const canAddMe =
+    Boolean(me) && captainId === undefined && !emailsOnTeam.has(me?.email.toLowerCase() ?? '');
 
   function openForm(next: ActiveForm) {
     add.reset();
@@ -297,7 +305,8 @@ export function RosterCard({ team }: { team: Team }) {
           racers={available}
           openSpots={openSpots}
           reviewOnly={picker.reviewOnly}
-          onAdded={(person) => {
+          onAdded={(person, racer) => {
+            setPickedFrom((now) => new Map(now).set(racer.email.toLowerCase(), person.id));
             awaitingPerson.current = person.id;
             clearError();
             setStatus(t('roster.added', { name: fullName(person) }));

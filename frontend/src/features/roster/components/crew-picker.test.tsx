@@ -171,6 +171,19 @@ describe('pick step', () => {
     expect(screen.getByText('No past racers match.')).toBeInTheDocument();
   });
 
+  it('clears the search on Escape before closing', async () => {
+    const { user, onClose } = setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
+    const search = screen.getByRole('searchbox', { name: 'Search past racers' });
+    await user.type(search, 'gra');
+    await user.keyboard('{Escape}');
+    expect(search).toHaveValue('');
+    expect(screen.getAllByRole('checkbox')).toHaveLength(7);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('has no search box with six racers or fewer', () => {
     setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3)] });
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
@@ -233,7 +246,7 @@ describe('review step', () => {
     const add = screen.getByRole('button', { name: 'Add Ada to the team' });
     expect(add).toBeDisabled();
     expect(
-      screen.getByText('6 details left to confirm. Tap each line once you have checked it.'),
+      screen.getByText('6 details left to confirm. Tick each line once you have checked it.'),
     ).toBeInTheDocument();
 
     await confirmAll(user);
@@ -267,6 +280,38 @@ describe('review step', () => {
     expect(line('Email')).toBeChecked();
     expect(line('Email')).toHaveAccessibleName('Email: new@example.com');
     expect(line('Email')).toHaveFocus();
+  });
+
+  it('puts a changed line back on Escape and stays open', async () => {
+    const { user, onClose } = setup();
+    await reviewOne(user);
+    await user.click(line('Email'));
+    await user.click(screen.getByRole('button', { name: 'Change email' }));
+    const email = screen.getByRole('textbox', { name: 'Email' });
+    await user.clear(email);
+    await user.type(email, 'new@example.com');
+    await user.keyboard('{Escape}');
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(line('Email')).toHaveAccessibleName('Email: ada@example.com');
+    expect(line('Email')).toBeChecked();
+    expect(line('Email')).toHaveFocus();
+  });
+
+  it('closes on Escape from a missing detail, which has nothing to go back to', async () => {
+    const { user, onClose } = setup();
+    await reviewOne(user, 'Edsger');
+    await user.click(screen.getByRole('textbox', { name: 'Phone' }));
+    await user.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('names ZIP code and Instagram as written on their Change buttons', async () => {
+    const { user } = setup();
+    await reviewOne(user);
+    expect(screen.getByRole('button', { name: 'Change ZIP code' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change Instagram' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change years racing' })).toBeInTheDocument();
   });
 
   it('edits the name with two inputs', async () => {
@@ -317,7 +362,7 @@ describe('review step', () => {
 
     expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
     expect(
-      screen.getByText('1 detail left to confirm. Tap each line once you have checked it.'),
+      screen.getByText('1 detail left to confirm. Tick each line once you have checked it.'),
     ).toBeInTheDocument();
   });
 
@@ -416,7 +461,7 @@ describe('saving', () => {
         },
       },
     ]);
-    expect(onAdded).toHaveBeenCalledWith(expect.objectContaining({ email: 'ada@example.com' }));
+    expect(onAdded).toHaveBeenCalledWith(expect.objectContaining({ email: 'ada@example.com' }), ada);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('button', { name: 'Add Grace to the team' })).toBeDisabled();
 
@@ -435,6 +480,36 @@ describe('saving', () => {
     fireEvent.click(add);
     await waitFor(() => expect(onAdded).toHaveBeenCalled());
     expect(posts).toHaveLength(1);
+  });
+
+  it('will not close while a save is in flight', async () => {
+    let finish: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    server.use(
+      http.post('/api/v1/teams/9/people', async ({ request }) => {
+        const body = (await request.json()) as { person: PastRacer };
+        posts.push(body);
+        await held;
+        return HttpResponse.json({
+          person: buildPerson({ id: 1, ...body.person }),
+          checklist: buildTeam().checklist,
+        });
+      }),
+    );
+    const { user, onAdded, onClose } = setup({ reviewOnly: ada });
+    await confirmAll(user);
+    await user.click(screen.getByRole('button', { name: 'Add Ada to the team' }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+
+    expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled();
+    await user.keyboard('{Escape}');
+    expect(onClose).not.toHaveBeenCalled();
+
+    finish();
+    await waitFor(() => expect(onAdded).toHaveBeenCalledTimes(1));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it('reopens the line a field error names, unconfirmed, with its message', async () => {
