@@ -143,5 +143,12 @@ export function resolveTarget(env: Env): Target {
   const override = read(env, 'BASE_URL');
   if (override) target.baseURL = override;
   assertHostAllowed(target.baseURL);
+  // The target's name drives payments, server startup and the inbox, so the
+  // host under test must be one that belongs to that target.
+  const host = new URL(target.baseURL).hostname.toLowerCase().replace(/\.$/, '');
+  const ownHosts = name === 'local' ? LOCAL_HOSTS : [STAGING_HOST];
+  if (!ownHosts.includes(host)) {
+    throw new Error(`BASE_URL host ${host} does not belong to the ${name} target (expected ${ownHosts.join(' or ')})`);
+  }
   return target;
 }

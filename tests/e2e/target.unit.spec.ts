@@ -68,6 +68,12 @@ test.describe('resolveTarget', () => {
     expect(() => resolveTarget({ BASE_URL: 'https://dogtag-staging.herokuapp.com@dogtag.chiditarod.org/' })).toThrow(/denylist/);
     expect(() => resolveTarget({ ...staging, BASE_URL: 'https://DOGTAG.chiditarod.org./' })).toThrow(/denylist/);
   });
+  test('BASE_URL must belong to the target host set, in both directions', () => {
+    expect(() => resolveTarget({ BASE_URL: 'https://dogtag-staging.herokuapp.com' })).toThrow(/BASE_URL.*dogtag-staging\.herokuapp\.com/);
+    expect(() => resolveTarget({ ...staging, BASE_URL: 'http://localhost:3099' })).toThrow(/BASE_URL.*localhost/);
+    expect(resolveTarget({ BASE_URL: 'http://127.0.0.1:3099' }).baseURL).toBe('http://127.0.0.1:3099');
+    expect(resolveTarget({ ...staging, BASE_URL: 'https://dogtag-staging.herokuapp.com' }).name).toBe('staging');
+  });
   test('unknown target is an error', () =>
     expect(() => resolveTarget({ E2E_TARGET: 'production' })).toThrow(/E2E_TARGET/));
   test('classy campaign must be on the allowlist', () =>
