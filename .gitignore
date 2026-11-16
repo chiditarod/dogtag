@@ -57,3 +57,6 @@ test.log*
 
 # Brainstorming companion mockups (local only)
 .superpowers/
+/.env.e2e
+playwright/.auth/
+playwright/.state/
