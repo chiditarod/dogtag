@@ -162,7 +162,8 @@ project-level `teardown`:
    - Name `Race E2E <runId>`. The `Race ` prefix keeps it inside the local
      `test_seeds:cleanup` pattern.
    - Registration opens 1 day ago and closes in 14 days. Final edits close in
-     14 days. The race date is in 30 days.
+     14 days and 1 hour (`RaceValidator` requires final edits to close after
+     registration). The race date is in 30 days.
    - Max teams 50, 5 people per team.
    - Experience labels: a short fixed list.
    - JSONForm: `tests/e2e/fixtures/jsonform.json`, a copy of the public
@@ -198,8 +199,8 @@ project-level `teardown`:
    - Email (below).
 4. `race-teardown` (the teardown of `race-setup`) retires the race instead of
    deleting it, through the admin edit form:
-   - It moves `race_datetime` and every window into the past and prefixes the
-     name with `[retired]`.
+   - It moves `race_datetime` and every window into the past and appends
+     ` [retired]` to the name (`Race E2E <runId> [retired]`).
    - That hides the race from the SPA list (`Race.current`) without orphaning
      its teams, people or completed requirements.
 
@@ -344,9 +345,13 @@ more changes, they stop and raise it.
     verified 2026-11-16.
 
   A missing required secret fails fast with the variable's name. Secrets are
-  never logged, and traces mask the password field.
+  never logged. Passwords, the operator login and the racer mailbox address are
+  typed with `fillSecret` (in-page value setter), because Playwright titles every
+  fill step `Fill "<value>"` and the HTML report keeps those titles.
 - **Run settings:**
-  - `trace: 'retain-on-failure'`, screenshots and video on failure.
+  - `trace: 'retain-on-failure'`, screenshots and video on failure, except
+    admin-auth (records nothing) and, on staging, race-setup and race-teardown
+    (no trace or video: they carry the operator's session cookie).
   - On staging: `retries: 0` (a retried payment means a duplicate test charge),
     and `workers: 1`.
 - **Docs:**

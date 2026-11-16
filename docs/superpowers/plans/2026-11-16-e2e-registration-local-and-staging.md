@@ -77,7 +77,8 @@ test mode and IMAP. A guard keeps it away from production.
 - **Race values:**
   - Time zone `America/Chicago`, 5 people per team, max teams 50.
   - Registration opened 1 day ago and closes in 14 days. Final edits close in 14
-    days. The race is in 30 days.
+    days and 1 hour (`RaceValidator` rejects final edits closing at registration
+    close). The race is in 30 days.
 - **Fees:**
   - "Cart Deposit": one tier at $88 (8800 cents) that begins at registration
     open.
