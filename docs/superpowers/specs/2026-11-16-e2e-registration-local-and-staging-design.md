@@ -39,7 +39,9 @@ before the Nov 24 go/no-go and before every later release.
 - **Optional checks, off unless configured:**
   - Classy: query the Classy API for the team's fundraising team (staging,
     or locally if Classy creds and a campaign are given).
-  - Email: Mailpit checks for the welcome and confirmation emails (local only).
+  - Email: the welcome and confirmation emails arrive. Locally they are read
+    from Mailpit, and on staging from the owner's test mailbox over IMAP. The
+    same assertions run on both.
 - **Guard:** the suite refuses to run against anything but an allowlisted
   target, and a hard denylist blocks production.
 - **Saved login:** the admin logs in once per run in a setup step, and later
@@ -47,7 +49,6 @@ before the Nov 24 go/no-go and before every later release.
 
 ## Non-goals
 
-- Email verification on staging. It is deferred; the owner may add it later.
 - Changing the legacy-flow e2e specs. They stay exactly as they are, in the
   default run and in CI. The legacy flow is the launch fallback and must be
   proven working today.
@@ -118,7 +119,7 @@ The work focuses on testing and integration.
 | Requirement type created | `MockPaymentRequirement` (mock) / `PaymentRequirement` (stripe) | `PaymentRequirement` |
 | Admin login | seeded `test+admin@example.com` (local `test_seeds:admin`) | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` |
 | Racer email | `e2e+<runId>@example.com` | `<user>+<runId>@<domain>` from `E2E_EMAIL_BASE` (required; the owner's test mailbox) |
-| Email check | Mailpit, when `E2E_CHECK_EMAIL=1` | not available (deferred; IMAP creds for the test mailbox make it possible later) |
+| Email check (`E2E_CHECK_EMAIL=1`) | Mailpit (`tests/helpers/mailpit.ts`) | IMAP on the test mailbox (`monday.mxrouting.net:993`) |
 | Classy check | when `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID` are set | same |
 
 Guard, evaluated when `playwright.config.ts` loads, before any test or web server
@@ -194,7 +195,7 @@ project-level `teardown`:
 
    Optional checks:
    - Classy (below).
-   - Mailpit email assertions, reused from `tests/helpers/mailpit.ts`.
+   - Email (below).
 4. `race-teardown` (the teardown of `race-setup`) retires the race instead of
    deleting it, through the admin edit form:
    - It moves `race_datetime` and every window into the past and prefixes the
@@ -227,6 +228,50 @@ Each target and payment mode uses one adapter, `payFee(page, feeCard, mode)`:
 
 When payments move to Checkout Sessions after launch, only this adapter and the
 mock path change. The test bodies do not.
+
+### Optional email check (`tests/e2e/inbox.ts`)
+
+`inbox.ts` exports one interface, which the registration test uses identically on
+both targets:
+
+- `clearInbox()`
+- `waitForEmail({ to, subjectIncludes, timeoutMs })` returns
+  `{ id, subject, html, text, links }`.
+- `countEmails({ to, subjectIncludes })`
+
+Each target has its own backend:
+
+- **local:** re-exports the existing `tests/helpers/mailpit.ts` unchanged. That
+  file is not duplicated or rewritten.
+- **staging:** IMAP via the `imapflow` npm package. This is a new root
+  devDependency, called out in the PR.
+  - Logs in as `E2E_EMAIL_BASE` with `E2E_IMAP_PASSWORD`.
+  - Polls `INBOX` with a server-side search on `TO <user>+<runId>@<domain>` and
+    the subject.
+  - Parses the body to the same `{ subject, html, text, links }` shape, reusing
+    Mailpit's `extractLinks`, which moves to a shared helper if needed.
+  - `clearInbox()` deletes only messages to this run's address, never the whole
+    mailbox. After the run, matched messages are flagged `\Deleted` and expunged.
+  - On timeout it also searches the Junk/Spam folder and names that folder in
+    the failure message. Mail that landed in spam is a real finding, not a
+    flake.
+
+POP3 was considered and rejected because it cannot search on the server. Every
+poll would download the whole mailbox and could not delete a single run's
+messages cleanly.
+
+Assertions, on both targets:
+- The welcome email arrives (`Welcome to dogTag`), and its links point at the
+  target host.
+- The confirmation email arrives (`Registration Confirmed for`).
+
+Verified 2026-11-16:
+- SMTP and IMAP logins work for the test mailbox.
+- Mail to `<user>+probe-<hex>@<domain>` arrives in `INBOX` within about 2 s
+  (`Delivered-To` is the base address).
+- An IMAP `TO` search finds it, and flag-and-expunge removes it.
+- The password in `.env.e2e` is quoted. Load the file with `dotenv` (already a
+  devDependency), which strips the quotes.
 
 ### Optional Classy check (`tests/e2e/classy.ts`)
 
@@ -294,10 +339,9 @@ more changes, they stop and raise it.
     (optional);
   - `E2E_EMAIL_BASE`, the test mailbox address (required on staging). The
     address itself is not committed, since the repo is public.
-  - `E2E_IMAP_PASSWORD`, unused until staging email checks are added.
-
-  The builder must verify early that MXRoute delivers plus-addresses
-  (`user+tag@`) to the base mailbox. If it does not, they stop and raise it.
+  - `E2E_IMAP_PASSWORD`, the test mailbox password, used by the staging email
+    check. MXRoute delivers plus-addresses to the base mailbox; this was
+    verified 2026-11-16.
 
   A missing required secret fails fast with the variable's name. Secrets are
   never logged, and traces mask the password field.
