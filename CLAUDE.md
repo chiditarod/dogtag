@@ -365,6 +365,7 @@ git push heroku main
 # Run migrations on Heroku
 heroku run rails db:migrate
 heroku run rails db:migrate -a staging-app-name
+heroku restart -a staging-app-name   # after any migration that adds a column the code reads
 
 # Download a production database and then restore it locally
 # Useful for testing migrations:
@@ -373,13 +374,15 @@ curl -o file.dump `heroku pg:backups:url --app dogtag`
 pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development file.dump
 ```
 
+The `Procfile` has no `release:` phase, so a push does not migrate. When a deploy adds a column that views or JSON read (e.g. `people.instagram`, read by every person row), pages that read it fail from the push until the migration has run. Dynos that booted before the migration keep the old column list, so `heroku restart` after migrating. Run the migration right after the push, on `dogtag-staging` first.
+
 ## Registration SPA
 
 - React SPA in `frontend/` (Vite, `base: "/register/"`, builds to `public/register`, gitignored). `SpaController#index` serves the build, 503 if missing, redirects to Vite only when `VITE_DEV_SERVER` is set.
 - Routes `register` and `register/*path` sit above the catch-all in `config/routes.rb`. `REGISTRATION_UI=spa` switches the homepage link (see `RegistrationUi`).
 - Frontend tests: `npm --prefix frontend test -- --run` (Vitest + jsdom + MSW; export `server` from `src/test/server.ts`). Strings via `t()` in `src/locales/en.ts`. Router exports `routes`/`BASENAME` so tests can use `createMemoryRouter`.
 - Heroku builds the SPA via root `heroku-postbuild`; local Node may differ from the pinned 24.x (ignore engine warnings).
-- Crew picker (`frontend/src/features/roster/components/crew-picker.tsx`, `crew-pick-list.tsx`, `crew-review.tsx`): the Racers step has one `Pick from past teams (N)` button instead of per-slot chips. Step 1 ticks past racers (capped at the open spots), step 2 reviews one person at a time. Each of the six details (name, email, phone, ZIP, years racing, Instagram) must be ticked or changed before `Add {first name} to the team` enables, and a person is saved only when that button is pressed. `Add yourself` reviews the captain alone when they are one of their own past racers; otherwise it opens the `Add a racer` form pre-filled from the account.
+- Crew picker (`frontend/src/features/roster/components/crew-picker.tsx`, `crew-pick-list.tsx`, `crew-review.tsx`): the Racers step has one `Pick from past teams (N)` button instead of per-slot chips. Step 1 ticks past racers (capped at the open spots), step 2 reviews one person at a time. Each of the six details (name, email, phone, ZIP, years racing, Instagram) must be ticked or changed before `Add {first name} to the team` enables, and a person is saved only when that button is pressed. `Add yourself` reviews the captain alone when they are one of their own past racers; otherwise it opens the `Add a racer` form pre-filled from the account. Escape backs out one level at a time: it clears a non-empty search, then puts back a line opened with `Change`, and only then closes the dialog (`DialogSheet` ignores an Escape whose `defaultPrevented` is set). Close and Escape do nothing while a save is in flight. A racer added through the picker stays out of the list for the visit even if their email was changed in review (`pickedFrom` in `roster-card.tsx`).
 - Wrapping inside a grid: `break-words` does not shrink a grid track's min-content width, so one long email widens the whole column. Use `grid-cols-[minmax(0,1fr)]` on the grid with `[overflow-wrap:anywhere]` on the values that must wrap.
 - Team page progress is `FlagProgress` (four Chicago-flag stars) driven by `stepStates(team)` in `features/teams/utils.ts`. The team route is the only wide one: `handle: { wide: true }` in `app/router.tsx`, read by `RegisterLayout`.
 - Racers give `instagram`, not `twitter` (model, API, SPA, legacy form). The `people.twitter` column still exists but nothing reads or writes it.

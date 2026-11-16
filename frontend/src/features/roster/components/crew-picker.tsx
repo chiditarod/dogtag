@@ -21,7 +21,8 @@ interface CrewPickerProps {
   openSpots: number;
   /** Skips the list and reviews this one person ("Add yourself"). */
   reviewOnly?: PastRacer;
-  onAdded: (person: Person) => void;
+  /** `racer` is the past racer the person came from; their email may have changed. */
+  onAdded: (person: Person, racer: PastRacer) => void;
   /** A 403: the parent shows the page banner and this dialog closes itself. */
   onForbidden: (error: unknown) => void;
   onClose: () => void;
@@ -78,12 +79,19 @@ export function CrewPicker({
     setStep('pick');
   }
 
+  // Closing mid-save would still save the person, but skip the success
+  // handling below, so Close and Escape wait for the save to finish.
+  function requestClose() {
+    if (!saving.current) onClose();
+  }
+
   function save(payload: PersonPayload, reportFieldErrors: ReportFieldErrors) {
     if (saving.current) return;
     saving.current = true;
+    const racer = current;
     add.mutate(payload, {
       onSuccess: ({ person }) => {
-        onAdded(person);
+        onAdded(person, racer);
         next();
       },
       onError: (error) => {
@@ -109,7 +117,7 @@ export function CrewPicker({
       : undefined;
 
   return (
-    <DialogSheet labelledBy={titleId} onClose={onClose} className={height}>
+    <DialogSheet labelledBy={titleId} onClose={requestClose} className={height}>
       {picking ? (
         <CrewPickList
           titleId={titleId}
@@ -118,7 +126,7 @@ export function CrewPicker({
           openSpots={openSpots}
           onToggle={toggle}
           onReview={startReview}
-          onClose={onClose}
+          onClose={requestClose}
         />
       ) : (
         <CrewReview
@@ -133,7 +141,7 @@ export function CrewPicker({
           onSave={save}
           onSkip={next}
           onBack={reviewOnly ? undefined : backToList}
-          onClose={onClose}
+          onClose={requestClose}
         />
       )}
     </DialogSheet>

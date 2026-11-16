@@ -96,6 +96,13 @@ export function CrewPickList({
             autoComplete="off"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              // Escape clears a search first; the next one closes the dialog.
+              if (event.key === 'Escape' && query) {
+                event.preventDefault();
+                setQuery('');
+              }
+            }}
           />
         </div>
       )}

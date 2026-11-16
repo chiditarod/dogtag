@@ -25,6 +25,8 @@ const focusableIn = (root: HTMLElement) =>
 /**
  * Modal shell: a bottom sheet below `sm`, a centered dialog from `sm`.
  * Escape closes, Tab stays inside, and focus returns to whatever opened it.
+ * A control inside that handles Escape itself (clearing a search, cancelling
+ * an edit) calls `preventDefault()`, and the dialog stays open.
  */
 export function DialogSheet({
   labelledBy,
@@ -45,7 +47,9 @@ export function DialogSheet({
   useEffect(() => {
     const opener = openerRef.current;
     function onKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === 'Escape') onCloseRef.current();
+      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
+        onCloseRef.current();
+      }
       // Focus can fall to <body> (a click on plain text, or any click in
       // Safari); Tab from there would walk the page behind the dialog.
       const dialog = dialogRef.current;

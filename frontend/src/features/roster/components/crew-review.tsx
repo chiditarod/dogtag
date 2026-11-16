@@ -76,6 +76,8 @@ export function CrewReview({
   const [lines, setLines] = useState(() => initialLines(draft));
   const titleRef = useRef<HTMLHeadingElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
+  // What a line held when Change opened it, so Escape can put it back.
+  const beforeChange = useRef<Partial<Record<LineKey, BeforeChange>>>({});
   const errorText = formErrors.join('\n');
 
   useEffect(() => {
@@ -97,8 +99,29 @@ export function CrewReview({
     if (isLineBlank(key, draft)) {
       setLine(key, { confirmed: false, error: missingMessage(key) });
     } else {
+      delete beforeChange.current[key];
       setLine(key, { confirmed: true, editing: false, error: null });
     }
+  }
+
+  function changeLine(key: LineKey) {
+    beforeChange.current[key] = {
+      confirmed: lines[key].confirmed,
+      values: Object.fromEntries(
+        lineFields(key).map((field) => [field, draft[field]]),
+      ),
+    };
+    setLine(key, { confirmed: false, editing: true });
+  }
+
+  /** Puts back a line opened with Change. False when there is nothing to go back to. */
+  function cancelLine(key: LineKey): boolean {
+    const before = beforeChange.current[key];
+    if (!before) return false;
+    delete beforeChange.current[key];
+    setDraft((current) => ({ ...current, ...before.values }));
+    setLine(key, { confirmed: before.confirmed, editing: false, error: null });
+    return true;
   }
 
   return (
@@ -138,7 +161,7 @@ export function CrewReview({
           <span className="text-sm font-semibold text-navy/70">
             {t('roster.reviewProgress', { index, total })}
           </span>
-          <Button variant="ghost" onClick={onClose}>
+          <Button variant="ghost" disabled={pending} onClick={onClose}>
             {t('roster.close')}
           </Button>
         </div>
@@ -162,8 +185,9 @@ export function CrewReview({
                   [key]: { ...current[key], confirmed: !current[key].confirmed },
                 }))
               }
-              onChange={() => setLine(key, { confirmed: false, editing: true })}
+              onChange={() => changeLine(key)}
               onDone={() => finishLine(key)}
+              onCancel={() => cancelLine(key)}
             />
           ))}
         </div>
@@ -210,6 +234,19 @@ export function CrewReview({
   );
 }
 
+interface BeforeChange {
+  confirmed: boolean;
+  values: Partial<PersonDraft>;
+}
+
+/** The draft fields a line edits. */
+const lineFields = (key: LineKey): Array<keyof PersonDraft> =>
+  key === 'name' ? ['first_name', 'last_name'] : [key];
+
+/** "Change name", but "Change ZIP code" and "Change Instagram". */
+const changeTarget = (key: LineKey, label: string) =>
+  key === 'zipcode' || key === 'instagram' ? label : label.toLowerCase();
+
 interface ReviewLineProps {
   lineKey: LineKey;
   state: LineState;
@@ -220,6 +257,8 @@ interface ReviewLineProps {
   onToggle: () => void;
   onChange: () => void;
   onDone: () => void;
+  /** Escape in an open editor; false when the line cannot be put back. */
+  onCancel: () => boolean;
 }
 
 /** One detail: a checkbox to confirm it, or its input while it is being changed. */
@@ -233,6 +272,7 @@ function ReviewLine({
   onToggle,
   onChange,
   onDone,
+  onCancel,
 }: ReviewLineProps) {
   const label = lineLabel(lineKey);
   const noteId = useId();
@@ -265,6 +305,12 @@ function ReviewLine({
           if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
             event.preventDefault();
             done();
+          }
+          // Escape backs out of this change only; the dialog stays open.
+          if (event.key === 'Escape' && !event.nativeEvent.isComposing) {
+            pressedDone.current = true;
+            if (onCancel()) event.preventDefault();
+            else pressedDone.current = false;
           }
         }}
         className="grid gap-2.5 rounded-lg border border-link bg-white p-3"
@@ -321,7 +367,7 @@ function ReviewLine({
       </button>
       <Button
         variant="ghost"
-        aria-label={t('roster.changeLabel', { label: label.toLowerCase() })}
+        aria-label={t('roster.changeLabel', { label: changeTarget(lineKey, label) })}
         onClick={onChange}
       >
         {t('roster.change')}
