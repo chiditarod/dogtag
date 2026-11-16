@@ -1,6 +1,7 @@
 # Rake task to seed test data for integration tests
 # Usage:
 #   rails test_seeds:admin                     (create admin user only)
+#   rails test_seeds:operator                  (create operator user only; the e2e staff login)
 #   rails test_seeds:basic                     (create full test environment using factories)
 #   rails test_seeds:payment_tiers             (create payment tiers test data)
 #   rails test_seeds:stripe_payment            (create Stripe payment test data)
@@ -44,6 +45,27 @@ namespace :test_seeds do
         roles_mask: User.mask_for(:admin)
       )
       puts "  ✓ Admin user created: #{admin.email}"
+    end
+  end
+
+  desc "Create operator user only (static email; the staff login for the registration e2e suite)"
+  task operator: [:guard, :environment] do
+    puts "🌱 Creating operator user..."
+
+    operator = User.find_by(email: "test+operator@example.com")
+    if operator
+      puts "  Operator user already exists: #{operator.email}"
+    else
+      operator = User.create!(
+        first_name: "Operator",
+        last_name: "User",
+        email: "test+operator@example.com",
+        phone: "555-111-3333",
+        password: "password123",
+        password_confirmation: "password123",
+        roles_mask: User.mask_for(:operator)
+      )
+      puts "  ✓ Operator user created: #{operator.email}"
     end
   end
 
@@ -543,16 +565,18 @@ namespace :test_seeds do
   task cleanup: [:guard, :environment] do
     puts "🧹 Cleaning up test data..."
 
-    # Count before deletion (exclude the static admin user)
+    keep = ["test+admin@example.com", "test+operator@example.com"]
+
+    # Count before deletion (exclude the static admin and operator users)
     count = {
-      users: User.where("email LIKE ? AND email != ?", "%@example.com", "test+admin@example.com").count,
+      users: User.where("email LIKE ? AND email NOT IN (?)", "%@example.com", keep).count,
       teams: Team.where("name LIKE ?", "Test Team%").count,
       races: Race.where("name LIKE ?", "Race %").count
     }
 
-    # Delete test data (keep the static admin user)
+    # Delete test data (keep the static admin and operator users)
     SentEmail.where("recipient LIKE ?", "%@example.com").delete_all
-    User.where("email LIKE ? AND email != ?", "%@example.com", "test+admin@example.com").destroy_all
+    User.where("email LIKE ? AND email NOT IN (?)", "%@example.com", keep).destroy_all
     Team.where("name LIKE ?", "Test Team%").destroy_all
     Race.where("name LIKE ?", "Race %").destroy_all
 

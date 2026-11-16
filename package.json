@@ -8,6 +8,9 @@
   "scripts": {
     "heroku-postbuild": "npm --prefix frontend ci --include=dev && npm --prefix frontend run build && rm -rf frontend/node_modules",
     "test": "playwright test",
+    "e2e": "playwright test --project=unit --project=registration",
+    "e2e:stripe": "E2E_PAYMENTS=stripe playwright test --project=registration",
+    "e2e:staging": "E2E_TARGET=staging playwright test --project=unit --project=registration",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui"
