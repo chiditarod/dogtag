@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { TOUR_OFF_KEY, tourSeenKey } from '@/features/tour/storage';
 import { clearCsrfToken } from '@/lib/api-client';
 import { buildChecklist, buildTeam, user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -501,5 +502,102 @@ describe('team load failures', () => {
     server.use(http.get('/api/v1/teams/9', () => HttpResponse.json({ error: 'boom' }, { status: 500 })));
     renderApp('/teams/9');
     expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+});
+
+describe('guided tour', () => {
+  const flagTitle = 'Four stars, four steps';
+
+  function tourOn() {
+    localStorage.removeItem(TOUR_OFF_KEY);
+  }
+
+  it('starts by itself on a first visit and writes the seen key when ended', async () => {
+    tourOn();
+    serveTeam({ questions: { required: true, done: false } });
+    renderApp('/teams/9');
+    const dialog = await screen.findByRole('dialog', { name: flagTitle });
+    expect(within(dialog).getByText('1 of 5')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'End tour' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(localStorage.getItem(tourSeenKey(user.id))).toBe('1');
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Take the tour' })).toHaveFocus(),
+    );
+  });
+
+  it('does not start when it has been seen, and Take the tour opens it at stop 1', async () => {
+    tourOn();
+    localStorage.setItem(tourSeenKey(user.id), '1');
+    serveTeam();
+    renderApp('/teams/9');
+    const replay = await screen.findByRole('button', { name: 'Take the tour' });
+    await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await userEvent.click(replay);
+    expect(await screen.findByRole('dialog', { name: flagTitle })).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText('1 of 4')).toBeInTheDocument();
+  });
+
+  it('does not start when tours are switched off, but Take the tour still works', async () => {
+    serveTeam();
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(await screen.findByRole('dialog', { name: flagTitle })).toBeInTheDocument();
+  });
+
+  it('does not start on a finalized team, and can still be replayed', async () => {
+    tourOn();
+    serveTeam({ finalized: true, remaining: 0, team_number: 12 });
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
+    expect(await screen.findByRole('dialog', { name: flagTitle })).toBeInTheDocument();
+  });
+
+  it('keeps its stop when the team refetches, and does not reopen after it ends', async () => {
+    tourOn();
+    serveTeam();
+    const { queryClient } = renderApp('/teams/9');
+    await screen.findByRole('dialog', { name: flagTitle });
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('dialog', { name: 'Add your racers' })).toBeInTheDocument();
+
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    expect(screen.getByRole('dialog', { name: 'Add your racers' })).toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByText('2 of 4')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'End tour' }));
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('counts four stops when the race has no questions', async () => {
+    tourOn();
+    serveTeam({ questions: { required: false, done: true } });
+    renderApp('/teams/9');
+    const dialog = await screen.findByRole('dialog', { name: flagTitle });
+    expect(within(dialog).getByText('1 of 4')).toBeInTheDocument();
+  });
+
+  it('leaves the group names and pills as they were', async () => {
+    tourOn();
+    serveTeam({
+      racers: { filled: 2, total: 5, done: false },
+      questions: { required: true, done: false },
+    });
+    renderApp('/teams/9');
+    await screen.findByRole('dialog', { name: flagTitle });
+    for (const name of ['Racers', 'Team questions', 'Registration fee', "You're in!"]) {
+      expect(screen.getByRole('group', { name })).toBeInTheDocument();
+    }
+    expect(screen.getByText('2 of 5')).toBeInTheDocument();
   });
 });

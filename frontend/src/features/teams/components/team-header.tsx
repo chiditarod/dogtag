@@ -1,3 +1,5 @@
+import type { Ref } from 'react';
+import { Button } from '@/components/ui/button';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
 import { formatDate, formatDeadline } from '@/lib/dates';
@@ -47,7 +49,14 @@ function leftItems({ checklist }: Team): LeftItem[] {
   return items;
 }
 
-export function TeamHeader({ team }: { team: Team }) {
+interface TeamHeaderProps {
+  team: Team;
+  onTakeTour: () => void;
+  /** Lets the page return focus here when the tour ends. */
+  replayRef?: Ref<HTMLButtonElement>;
+}
+
+export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
   const { race } = team;
   const items = leftItems(team);
   return (
@@ -92,6 +101,12 @@ export function TeamHeader({ team }: { team: Team }) {
           </ul>
         </div>
       )}
+      {/* The negative margin cancels the ghost padding, like the edit toggle. */}
+      <div>
+        <Button ref={replayRef} variant="ghost" className="-mx-4" onClick={onTakeTour}>
+          {t('tour.replay')}
+        </Button>
+      </div>
     </section>
   );
 }

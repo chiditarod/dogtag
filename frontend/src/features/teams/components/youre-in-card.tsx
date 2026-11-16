@@ -11,6 +11,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
         status="todo"
         pill=""
         locked
+        tourId="in"
       >
         {t('team.locked')}
       </ChecklistCard>
@@ -23,6 +24,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
       title={t('team.youreIn')}
       status="done"
       pill={t('team.pillDone')}
+      tourId="in"
     >
       {checklist.team_number !== null && (
         <p className="font-display text-3xl font-semibold text-starText">

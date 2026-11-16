@@ -1,5 +1,7 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
+import { useMe } from '@/features/auth/api/use-me';
 import { useTeam } from '@/features/teams/api/use-team';
 import { ChecklistCard } from '@/features/teams/components/checklist-card';
 import {
@@ -13,6 +15,9 @@ import {
   TeamPageErrorProvider,
 } from '@/features/teams/components/team-page-error';
 import { YoureInCard } from '@/features/teams/components/youre-in-card';
+import { GuidedTour } from '@/features/tour/components/guided-tour';
+import { markSeen, shouldAutoStart } from '@/features/tour/storage';
+import { teamTourStops } from '@/features/tour/stops';
 import { feePill, stepStates } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
@@ -21,6 +26,42 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   const { data: team, isPending, error, refetch } = useTeam(teamId, {
     pollForFundraisingUrl: true,
   });
+
+  const { data: me } = useMe();
+  const [tourOpen, setTourOpen] = useState(false);
+  const replayRef = useRef<HTMLButtonElement>(null);
+  const autoStartChecked = useRef(false);
+  const focusReplayOnClose = useRef(false);
+
+  // Stops depend only on whether the race has questions, so a refetch of the
+  // team (the page polls) hands the open tour the same content.
+  const questionsRequired = team?.checklist.questions.required;
+  const stops = useMemo(
+    () => (team ? teamTourStops(team) : []),
+    [questionsRequired],
+  );
+
+  // Once per mount, when both the team and the signed-in user are known.
+  useEffect(() => {
+    if (!team || !me || autoStartChecked.current) return;
+    autoStartChecked.current = true;
+    if (!team.checklist.finalized && shouldAutoStart(me.id)) setTourOpen(true);
+  }, [team, me]);
+
+  // The tour restores focus to what had it before it opened (the page body on
+  // an auto-start) as it unmounts; this effect runs after that and wins.
+  useEffect(() => {
+    if (!tourOpen && focusReplayOnClose.current) {
+      focusReplayOnClose.current = false;
+      replayRef.current?.focus();
+    }
+  }, [tourOpen]);
+
+  function endTour() {
+    if (me) markSeen(me.id);
+    focusReplayOnClose.current = true;
+    setTourOpen(false);
+  }
 
   if (isPending) return <QueryLoading />;
   if (error && !team) {
@@ -51,11 +92,16 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
           {/* Not sticky while the edit form is open: a sticky rail taller than
               the viewport could never show its Save button. */}
           <div className="lg:sticky lg:top-6 lg:has-[form]:static">
-            <TeamHeader team={team} />
+            <TeamHeader
+              team={team}
+              replayRef={replayRef}
+              onTakeTour={() => setTourOpen(true)}
+            />
           </div>
           <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
             <ChecklistCard
               anchor="step-racers"
+              tourId="racers"
               title={t('team.racers')}
               status={status(racersDone)}
               pill={t('team.racersPill', {
@@ -68,6 +114,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
             {checklist.questions.required && (
               <ChecklistCard
                 anchor="step-questions"
+                tourId="questions"
                 title={t('team.questions')}
                 status={status(questionsDone)}
                 pill={questionsDone ? t('team.pillDone') : t('team.pillTodo')}
@@ -77,6 +124,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
             )}
             <ChecklistCard
               anchor="step-fee"
+              tourId="fee"
               title={t('team.fee')}
               status={status(feeDone)}
               pill={feePill(checklist.fee, team.race.time_zone)}
@@ -87,6 +135,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
+      {tourOpen && <GuidedTour stops={stops} onEnd={endTour} />}
     </TeamPageErrorProvider>
   );
 }
