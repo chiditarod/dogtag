@@ -34,6 +34,24 @@ test mode and IMAP. A guard keeps it away from production.
 
 ## Global Constraints
 
+- **Security amendments (owner-approved 2026-11-16):**
+  - **Staff login is an operator, not an admin.** The tests never use an admin
+    account. If an admin-UI step is forbidden for operators, stop and report it;
+    do not fall back to admin.
+  - **Classy campaign allowlist:** `ALLOWED_CLASSY_CAMPAIGNS = [867400]`,
+    hard-coded in `target.ts`. Any other `E2E_CLASSY_CAMPAIGN_ID` is an error.
+    Deleting a Classy team requires its name to start with `Test Team E2E ` and
+    its campaign to be on the allowlist.
+  - **Recording hygiene:**
+    - The `admin-auth` project runs with `trace: 'off'`, `video: 'off'` and
+      `screenshot: 'off'`.
+    - Classy and IMAP calls use Node (`fetch` and `imapflow`), never
+      Playwright's `request` fixture, so they never land in traces.
+    - `race-teardown` deletes `playwright/.auth/staff.json` after retiring the
+      race.
+    - Staging secrets never go into CI.
+  - **Supply chain:** new devDependencies are added with `--save-exact`, and
+    `package-lock.json` is committed.
 - **Allowed and denied hosts:**
   - Allowlist, hard-coded: `localhost`, `127.0.0.1`,
     `dogtag-staging.herokuapp.com`.
@@ -173,17 +191,31 @@ it "creates a MockPaymentRequirement when an admin picks the mock type" do
 end
 ```
 
+Also add, in `spec/models/requirement_spec.rb`, the server-side check (security
+fix 5). Today `permit(:name, :type)` plus STI accepts any subclass:
+
+```ruby
+it "rejects a mock requirement in production" do
+  allow(Rails.env).to receive(:production?).and_return(true)
+  requirement = Requirement.new(name: "Fee", type: "MockPaymentRequirement", race: FactoryBot.create(:race))
+  expect(requirement).not_to be_valid
+  expect(requirement.errors[:type]).to be_present
+end
+```
+
 - [ ] **Step 2: Run** `bundle exec rspec spec/models/requirement_spec.rb spec/controllers/requirements_controller_spec.rb`.
   Expected: the new examples FAIL.
 - [ ] **Step 3: Implement.**
   - `allowed_types` returns `ALLOWED_TYPES` in production, and
     `ALLOWED_TYPES + [["Mock payment", "MockPaymentRequirement"]]` otherwise.
+  - Add `validates :type, inclusion: { in: ->(_) { Requirement.allowed_types.map(&:last) } }`
+    to `Requirement`.
   - If `RequirementsController#create` rejects types that aren't in
     `allowed_types`, it must accept the mock type outside production. Check its
     `params.expect` and type handling, and change only what the test needs.
 - [ ] **Step 4: Run** the command from Step 2. Expected: PASS. Then run
   `bundle exec rspec spec/models spec/controllers`. Expected: PASS.
-- [ ] **Step 5: Commit.** Message: `Offer MockPaymentRequirement in the admin type select outside production`
+- [ ] **Step 5: Commit.** Message: `Validate requirement type; offer MockPaymentRequirement outside production`
 
 ### Task 2: Labels on the legacy login fields
 
@@ -239,7 +271,7 @@ export interface Target {
   startServer: boolean;                      // local only
   payments: PaymentMode;
   requirementType: 'MockPaymentRequirement' | 'PaymentRequirement';
-  admin: { email: string; password: string };
+  staff: { email: string; password: string };   // an operator, not an admin
   racerEmail(runId: string): string;
   inbox: 'mailpit' | 'imap';
   checkEmail: boolean;                       // E2E_CHECK_EMAIL === '1'
@@ -249,6 +281,7 @@ export interface Target {
 export const ALLOWED_HOSTS: readonly string[];
 export const DENIED_HOSTS: readonly string[];          // exact hosts
 export const DENIED_SUFFIXES: readonly string[];       // ['.chiditarod.org']
+export const ALLOWED_CLASSY_CAMPAIGNS: readonly number[]; // [867400]
 export function assertHostAllowed(url: string): void;  // throws Error
 export function resolveTarget(env: Record<string, string | undefined>): Target;
 ```
@@ -256,8 +289,10 @@ export function resolveTarget(env: Record<string, string | undefined>): Target;
 - **Local defaults:**
   - `baseURL` is `http://localhost:${TEST_PORT}` (`TEST_PORT` comes from
     `tests/helpers/server-env.ts`).
-  - The admin is `test+admin@example.com` / `password123`, from the
-    `test_seeds:admin` task.
+  - The staff login is `test+operator@example.com` / `password123`, from the
+    new `test_seeds:operator` task (Task 4).
+- **Staging staff login:** `E2E_OPERATOR_EMAIL` / `E2E_OPERATOR_PASSWORD`. That's
+  the seeded operator Olive, created by `staging:seed`.
   - `inbox` is `mailpit`.
   - `imap` is null.
 - **Staging:** `imap` is `{ host: 'monday.mxrouting.net', port: 993, user:
@@ -275,8 +310,8 @@ import { assertHostAllowed, resolveTarget } from './target';
 const staging = {
   E2E_TARGET: 'staging',
   E2E_EMAIL_BASE: 'tests@mail.test',
-  E2E_ADMIN_EMAIL: 'a@x.test',
-  E2E_ADMIN_PASSWORD: 'pw',
+  E2E_OPERATOR_EMAIL: 'a@x.test',
+  E2E_OPERATOR_PASSWORD: 'pw',
 };
 
 test.describe('assertHostAllowed', () => {
@@ -314,20 +349,22 @@ test.describe('resolveTarget', () => {
     expect(() => resolveTarget({ ...staging, E2E_PAYMENTS: 'mock' })).toThrow(/E2E_PAYMENTS/));
   test('staging names each missing secret', () => {
     expect(() => resolveTarget({ E2E_TARGET: 'staging' })).toThrow(/E2E_EMAIL_BASE/);
-    expect(() => resolveTarget({ ...staging, E2E_ADMIN_PASSWORD: '' })).toThrow(/E2E_ADMIN_PASSWORD/);
+    expect(() => resolveTarget({ ...staging, E2E_OPERATOR_PASSWORD: '' })).toThrow(/E2E_OPERATOR_PASSWORD/);
     expect(() => resolveTarget({ ...staging, E2E_CHECK_EMAIL: '1' })).toThrow(/E2E_IMAP_PASSWORD/);
   });
   test('BASE_URL may not leave the allowlist', () =>
     expect(() => resolveTarget({ ...staging, BASE_URL: 'https://dogtag.chiditarod.org' })).toThrow(/denylist/));
   test('unknown target is an error', () =>
     expect(() => resolveTarget({ E2E_TARGET: 'production' })).toThrow(/E2E_TARGET/));
+  test('classy campaign must be on the allowlist', () =>
+    expect(() => resolveTarget({ CLASSY_CLIENT_ID: 'x', CLASSY_CLIENT_SECRET: 'y', E2E_CLASSY_CAMPAIGN_ID: '999' })).toThrow(/campaign/));
   test('classy is null unless fully configured', () => {
     expect(resolveTarget({ CLASSY_CLIENT_ID: 'x' }).classy).toBeNull();
     expect(resolveTarget({ CLASSY_CLIENT_ID: 'x', CLASSY_CLIENT_SECRET: 'y', E2E_CLASSY_CAMPAIGN_ID: '867400' }).classy)
       .toEqual({ clientId: 'x', clientSecret: 'y', campaignId: 867400 });
   });
   test('error messages never contain secret values', () => {
-    try { resolveTarget({ ...staging, E2E_CHECK_EMAIL: '1', E2E_ADMIN_PASSWORD: 'hunter2-secret' }); } catch (e) {
+    try { resolveTarget({ ...staging, E2E_CHECK_EMAIL: '1', E2E_OPERATOR_PASSWORD: 'hunter2-secret' }); } catch (e) {
       expect(String(e)).not.toContain('hunter2-secret');
     }
   });
@@ -364,10 +401,11 @@ test.describe('resolveTarget', () => {
     after `dotenv.config({ path: '.env.e2e', quiet: true })`.
 - **Projects (all Desktop Chrome):**
   - `unit`: `testMatch: /\.unit\.spec\.ts$/`.
-  - `admin-auth`: `testMatch: /admin-auth\.setup\.ts$/`.
+  - `admin-auth`: `testMatch: /admin-auth\.setup\.ts$/`, with
+    `use: { trace: 'off', video: 'off', screenshot: 'off' }`.
   - `race-setup`: `testMatch: /race-setup\.spec\.ts$/`,
     `dependencies: ['admin-auth']`, `teardown: 'race-teardown'`, with
-    `storageState: 'playwright/.auth/admin.json'`.
+    `storageState: 'playwright/.auth/staff.json'`.
   - `race-teardown`: `testMatch: /race-teardown\.ts$/`, same storageState.
   - `registration`: `testMatch: /registration\.spec\.ts$/`,
     `dependencies: ['race-setup']`.
@@ -387,7 +425,11 @@ test.describe('resolveTarget', () => {
   - Sets `E2E_RUN_ID`.
   - On staging, skips the SPA build and every `rails` command.
   - Locally, after `test_seeds:cleanup`, also runs
-    `bundle exec rails test_seeds:admin`.
+    `bundle exec rails test_seeds:operator`.
+  - Add that rake task to `lib/tasks/test_seeds.rake`, mirroring
+    `test_seeds:admin`. It creates `test+operator@example.com` / `password123`
+    with `roles: [:operator]`, idempotently, and `cleanup` keeps it the way it
+    keeps the admin.
 - **npm scripts:**
   - `"e2e": "playwright test --project=unit --project=registration"`
   - `"e2e:stripe": "E2E_PAYMENTS=stripe playwright test --project=registration"`
@@ -408,7 +450,7 @@ test.describe('resolveTarget', () => {
     under `local-suite`, plus `unit`.
   - (c) `npx playwright test --project=unit` passes.
   - (d) `E2E_TARGET=staging npx playwright test --list` with
-    `E2E_ADMIN_*`/`E2E_EMAIL_BASE` unset fails, naming the missing variable.
+    `E2E_OPERATOR_*`/`E2E_EMAIL_BASE` unset fails, naming the missing variable.
 - [ ] **Step 5: Commit.** Message: `E2E: target-aware Playwright projects and global setup`
 
 ### Task 5: One inbox interface (Mailpit locally, IMAP on staging)
@@ -481,7 +523,7 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
 - [ ] **Step 2: Run** `npx playwright test --project=unit --project=live -g "parseMessage|this run"`.
   Expected: FAIL because the modules are missing.
 - [ ] **Step 3: Implement** `links.ts`, `imap.ts` and `inbox.ts` with these
-  signatures, and add the devDependencies (`npm i -D imapflow mailparser @types/mailparser`).
+  signatures, and add the devDependencies (`npm i -D --save-exact imapflow mailparser @types/mailparser`).
 - [ ] **Step 4: Run** Step 2's command with `.env.e2e` present (the live test
   runs). Expected: PASS. Then `npx playwright test tests/spa/password-reset.spec.ts`,
   which still uses Mailpit through the moved `extractLinks`. Expected: PASS.
@@ -497,7 +539,9 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
 - Consumes: `target.classy` (Task 4).
 - Produces:
   - `findFundraisingTeamsByName(campaignId: number, name: string): Promise<Array<{ id: number; name: string }>>`
-  - `deleteFundraisingTeam(id: number): Promise<'deleted' | 'unsupported'>`
+  - `deleteFundraisingTeam(team: { id: number; name: string }, campaignId: number): Promise<'deleted' | 'unsupported'>`.
+    It throws before any request unless `team.name` starts with `Test Team E2E `
+    and `campaignId` is in `ALLOWED_CLASSY_CAMPAIGNS`.
 - Behavior:
   - Gets an OAuth client-credentials token from `https://api.classy.org/oauth2/auth`
     (`grant_type=client_credentials`) and caches it for the module's lifetime,
@@ -509,7 +553,16 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
   - The delete is `DELETE /2.0/fundraising-teams/<id>`. Return `'unsupported'`
     on 403, 404 or 405, and throw on anything else non-2xx.
 
-- [ ] **Step 1: Write the test** (it skips unless `target.classy`):
+- [ ] **Step 1: Write the tests.** The guard test always runs:
+
+```ts
+test('deleteFundraisingTeam refuses non-e2e teams and other campaigns', async () => {
+  await expect(deleteFundraisingTeam({ id: 1, name: 'Real Team' }, 867400)).rejects.toThrow(/Test Team E2E/);
+  await expect(deleteFundraisingTeam({ id: 1, name: 'Test Team E2E x' }, 123)).rejects.toThrow(/campaign/);
+});
+```
+
+  The live test skips unless `target.classy` is set:
   `findFundraisingTeamsByName(campaignId, 'No Such Team <runId>')` resolves to
   `[]`.
 - [ ] **Step 2: Run** `npx playwright test --project=live -g Classy`. Expected:
@@ -546,7 +599,7 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
     `Race E2E *` without `[retired]` that are listed under current races on
     `/races`.
 - Produces, in `admin-auth.setup.ts`: it logs in at `/user_session/new` with
-  `target.admin` and saves `playwright/.auth/admin.json`.
+  `target.staff` and saves `playwright/.auth/staff.json`.
 - **`race-setup.spec.ts` (test A):**
   1. On both targets, it retires every id from `currentE2ERaceIds`. On staging
      this is the sweep; locally it's harmless.
@@ -555,7 +608,8 @@ test('finds only this run’s mail, reports Junk, and clears only its own', asyn
      `target.requirementType`. The Classy fields are set only when
      `target.classy`.
   3. It asserts, then calls `writeRaceState`.
-- **`race-teardown.ts`:** calls `retireRace(readRaceState().raceId)`.
+- **`race-teardown.ts`:** calls `retireRace(readRaceState().raceId)`, then
+  deletes `playwright/.auth/staff.json` in a `finally`.
 
 - [ ] **Step 1: Write `race-setup.spec.ts`'s assertions.**
 
@@ -596,7 +650,9 @@ Export the sweep as `sweepLeftoverRaces(page): Promise<number[]>` from
   - After the run, the race has `[retired]` in its name and is gone from
     `/api/v1/races`.
   - `TZ=UTC` proves the zone handling.
-- [ ] **Step 5: Commit.** Message: `E2E: admin login, race setup through the admin UI, and retire-on-teardown`
+  Also confirm the run used the operator: the race-setup log records the
+  logged-in role, and no step needed admin.
+- [ ] **Step 5: Commit.** Message: `E2E: operator login, race setup through the admin UI, and retire-on-teardown`
 
 ### Task 8: Payment adapter and the registration test (test B)
 
@@ -644,7 +700,7 @@ Export the sweep as `sweepLeftoverRaces(page): Promise<number[]>` from
      contains the race name.
   9. If `target.classy`, use
      `expect.poll(() => findFundraisingTeamsByName(campaignId, teamName), { timeout: 120_000 }).toHaveLength(1)`,
-     then `deleteFundraisingTeam(id)`. Log `'unsupported'` with
+     then `deleteFundraisingTeam(team, campaignId)`. Log `'unsupported'` with
      `test.info().annotations` and don't fail on it.
   10. If `target.inbox === 'imap'`, call `clearInbox()` in `afterAll`.
 
@@ -687,6 +743,22 @@ test('assertTestKey refuses live and missing keys', () => {
     - the guard rule and the no-Heroku rule;
     - races are retired, not deleted;
     - IMAP plus-address racers on staging.
+- [ ] **Step 2b: Stop installing root devDependencies on Heroku (security fix 6).**
+  This is an ops step done by the controller, not a subagent.
+  1. Run `heroku config:set NPM_CONFIG_OMIT=dev -a dogtag-staging`.
+  2. Redeploy `main` to staging.
+  3. Confirm both of these:
+     - The build log shows no `@playwright/test` or `imapflow` install.
+     - `/register` still returns 200 and loads the SPA.
+  4. If the buildpack ignores the variable, stop and report it. Don't try other
+     variables.
+  5. Once it works, set the same on `dogtag`. The owner has authorized
+     non-Stripe config vars on production.
+  6. Add a line to `docs/runbooks/2026-production-launch.md`'s config-vars
+     list.
+
+  Also add to `CLAUDE.md` E2E Learnings: staging secrets and `.env.e2e` never
+  go into CI or artifacts.
 - [ ] **Step 3: Run the full local suite:** `bin/check` and then
   `SPA_BUILD=skip bin/check e2e`. Expected:
   - All steps `ok`.

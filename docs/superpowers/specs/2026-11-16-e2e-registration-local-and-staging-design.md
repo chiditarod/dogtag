@@ -117,7 +117,7 @@ The work focuses on testing and integration.
 | Rails server | booted by Playwright `webServer` | none |
 | Payments | `mock` (default) or `stripe` if `E2E_PAYMENTS=stripe` | `stripe` only |
 | Requirement type created | `MockPaymentRequirement` (mock) / `PaymentRequirement` (stripe) | `PaymentRequirement` |
-| Admin login | seeded `test+admin@example.com` (local `test_seeds:admin`) | `E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` |
+| Staff login (operator) | `test+operator@example.com` (local `test_seeds:operator`) | `E2E_OPERATOR_EMAIL` / `E2E_OPERATOR_PASSWORD` (seeded operator) |
 | Racer email | `e2e+<runId>@example.com` | `<user>+<runId>@<domain>` from `E2E_EMAIL_BASE` (required; the owner's test mailbox) |
 | Email check (`E2E_CHECK_EMAIL=1`) | Mailpit (`tests/helpers/mailpit.ts`) | IMAP on the test mailbox (`monday.mxrouting.net:993`) |
 | Classy check | when `CLASSY_CLIENT_ID/SECRET` and `E2E_CLASSY_CAMPAIGN_ID` are set | same |
@@ -334,7 +334,7 @@ more changes, they stop and raise it.
   `npm test` keeps running the local default.
 - **Secrets:** `.env.e2e` holds the following. It is gitignored and also listed
   in `.git/info/exclude`, so it stays untracked on every branch.
-  - `E2E_ADMIN_EMAIL` and `E2E_ADMIN_PASSWORD` (a staging admin account);
+  - `E2E_OPERATOR_EMAIL` and `E2E_OPERATOR_PASSWORD` (the seeded staging operator);
   - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET` and `E2E_CLASSY_CAMPAIGN_ID`
     (optional);
   - `E2E_EMAIL_BASE`, the test mailbox address (required on staging). The
@@ -370,3 +370,30 @@ more changes, they stop and raise it.
 - Whether the Classy token and request code is a small fetch wrapper or shares
   code with anything existing in `tests/`.
 - The wording of guard error messages.
+
+## Security amendments (security pass, owner-approved 2026-11-16)
+
+The repo is public, so the suite was reviewed for what an outsider could learn
+or misuse, and for mistakes that could reach production. These amendments
+override anything above that conflicts with them.
+
+1. **Staging data is synthetic.** Staging no longer restores the production
+   dump. `bin/rails staging:seed` (PR #288) fills an empty database. Every
+   seeded address is a plus-address of the test mailbox.
+2. **Tests log in as an operator, never an admin.**
+   - Staging uses the seeded operator, via `E2E_OPERATOR_EMAIL` and
+     `E2E_OPERATOR_PASSWORD`.
+   - Locally it's `test+operator@example.com`, from `test_seeds:operator`.
+   - The release-phase auto-admin idea is dropped.
+3. **Recording hygiene.**
+   - No trace, video or screenshots for the login step.
+   - Classy and IMAP calls bypass Playwright's request recording.
+   - The saved session file is deleted at teardown.
+   - Staging secrets never go into CI or its public artifacts.
+4. **Classy campaign allowlist.** Only campaign 867400 is accepted, and deletes
+   only touch teams named `Test Team E2E *` in it.
+5. **The server validates the requirement type** against `allowed_types`. This
+   closes the existing hole where any STI subclass could be posted.
+6. **Supply chain.** New devDependencies are pinned exactly.
+   `NPM_CONFIG_OMIT=dev` on both Heroku apps keeps root test packages, and
+   their install scripts, out of builds that can read production config vars.
