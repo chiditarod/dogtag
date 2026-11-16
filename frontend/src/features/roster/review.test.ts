@@ -103,3 +103,16 @@ describe('applyFieldErrors', () => {
     expect(unconfirmedCount(lines)).toBe(2);
   });
 });
+
+describe('unconfirmedCount', () => {
+  it('counts an open line even when its confirmed flag is still true', () => {
+    const lines = initialLines(draft);
+    const confirmed = Object.fromEntries(
+      Object.entries(lines).map(([key, line]) => [key, { ...line, confirmed: true }]),
+    ) as ReturnType<typeof initialLines>;
+    expect(unconfirmedCount(confirmed)).toBe(0);
+    expect(
+      unconfirmedCount({ ...confirmed, email: { ...confirmed.email, editing: true } }),
+    ).toBe(1);
+  });
+});

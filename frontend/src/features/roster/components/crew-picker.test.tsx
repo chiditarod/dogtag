@@ -172,6 +172,13 @@ describe('pick step', () => {
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
 
+  it('keeps Shift+Tab from the title inside the dialog', async () => {
+    const { user } = setup();
+    expect(screen.getByRole('heading', { name: 'Pick from past teams' })).toHaveFocus();
+    await user.tab({ shift: true });
+    expect(row('Edsger')).toHaveFocus();
+  });
+
   it('closes on Escape and on Close', async () => {
     const { user, onClose } = setup();
     await user.keyboard('{Escape}');
@@ -267,6 +274,45 @@ describe('review step', () => {
     await user.selectOptions(select, 'Twice');
     await user.click(screen.getByRole('button', { name: 'Done' }));
     expect(line('Years racing')).toHaveAccessibleName('Years racing: Twice');
+  });
+
+  it('blocks adding again as soon as a confirmed line is reopened', async () => {
+    const { user } = setup({ reviewOnly: ada });
+    await confirmAll(user);
+    await user.click(screen.getByRole('button', { name: 'Change email' }));
+
+    expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
+    expect(
+      screen.getByText('1 detail left to confirm. Tap each line once you have checked it.'),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps a confirmed years line open and unsaved when it is changed to nothing', async () => {
+    serveSave();
+    const { user } = setup({ reviewOnly: ada });
+    await confirmAll(user);
+    await user.click(screen.getByRole('button', { name: 'Change years racing' }));
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Years racing' }), 'Select one');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(screen.getByRole('combobox', { name: 'Years racing' })).toBeInTheDocument();
+    expect(screen.getByText('Years racing is missing. Add it to continue.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
+    expect(posts).toHaveLength(0);
+  });
+
+  it('does not save when Enter is pressed in an open editor', async () => {
+    serveSave();
+    const { user } = setup({ reviewOnly: ada });
+    await confirmAll(user);
+    await user.click(screen.getByRole('button', { name: 'Change email' }));
+    const email = screen.getByRole('textbox', { name: 'Email' });
+    await user.clear(email);
+    await user.type(email, '{Enter}');
+
+    expect(screen.getByRole('textbox', { name: 'Email' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
+    expect(posts).toHaveLength(0);
   });
 
   it('wraps long values', async () => {
@@ -368,8 +414,10 @@ describe('saving', () => {
     await confirmAll(user);
     await user.click(screen.getByRole('button', { name: 'Add Ada to the team' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Team is full');
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Team is full');
+    expect(alert).toHaveFocus();
+    expect(screen.getByRole('dialog')).toContainElement(document.activeElement as HTMLElement);
     expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeEnabled();
     expect(onClose).not.toHaveBeenCalled();
   });

@@ -75,10 +75,18 @@ export function CrewReview({
   const [draft, setDraft] = useState(() => draftFromPastRacer(racer, race));
   const [lines, setLines] = useState(() => initialLines(draft));
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+  const errorText = formErrors.join('\n');
 
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
+
+  // The Add button disables while saving, so focus lands on the message
+  // instead of dropping out of the dialog.
+  useEffect(() => {
+    if (errorText) alertRef.current?.focus();
+  }, [errorText]);
 
   const firstName = draft.first_name.trim() || racer.first_name;
   const left = unconfirmedCount(lines);
@@ -87,7 +95,7 @@ export function CrewReview({
 
   function finishLine(key: LineKey) {
     if (isLineBlank(key, draft)) {
-      setLine(key, { error: missingMessage(key) });
+      setLine(key, { confirmed: false, error: missingMessage(key) });
     } else {
       setLine(key, { confirmed: true, editing: false, error: null });
     }
@@ -149,9 +157,12 @@ export function CrewReview({
                 setDraft((current) => ({ ...current, [field]: value }))
               }
               onToggle={() =>
-                setLine(key, { confirmed: !lines[key].confirmed })
+                setLines((current) => ({
+                  ...current,
+                  [key]: { ...current[key], confirmed: !current[key].confirmed },
+                }))
               }
-              onChange={() => setLine(key, { editing: true })}
+              onChange={() => setLine(key, { confirmed: false, editing: true })}
               onDone={() => finishLine(key)}
             />
           ))}
@@ -160,8 +171,10 @@ export function CrewReview({
       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 border-t border-flag px-4 pb-4 pt-3">
         {formErrors.length > 0 && (
           <div
+            ref={alertRef}
             role="alert"
-            className="basis-full rounded-md border border-star bg-white p-3 text-sm text-starText"
+            tabIndex={-1}
+            className="basis-full rounded-md border border-star bg-white p-3 text-sm text-starText focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
           >
             {formErrors.map((message) => (
               <p key={message}>{message}</p>
@@ -172,11 +185,13 @@ export function CrewReview({
           className="flex-1 sm:flex-none"
           disabled={left > 0}
           loading={pending}
-          onClick={() =>
+          onClick={() => {
+            // Keep focus in the dialog once this button disables.
+            titleRef.current?.focus();
             onSave(payloadFromDraft(draft), (fieldErrors) =>
               setLines((current) => applyFieldErrors(current, fieldErrors)),
-            )
-          }
+            );
+          }}
         >
           {t('roster.addToTeam', { name: firstName })}
         </Button>

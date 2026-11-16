@@ -54,7 +54,8 @@ export function DialogSheet({ labelledBy, onClose, children }: DialogSheetProps)
     const first = items[0];
     const last = items[items.length - 1];
     const active = document.activeElement;
-    if (event.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+    // The title takes focus but is not tabbable, so it counts as "before first".
+    if (event.shiftKey && items.indexOf(active as HTMLElement) <= 0) {
       event.preventDefault();
       last.focus();
     } else if (!event.shiftKey && active === last) {

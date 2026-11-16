@@ -117,5 +117,6 @@ export function applyFieldErrors(
   return next;
 }
 
+/** An open editor never counts as confirmed, whatever its flag says. */
 export const unconfirmedCount = (lines: ReviewLines): number =>
-  LINE_KEYS.filter((key) => !lines[key].confirmed).length;
+  LINE_KEYS.filter((key) => !lines[key].confirmed || lines[key].editing).length;
