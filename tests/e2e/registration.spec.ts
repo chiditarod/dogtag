@@ -10,10 +10,12 @@
  * test key (assertTestKey), in mock mode too.
  */
 import { expect, test, type APIRequestContext } from '@playwright/test';
+import { randomUUID } from 'crypto';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { deleteFundraisingTeam, findFundraisingTeamsByName } from './classy';
 import { clearInbox, waitForEmail } from './inbox';
+import { fillSecret } from './fill-secret';
 import { assertTestKey, payFee } from './payments';
 import { readRaceState, runId, target } from './run';
 
@@ -68,16 +70,33 @@ async function currentRace(request: APIRequestContext, raceName: string) {
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.afterAll(async () => {
-  // The IMAP mailbox is shared; leave nothing from this run behind.
-  if (target.inbox === 'imap') await clearInbox();
+  // The IMAP mailbox is shared; leave nothing from this run behind. Without
+  // E2E_IMAP_PASSWORD there is no IMAP login (and nothing was read).
+  if (target.inbox === 'imap' && target.imap) await clearInbox();
 });
 
+/**
+ * Worst-case waits on staging: welcome email 90 s, two Stripe Checkout payments
+ * at up to 30 s (popup) + 60 s (paid) each, confirmation email 90 s and the
+ * Classy poll 120 s = 480 s, plus page loads and form steps. Local Stripe
+ * Checkout adds the two payment waits to the usual 2 minutes.
+ */
+const STAGING_TIMEOUT = 10 * 60_000;
+const LOCAL_STRIPE_TIMEOUT = 5 * 60_000;
+const LOCAL_TIMEOUT = 2 * 60_000;
+
 test('B: a new captain registers a team through "You\'re in!"', async ({ page, request }) => {
-  const id = runId();
+  test.setTimeout(
+    target.name === 'staging' ? STAGING_TIMEOUT : target.payments === 'stripe' ? LOCAL_STRIPE_TIMEOUT : LOCAL_TIMEOUT,
+  );
+  // A CI retry reuses E2E_RUN_ID, so fold the retry number in: otherwise the
+  // retried sign-up fails with "email taken". Staging never retries.
+  const retry = test.info().retry;
+  const id = retry > 0 ? `${runId()}-r${retry}` : runId();
   const { raceName } = readRaceState();
   const email = target.racerEmail(id);
   const teamName = `Test Team E2E ${id}`;
-  const password = `E2e-${id}-pass`;
+  const password = `E2e-${randomUUID()}`;
   const fee = page.getByRole('group', { name: 'Registration fee' });
 
   await test.step('The race takes test payments only', async () => {
@@ -90,10 +109,11 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
     await page.goto('/register/signup');
     await page.getByLabel('First name').fill('Captain');
     await page.getByLabel('Last name').fill(`E2E ${id}`);
-    await page.getByLabel('Email', { exact: true }).fill(email);
+    // The address is a private mailbox on staging, so it never goes in a step title.
+    await fillSecret(page.getByLabel('Email', { exact: true }), email);
     await page.getByLabel('Phone').pressSequentially('3125550100');
-    await page.getByLabel('Password', { exact: true }).fill(password);
-    await page.getByLabel('Confirm password').fill(password);
+    await fillSecret(page.getByLabel('Password', { exact: true }), password);
+    await fillSecret(page.getByLabel('Confirm password'), password);
     await page.getByRole('button', { name: 'Create account' }).click();
     await expect(page.getByRole('heading', { name: 'Choose your race' })).toBeVisible();
 
@@ -160,17 +180,18 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
   });
 
   await test.step('Pay both fees and get a team number', async () => {
-    // Re-checked right before the first payment click.
-    assertTestKey((await currentRace(request, raceName)).stripe_publishable_key);
+    // Re-checked right before the first payment click; payFee checks it again.
+    const publishableKey = (await currentRace(request, raceName)).stripe_publishable_key;
+    assertTestKey(publishableKey);
 
     const deposit = fee.getByRole('listitem').filter({ hasText: 'Cart Deposit' });
     const registration = fee.getByRole('listitem').filter({ hasText: 'Race Registration' });
     const teamNumber = page.getByRole('group', { name: "You're in!" }).getByText(/^Team #\d+$/);
 
-    await payFee(page, deposit, '$88', target.payments);
+    await payFee(page, deposit, '$88', target.payments, publishableKey);
     await expect(page.getByText(/^Team #\d+$/)).toHaveCount(0);
 
-    await payFee(page, registration, '$130', target.payments);
+    await payFee(page, registration, '$130', target.payments, publishableKey);
     await expect(fee.getByText('Paid $218 total')).toBeVisible();
     await expect(teamNumber).toBeVisible();
   });

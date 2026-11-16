@@ -6,6 +6,7 @@
  * resolving a target. Never logs a full key: errors name only its prefix.
  */
 import { expect, type Locator, type Page } from '@playwright/test';
+import { fillSecret } from './fill-secret';
 import type { PaymentMode } from './target';
 
 const TEST_KEY_PREFIX = 'pk_test_';
@@ -22,12 +23,13 @@ async function payWithStripeCheckout(page: Page): Promise<void> {
   const card = frame.getByPlaceholder('Card number');
   await expect(card).toBeVisible({ timeout: 30_000 });
 
-  // checkout.js is opened with the captain's email; fill it only if it shows up empty.
+  // checkout.js is opened with the captain's email; fill it only if it shows up
+  // empty. The address is a private mailbox on staging, so it is not echoed.
   const email = frame.getByPlaceholder('Email');
   if ((await email.isVisible()) && (await email.inputValue()) === '') {
     const me = await page.request.get('/api/v1/me');
     expect(me.status()).toBe(200);
-    await email.fill((await me.json()).user.email);
+    await fillSecret(email, (await me.json()).user.email);
   }
 
   await card.fill('4242424242424242');
@@ -38,9 +40,17 @@ async function payWithStripeCheckout(page: Page): Promise<void> {
 
 /**
  * Pays one fee from its list item in the "Registration fee" group and waits
- * for it to show as paid. The caller must have run assertTestKey on the race.
+ * for it to show as paid. Refuses (before touching the page) unless
+ * publishableKey is the race's Stripe test key.
  */
-export async function payFee(page: Page, feeItem: Locator, amountLabel: string, mode: PaymentMode): Promise<void> {
+export async function payFee(
+  page: Page,
+  feeItem: Locator,
+  amountLabel: string,
+  mode: PaymentMode,
+  publishableKey: string | undefined,
+): Promise<void> {
+  assertTestKey(publishableKey);
   if (mode === 'mock') {
     await feeItem.getByRole('button', { name: 'Mock pay' }).click();
   } else {

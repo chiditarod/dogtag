@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { assertHostAllowed, resolveTarget } from './target';
-import { assertTestKey } from './payments';
+import type { Locator, Page } from '@playwright/test';
+import { assertTestKey, payFee } from './payments';
 
 const staging = {
   E2E_TARGET: 'staging',
@@ -98,4 +99,22 @@ test('assertTestKey refuses live and missing keys', () => {
   expect(() => assertTestKey('pk_live_abc')).toThrow(/pk_live_/);
   expect(() => assertTestKey(undefined)).toThrow(/Refusing to pay/);
   expect(() => assertTestKey('pk_test_abc')).not.toThrow();
+});
+
+test('payFee refuses a live or missing key before touching the page', async () => {
+  // Any use of the page or the fee item fails the test.
+  const untouchable = <T extends object>() =>
+    new Proxy({} as T, {
+      get: (_target, prop) => {
+        throw new Error(`payFee touched the page (${String(prop)})`);
+      },
+    });
+  for (const mode of ['mock', 'stripe'] as const) {
+    await expect(payFee(untouchable<Page>(), untouchable<Locator>(), '$88', mode, 'pk_live_abc')).rejects.toThrow(
+      /Refusing to pay/,
+    );
+    await expect(payFee(untouchable<Page>(), untouchable<Locator>(), '$88', mode, undefined)).rejects.toThrow(
+      /Refusing to pay/,
+    );
+  }
 });

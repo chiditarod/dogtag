@@ -8,6 +8,12 @@ assertHostAllowed(target.baseURL);
 
 const staging = target.name === 'staging';
 const STAFF_STATE = 'playwright/.auth/staff.json';
+/**
+ * The operator's session cookie rides along in race-setup and race-teardown, so
+ * on staging their failures keep no trace or video (both would save the cookie
+ * or the logged-in pages under test-results/). Locally they keep the defaults.
+ */
+const staffRecording = staging ? { trace: 'off' as const, video: 'off' as const } : {};
 
 /**
  * The local Rails server and the seed subprocesses must never see real Classy
@@ -92,7 +98,8 @@ export default defineConfig({
   projects: [
     { name: 'unit', testMatch: /\.unit\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
     {
-      // Logs in as the operator once. No recordings: the login carries a password.
+      // Logs in as the operator once. No recordings: the login carries a password
+      // (typed with fillSecret, so it is not in any step title either).
       name: 'admin-auth',
       testMatch: /admin-auth\.setup\.ts$/,
       use: { ...devices['Desktop Chrome'], trace: 'off', video: 'off', screenshot: 'off' },
@@ -102,12 +109,12 @@ export default defineConfig({
       testMatch: /race-setup\.spec\.ts$/,
       dependencies: ['admin-auth'],
       teardown: 'race-teardown',
-      use: { ...devices['Desktop Chrome'], storageState: STAFF_STATE },
+      use: { ...devices['Desktop Chrome'], storageState: STAFF_STATE, ...staffRecording },
     },
     {
       name: 'race-teardown',
       testMatch: /race-teardown\.ts$/,
-      use: { ...devices['Desktop Chrome'], storageState: STAFF_STATE },
+      use: { ...devices['Desktop Chrome'], storageState: STAFF_STATE, ...staffRecording },
     },
     {
       name: 'registration',
