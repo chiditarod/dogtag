@@ -70,6 +70,9 @@ class Ability
       can [:index, :search, :show], User
       can [:index, :search, :show, :edit, :update], [Team, Person]
       can [:index, :show, :edit, :update, :create], [Race, PaymentRequirement, Tier]
+      # requirements#new builds a base Requirement (type picked on the form);
+      # create still requires a PaymentRequirement subclass.
+      can :new, Requirement
       can [:refund], :charges
       can :index, SentEmail
     end
