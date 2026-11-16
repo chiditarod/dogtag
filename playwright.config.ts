@@ -9,11 +9,15 @@ assertHostAllowed(target.baseURL);
 const staging = target.name === 'staging';
 const STAFF_STATE = 'playwright/.auth/staff.json';
 
-/** The local Rails server must not inherit staging secrets (Classy, IMAP, ...) that .env.e2e adds to process.env. */
-function localServerEnv(): Record<string, string> {
-  const env = serverEnv();
-  for (const key of e2eFileKeys) delete env[key];
-  return env;
+/**
+ * The local Rails server and the seed subprocesses must never see real Classy
+ * credentials. Playwright launches the webServer with {...process.env, ...env},
+ * and Rails treats an empty string as a credential, so the keys have to be
+ * removed from process.env itself. run.ts has already captured target.classy
+ * (for the live specs), and workers re-load this config, so it holds per process.
+ */
+if (!staging) {
+  for (const key of new Set([...e2eFileKeys, 'CLASSY_CLIENT_ID', 'CLASSY_CLIENT_SECRET'])) delete process.env[key];
 }
 
 // The test port (default 3099, override with TEST_PORT) and the Rails server
@@ -130,7 +134,7 @@ export default defineConfig({
     ? {
         command: `bundle exec rails server -u webrick -p ${TEST_PORT}`,
         url: `http://localhost:${TEST_PORT}`,
-        env: localServerEnv(),
+        env: serverEnv(),
         reuseExistingServer: true, // Always reuse if server already running (it must have the env above)
         timeout: 120 * 1000, // 2 minutes for server startup
         stdout: 'pipe',
