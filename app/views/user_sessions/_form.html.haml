@@ -12,13 +12,13 @@
       .input-group.margin-bottom-sm
         %span.input-group-addon
           %i.fa.fa-fw.fa-envelope
-        = f.label :email, "Email", :class => 'sr-only'
+        = f.label :email, :class => 'sr-only'
         = f.text_field :email, :class => 'form-control'
       %br
       .input-group
         %span.input-group-addon
           %i.fa.fa-fw.fa-key
-        = f.label :password, "Password", :class => 'sr-only'
+        = f.label :password, :class => 'sr-only'
         = f.password_field :password, :class => 'form-control'
       .field
         = f.check_box :remember_me
