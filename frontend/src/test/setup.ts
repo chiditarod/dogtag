@@ -6,20 +6,20 @@ import { server } from '@/test/server';
 
 // jsdom swaps in its own AbortController/AbortSignal, and the undici bundled with Node 24
 // rejects a jsdom signal in `new Request(url, { signal })` (React Router builds one on every
-// navigation). Drop a foreign signal before the native Request sees it; tests never abort.
+// navigation). Tests never abort a request, so drop the signal before the native Request sees it.
+// (An instanceof check cannot tell them apart: undici builds Request.signal from jsdom's class.)
 const NativeRequest = globalThis.Request;
-const NativeAbortSignal = new NativeRequest('http://localhost').signal.constructor;
-class SignalSafeRequest extends NativeRequest {
+class SignalFreeRequest extends NativeRequest {
   constructor(input: RequestInfo | URL, init?: RequestInit) {
-    if (init?.signal && !(init.signal instanceof NativeAbortSignal)) {
-      const { signal: _foreign, ...rest } = init;
+    if (init?.signal) {
+      const { signal: _dropped, ...rest } = init;
       super(input, rest);
     } else {
       super(input, init);
     }
   }
 }
-globalThis.Request = SignalSafeRequest;
+globalThis.Request = SignalFreeRequest;
 
 // CI runs on a slow 2-vCPU container; the 1 s default makes navigation waits flaky there.
 configure({ asyncUtilTimeout: 5000 });
