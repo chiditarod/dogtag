@@ -41,6 +41,22 @@ references:
         # bundle clean
 
 jobs:
+  frontend:
+    # Cheapest checks first: no database, no services, no browsers.
+    docker:
+      - image: "cimg/node:24.11"
+    steps:
+      - checkout
+      - run:
+          name: Install registration SPA dependencies
+          command: npm --prefix frontend ci
+      - run:
+          name: Typecheck registration SPA
+          command: cd frontend && npx --no-install tsc --noEmit
+      - run:
+          name: Run registration SPA unit tests (Vitest)
+          command: npm --prefix frontend test -- --run
+
   test:
     parallelism: 4
     parameters:
@@ -139,13 +155,11 @@ jobs:
       # Setup database
       - <<: *migrate
 
-      # Unit-test, then build the React registration SPA served at /register
+      # Build the React registration SPA served at /register (typecheck and
+      # Vitest already passed in the frontend job)
       - run:
           name: Install registration SPA dependencies
           command: npm --prefix frontend ci
-      - run:
-          name: Run registration SPA unit tests (Vitest)
-          command: npm --prefix frontend test -- --run
       - run:
           name: Build registration SPA
           command: npm --prefix frontend run build
@@ -182,7 +196,11 @@ workflows:
   # Main workflow for all pushes and PRs
   all:
     jobs:
+      # Serial, cheapest first: frontend -> rspec -> Playwright
+      - frontend
       - test:
+          requires:
+            - frontend
           matrix:
             parameters:
               ruby_version: ["3.4.8"]
@@ -210,7 +228,10 @@ workflows:
               only:
                 - main
     jobs:
+      - frontend
       - test:
+          requires:
+            - frontend
           matrix:
             parameters:
               ruby_version: ["3.4.8"]
