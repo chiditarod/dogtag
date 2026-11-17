@@ -79,6 +79,10 @@ export async function deleteFundraisingTeam(team: FundraisingTeam, campaignId: n
   const path = `/fundraising-teams/${team.id}`;
   const response = await classyFetch(path, { method: 'DELETE' });
   if ([403, 404, 405].includes(response.status)) return 'unsupported';
-  if (!response.ok) throw new Error(`Classy DELETE ${path} failed with status ${response.status}`);
+  if (!response.ok) {
+    // Classy's error body names the reason (e.g. the team still has members); it carries no credentials.
+    const detail = (await response.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 300);
+    throw new Error(`Classy DELETE ${path} failed with status ${response.status}${detail ? `: ${detail}` : ''}`);
+  }
   return 'deleted';
 }
