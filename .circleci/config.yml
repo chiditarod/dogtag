@@ -85,7 +85,11 @@ jobs:
       - <<: *bundle
       - <<: *wait_for_db
       - <<: *migrate
-      - ruby/rspec-test
+      # Splits specs across the 4 nodes and uploads results (store-test-results in
+      # .circleci/test-suites.yml replaces a store_test_results step).
+      - run:
+          name: Run RSpec (Smarter Testing)
+          command: circleci testsuite run "rspec"
       - <<: *save
 
   integration:
