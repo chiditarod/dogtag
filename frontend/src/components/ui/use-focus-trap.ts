@@ -7,8 +7,9 @@ const focusableIn = (root: HTMLElement) =>
   Array.from(root.querySelectorAll<HTMLElement>(FOCUSABLE));
 
 /**
- * Keeps Tab inside a modal and calls `onEscape` on Escape. Does nothing
- * while `ref` is not attached.
+ * Keeps Tab inside a modal and calls `onEscape` on Escape. An Escape that a
+ * control inside already handled (`preventDefault()`) or that ends an IME
+ * composition is left alone. Does nothing while `ref` is not attached.
  */
 export function useFocusTrap(
   ref: RefObject<HTMLElement | null>,
@@ -21,7 +22,9 @@ export function useFocusTrap(
     function onKeyDown(event: KeyboardEvent) {
       const root = ref.current;
       if (!root) return;
-      if (event.key === 'Escape') onEscapeRef.current();
+      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
+        onEscapeRef.current();
+      }
       if (event.key !== 'Tab') return;
       const items = focusableIn(root);
       if (items.length === 0) return;
