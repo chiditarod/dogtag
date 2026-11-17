@@ -179,6 +179,7 @@ Then:
     npm test                                  # all specs; builds the SPA first (SPA_BUILD=skip to reuse the build)
     npx playwright test tests/spa             # only the SPA suite
     npm run e2e                               # registration flow, local: mock payments, Mailpit
+    npm run e2e:headed                        # same as e2e, with a visible browser
     npm run e2e:stripe                        # same, with a real Stripe test-card payment
     npm run e2e:staging                       # against dogtag-staging (needs .env.e2e; see tests/README.md)
     bin/check e2e                             # quiet run for CI-style output
