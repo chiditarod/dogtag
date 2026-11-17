@@ -1,0 +1,6 @@
+---
+name: rspec
+discover: find spec -type f -name '*_spec.rb'
+run: bundle exec rspec --format progress --format RspecJunitFormatter --out "<< outputs.junit >>" << test.atoms >>
+options:
+  store-test-results: true
