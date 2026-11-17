@@ -66,8 +66,14 @@ async function currentRace(request: APIRequestContext, raceName: string) {
   return race;
 }
 
-// A fresh visitor: no operator session from the race-setup project.
-test.use({ storageState: { cookies: [], origins: [] } });
+// A fresh visitor: no operator session from the race-setup project, but with
+// the guided tour switched off (it would otherwise cover the team page).
+test.use({
+  storageState: {
+    cookies: [],
+    origins: [{ origin: new URL(target.baseURL).origin, localStorage: [{ name: 'dogtag:tour:off', value: '1' }] }],
+  },
+});
 
 test.afterAll(async () => {
   // The IMAP mailbox is shared; leave nothing from this run behind. Without
