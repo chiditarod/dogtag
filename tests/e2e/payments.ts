@@ -33,7 +33,15 @@ async function payWithStripeCheckout(page: Page): Promise<void> {
   }
 
   await card.fill('4242424242424242');
-  await frame.getByPlaceholder('MM / YY').pressSequentially('12 / 34', { delay: 50 });
+  // checkout.js reformats the expiry as it is typed and sometimes drops the last
+  // keystroke ("12 / 3"), which leaves Pay unable to submit. Retype until the
+  // field holds the full value.
+  const expiry = frame.getByPlaceholder('MM / YY');
+  await expect(async () => {
+    await expiry.fill('');
+    await expiry.pressSequentially('12 / 34', { delay: 50 });
+    await expect(expiry).toHaveValue('12 / 34', { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
   await frame.getByPlaceholder('CVC').fill('123');
   await frame.getByRole('button', { name: /^Pay/ }).click();
 }
