@@ -9,6 +9,8 @@ export default mergeConfig(
       globals: true,
       setupFiles: ['./src/test/setup.ts'],
       css: false,
+      // The 2-vCPU CI container is far slower than a laptop; big forms need the headroom.
+      testTimeout: 15000,
     },
   }),
 );
