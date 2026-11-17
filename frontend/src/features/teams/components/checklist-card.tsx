@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChicagoStar } from '@/components/ui/chicago-star';
+import type { TourStopId } from '@/features/tour/stops';
 import { t } from '@/locales/en';
 
 interface ChecklistCardProps {
@@ -12,6 +13,8 @@ interface ChecklistCardProps {
   pill: string;
   /** Not-yet-available step (the final "You're in!" step): a quiet one-line note. */
   locked?: boolean;
+  /** Marks the heading row as a guided-tour target. */
+  tourId?: TourStopId;
   children?: ReactNode;
 }
 
@@ -21,6 +24,7 @@ export function ChecklistCard({
   status,
   pill,
   locked = false,
+  tourId,
   children,
 }: ChecklistCardProps) {
   const done = status === 'done';
@@ -34,7 +38,7 @@ export function ChecklistCard({
       data-status={status}
       data-locked={locked || undefined}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3" data-tour={tourId}>
         <ChicagoStar filled={done} className="h-6 w-6 shrink-0" />
         <h2
           id={titleId}

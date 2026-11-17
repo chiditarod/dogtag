@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import { TEST_PORT, serverEnv } from './tests/helpers/server-env';
 
+const baseURL = process.env.BASE_URL || `http://localhost:${TEST_PORT}`;
+
 // The test port (default 3099, override with TEST_PORT) and the Rails server
 // environment (APP_HOST, SIDEKIQ_INLINE, REGISTRATION_UI, SMTP_*) live in
 // tests/helpers/server-env.ts, shared with the specs.
@@ -43,7 +45,19 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.BASE_URL || `http://localhost:${TEST_PORT}`,
+    baseURL,
+
+    /* The team page opens its guided tour by itself, which would sit on top of
+       every spec. This switches it off; tests/spa/guided-tour.spec.ts clears it. */
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: new URL(baseURL).origin,
+          localStorage: [{ name: 'dogtag:tour:off', value: '1' }],
+        },
+      ],
+    },
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',

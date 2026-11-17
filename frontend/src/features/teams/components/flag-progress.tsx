@@ -35,6 +35,7 @@ export function FlagProgress({ steps, label }: FlagProgressProps) {
   return (
     <div
       role="progressbar"
+      data-tour="flag"
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={4}

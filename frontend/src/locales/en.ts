@@ -186,6 +186,22 @@ export const en = {
   'notFound.heading': 'Page not found',
   'notFound.body': 'We could not find the page you were looking for.',
   'notFound.home': 'Back to races',
+  'tour.flag.title': 'Four stars, four steps',
+  'tour.flag.body': 'Each star turns solid red when its step is done. Fill all four and your team is in.',
+  'tour.racers.title': 'Add your racers',
+  'tour.racers.body': 'Add each racer here. If you have raced before, you can pick people from your past teams.',
+  'tour.questions.title': 'Answer the team questions',
+  'tour.questions.body': 'A few questions about your team and cart. You can change your answers later.',
+  'tour.fee.title': 'Pay the registration fee',
+  'tour.fee.body': 'Pay by card here. If the price is going up, this step shows the date.',
+  'tour.in.title': "You're in",
+  'tour.in.body': 'When the first three stars are solid red, your spot is locked in and you get your team number.',
+  'tour.counter': '{index} of {total}',
+  'tour.prev': 'Prev',
+  'tour.next': 'Next',
+  'tour.done': 'Done',
+  'tour.end': 'End tour',
+  'tour.replay': 'Take the tour',
 } as const;
 
 /** Looks up a string; `{name}` placeholders are filled from `vars`. */
