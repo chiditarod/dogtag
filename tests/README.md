@@ -37,7 +37,7 @@ SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
 
 Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the rows are removed by `test_seeds:cleanup` at the next global setup, not by the spec itself):
 
-- **`full-registration.spec.ts`** (`test_seeds:spa_registration`): sign up, welcome email, create a team, add racers, answer questions, mock pay the cart deposit and race registration, "You're in!", confirmation email.
+- The full sign-up to "You're in!" flow (welcome email, team, racers, questions, both fees, confirmation email) is `tests/e2e/registration.spec.ts`, run with `npm run e2e` (it uses the race the `race-setup` project creates, not a seed).
 - **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer in the crew picker, confirms the six details, and the slot is filled.
 - **`guided-tour.spec.ts`** (`test_seeds:past_racers`): the team page opens the guided tour by itself, `Next` walks the three stops (that race has no questions and no fee), `Done` ends it for good (it stays closed after a reload), and `Take the tour` replays it. It clears the `dogtag:tour:off` switch that `playwright.config.ts` sets for every other spec.
 - **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
@@ -76,29 +76,41 @@ npm run test:debug
 npm run test:ui
 ```
 
-### Against Staging or Production
+### Running against staging
 
-Set the `BASE_URL` environment variable:
+The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
 
-```bash
-# Against staging
-BASE_URL=https://dogtag-staging.herokuapp.com npm test
+| Key | Purpose |
+|---|---|
+| `E2E_EMAIL_BASE` | Test mailbox (`user@domain`). Racers are plus-addressed: `<user>+<runId>@<domain>` |
+| `E2E_IMAP_PASSWORD` | Mailbox password; needed only with `E2E_CHECK_EMAIL=1` |
+| `E2E_OPERATOR_EMAIL`, `E2E_OPERATOR_PASSWORD` | Staging **operator** login used to create the race. Never an admin |
+| `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `E2E_CLASSY_CAMPAIGN_ID` | Classy check; used only with `E2E_CHECK_CLASSY=1`, which then requires all three. The campaign must be on the allowlist in `target.ts` (867400) |
 
-# Against production (be careful!)
-BASE_URL=https://dogtag.herokuapp.com npm test
-```
-
-**Note:** Before running tests against deployed environments, seed the test data.
-All `test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern)
-abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set:
+The suite never logs in as an admin, so admin credentials do not belong in `.env.e2e`. `bin/rails staging:seed` (run on the staging dyno, not by the suite) reads its own `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD` and `SEED_PASSWORD` (optional `SEED_EMAIL_BASE`, `SEED_CLASSY_CAMPAIGN_ID`); pass those to that command, not to Playwright.
 
 ```bash
-# Staging (a Heroku staging app normally runs RAILS_ENV=production, so the flag is needed there too)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r staging
-
-# Production (use with caution!)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:basic -r heroku
+npm run e2e                  # local: mock payments, Mailpit (unit + registration projects)
+npm run e2e:stripe           # local: real Stripe test-card payment
+E2E_CHECK_EMAIL=1 npm run e2e:staging   # staging: Stripe test card, IMAP email check when E2E_CHECK_EMAIL=1
+E2E_CHECK_CLASSY=1 npm run e2e          # any target: also check (then delete) the Classy fundraising team
+E2E_TARGET=staging npx playwright test --project=live   # live IMAP and Classy specs
 ```
+
+The Classy check runs only with `E2E_CHECK_CLASSY=1`, on either target; having the credentials is not enough. It gives the race the Classy campaign, so the server under test creates a real Classy member for the racer and a real fundraising team (the suite deletes the team; the member stays). Locally, the Rails server then gets the Classy credentials from `.env.e2e`; without the flag the local race has no campaign, so the Classy keys in `.env` do nothing. A Rails server already running on the test port is reused as is, so stop it first.
+
+What the guard refuses (`tests/e2e/target.ts`; the lists are hard-coded and no environment variable extends them):
+
+- Any host that is not `localhost`, `127.0.0.1` or `dogtag-staging.herokuapp.com`, and always `dogtag.chiditarod.org`, `dogtag.herokuapp.com` and `*.chiditarod.org`. The `BASE_URL` host is parsed with `URL` (case, trailing dot, userinfo and ports are handled) and must belong to the chosen `E2E_TARGET`; staging must be https.
+- Paying when the race's Stripe publishable key does not start with `pk_test_` (this includes mock mode).
+- A Classy campaign other than the allowlisted one; only teams named `Test Team E2E *` are ever deleted.
+- A missing required variable (the error names the variable, never its value).
+
+The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race. The next run retires it first once it is two hours old (the UTC start time is in the name), so two runs at the same time leave each other's races alone. On staging, the registration project (like race setup and teardown) keeps no trace or video, because they would hold the test mailbox address and the racer's password; a failure screenshot can still show the address and stays in the local, gitignored `test-results/`. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
+
+### Seed tasks and deployed environments
+
+`test_seeds:*` tasks (including `cleanup`, which deletes by name/email pattern) abort when `RAILS_ENV=production` unless `ALLOW_TEST_SEEDS_IN_PRODUCTION=true` is set. Never run them against production, and the e2e suite never runs them against staging.
 
 ## Test Structure
 
@@ -137,8 +149,7 @@ After running tests, clean up test data:
 # Local
 bundle exec rails test_seeds:cleanup
 
-# Staging (needs the production opt-in flag, see above)
-heroku run ALLOW_TEST_SEEDS_IN_PRODUCTION=true rails test_seeds:cleanup -r staging
+# Staging: the registration suite retires its own race, no cleanup needed
 ```
 
 ## Debugging

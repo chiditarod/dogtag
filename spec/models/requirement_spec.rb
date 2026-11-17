@@ -21,9 +21,29 @@ describe Requirement do
   let (:team) { FactoryBot.create :team }
   let (:user) { FactoryBot.create :user }
 
-  describe '#allowed_types' do
-    it "outputs the ALLOWED_TYPES constant" do
-      expect(Requirement.allowed_types).to eq(Requirement::ALLOWED_TYPES)
+  describe ".allowed_types" do
+    it "offers only real payments in production" do
+      allow(Rails.env).to receive(:production?).and_return(true)
+      expect(Requirement.allowed_types).to eq([["Payment", "PaymentRequirement"]])
+    end
+
+    it "also offers mock payments outside production" do
+      expect(Requirement.allowed_types).to include(["Mock payment", "MockPaymentRequirement"])
+    end
+  end
+
+  describe "type validation" do
+    it "rejects a mock requirement in production" do
+      allow(Rails.env).to receive(:production?).and_return(true)
+      requirement = Requirement.new(name: "Fee", type: "MockPaymentRequirement", race: FactoryBot.create(:race))
+      expect(requirement).not_to be_valid
+      expect(requirement.errors[:type]).to be_present
+    end
+
+    it "rejects a blank type" do
+      requirement = Requirement.new(name: "Fee", type: "", race: FactoryBot.create(:race))
+      expect(requirement).not_to be_valid
+      expect(requirement.errors[:type]).to be_present
     end
   end
 

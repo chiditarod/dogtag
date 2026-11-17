@@ -161,14 +161,33 @@ email dogtag sends shows up in the Mailpit inbox.
 
 ### End-to-end tests (Playwright)
 
-    docker compose up -d db redis mailpit
-    npm ci && npx playwright install chromium
+Setup checklist for running the suite locally:
+
+- [ ] Ruby 3.4 and Node 24.x installed (`bundle install` done; see Setup above).
+- [ ] Docker running, with `docker compose up -d db redis mailpit` (Postgres, Redis, Mailpit on SMTP `1025`, UI at http://localhost:8025).
+- [ ] `.env` exists (`cp .env.example .env`) with `STRIPE_PUBLISHABLE_KEY` and `STRIPE_SECRET_KEY` set (test keys; Rails will not boot without them). `e2e:stripe` needs real `pk_test_`/`sk_test_` keys; mock-payment runs only need the variables to be present.
+- [ ] The development database exists and is migrated: `bundle exec rails db:create db:migrate` (Playwright boots Rails in **development**).
+- [ ] `npm ci` at the repo root, and `npx playwright install chromium`.
+- [ ] Nothing else is listening on port 3099 (or on `TEST_PORT`). A server already running there is reused as is, so a dev server started without the e2e variables breaks the run. Stop it first.
+- [ ] `VITE_DEV_SERVER` is unset in your shell and `.env` (Rails must serve the built SPA from `public/register`).
+- [ ] A frontend build is possible: global setup runs `npm --prefix frontend ci` if needed and builds the SPA; set `SPA_BUILD=skip` to reuse an existing `public/register`.
+- [ ] Optional: `.env.e2e` (gitignored) only for staging, IMAP or Classy runs. It is not needed for `npm run e2e` or `npm test`. If you do not intend to hit staging, leave it empty or absent.
+- [ ] Never point it at production: the host guard in `tests/e2e/target.ts` refuses anything but `localhost`, `127.0.0.1` and `dogtag-staging.herokuapp.com`.
+
+Then:
+
     npm test                                  # all specs; builds the SPA first (SPA_BUILD=skip to reuse the build)
     npx playwright test tests/spa             # only the SPA suite
+    npm run e2e                               # registration flow, local: mock payments, Mailpit
+    npm run e2e:headed                        # same as e2e, with a visible browser
+    npm run e2e:stripe                        # same, with a real Stripe test-card payment
+    npm run e2e:staging                       # against dogtag-staging (needs .env.e2e; see tests/README.md)
+    bin/check e2e                             # quiet run for CI-style output
 
 Playwright boots Rails with `SIDEKIQ_INLINE=true` (jobs run in-process, no
-Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. See
-`tests/README.md` for details.
+Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. Failures
+leave an HTML report (`npx playwright show-report`) and traces in
+`test-results/`. See `tests/README.md` for details.
 
 ## Registration SPA (React)
 

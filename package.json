@@ -8,6 +8,10 @@
   "scripts": {
     "heroku-postbuild": "npm --prefix frontend ci --include=dev && npm --prefix frontend run build && rm -rf frontend/node_modules",
     "test": "playwright test",
+    "e2e": "playwright test --project=unit --project=registration",
+    "e2e:headed": "playwright test --project=unit --project=registration --headed",
+    "e2e:stripe": "E2E_PAYMENTS=stripe playwright test --project=registration",
+    "e2e:staging": "E2E_TARGET=staging playwright test --project=unit --project=registration",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui"
@@ -22,8 +26,11 @@
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/dotenv": "^6.1.1",
+    "@types/mailparser": "3.9.0",
     "@types/node": "^20.10.0",
     "dotenv": "^17.2.3",
+    "imapflow": "2.12.1",
+    "mailparser": "3.14.5",
     "typescript": "^5.3.0"
   }
 }

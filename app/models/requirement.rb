@@ -19,15 +19,18 @@ class Requirement < ApplicationRecord
 
   belongs_to :race
   validates :race, presence: true
+  validates :type, inclusion: { in: ->(_) { Requirement.allowed_types.map(&:last) } }, allow_nil: true
 
   has_many :completed_requirements
   has_many :teams, :through => :completed_requirements
 
   ALLOWED_TYPES = [['Payment', 'PaymentRequirement']]
+  MOCK_TYPES = [["Mock payment", "MockPaymentRequirement"]]
 
   class << self
+    # Mock payments are never offered or accepted in production.
     def allowed_types
-      ALLOWED_TYPES
+      Rails.env.production? ? ALLOWED_TYPES : ALLOWED_TYPES + MOCK_TYPES
     end
   end
 

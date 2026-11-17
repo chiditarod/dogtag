@@ -182,6 +182,13 @@ describe RequirementsController do
         end.to change(Requirement, :count).by 1
       end
 
+      it "creates a MockPaymentRequirement when an admin picks the mock type" do
+        expect {
+          post :create, params: { race_id: req.race.id, requirement: { name: "Cart Deposit", type: "MockPaymentRequirement" } }
+        }.to change(MockPaymentRequirement, :count).by(1)
+        expect(response).to have_http_status(:redirect)
+      end
+
       context 'upon success' do
         before do
           post :create, params: { :race_id => req.race.id, :requirement => valid_req_hash }
@@ -200,6 +207,30 @@ describe RequirementsController do
           expect(assigns(:requirement).race).to eq(req.race)
         end
       end
+    end
+  end
+
+  context "[logged in as an operator]" do
+    let(:race) { FactoryBot.create :race }
+    let(:operator) { FactoryBot.create :operator_user }
+
+    before do
+      activate_authlogic
+      login_user! operator
+    end
+
+    it "opens the new-requirement form" do
+      get :new, params: { race_id: race.id }
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "creates a payment requirement and redirects to its edit page" do
+      expect {
+        post :create, params: { race_id: race.id, requirement: { name: "Cart Deposit", type: "PaymentRequirement" } }
+      }.to change(PaymentRequirement, :count).by(1)
+      requirement = race.requirements.last
+      expect(requirement.name).to eq("Cart Deposit")
+      expect(response).to redirect_to(edit_race_requirement_url(race_id: race.id, id: requirement.id))
     end
   end
 end

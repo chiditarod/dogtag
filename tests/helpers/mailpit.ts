@@ -3,6 +3,8 @@
  * Rails delivers dev/e2e mail over SMTP to localhost:1025; this reads it back
  * over Mailpit's HTTP API.
  */
+import { extractLinks } from './links';
+
 const MAILPIT_URL = process.env.MAILPIT_URL || 'http://localhost:8025';
 
 export interface ReceivedEmail {
@@ -47,11 +49,6 @@ async function search({ to, subjectIncludes }: WaitOptions): Promise<MailpitSumm
 /** How many messages to `to` (optionally with a subject fragment) are in the inbox now. */
 export async function countEmails(options: WaitOptions): Promise<number> {
   return (await search(options)).length;
-}
-
-function extractLinks(...bodies: string[]): string[] {
-  const urls = bodies.flatMap((body) => body.match(/https?:\/\/[^\s"'<>)]+/g) ?? []);
-  return [...new Set(urls.map((url) => url.replace(/&amp;/g, '&').replace(/[.,]+$/, '')))];
 }
 
 /** Polls until a matching message arrives (newest first), or throws after `timeoutMs`. */

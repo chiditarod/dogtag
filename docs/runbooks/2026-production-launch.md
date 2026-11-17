@@ -24,6 +24,11 @@ Config vars already set: `APP_HOST=dogtag.chiditarod.org`, `REGISTRATION_UI=spa`
 Still missing:
 - `DATABASE_URL` and `REDIS_URL`. Step 2 adds them.
 - Stripe live keys (**OWNER**, step 1).
+- `NPM_CONFIG_OMIT=dev`. It keeps root devDependencies (Playwright, `imapflow`,
+  `mailparser`) and their install scripts out of builds that can read production
+  config vars. It is set on `dogtag-staging`; once a staging build log shows no
+  `@playwright/test` or `imapflow` install and `/register` still loads, run
+  `heroku config:set NPM_CONFIG_OMIT=dev -a dogtag`.
 
 Unused leftovers (harmless): `LOG_LEVEL_RAILS`, `DOMAIN_NAME`, `GOOGLE_ANALYTICS`, `NEW_RELIC_APP_NAME`.
 
