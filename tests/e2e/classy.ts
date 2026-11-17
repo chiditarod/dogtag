@@ -76,6 +76,18 @@ export async function deleteFundraisingTeam(team: FundraisingTeam, campaignId: n
   if (!ALLOWED_CLASSY_CAMPAIGNS.includes(campaignId)) {
     throw new Error(`Refusing to delete Classy team ${team.id}: campaign ${campaignId} is not on the allowlist`);
   }
+  // Classy refuses (400) to delete a team that still has active fundraising pages,
+  // and the server creates the captain's page with the team, so remove the pages first.
+  const pagesPath = `/fundraising-teams/${team.id}/fundraising-pages`;
+  const pages = await classyFetch(pagesPath, { query: { per_page: '100' } });
+  if (!pages.ok) throw new Error(`Classy GET ${pagesPath} failed with status ${pages.status}`);
+  for (const page of ((await pages.json()) as { data?: Array<{ id: number }> }).data ?? []) {
+    const pagePath = `/fundraising-pages/${page.id}`;
+    const removed = await classyFetch(pagePath, { method: 'DELETE' });
+    if ([403, 404, 405].includes(removed.status)) return 'unsupported';
+    if (!removed.ok) throw new Error(`Classy DELETE ${pagePath} failed with status ${removed.status}`);
+  }
+
   const path = `/fundraising-teams/${team.id}`;
   const response = await classyFetch(path, { method: 'DELETE' });
   if ([403, 404, 405].includes(response.status)) return 'unsupported';
