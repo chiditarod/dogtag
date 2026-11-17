@@ -35,23 +35,7 @@ export function DialogSheet({
 
   useEffect(() => {
     const opener = openerRef.current;
-    function onKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === 'Escape' && !event.defaultPrevented && !event.isComposing) {
-        onCloseRef.current();
-      }
-      // Focus can fall to <body> (a click on plain text, or any click in
-      // Safari); Tab from there would walk the page behind the dialog.
-      const dialog = dialogRef.current;
-      if (event.key === 'Tab' && dialog && !dialog.contains(document.activeElement)) {
-        const items = focusableIn(dialog);
-        const target = event.shiftKey ? items[items.length - 1] : items[0];
-        if (target) {
-          event.preventDefault();
-          target.focus();
-        }
-      }
-    }
-    document.addEventListener('keydown', onKeyDown);
+    // The opener may be gone (adding a racer replaces its row).
     return () => {
       if (opener?.isConnected) opener.focus();
     };
