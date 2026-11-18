@@ -40,6 +40,8 @@ en:
               taken_on_team: is already on this team
             instagram:
               invalid_handle: should look like @handle (letters, numbers, periods and underscores)
+            tiktok:
+              invalid_handle: should look like @handle (2-24 letters, numbers, periods and underscores, not ending in a period)
   dogpen: dogPen
 
   create_failed: Create failed.
@@ -189,6 +191,7 @@ en:
     form:
       experience: How many years has this person participated at Chiditarod?
       instagram: Got Instagram? Add your handle
+      tiktok: Got TikTok? Add your handle
       phone: Mobile Phone
       we_will_sms: Please be accurate; we will send you important texts on race day
   teams:

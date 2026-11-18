@@ -167,6 +167,7 @@ export function CrewReview({
         </div>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4">
+        <p className="pb-2 text-sm text-navy/80">{t('roster.reviewIntro')}</p>
         <div className="grid grid-cols-[minmax(0,1fr)] gap-2 pb-3.5">
           {LINE_KEYS.map((key) => (
             <ReviewLine
@@ -243,9 +244,9 @@ interface BeforeChange {
 const lineFields = (key: LineKey): Array<keyof PersonDraft> =>
   key === 'name' ? ['first_name', 'last_name'] : [key];
 
-/** "Change name", but "Change ZIP code" and "Change Instagram". */
+/** "Change name", but "Change ZIP code", "Change Instagram" and "Change TikTok". */
 const changeTarget = (key: LineKey, label: string) =>
-  key === 'zipcode' || key === 'instagram' ? label : label.toLowerCase();
+  key === 'zipcode' || key === 'instagram' || key === 'tiktok' ? label : label.toLowerCase();
 
 interface ReviewLineProps {
   lineKey: LineKey;
@@ -485,6 +486,18 @@ function LineEditor({ lineKey, draft, race, error, onDraft }: LineEditorProps) {
             placeholder={t('roster.instagramPlaceholder')}
             value={draft.instagram}
             onChange={(event) => onDraft('instagram', event.target.value)}
+          />
+        </Field>
+      );
+    case 'tiktok':
+      return (
+        <Field label={t('roster.tiktokLine')} name="tiktok" error={errors}>
+          <Input
+            autoComplete="off"
+            autoCapitalize="none"
+            placeholder={t('roster.tiktokPlaceholder')}
+            value={draft.tiktok}
+            onChange={(event) => onDraft('tiktok', event.target.value)}
           />
         </Field>
       );

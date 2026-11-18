@@ -29,7 +29,7 @@ interface CrewPickerProps {
 }
 
 /**
- * Pick several past racers from a checklist, then confirm each person's six
+ * Pick several past racers from a checklist, then confirm each person's seven
  * details one at a time. Each person is saved as soon as they are confirmed.
  */
 export function CrewPicker({

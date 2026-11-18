@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Person < ApplicationRecord
-  before_validation :downcase_email, :normalize_instagram
+  before_validation :downcase_email, :normalize_instagram, :normalize_tiktok
 
   validates :first_name, :last_name, :email, :phone, :zipcode, presence: true
   validates :email, format: { :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i }
@@ -28,6 +28,11 @@ class Person < ApplicationRecord
   # at either end and never two in a row.
   validates :instagram, allow_nil: true, format: {
     with: /\A@(?!\.)(?!.*\.\.)[a-z0-9._]{1,30}(?<!\.)\z/, message: :invalid_handle
+  }
+  # TikTok allows letters, numbers, periods and underscores (2-24 characters),
+  # but the handle cannot end with a period.
+  validates :tiktok, allow_nil: true, format: {
+    with: /\A@[a-z0-9._]{2,24}(?<!\.)\z/, message: :invalid_handle
   }
   validates :zipcode, format: { :with => /\A\d{5}(-\d{4})?\z/, :message => "should be in the form 12345 or 12345-1234" }
   validates :phone, format: { :with => /\A\d{3}-\d{3}-\d{4}\z/, :message => "should be in the form 555-867-5309" }
@@ -59,6 +64,11 @@ class Person < ApplicationRecord
     # [[:space:]] also strips a non-breaking space pasted from a profile page.
     handle = instagram.to_s.gsub(/\A[[:space:]]+|[[:space:]]+\z/, "").downcase.delete_prefix("@")
     self.instagram = handle.empty? ? nil : "@#{handle}"
+  end
+
+  def normalize_tiktok
+    handle = tiktok.to_s.gsub(/\A[[:space:]]+|[[:space:]]+\z/, "").downcase.delete_prefix("@")
+    self.tiktok = handle.empty? ? nil : "@#{handle}"
   end
 
   def email_must_be_lowercase

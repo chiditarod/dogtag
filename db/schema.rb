@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_16_073159) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_18_075343) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,13 +40,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_16_073159) do
     t.string "last_name"
     t.string "email"
     t.string "phone"
-    t.string "twitter"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.bigint "team_id"
     t.integer "experience"
     t.string "zipcode", null: false
     t.text "instagram"
+    t.text "tiktok"
     t.index ["team_id"], name: "index_people_on_team_id"
   end
 
