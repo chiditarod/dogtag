@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_16_073159) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -66,6 +66,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_16_073159) do
     t.datetime "final_edits_close", precision: nil, null: false
     t.text "experience_labels", default: [], null: false, array: true
     t.text "time_zone", default: "America/Chicago", null: false
+    t.text "confirmation_text"
   end
 
   create_table "requirements", force: :cascade do |t|
@@ -117,6 +118,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_16_073159) do
     t.integer "assigned_team_number"
     t.integer "classy_id"
     t.integer "classy_fundraiser_page_id"
+    t.datetime "confirmation_seen_at"
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["user_id"], name: "index_teams_on_user_id"
   end
