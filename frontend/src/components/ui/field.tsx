@@ -21,6 +21,8 @@ interface FieldProps {
   error?: string[];
   /** Slot for an InfoTip rendered beside the label. */
   hint?: ReactNode;
+  /** Plain-text help shown under the label and announced with the control. */
+  help?: string;
   /** An input element (gets id/name/aria props injected) or a render function. */
   children: ReactElement | ((props: FieldControlProps) => ReactNode);
   className?: string;
@@ -41,17 +43,19 @@ export function Field({
   name,
   error,
   hint,
+  help,
   children,
   className = '',
 }: FieldProps) {
   const id = useId();
   const errorId = `${id}-error`;
+  const helpId = `${id}-help`;
   const hasError = !!error?.length;
   const control: FieldControlProps = {
     id,
     name,
     'aria-invalid': hasError ? true : undefined,
-    'aria-describedby': hasError ? errorId : undefined,
+    'aria-describedby': [help ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') || undefined,
   };
 
   return (
@@ -62,6 +66,11 @@ export function Field({
         </label>
         {hint}
       </div>
+      {help && (
+        <p id={helpId} className="text-sm text-navy/80">
+          {help}
+        </p>
+      )}
       {typeof children === 'function'
         ? children(control)
         : isValidElement(children)

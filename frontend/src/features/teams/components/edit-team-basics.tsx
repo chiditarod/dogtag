@@ -85,6 +85,7 @@ export function EditTeamBasics({ team }: { team: Team }) {
       </Field>
       <Field
         label={t('teams.description')}
+        help={t('teams.descriptionHelp')}
         name="description"
         error={fieldErrors.description}
       >
