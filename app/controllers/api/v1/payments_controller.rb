@@ -6,7 +6,6 @@ class Api::V1::PaymentsController < Api::V1::BaseController
     already_paid: :conflict,
     in_progress: :conflict,
     race_full: :conflict,
-    roster_incomplete: :unprocessable_entity,
     price_changed: :conflict,
     duplicate_charge: :conflict,
     card_error: :payment_required,
