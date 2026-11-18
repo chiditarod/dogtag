@@ -273,6 +273,19 @@ describe Team do
       expect(team.reload.new_team).to be(true)
     end
 
+    it "refreshes both teams when a racer moves between them" do
+      race = FactoryBot.create :race, people_per_team: 3
+      from = FactoryBot.create :team, race: race
+      to = FactoryBot.create :team, race: race
+      FactoryBot.create :person, team: from, experience: 0
+      veteran = FactoryBot.create :person, team: from, experience: 2
+      FactoryBot.create :person, team: to, experience: 0
+      expect([from.reload.new_team, to.reload.new_team]).to eq([false, true])
+
+      veteran.update!(team: to)
+      expect([from.reload.new_team, to.reload.new_team]).to eq([true, false])
+    end
+
     it "counts a blank experience as 0" do
       person = FactoryBot.create :person, team: team, experience: 2
       person.update_columns(experience: nil)
@@ -429,6 +442,13 @@ describe Team do
       header, *rows = Team.export(race.id)
       flags = rows.to_h { |row| [row[header.index("name")], row[header.index("new_team")]] }
       expect(flags).to eq(team.name => "no", new_team.name => "yes", empty_team.name => "")
+    end
+
+    it "puts the new team flag last so older columns keep their positions" do
+      header, team_row = Team.export(race.id)
+      expect(header.first(3)).to eq(%w[finalized number name])
+      expect(header.last).to eq("new_team")
+      expect(team_row.length).to eq(header.length)
     end
 
     context 'with finalized option' do

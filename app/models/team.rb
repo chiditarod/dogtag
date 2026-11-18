@@ -206,7 +206,6 @@ class Team < ApplicationRecord
         row = []
         row << team.finalized.to_s
         row << team.assigned_team_number.to_s
-        row << { true => "yes", false => "no" }.fetch(team.new_team, "")
 
         cols = [].concat(Team.attribute_names.select do |n|
           %w(name experience description).include?(n)
@@ -232,6 +231,10 @@ class Team < ApplicationRecord
           }
         end
 
+        # Appended last so the positions of every older column stay put for
+        # anyone reading the export by column.
+        row << { true => "yes", false => "no" }.fetch(team.new_team, "")
+
         memo << row
       end
     end
@@ -240,7 +243,6 @@ class Team < ApplicationRecord
       header = []
       header << 'finalized'
       header << 'number'
-      header << 'new_team'
 
       # team basics
       header.concat(Team.attribute_names.select do |n|
@@ -258,7 +260,7 @@ class Team < ApplicationRecord
         header.concat person_keys.map{ |k| "dawg_#{i}_#{k}" }
       end
 
-      header
+      header << 'new_team'
     end
   end
 end

@@ -129,7 +129,7 @@ describe RacesController do
           return nil unless column
           page.css("#waitlisted tr").select { |row| row.at_css("> td") }.to_h do |row|
             cells = row.css("> td")
-            [cells[4].at_css("h4").text.strip, cells[column].text.strip]
+            [row.at_css("h4").text.strip, cells[column].text.strip]
           end
         end
 
@@ -142,6 +142,12 @@ describe RacesController do
           veteran_team.update!(new_team_setting: "yes")
           get :registrations, params: { race_id: race.id }
           expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "Yes (set by admin)")
+        end
+
+        it "shows refunders the column" do
+          login_user! FactoryBot.create(:refunder_user)
+          get :registrations, params: { race_id: race.id }
+          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "No")
         end
 
         it "hides the column from racers" do
