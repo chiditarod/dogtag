@@ -14,11 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Team < ApplicationRecord
+  OTHER_BUDDIES_MAX_LENGTH = 1000
+
   validates :name, :description, presence: true
   validates :name, length: { :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less." }
   validates :name, uniqueness: { :scope => [:race], :message => 'should be unique per race' }
   validates :experience, presence: true
   validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
+  validates :other_buddies, length: { maximum: OTHER_BUDDIES_MAX_LENGTH }
   validates_with TeamValidator
 
   include Wisper.model
@@ -33,6 +36,13 @@ class Team < ApplicationRecord
   # A team must track which race requirements have been fulfilled.
   has_many :completed_requirements
   has_many :requirements, :through => :completed_requirements
+
+  # Teams this team asked to start near, and the picks other teams made of this one.
+  has_many :team_buddies, dependent: :destroy
+  has_many :buddy_teams, through: :team_buddies
+  has_many :named_by_buddies, class_name: "TeamBuddy", foreign_key: :buddy_team_id, dependent: :destroy
+
+  before_validation :normalize_other_buddies
 
   scope :all_finalized,   -> { where('teams.finalized = ?', true) }
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
@@ -191,7 +201,19 @@ class Team < ApplicationRecord
     waitlisted_teams.index(id) + 1
   end
 
+  # Names of the teams this team picked (as stored, alphabetical like the picker),
+  # then the free-text other_buddies when present.
+  def racing_with_names
+    picked = buddy_teams.sort_by { |t| [t.name.to_s.downcase, t.id] }.map(&:name)
+    picked << other_buddies if other_buddies.present?
+    picked
+  end
+
   private
+
+  def normalize_other_buddies
+    self.other_buddies = other_buddies.to_s.strip.presence
+  end
 
   def next_available_team_num
     teams = Team.where(race_id: race.id).where('teams.assigned_team_number IS NOT NULL')
@@ -221,8 +243,13 @@ class Team < ApplicationRecord
       value.start_with?("=", "+", "-", "@") ? "'#{value}" : value
     end
 
+    def racing_with_cell(team)
+      team.racing_with_names.map { |name| spreadsheet_safe(name) }.join("; ")
+    end
+
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams
+      teams = teams.preload(:buddy_teams)
       teams.inject([]) do |memo, team|
         row = []
         row << team.finalized.to_s
@@ -262,6 +289,8 @@ class Team < ApplicationRecord
         # anyone reading the export by column.
         row << { true => "yes", false => "no" }.fetch(team.new_team, "")
 
+        row << racing_with_cell(team)
+
         memo << row
       end
     end
@@ -288,6 +317,7 @@ class Team < ApplicationRecord
       end
 
       header << 'new_team'
+      header << 'racing_with'
     end
   end
 end

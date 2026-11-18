@@ -115,6 +115,7 @@ Rails.application.routes.draw do
         resources :people, only: [:create, :update, :destroy]
         resources :past_racers, only: [:index]
         resource :questions, only: [:show, :update]
+        resource :buddy_options, only: [:show]
         resources :payments, only: [:create]
         resource :confirmation, only: [:create]
         resources :mock_payments, only: [:create] if Rails.env.development? || Rails.env.test?

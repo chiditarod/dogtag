@@ -385,6 +385,18 @@ describe TeamsController do
             expect(Nokogiri::HTML(response.body).text).to match(/New team:\s+Yes/)
           end
 
+          it "shows staff who the team wants to race with" do
+            friend = FactoryBot.create :team, race: team.race, name: "Friendly Folks"
+            team.update!(buddy_teams: [friend], other_buddies: "Outsiders")
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).to match(/Racing with:\s+Friendly Folks; Outsiders/)
+          end
+
+          it "omits the line when the team has no picks" do
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).not_to include("Racing with")
+          end
+
           it "hides the override from the captain" do
             login_user! normal_user
             get :edit, params: { id: team.id }

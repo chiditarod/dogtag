@@ -56,6 +56,7 @@ All email is sent through MXRoute over SMTP (the `SMTP_*` settings above). Every
 Each race has a `jsonform` field. This field can contain a [jsonform](https://github.com/jsonform/jsonform) schema that is consumed and rendered as questions to the end-user during their team signup. Their responses are then saved into their team record and are included when exporting a CSV.
 
 - Answer keys are taken from the race's schema, so new questions need no code changes.
+- Racers also pick the teams they want to race with (and an optional free-text "other") in the SPA's Questions card. The CSV export has a final `racing_with` column and the team page shows "Racing with" to admins and operators. These are not part of the jsonform schema.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
 ## New teams

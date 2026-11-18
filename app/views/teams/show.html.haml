@@ -41,6 +41,11 @@
           %strong New team:
           = new_team_label(@team)
 
+      - if current_user.is_any_of?(:admin, :operator) && @team.racing_with_names.any?
+        %p
+          %strong Racing with:
+          = @team.racing_with_names.join("; ")
+
       - if @team.race.open_for_registration?
         %i.lead.text-success
           = t('.can_change_until', :date => deadline_readable(@race.local(@race.registration_close)))

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_18_180042) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -100,6 +100,16 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
     t.index ["team_id"], name: "index_sent_emails_on_team_id"
   end
 
+  create_table "team_buddies", force: :cascade do |t|
+    t.bigint "team_id", null: false
+    t.bigint "buddy_team_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["buddy_team_id"], name: "index_team_buddies_on_buddy_team_id"
+    t.index ["team_id", "buddy_team_id"], name: "index_team_buddies_on_team_id_and_buddy_team_id", unique: true
+    t.index ["team_id"], name: "index_team_buddies_on_team_id"
+  end
+
   create_table "teams", force: :cascade do |t|
     t.string "name"
     t.bigint "user_id"
@@ -121,6 +131,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
     t.boolean "new_team"
     t.boolean "new_team_overridden"
     t.datetime "confirmation_seen_at"
+    t.text "other_buddies"
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["user_id"], name: "index_teams_on_user_id"
   end
@@ -158,4 +169,6 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
     t.integer "classy_id"
   end
 
+  add_foreign_key "team_buddies", "teams", column: "buddy_team_id", on_delete: :cascade
+  add_foreign_key "team_buddies", "teams", on_delete: :cascade
 end
