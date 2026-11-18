@@ -66,7 +66,7 @@ describe ChargesController do
 
       context 'when stripe cannot find or create a customer' do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           expect(Customer).to receive(:get).and_return nil
@@ -108,7 +108,7 @@ describe ChargesController do
 
       context "when Charge is successful" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         let(:customer) do
           Stripe::Customer.create({
@@ -175,7 +175,7 @@ describe ChargesController do
 
       context "when the requirement has no active price" do
         let(:requirement) { FactoryBot.create :payment_requirement }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           expect(Stripe::Charge).not_to receive(:create)
@@ -194,7 +194,7 @@ describe ChargesController do
 
       context "when registration is closed" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           requirement.race.update_column(:registration_close, 1.week.ago)
@@ -214,7 +214,7 @@ describe ChargesController do
 
       context "when the posted amount no longer matches the active price" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           expect(Customer).not_to receive(:get)
@@ -234,7 +234,7 @@ describe ChargesController do
 
       context "when the race is full and the team is waitlisted" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           requirement.race.update_column(:max_teams, 0)
@@ -253,9 +253,29 @@ describe ChargesController do
         include_examples "redirects to prior url"
       end
 
+      context "when the team still needs racers" do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+
+        before do
+          expect(Customer).not_to receive(:get)
+          expect(Stripe::Charge).not_to receive(:create)
+          session[:prior_url] = '/prior_url/'
+          post :create, params: { amount: 5000, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+        end
+
+        it "flashes that payment is locked until the roster is full and does not charge" do
+          expect(flash[:error]).to eq(I18n.t("charges.roster_incomplete"))
+          expect(CompletedRequirement.count).to eq(0)
+        end
+
+        include_examples "redirects to prior url"
+      end
+
       context "when the team belongs to another user" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }
 
         it "raises AccessDenied and does not charge" do
           session[:prior_url] = '/prior_url/'
@@ -272,7 +292,7 @@ describe ChargesController do
       context "when the user may edit the team as an operator" do
         let(:the_user) { FactoryBot.create :operator_user }
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }
 
         before { StripeMock.start }
         after { StripeMock.stop }
@@ -289,7 +309,7 @@ describe ChargesController do
 
       context "when the requirement belongs to another race" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user }
 
         before do
           expect(Customer).not_to receive(:get)
@@ -309,7 +329,7 @@ describe ChargesController do
 
       context "when the requirement is already paid for the team" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
 
         before do
           requirement.complete(team.id, the_user, { 'charge_id' => 'ch_1', 'amount' => 5000 })
@@ -344,7 +364,7 @@ describe ChargesController do
         after { StripeMock.stop }
 
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
-        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+        let(:team) { FactoryBot.create :team, :with_enough_people, user: the_user, race: requirement.race }
         let(:stripe_metadata) { { team_id: team.id, requirement_id: requirement.id }.to_json }
 
         let(:customer) do
