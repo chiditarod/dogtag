@@ -15,7 +15,7 @@ export const en = {
   'feedback.cancel': 'Cancel',
   'feedback.thanks': 'Thank you. We got your message.',
   'feedback.close': 'Close',
-  'feedback.rateLimited': 'You have sent a lot of reports. Please wait a minute and try again.',
+  'feedback.rateLimited': 'You have sent several reports recently. Please try again in about an hour.',
   'feedback.discardPrompt': 'Discard your message?',
   'feedback.discard': 'Discard',
   'feedback.keepWriting': 'Keep writing',

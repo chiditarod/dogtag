@@ -18,6 +18,18 @@ beforeEach(() => {
 afterEach(() => clearCsrfToken());
 
 describe('FeedbackLink', () => {
+  it('is not offered to someone who is logged out', async () => {
+    server.use(
+      http.get('/api/v1/me', () =>
+        HttpResponse.json({ error: 'not_authenticated', errors: {} }, { status: 401 }),
+      ),
+    );
+    renderApp('/');
+
+    expect(await screen.findByRole('link', { name: t('layout.login') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('feedback.open') })).not.toBeInTheDocument();
+  });
+
   it('sends the message with the page and browser', async () => {
     let body: unknown;
     server.use(

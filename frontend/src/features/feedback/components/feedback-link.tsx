@@ -2,13 +2,16 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useMatches } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
+import { useMe } from '@/features/auth/api/use-me';
 import { useFeedback } from '@/features/feedback/api/use-feedback';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 
-/** Footer link that opens a dialog for telling staff about a problem. */
+/** Footer link that opens a dialog for telling staff about a problem. Only shown when logged in. */
 export function FeedbackLink() {
+  const { data: user } = useMe();
   const [open, setOpen] = useState(false);
+  if (!user) return null;
   return (
     <>
       <button
