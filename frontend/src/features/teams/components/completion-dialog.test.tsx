@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { setTeamChecklist } from '@/features/teams/api/use-team';
+import { TOUR_OFF_KEY } from '@/features/tour/storage';
 import { clearCsrfToken } from '@/lib/api-client';
 import { buildChecklist, buildTeam, user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -122,13 +123,33 @@ describe('CompletionDialog', () => {
     expect(second).not.toHaveTextContent('fundraising');
   });
 
-  it('does not render the tour while the dialog is open', async () => {
+  it('Clicking the backdrop posts once and closes', async () => {
     serve();
     renderApp('/teams/9');
-    await screen.findByRole('dialog', { name: NAME });
-    await userEvent.keyboard('{Escape}');
+    const dialog = await screen.findByRole('dialog', { name: NAME });
+    await userEvent.click(dialog.parentElement as HTMLElement);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    await userEvent.click(screen.getByRole('button', { name: /take the tour/i }));
-    expect(await screen.findByRole('dialog')).not.toHaveAccessibleName(NAME);
+    await waitFor(() => expect(posts).toBe(1));
+  });
+
+  it('ends an open tour when the confirmation appears and does not bring it back', async () => {
+    const team = serve({ finalized: false, show_confirmation: false });
+    localStorage.removeItem(TOUR_OFF_KEY);
+    const { queryClient } = renderApp('/teams/9');
+    await screen.findByRole('dialog', { name: /./ });
+    expect(screen.queryByRole('dialog', { name: NAME })).toBeNull();
+    act(() => {
+      setTeamChecklist(queryClient, 9, {
+        ...team.checklist,
+        finalized: true,
+        show_confirmation: true,
+      });
+    });
+    const dialog = await screen.findByRole('dialog', { name: NAME });
+    expect(screen.getAllByRole('dialog')).toEqual([dialog]);
+    await userEvent.click(screen.getByRole('button', { name: 'Got it' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(posts).toBe(1));
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

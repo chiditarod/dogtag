@@ -19,7 +19,7 @@ export function CompletionDialog({ team, onClose }: CompletionDialogProps) {
   const titleId = useId();
   const { checklist, race } = team;
   return (
-    <DialogSheet labelledBy={titleId} onClose={onClose}>
+    <DialogSheet labelledBy={titleId} onClose={onClose} closeOnBackdrop>
       <div className="px-4 pb-2.5 pt-3.5">
         <h2
           id={titleId}

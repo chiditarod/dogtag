@@ -8,6 +8,8 @@ interface DialogSheetProps {
   onClose: () => void;
   /** Extra classes for the dialog box, e.g. a fixed height. */
   className?: string;
+  /** Clicking the dimmed area outside the dialog also calls `onClose`. */
+  closeOnBackdrop?: boolean;
   /** The head, scrolling body and pinned foot, laid out as a flex column. */
   children: ReactNode;
 }
@@ -22,6 +24,7 @@ export function DialogSheet({
   labelledBy,
   onClose,
   className = '',
+  closeOnBackdrop = false,
   children,
 }: DialogSheetProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -42,7 +45,16 @@ export function DialogSheet({
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-navy/50 sm:items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-40 flex items-end justify-center bg-navy/50 sm:items-center sm:p-4"
+      onClick={
+        closeOnBackdrop
+          ? (event) => {
+              if (event.target === event.currentTarget) onClose();
+            }
+          : undefined
+      }
+    >
       <div
         ref={dialogRef}
         role="dialog"

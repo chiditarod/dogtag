@@ -73,6 +73,13 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
     }
   }, [tourOpen]);
 
+  // The confirmation takes over: end an open tour rather than hide it, so it
+  // does not come back at stop 1 over a finalized team.
+  const confirmationShowing = !!team?.checklist.show_confirmation && !dismissed;
+  useEffect(() => {
+    if (confirmationShowing) setTourOpen(false);
+  }, [confirmationShowing]);
+
   function endTour() {
     if (me) markSeen(me.id);
     focusReplayOnClose.current = true;
