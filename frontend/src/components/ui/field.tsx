@@ -51,11 +51,12 @@ export function Field({
   const errorId = `${id}-error`;
   const helpId = `${id}-help`;
   const hasError = !!error?.length;
+  const describedBy = [help && helpId, hasError && errorId].filter(Boolean).join(' ');
   const control: FieldControlProps = {
     id,
     name,
     'aria-invalid': hasError ? true : undefined,
-    'aria-describedby': [help ? helpId : null, hasError ? errorId : null].filter(Boolean).join(' ') || undefined,
+    'aria-describedby': describedBy || undefined,
   };
 
   return (
