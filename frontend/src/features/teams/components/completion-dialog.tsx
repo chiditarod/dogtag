@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { ConfirmationText } from '@/features/teams/components/confirmation-text';
@@ -17,13 +17,18 @@ interface CompletionDialogProps {
 /** One-time "you're fully registered" confirmation for the captain. */
 export function CompletionDialog({ team, onClose }: CompletionDialogProps) {
   const titleId = useId();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  // DialogSheet leaves initial focus to its children.
+  useEffect(() => titleRef.current?.focus(), []);
   const { checklist, race } = team;
   return (
     <DialogSheet labelledBy={titleId} onClose={onClose} closeOnBackdrop>
       <div className="px-4 pb-2.5 pt-3.5">
         <h2
           id={titleId}
-          className="font-display text-[22px] font-semibold leading-tight [overflow-wrap:anywhere]"
+          ref={titleRef}
+          tabIndex={-1}
+          className="font-display text-[22px] font-semibold leading-tight [overflow-wrap:anywhere] focus:outline-none"
         >
           {t('confirm.title')}
         </h2>
@@ -39,7 +44,7 @@ export function CompletionDialog({ team, onClose }: CompletionDialogProps) {
             date: formatDeadline(race.registration_close, race.time_zone),
           })}
         </p>
-        {/* #311: the "add to calendar" link will go here. */}
+        {/* #311: fundraising terms-of-service guidance for captains will go here. */}
         <p className="text-sm [overflow-wrap:anywhere]">
           {t('confirm.help')}{' '}
           <a href={`mailto:${HELP_EMAIL}`} className="text-link underline">

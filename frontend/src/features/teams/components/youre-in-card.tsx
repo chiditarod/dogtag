@@ -33,6 +33,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
           {checklist.team_number}
         </p>
       )}
+      {/* #311: fundraising terms-of-service guidance for captains will go here. */}
       <FundraisingStatus checklist={checklist} />
     </ChecklistCard>
   );

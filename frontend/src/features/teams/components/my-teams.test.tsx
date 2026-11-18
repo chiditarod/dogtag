@@ -31,7 +31,7 @@ describe('MyTeams', () => {
     expect(within(first).getByText('2 things left')).toBeInTheDocument();
     expect(within(first).getByRole('link')).toHaveAttribute('href', '/register/teams/9');
     const second = screen.getByText('Done Team').closest('li')!;
-    expect(within(second).getByText("You're in! Team #42")).toBeInTheDocument();
+    expect(within(second).getByText("You're fully registered! Team #42")).toBeInTheDocument();
   });
 
   it('uses the singular for one thing left', async () => {

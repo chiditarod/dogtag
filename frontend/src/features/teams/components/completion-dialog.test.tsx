@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -61,6 +61,13 @@ describe('CompletionDialog', () => {
       'href',
       'mailto:dogtag@chiditarod.org',
     );
+  });
+
+  it('moves focus to the heading when it opens', async () => {
+    serve();
+    renderApp('/teams/9');
+    const dialog = await screen.findByRole('dialog', { name: NAME });
+    expect(within(dialog).getByRole('heading', { name: NAME })).toHaveFocus();
   });
 
   it('does not open when show_confirmation is false', async () => {

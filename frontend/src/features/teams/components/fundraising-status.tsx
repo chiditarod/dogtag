@@ -3,7 +3,7 @@ import type { Checklist } from '@/types/api';
 
 interface FundraisingStatusProps {
   checklist: Checklist;
-  /** Header variant: leaves out the pending hint. */
+  /** Header and dialog variant: plain text without the hint; only the full variant is a live region. */
   compact?: boolean;
 }
 
@@ -22,7 +22,7 @@ export function FundraisingStatus({ checklist, compact = false }: FundraisingSta
   }
   if (!checklist.classy_expected) return null;
   return (
-    <div role="status" className="space-y-1 text-sm">
+    <div role={compact ? undefined : 'status'} className="space-y-1 text-sm">
       <p>{t('team.fundraisingPending')}</p>
       {!compact && <p className="text-navy/70">{t('team.fundraisingPendingHint')}</p>}
     </div>

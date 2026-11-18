@@ -28,6 +28,9 @@ export function DialogSheet({
   children,
 }: DialogSheetProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  // A drag that starts inside the dialog and ends on the dimmed area also
+  // fires a click there; only a press that began on the backdrop closes.
+  const pressStartedOnBackdrop = useRef(false);
   useFocusTrap(dialogRef, onClose);
   // Read while rendering: children focus themselves in their own effects,
   // which run before this component's.
@@ -38,19 +41,38 @@ export function DialogSheet({
 
   useEffect(() => {
     const opener = openerRef.current;
-    // The opener may be gone (adding a racer replaces its row).
     return () => {
-      if (opener?.isConnected) opener.focus();
+      // The opener may be gone (adding a racer replaces its row) or may never
+      // have been a control; fall back to the page's main heading so focus
+      // does not drop to <body>.
+      if (opener?.isConnected && opener !== document.body) {
+        opener.focus();
+        return;
+      }
+      const heading = document.querySelector<HTMLElement>('h1');
+      if (!heading) return;
+      if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1;
+      heading.focus();
     };
   }, []);
 
   return createPortal(
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-navy/50 sm:items-center sm:p-4"
+      onPointerDown={
+        closeOnBackdrop
+          ? (event) => {
+              pressStartedOnBackdrop.current = event.target === event.currentTarget;
+            }
+          : undefined
+      }
       onClick={
         closeOnBackdrop
           ? (event) => {
-              if (event.target === event.currentTarget) onClose();
+              if (event.target === event.currentTarget && pressStartedOnBackdrop.current) {
+                onClose();
+              }
+              pressStartedOnBackdrop.current = false;
             }
           : undefined
       }

@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { ChicagoStar } from '@/components/ui/chicago-star';
+import { t } from '@/locales/en';
 
 type Steps = [boolean, boolean, boolean, boolean];
 
@@ -33,6 +34,16 @@ export function FlagProgress({ steps, label, starLabels }: FlagProgressProps) {
     setShown(current);
   }
   const { landed, salute } = current;
+  const valueText = [
+    [true, t('team.stars.done')],
+    [false, t('team.stars.todo')],
+  ]
+    .map(([want, word]) => {
+      const names = starLabels.filter((_, i) => steps[i] === want);
+      return names.length ? `${names.join(', ')} ${word as string}` : null;
+    })
+    .filter(Boolean)
+    .join('; ');
 
   return (
     <div
@@ -42,6 +53,7 @@ export function FlagProgress({ steps, label, starLabels }: FlagProgressProps) {
       aria-valuemin={0}
       aria-valuemax={4}
       aria-valuenow={steps.filter(Boolean).length}
+      aria-valuetext={valueText}
       className={`rounded-lg border border-flag bg-white py-1.5 ${salute ? 'flag-salute' : ''}`.trim()}
     >
       <div className="h-[13px] bg-flag lg:h-4" />

@@ -119,6 +119,26 @@ describe('FlagProgress', () => {
     ]);
   });
 
+  it('summarises done and to-do stars for assistive technology', () => {
+    const { rerender } = render(
+      <FlagProgress steps={[true, true, false, false]} label="Progress" starLabels={labels} />,
+    );
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuetext',
+      'Team, Racers done; Questions, Fee to do',
+    );
+    rerender(<FlagProgress steps={[true, true, true, true]} label="Progress" starLabels={labels} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuetext',
+      'Team, Racers, Questions, Fee done',
+    );
+    rerender(<FlagProgress steps={[false, false, false, false]} label="Progress" starLabels={labels} />);
+    expect(screen.getByRole('progressbar')).toHaveAttribute(
+      'aria-valuetext',
+      'Team, Racers, Questions, Fee to do',
+    );
+  });
+
   it('draws the approved star geometry', () => {
     render(<FlagProgress steps={[true, false, false, false]} label="Progress" starLabels={labels} />);
     const points = stars()[0].querySelector('polygon')!.getAttribute('points')!;
