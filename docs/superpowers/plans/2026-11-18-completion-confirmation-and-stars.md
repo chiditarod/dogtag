@@ -202,13 +202,13 @@
 
 ### Task 8: Racers card collapses when the team finishes
 
-The roster already starts collapsed (first names + `Show racers`) when it is full on load (`roster-card.tsx:51,236-255`). This task makes it collapse when the team becomes finalized during the visit and adds the chevron/expanded state.
+The roster already starts collapsed (first names + `Show racers`) when it is full on load (`roster-card.tsx:51,236-255`). **Keep that behavior exactly as it is (owner requirement):** a full roster on load still starts collapsed whether or not the team is finalized, and a spot opening still expands it. This task only adds: collapsing when the team becomes finalized during the visit, and the chevron/expanded state on the toggle.
 
 **Files:**
 - Modify: `frontend/src/features/roster/components/roster-card.tsx`, `frontend/src/locales/en.ts`
 - Test: `frontend/src/features/roster/components/roster-card.test.tsx`
 
-- [ ] **Step 1: Write failing tests:** a full, unfinalized roster that becomes `finalized: true` (cache update) collapses to the names line; the toggle is a button with `aria-expanded="false"` and a chevron icon (`aria-hidden`); expanding sets `aria-expanded="true"` and a `Hide racers` button collapses it again (only when the roster is full).
+- [ ] **Step 1: Write failing tests** (existing collapse-on-load tests in `roster-card.test.tsx` must stay unchanged and green; add one if none covers "full, unfinalized roster on load starts collapsed"): a full, unfinalized roster that becomes `finalized: true` (cache update) collapses to the names line; the toggle is a button with `aria-expanded="false"` and a chevron icon (`aria-hidden`); expanding sets `aria-expanded="true"` and a `Hide racers` button collapses it again (only when the roster is full).
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Implement** with a previous-finalized ref (same render-time pattern as the existing `collapsed && hasEmptySlot` adjustment). Key `roster.hideRacers` = `Hide racers`.
 - [ ] **Step 4: Run** Vitest. Expected: PASS.
