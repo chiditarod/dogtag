@@ -178,13 +178,21 @@ describe TeamChecklist do
   end
 
   describe "confirmation" do
-    it "exposes the race's confirmation HTML" do
+    it "exposes the race's confirmation HTML once the team is finalized" do
       race.update!(confirmation_text: "**Hi**")
+      team.update_columns(finalized: true)
       expect(checklist[:confirmation_html]).to include("<strong>Hi</strong>")
       expect(checklist[:confirmation_html]).to be_a(String)
     end
 
+    it "withholds the confirmation HTML until the team is finalized" do
+      race.update!(confirmation_text: "**Hi**")
+      expect(ConfirmationText).not_to receive(:to_html)
+      expect(checklist[:confirmation_html]).to be_nil
+    end
+
     it "is nil when the race has no confirmation text" do
+      team.update_columns(finalized: true)
       expect(checklist[:confirmation_html]).to be_nil
     end
 

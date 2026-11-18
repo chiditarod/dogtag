@@ -41,6 +41,33 @@ RSpec.describe ConfirmationText do
       end
     end
 
+    it "drops mixed-case, entity-encoded and data: hrefs but keeps the text" do
+      [
+        "javascript:alert(1)",
+        "JaVaScRiPt:alert(1)",
+        "&#106;avascript:alert(1)",
+        "&#x6A;avascript:alert(1)",
+        "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg=="
+      ].each do |url|
+        html = described_class.to_html("[label](#{url})")
+        expect(html).not_to match(/href/i)
+        expect(html).not_to match(/javascript|data:/i)
+        expect(html).to include("label")
+      end
+    end
+
+    it "drops the href of a raw HTML anchor with a dangerous scheme" do
+      html = described_class.to_html('<a href="&#106;avascript:alert(1)">raw</a>')
+      expect(html).not_to include("href")
+      expect(html).not_to match(/javascript/i)
+    end
+
+    it "drops the href of a relative link and keeps its text" do
+      html = described_class.to_html("[docs](../docs/start)")
+      expect(html).not_to include("href")
+      expect(html).to include("docs")
+    end
+
     it "is nil when blank" do
       expect(described_class.to_html(nil)).to be_nil
       expect(described_class.to_html("  \n")).to be_nil

@@ -87,6 +87,18 @@ describe Race do
     end
   end
 
+  describe "confirmation text" do
+    it "is invalid when longer than the maximum" do
+      long = "a" * (Race::CONFIRMATION_TEXT_MAX_LENGTH + 1)
+      race = FactoryBot.build(:race, confirmation_text: long)
+
+      expect(race).not_to be_valid
+      expect(race.errors[:confirmation_text].first).to include("maximum is #{Race::CONFIRMATION_TEXT_MAX_LENGTH}")
+      expect(FactoryBot.build(:race, confirmation_text: "a" * Race::CONFIRMATION_TEXT_MAX_LENGTH)).to be_valid
+      expect(FactoryBot.build(:race, confirmation_text: nil)).to be_valid
+    end
+  end
+
   describe "#time_zone" do
     it "defaults to America/Chicago" do
       expect(Race.new.time_zone).to eq("America/Chicago")

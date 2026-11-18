@@ -29,6 +29,5 @@ module ConfirmationText
     fragment = Loofah.html5_fragment(clean)
     fragment.scrub!(HREF_SCRUBBER)
     fragment.to_s.html_safe
-
   end
 end

@@ -126,7 +126,14 @@ describe UserMailer do
     end
 
     it "omits the text block when blank" do
+      with_text = UserMailer.team_finalized_email(team.user, team).html_part.body.decoded
       race.update!(confirmation_text: nil)
+      expect(with_text).to include("Read the")
+      expect(html.scan("<div").size).to eq(with_text.scan("<div").size - 1)
+      expect(html).not_to include("example.com/g")
+      expect(html).not_to include("Read the")
+      expect(text).not_to include("Read the")
+      expect(text).not_to include("example.com/g")
       expect(html).to include(RegistrationUi.team_url(team))
       expect(html).to include("dogtag@chiditarod.org")
       expect(text).to include("dogtag@chiditarod.org")

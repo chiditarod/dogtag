@@ -34,6 +34,10 @@ en:
   activerecord:
     errors:
       models:
+        race:
+          attributes:
+            confirmation_text:
+              too_long_text: is too long (maximum is %{count} characters); shorten it to keep the confirmation email readable
         person:
           attributes:
             email:

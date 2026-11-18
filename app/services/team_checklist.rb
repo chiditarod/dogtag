@@ -22,7 +22,7 @@ class TeamChecklist
       classy_fundraising_url: team.classy_fundraising_url,
       # Only races with a Classy campaign get a fundraising page, so only they should wait for one.
       classy_expected: race.classy_campaign_id.present?,
-      confirmation_html: ConfirmationText.to_html(race.confirmation_text)&.to_str,
+      confirmation_html: confirmation_html,
       show_confirmation: show_confirmation?
     }
   end
@@ -30,6 +30,11 @@ class TeamChecklist
   private
 
   attr_reader :team, :race, :viewer
+
+  # The SPA shows the text only once the team is finalized, so render it only then.
+  def confirmation_html
+    ConfirmationText.to_html(race.confirmation_text)&.to_str if team.finalized
+  end
 
   # Only the captain is asked, and only until they have closed the confirmation once.
   def show_confirmation?
