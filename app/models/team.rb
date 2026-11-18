@@ -38,6 +38,11 @@ class Team < ApplicationRecord
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
   scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
 
+  # Library filing order, so "The Secret Gentlemen" sorts under S: "Secret Gentlemen, The".
+  def library_name
+    name.to_s.sub(/\A[[:space:]]*(?<the>the)[[:space:]]+(?<rest>[^[:space:]].*?)[[:space:]]*\z/i) { "#{$~[:rest]}, #{$~[:the]}" }
+  end
+
   # A team that never finished registering: nothing paid and not finalized. Only these can be deleted
   # by their captain or by operators.
   def deletable?
@@ -199,7 +204,6 @@ class Team < ApplicationRecord
 
 
   class << self
-    # todo: spec
     def export(race_id, options = {})
       race = Race.find(race_id)
       person_keys = %w(first_name last_name email phone instagram experience tiktok)
@@ -212,6 +216,11 @@ class Team < ApplicationRecord
 
     private
 
+    # Spreadsheet apps evaluate cells that start with these characters as formulas.
+    def spreadsheet_safe(value)
+      value.start_with?("=", "+", "-", "@") ? "'#{value}" : value
+    end
+
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams
       teams.inject([]) do |memo, team|
@@ -223,8 +232,14 @@ class Team < ApplicationRecord
           %w(name experience description).include?(n)
         end)
 
-        # team basics
-        row.concat cols.map{ |n| n == "experience" ? race.experience_label(team[n]) : team[n] }
+        # team basics (the name uses library rules so "The" teams don't all file under T)
+        row.concat(cols.map { |n|
+          case n
+          when "experience" then race.experience_label(team[n])
+          when "name" then spreadsheet_safe(team.library_name)
+          else team[n]
+          end
+        })
 
         # race-specific details
         row.concat race.question_fields.map{ |n| team.jsonform_value(n) }

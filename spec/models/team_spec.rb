@@ -395,6 +395,58 @@ describe Team do
     end
   end
 
+  describe '#library_name' do
+    def library_name(name)
+      FactoryBot.build(:team, name: name).library_name
+    end
+
+    it "moves a leading The to the end" do
+      expect(library_name("The Secret Gentlemen")).to eq("Secret Gentlemen, The")
+    end
+
+    it "returns an empty string for a nil or empty name" do
+      expect(library_name(nil)).to eq("")
+      expect(library_name("")).to eq("")
+    end
+
+    it "leaves a lone The alone" do
+      expect(library_name("The")).to eq("The")
+    end
+
+    it "only moves The when it is a whole word" do
+      expect(library_name("Theodore's Team")).to eq("Theodore's Team")
+      expect(library_name("There Be Dragons")).to eq("There Be Dragons")
+    end
+
+    it "leaves names that do not start with The alone" do
+      expect(library_name("Cart Pushers")).to eq("Cart Pushers")
+      expect(library_name("Bring The Noise")).to eq("Bring The Noise")
+    end
+
+    it "only moves the first The" do
+      expect(library_name("The The")).to eq("The, The")
+    end
+
+    it "collapses surrounding and repeated whitespace around The" do
+      expect(library_name("the  lonely carts")).to eq("lonely carts, the")
+      expect(library_name("  The Bold Ones  ")).to eq("Bold Ones, The")
+    end
+
+    it "keeps the case of The as typed" do
+      expect(library_name("the lonely carts")).to eq("lonely carts, the")
+      expect(library_name("THE Bold Ones")).to eq("Bold Ones, THE")
+    end
+
+    it "handles a non-breaking space after The and non-ASCII names" do
+      expect(library_name("The\u00A0Caf\u00E9 Crew")).to eq("Caf\u00E9 Crew, The")
+      expect(library_name("The \u00C9toiles")).to eq("\u00C9toiles, The")
+    end
+
+    it "keeps back-reference text in a name literally" do
+      expect(library_name("The \\1 Crew")).to eq("\\1 Crew, The")
+    end
+  end
+
   describe '#export' do
     let(:race) { FactoryBot.create :race }
     let!(:team) { FactoryBot.create :team, :with_enough_people, race: race }
@@ -413,6 +465,39 @@ describe Team do
       race.people_per_team.times do |i|
         expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_instagram", "dawg_#{i}_experience", "dawg_#{i}_tiktok")
       end
+    end
+
+    it "writes the team name in library order to the name column" do
+      team.update_column(:name, "The Secret Gentlemen")
+      header, row = Team.export(race.id)
+      expect(row[header.index("name")]).to eq("Secret Gentlemen, The")
+    end
+
+    it "leaves the stored team name unchanged" do
+      team.update_column(:name, "The Secret Gentlemen")
+      Team.export(race.id)
+      expect(team.reload.name).to eq("The Secret Gentlemen")
+    end
+
+    it "keeps spreadsheets from evaluating names that start with a formula character" do
+      {
+        "=SUM(A1)" => "'=SUM(A1)",
+        "+1 Cart" => "'+1 Cart",
+        "-Dash" => "'-Dash",
+        "@home" => "'@home",
+        "Plain Team" => "Plain Team"
+      }.each do |name, written|
+        team.update_column(:name, name)
+        header, row = Team.export(race.id)
+        expect(row[header.index("name")]).to eq(written)
+        expect(team.reload.name).to eq(name)
+      end
+    end
+
+    it "guards a formula name that is filed after a leading The" do
+      team.update_column(:name, "The =Cmd")
+      header, row = Team.export(race.id)
+      expect(row[header.index("name")]).to eq("'=Cmd, The")
     end
 
     it 'appends the tiktok column after experience so existing column positions hold' do

@@ -191,6 +191,9 @@ Teams must meet all requirements to finalize:
 
 Use `team.meets_finalization_requirements?` to check status.
 
+CSV exports (`Team.export`) write the team name with `Team#library_name` ("The Secret Gentlemen" becomes "Secret Gentlemen, The"); only a leading "The" is moved and the stored name is unchanged. The export dropdown on the race page has an info icon saying so.
+`Team.export` also prefixes a team name starting with `=`, `+`, `-` or `@` with `'` so spreadsheets do not evaluate it (name column only). Info icons in the legacy admin views use `.js-tooltip` (`app/assets/javascripts/tooltips.js`); bootstrap.min.js loads after application.js, so init runs on DOM ready, and the click handler stops propagation so a tap does not close an open dropdown.
+
 Deleting a team: `Team#deletable?` (not finalized, nothing paid) gates `DELETE /api/v1/teams/:id` and the legacy `teams#destroy`. The Ability lets a captain delete their own deletable team while registration is open, and operators any deletable team; admins can delete any team without payments. People are `dependent: :destroy`. The SPA shows `DeleteTeam` from `team.deletable`, and staff delete from the Pending table on the race registrations page.
 
 ## Common Patterns
