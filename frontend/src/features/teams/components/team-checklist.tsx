@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { useMe } from '@/features/auth/api/use-me';
+import { useMarkConfirmationSeen } from '@/features/teams/api/use-mark-confirmation-seen';
 import { useTeam } from '@/features/teams/api/use-team';
 import { ChecklistCard } from '@/features/teams/components/checklist-card';
 import {
@@ -9,6 +10,7 @@ import {
   QuestionsCardSlot,
   RosterCardSlot,
 } from '@/features/teams/components/checklist-slots';
+import { CompletionDialog } from '@/features/teams/components/completion-dialog';
 import { TeamHeader } from '@/features/teams/components/team-header';
 import {
   TeamErrorBanner,
@@ -28,6 +30,8 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   });
 
   const { data: me } = useMe();
+  const [dismissed, setDismissed] = useState(false);
+  const markConfirmationSeen = useMarkConfirmationSeen(Number(teamId));
   const [tourOpen, setTourOpen] = useState(false);
   const replayRef = useRef<HTMLButtonElement>(null);
   const autoStartChecked = useRef(false);
@@ -93,6 +97,7 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   }
 
   const { checklist } = team;
+  const showDialog = checklist.show_confirmation && !dismissed;
   // Card statuses come from the checklist, not stepStates: a finalized team's
   // flag is forced full, but a regressed step's card should still read "to do".
   const [racersDone, questionsDone, feeDone] = cardSteps(checklist);
@@ -148,7 +153,18 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
-      {tourOpen && <GuidedTour stops={stops} onEnd={endTour} />}
+      {showDialog && (
+        <CompletionDialog
+          team={team}
+          onClose={() => {
+            setDismissed(true);
+            // A failed POST is not worth a banner: the dialog just closes and
+            // shows again on the next visit.
+            markConfirmationSeen.mutate(undefined, { onError: () => {} });
+          }}
+        />
+      )}
+      {tourOpen && !showDialog && <GuidedTour stops={stops} onEnd={endTour} />}
     </TeamPageErrorProvider>
   );
 }
