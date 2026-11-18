@@ -398,6 +398,41 @@ describe TeamsController do
           expect(response).to be_successful
         end
 
+        context "with a payment due and racers still missing" do
+          render_views
+
+          let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+          let(:team) { FactoryBot.create :team, race: requirement.race }
+          let(:the_user) { team.user }
+          let(:locked) { I18n.t("requirements.payment_requirement.no_pay_roster") }
+
+          it "tells the captain payment is locked and offers no Stripe button" do
+            get :show, params: { :id => team.id }
+            expect(response.body).to include(locked)
+            expect(response.body).not_to include("stripe-button")
+          end
+
+          context "when staff views the team" do
+            let(:the_user) { FactoryBot.create :operator_user }
+
+            it "still offers the Stripe button" do
+              get :show, params: { :id => team.id }
+              expect(response.body).not_to include(locked)
+              expect(response.body).to include("stripe-button")
+            end
+          end
+
+          context "once the roster is full" do
+            let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }
+
+            it "offers the Stripe button to the captain" do
+              get :show, params: { :id => team.id }
+              expect(response.body).not_to include(locked)
+              expect(response.body).to include("stripe-button")
+            end
+          end
+        end
+
         it 'does not cache this page' do
           get :show, params: { :id => team.id }
           # Rails 7.0: Cache-Control header changed from 'no-cache, no-store' to 'no-store'

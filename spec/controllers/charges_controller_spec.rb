@@ -253,6 +253,26 @@ describe ChargesController do
         include_examples "redirects to prior url"
       end
 
+      context "when the team still needs racers" do
+        let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+        let(:team) { FactoryBot.create :team, user: the_user, race: requirement.race }
+
+        before do
+          expect(Customer).not_to receive(:get)
+          expect(Stripe::Charge).not_to receive(:create)
+          session[:prior_url] = '/prior_url/'
+          post :create, params: { amount: 5000, stripeToken: 'foo', stripeEmail: 'bar', description: 'hi',
+                                  metadata: { team_id: team.id, requirement_id: requirement.id }.to_json }
+        end
+
+        it "flashes that payment is locked until the roster is full and does not charge" do
+          expect(flash[:error]).to eq(I18n.t("charges.roster_incomplete"))
+          expect(CompletedRequirement.count).to eq(0)
+        end
+
+        include_examples "redirects to prior url"
+      end
+
       context "when the team belongs to another user" do
         let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
         let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }

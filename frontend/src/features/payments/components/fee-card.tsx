@@ -81,9 +81,11 @@ export function FeeCard({ team }: { team: Team }) {
       </p>
     );
   }
-  if (!checklist.racers.done) {
-    return <p className="text-base text-navy">{t('fee.rosterFirst')}</p>;
-  }
+
+  // Racers still see the price, the next tier and what is paid; only the Pay
+  // buttons wait for a full roster.
+  const rosterDone = checklist.racers.done;
+  const waitingOnRoster = !rosterDone && fee.items.some((item) => !item.done && item.amount_due_cents !== null);
 
   const isMock = (item: FeeItem) =>
     race.payment_requirements.find(
@@ -204,29 +206,34 @@ export function FeeCard({ team }: { team: Team }) {
   const processing = phase !== 'idle';
 
   return (
-    <ul className="divide-y divide-flag">
-      {fee.items.map((item) => (
-        <FeeRow
-          key={item.requirement_id}
-          item={item}
-          mock={isMock(item)}
-          disabled={processing}
-          processing={processing && activeId === item.requirement_id}
-          message={
-            message?.requirementId === item.requirement_id ? message.text : null
-          }
-          focusPaid={focusPaid}
-          timeZone={race.time_zone}
-          onPay={() => void handlePay(item)}
-        />
-      ))}
-    </ul>
+    <div className="space-y-3">
+      <ul className="divide-y divide-flag">
+        {fee.items.map((item) => (
+          <FeeRow
+            key={item.requirement_id}
+            item={item}
+            mock={isMock(item)}
+            canPay={rosterDone}
+            disabled={processing}
+            processing={processing && activeId === item.requirement_id}
+            message={
+              message?.requirementId === item.requirement_id ? message.text : null
+            }
+            focusPaid={focusPaid}
+            timeZone={race.time_zone}
+            onPay={() => void handlePay(item)}
+          />
+        ))}
+      </ul>
+      {waitingOnRoster && <p className="text-base text-navy">{t('fee.rosterFirst')}</p>}
+    </div>
   );
 }
 
 function FeeRow({
   item,
   mock,
+  canPay,
   disabled,
   processing,
   message,
@@ -236,6 +243,8 @@ function FeeRow({
 }: {
   item: FeeItem;
   mock: boolean;
+  /** False while the roster is incomplete: the price shows, the button does not. */
+  canPay: boolean;
   disabled: boolean;
   processing: boolean;
   message: string | null;
@@ -284,17 +293,19 @@ function FeeRow({
             })}
           </p>
         )}
-        <Button
-          disabled={disabled}
-          aria-busy={processing || undefined}
-          onClick={onPay}
-        >
-          {processing
-            ? t('fee.processing')
-            : mock
-              ? t('fee.mockPay')
-              : t('fee.pay', { amount })}
-        </Button>
+        {canPay && (
+          <Button
+            disabled={disabled}
+            aria-busy={processing || undefined}
+            onClick={onPay}
+          >
+            {processing
+              ? t('fee.processing')
+              : mock
+                ? t('fee.mockPay')
+                : t('fee.pay', { amount })}
+          </Button>
+        )}
       </>
     );
   }

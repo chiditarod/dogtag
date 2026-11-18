@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearCsrfToken } from '@/lib/api-client';
 import { openStripeCheckout } from '@/lib/stripe-checkout';
+import { t } from '@/locales/en';
 import { buildChecklist, buildRace, buildTeam, user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
@@ -367,11 +368,37 @@ describe('FeeCard', () => {
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('asks for the full roster first and hides Pay while racers are missing', async () => {
-    serve({ checklist: { racers: { filled: 3, total: 5, done: false } } });
+  it('hides Pay while racers are missing but still shows the price and next tier', async () => {
+    serve({
+      checklist: {
+        racers: { filled: 3, total: 5, done: false },
+        fee: feeOf([item({ next_tier: { price_cents: 35050, begins_at: '2027-02-01T06:00:00.000Z' } })]),
+      },
+    });
     renderApp('/teams/9');
     const fee = await card();
-    expect(await fee.findByText(/Add all of your racers first/)).toBeInTheDocument();
+    expect(await fee.findByText('$300', { selector: 'p' })).toBeInTheDocument();
+    expect(fee.getByText('Goes to $350.50 on Mon, Feb 1, 2027')).toBeInTheDocument();
+    expect(fee.getByText(t('fee.rosterFirst'))).toBeInTheDocument();
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('keeps an already-paid row visible when the roster later drops below full', async () => {
+    serve({
+      checklist: {
+        racers: { filled: 4, total: 5, done: false },
+        fee: feeOf([
+          item({ requirement_id: 3, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800 }),
+          item({ requirement_id: 4, name: 'Registration fee' }),
+        ]),
+      },
+    });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText('Deposit')).toBeInTheDocument();
+    expect(fee.getByText(t('fee.paid', { amount: '$88' }))).toBeInTheDocument();
+    expect(fee.getByText('$300', { selector: 'p' })).toBeInTheDocument();
+    expect(fee.getByText(t('fee.rosterFirst'))).toBeInTheDocument();
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 

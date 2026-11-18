@@ -166,7 +166,7 @@ en:
     not_payable: This requirement cannot be paid by card.
     already_paid: This requirement has already been paid for this team, so your card was not charged.
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
-    roster_incomplete: Add all of your racers before paying, so your card was not charged.
+    roster_incomplete: Your team needs all of its racers before payment unlocks.
     race_full: This race is full. Your team is on the waitlist and can't pay yet, so your card was not charged.
     price_changed: "The registration fee has changed to %{amount}, so your card was not charged. Please review the new price and try again."
     mock_declined: Mock payment declined
@@ -298,7 +298,7 @@ en:
   requirements:
     payment_requirement:
       no_pay_waitlist: You are on the waitlist. Payment is not available.
-      no_pay_roster: Add all of your racers before paying.
+      no_pay_roster: Your team needs all of its racers before payment unlocks.
       no_complete_when_closed: Registration closed
     table:
       tiers: tiers
