@@ -101,6 +101,7 @@ export const en = {
   'fee.closed': 'Registration is closed.',
   'fee.changed': '{name} is now {amount}. Please review and pay again.',
   'fee.opensLater': 'Registration fee opens {date}',
+  'fee.rosterFirst': 'Add all of your racers first. Then you can pay.',
   'fee.waitlist': 'This race is full, so your team is on the waitlist. Payment is not available.',
   'fee.unavailable': 'Payment is temporarily unavailable. Please try again.',
   'roster.slots': 'Racer slots',
