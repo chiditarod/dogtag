@@ -195,6 +195,8 @@ Teams must meet all requirements to finalize:
 
 Use `team.meets_finalization_requirements?` to check status.
 
+Deleting a team: `Team#deletable?` (not finalized, nothing paid) gates `DELETE /api/v1/teams/:id` and the legacy `teams#destroy`. The Ability lets a captain delete their own deletable team while registration is open, and operators any deletable team; admins can delete any team without payments. People are `dependent: :destroy`. The SPA shows `DeleteTeam` from `team.deletable`, and staff delete from the Pending table on the race registrations page.
+
 ## Common Patterns
 
 ### Email Handling

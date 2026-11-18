@@ -110,7 +110,7 @@ Rails.application.routes.draw do
       resources :users, only: [:create]
       resources :password_resets, only: [:create]
       resources :races, only: [:index, :show]
-      resources :teams, only: [:index, :show, :create, :update] do
+      resources :teams, only: [:index, :show, :create, :update, :destroy] do
         resources :people, only: [:create, :update, :destroy]
         resources :past_racers, only: [:index]
         resource :questions, only: [:show, :update]

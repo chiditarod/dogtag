@@ -64,6 +64,7 @@ export function buildTeam(overrides: Partial<Team> = {}): Team {
     name: 'Cart Pushers',
     description: 'We push carts',
     experience: 1,
+    deletable: true,
     race: buildRace(),
     people: [],
     checklist: buildChecklist(),

@@ -109,7 +109,9 @@
 
   .tab-pane.active{:id => "people"}
 
-    -#todo: consider delete; can't see it render
+    - if @team.deletable? && can?(:destroy, @team)
+      .pull-right
+        = button_to t('delete'), team_path(@team), :method => :delete, :data => { :confirm => t('teams.destroy.confirm', :name => @team.name) }, :class => 'btn btn-danger btn-sm'
     - if @team.needs_people?
       .pull-right
         .text-danger

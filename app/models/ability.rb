@@ -41,10 +41,9 @@ class Ability
 
     can [:create], :charges
 
-    #todo implement at some point
-    #can [:destroy], Team do |team|
-      #user.id == team.user_id && team.completed_requirements.empty?
-    #end
+    can [:destroy], Team do |team|
+      team.user_id == user.id && team.deletable? && team.race.open_for_registration?
+    end
 
     can [:registrations], Race
 
@@ -69,6 +68,7 @@ class Ability
       can [:export], Race
       can [:index, :search, :show], User
       can [:index, :search, :show, :edit, :update], [Team, Person]
+      can [:destroy], Team, &:deletable?
       can [:index, :show, :edit, :update, :create], [Race, PaymentRequirement, Tier]
       # requirements#new builds a base Requirement (type picked on the form);
       # create still requires a PaymentRequirement subclass.
