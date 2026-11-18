@@ -449,15 +449,42 @@ describe TeamsController do
         end.to broadcast(:destroy_team_successful)
       end
 
+      context 'as the team captain' do
+        let(:the_user) { FactoryBot.create :user }
+
+        it 'deletes their own pending team' do
+          team = FactoryBot.create :team, :with_people, people_count: 1, user: the_user
+          expect { delete :destroy, params: { id: team.id } }.to change(Team, :count).by(-1).and change(Person, :count).by(-1)
+          expect(response).to redirect_to(teams_path)
+        end
+
+        it 'cannot delete a team that has paid' do
+          team = FactoryBot.create :team, user: the_user
+          FactoryBot.create :completed_requirement, team: team, user: the_user
+          expect { delete :destroy, params: { id: team.id } }.to raise_error(CanCan::AccessDenied)
+          expect(Team.exists?(team.id)).to be(true)
+        end
+      end
+
+      context 'as an operator' do
+        let(:the_user) { FactoryBot.create :operator_user }
+
+        it 'deletes a pending team and returns to the race registrations page' do
+          team = FactoryBot.create :team
+          expect { delete :destroy, params: { id: team.id } }.to change(Team, :count).by(-1)
+          expect(response).to redirect_to(race_registrations_path(team.race))
+        end
+      end
+
       context 'with valid id' do
         let(:valid_team) { FactoryBot.create :team }
         before do
           delete :destroy, params: { :id => valid_team.id }
         end
 
-        it 'sets the flash notice and redirects to the team index' do
+        it 'sets the flash notice and sends staff back to the race registrations' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
-          expect(response).to redirect_to(teams_path)
+          expect(response).to redirect_to(race_registrations_path(valid_team.race))
         end
       end
 

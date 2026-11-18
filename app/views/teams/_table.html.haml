@@ -54,6 +54,9 @@
           %i.fa.fa-quote-left.pull-left.fa-border
           = team.description
 
+        - if !team.finalized && can?(:destroy, team) && team.deletable?
+          = button_to t('delete'), team_path(team), :method => :delete, :data => { :confirm => t('teams.destroy.confirm', :name => team.name) }, :class => 'btn btn-danger btn-xs', :form => { :class => 'pull-left' }
+
       %td
         - if current_user.is_any_of?(:admin, :operator, :refunder)
           %h4
