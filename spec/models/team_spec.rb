@@ -77,6 +77,33 @@ describe Team do
     end
   end
 
+  describe "buddies" do
+    it "is invalid when other_buddies is over 1000 characters" do
+      team = FactoryBot.build :team, other_buddies: "a" * (Team::OTHER_BUDDIES_MAX_LENGTH + 1)
+
+      expect(team).not_to be_valid
+      expect(team.errors[:other_buddies]).to be_present
+      expect(FactoryBot.build(:team, other_buddies: "a" * Team::OTHER_BUDDIES_MAX_LENGTH)).to be_valid
+    end
+
+    it "stores blank other_buddies as nil" do
+      team = FactoryBot.create :team, other_buddies: "   "
+
+      expect(team.reload.other_buddies).to be_nil
+    end
+
+    it "destroying a team removes picks it made and picks that name it" do
+      made = FactoryBot.create :team_buddy
+      named = FactoryBot.create :team_buddy, team: FactoryBot.create(:team, race: made.team.race), buddy_team: made.team
+      other = named.team
+
+      made.team.destroy
+
+      expect(TeamBuddy.where(id: [made.id, named.id])).to be_empty
+      expect(Team.exists?(other.id)).to be true
+    end
+  end
+
   describe '.finalize' do
 
     context 'called on a finalized team' do
