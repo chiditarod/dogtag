@@ -121,14 +121,30 @@
 - [ ] **Step 4: Run** `npm --prefix frontend test -- --run`, `npm --prefix frontend exec tsc -- --noEmit -p frontend` (or the repo's typecheck script) — Expected: PASS.
 - [ ] **Step 5: Commit** ("Add team picker to the Questions card").
 
-### Task 6: Form payload, docs, full check, PR
+### Task 6: Playwright e2e and seed task
+
+**Files:**
+- Create: `tests/spa/buddy-picker.spec.ts`
+- Modify: `lib/tasks/test_seeds.rake` (new `test_seeds:buddy_picker` task, header comment line, and `test_seeds:cleanup` coverage), `tests/README.md` (list the spec)
+
+**Interfaces:**
+- Consumes: Task 2 to Task 5 behavior. Pattern: `tests/spa/past-racers.spec.ts` (`seed<Credentials>("buddy_picker")` from `tests/helpers/seed.ts`, `seeded.dispose()` in `afterAll`).
+- Produces: `test_seeds:buddy_picker`, which prints JSON credentials `{ captain_email, captain_password, team_id, team_name, race_name, teams: [{ name, finalized }] }`. It creates an open race with a JSONForm (use the `:race_with_jsonform` factory), the captain's unfinalized team, a finalized team named "banana crew" and an unfinalized team named "Apple Cart" (names that distinguish case-insensitive ordering), all unique per `TEST_UNIQUE_ID`, with `@example.com` emails. Add a `team_buddies` count helper only if the spec needs a DB assertion; otherwise assert through the UI after a reload.
+
+- [ ] **Step 1: Write the e2e spec** `SPA questions: team picker`, as one test with `test.step`s: log in with the seeded captain (use `fillSecret` for the password if the existing specs do) and open the team page; in the Questions card assert the options list reads `Apple Cart` (Still registering) before `banana crew` (Fully registered) with `Other…` last; tick both teams, tick `Other…`, fill "Which other teams or people?" with `The Wandering Sprockets`, answer any required JSONForm questions, save; reload the page, reopen Questions with Edit, and assert both teams and the Other… text are still selected. A second test: `unticking Other… and saving clears the free text` (reload and see Other… unselected). Use role and label locators, not CSS.
+- [ ] **Step 2: Run** `npx playwright test tests/spa/buddy-picker.spec.ts` — Expected: FAIL (no seed task).
+- [ ] **Step 3: Implement `test_seeds:buddy_picker`** following `past_racers` in `lib/tasks/test_seeds.rake`, and make sure `test_seeds:cleanup` removes its users, teams and race (it already sweeps `@example.com` users and `Race %` races; confirm `team_buddies` rows go via cascade).
+- [ ] **Step 4: Run** the spec with the server env documented in `tests/README.md` (Rails in development against `dogtag_test_2`, Mailpit up). Expected: PASS. If Playwright cannot be run here, say so in the PR; do not claim it passed.
+- [ ] **Step 5: Commit** ("Add e2e spec and seed for the team picker").
+
+### Task 7: Form payload, docs, full check, PR
 
 **Files:**
 - Modify: `README.md` (only if it documents the questions API or export columns), `CLAUDE.md` (a "Team picker (#302)" bullet under Registration SPA covering the join table, `buddy_options`, the questions API fields, `racing_with` column, and that `buddies` stays only in fixtures/old answers)
 - External: `../dogtag-private/jsonform/chiditarod_22.json`
 
 - [ ] **Step 1: Ask the owner before touching the private repo, then remove the `buddies` property and any `form` reference to it from `chiditarod_22.json`; commit it in `../dogtag-private` (master). Do not load the payload into a race.** Leave the in-repo fixtures (`spec/fixtures/files/valid_jsonform.json`, `tests/e2e/fixtures/jsonform.json`, `frontend/src/features/questions/__fixtures__/chiditarod_21.json`) as they are: they keep exercising old answers.
-- [ ] **Step 2: Update CLAUDE.md** (and README if needed) as listed above.
-- [ ] **Step 3: Run** `bin/check` (rspec, frontend, build) with `DATABASE_URL` pointing at `dogtag_test_2`. Expected: every step reports success. If a Playwright SPA spec for the Questions card needs updating (`tests/spa/`), update it, and say in the PR whether it was actually run.
+- [ ] **Step 2: Update CLAUDE.md** (and README if needed) as listed above. The rule "every SPA feature needs a Playwright e2e spec" is already added to CLAUDE.md's Testing section; keep it.
+- [ ] **Step 3: Run** `bin/check` (rspec, frontend, build) with `DATABASE_URL` pointing at `dogtag_test_2`. Expected: every step reports success. Run `bin/check e2e` too; the PR body states whether the Playwright spec was actually run and its result.
 - [ ] **Step 4: Commit** ("Document the team picker").
 - [ ] **Step 5: Push and open the PR:** `git push -u origin feature/302-buddy-picker`, then `gh pr create --repo chiditarod/dogtag --head ometa:feature/302-buddy-picker --base main`. The body lists what changed, the migration to run (staging first, then `heroku restart`), the questions API additions, and ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. The owner merges.
