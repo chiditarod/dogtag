@@ -81,6 +81,9 @@ export function FeeCard({ team }: { team: Team }) {
       </p>
     );
   }
+  if (!checklist.racers.done) {
+    return <p className="text-base text-navy">{t('fee.rosterFirst')}</p>;
+  }
 
   const isMock = (item: FeeItem) =>
     race.payment_requirements.find(
