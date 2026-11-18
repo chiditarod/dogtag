@@ -196,6 +196,7 @@ Teams must meet all requirements to finalize:
 Use `team.meets_finalization_requirements?` to check status.
 
 CSV exports (`Team.export`) write the team name with `Team#library_name` ("The Secret Gentlemen" becomes "Secret Gentlemen, The"); only a leading "The" is moved and the stored name is unchanged. The export dropdown on the race page has an info icon saying so.
+`Team.export` also prefixes a team name starting with `=`, `+`, `-` or `@` with `'` so spreadsheets do not evaluate it (name column only). Info icons in the legacy admin views use `.js-tooltip` (`app/assets/javascripts/tooltips.js`); bootstrap.min.js loads after application.js, so init runs on DOM ready, and the click handler stops propagation so a tap does not close an open dropdown.
 
 ## Common Patterns
 

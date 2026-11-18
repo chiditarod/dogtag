@@ -40,7 +40,7 @@ class Team < ApplicationRecord
 
   # Library filing order, so "The Secret Gentlemen" sorts under S: "Secret Gentlemen, The".
   def library_name
-    name.to_s.sub(/\A\s*(the)\s+(\S.*?)\s*\z/i, '\2, \1')
+    name.to_s.sub(/\A[[:space:]]*(?<the>the)[[:space:]]+(?<rest>[^[:space:]].*?)[[:space:]]*\z/i) { "#{$~[:rest]}, #{$~[:the]}" }
   end
 
   def unfinalized
@@ -162,7 +162,6 @@ class Team < ApplicationRecord
 
 
   class << self
-    # todo: spec
     def export(race_id, options = {})
       race = Race.find(race_id)
       person_keys = %w(first_name last_name email phone instagram experience)
@@ -174,6 +173,11 @@ class Team < ApplicationRecord
     end
 
     private
+
+    # Spreadsheet apps evaluate cells that start with these characters as formulas.
+    def spreadsheet_safe(value)
+      value.start_with?("=", "+", "-", "@") ? "'#{value}" : value
+    end
 
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams
@@ -190,7 +194,7 @@ class Team < ApplicationRecord
         row.concat(cols.map { |n|
           case n
           when "experience" then race.experience_label(team[n])
-          when "name" then team.library_name
+          when "name" then spreadsheet_safe(team.library_name)
           else team[n]
           end
         })

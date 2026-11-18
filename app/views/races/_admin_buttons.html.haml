@@ -1,4 +1,5 @@
 - if current_user && current_user.is_any_of?(:admin, :operator)
+  - library_note = 'Team names are saved using library rules: "The Secret Gentlemen" becomes "Secret Gentlemen, The", so teams that start with "The" are not all filed under T.'
   .btn-group
     %button.btn.btn-default.dropdown-toggle{:type => 'button', :'data-toggle' => 'dropdown'}
       %i.fa.fa-save.fa-fw
@@ -12,7 +13,7 @@
       %li.divider
       %li.dropdown-header
         Team exports
-        %i.fa.fa-info-circle.fa-fw{:title => 'Team names are saved using library rules: "The Secret Gentlemen" becomes "Secret Gentlemen, The", so teams that start with "The" are not all filed under T.', :'aria-label' => 'Team names are saved using library rules: "The Secret Gentlemen" becomes "Secret Gentlemen, The"', :tabindex => 0, :role => 'img'}
+        %i.fa.fa-info-circle.fa-fw.js-tooltip{:title => library_note, :'aria-label' => library_note, :tabindex => 0, :role => 'img', :'data-toggle' => 'tooltip', :'data-trigger' => 'hover focus', :'data-container' => 'body', :'data-placement' => 'right'}
       %li
         = link_to race_export_url(race, :finalized => true) do
           %i.fa.fa-table.fa-fw
