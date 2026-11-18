@@ -52,4 +52,58 @@ describe('FeedbackLink', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(t('common.genericError'));
     expect(screen.getByLabelText(t('feedback.message'))).toHaveValue('Hello');
   });
+
+  it('moves focus to Close once the message is sent', async () => {
+    server.use(http.post('/api/v1/feedback', () => HttpResponse.json({}, { status: 201 })));
+    renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: t('feedback.open') }));
+    await userEvent.type(screen.getByLabelText(t('feedback.message')), 'Hello');
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.send') }));
+
+    const close = await screen.findByRole('button', { name: t('feedback.close') });
+    expect(close).toHaveFocus();
+  });
+
+  it('says so when too many reports were sent, and keeps the message', async () => {
+    server.use(
+      http.post('/api/v1/feedback', () =>
+        HttpResponse.json({ error: 'rate_limited', errors: {} }, { status: 429 }),
+      ),
+    );
+    renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: t('feedback.open') }));
+    await userEvent.type(screen.getByLabelText(t('feedback.message')), 'Hello');
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.send') }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('feedback.rateLimited'));
+    expect(screen.queryByText(t('common.genericError'))).not.toBeInTheDocument();
+    expect(screen.getByLabelText(t('feedback.message'))).toHaveValue('Hello');
+  });
+
+  it('closes at once when nothing was typed', async () => {
+    renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: t('feedback.open') }));
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.cancel') }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('asks before discarding a typed message, on Cancel and on Escape', async () => {
+    renderApp('/');
+    await userEvent.click(await screen.findByRole('button', { name: t('feedback.open') }));
+    await userEvent.type(screen.getByLabelText(t('feedback.message')), 'A long story');
+
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.cancel') }));
+    expect(screen.getByText(t('feedback.discardPrompt'))).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.keepWriting') }));
+    expect(screen.queryByText(t('feedback.discardPrompt'))).not.toBeInTheDocument();
+    expect(screen.getByLabelText(t('feedback.message'))).toHaveValue('A long story');
+
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByText(t('feedback.discardPrompt'))).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: t('feedback.discard') }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 });
