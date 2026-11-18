@@ -69,6 +69,7 @@ describe StagingSeed do
     it "creates an open current race shaped like XXII" do
       run_seed("SEED_CLASSY_CAMPAIGN_ID" => "867400")
       race = Race.find_by!(name: "CHIditarod XXII (staging)")
+      expect(race.confirmation_text).to include("(https://chiditarod.org)")
       expect(race.open_for_registration?).to be(true)
       expect(race.time_zone).to eq("America/Chicago")
       expect(race.people_per_team).to eq(5)

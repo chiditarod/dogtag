@@ -31,6 +31,16 @@ RSpec.describe ConfirmationText do
         .to include('href="mailto:dogtag@chiditarod.org"')
     end
 
+    it "keeps http and https links and drops the href for other schemes" do
+      expect(described_class.to_html("[a](http://example.com)")).to include('href="http://example.com"')
+      expect(described_class.to_html("[a](https://example.com)")).to include('href="https://example.com"')
+      ["ftp://x.example.com", "tel:123", "/foo", "webcal://x.example.com/c.ics"].each do |url|
+        html = described_class.to_html("[label](#{url})")
+        expect(html).not_to include("href")
+        expect(html).to include("label")
+      end
+    end
+
     it "is nil when blank" do
       expect(described_class.to_html(nil)).to be_nil
       expect(described_class.to_html("  \n")).to be_nil

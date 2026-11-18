@@ -107,6 +107,9 @@ class StagingSeed
     create_user("Nina", "New", "nina")                   # no teams: register from scratch
   end
 
+  CONFIRMATION_TEXT = "See you at the start line! Read the " \
+    "[racer guide](https://chiditarod.org) before race day.\n\nQuestions? Reply to this email.".freeze
+
   # People can only be added while a race is open, so every race is created
   # open and moved to its real dates afterwards with update_columns.
   def open_race(name, people_per_team:, max_teams:, jsonform: nil, classy: false)
@@ -174,6 +177,7 @@ class StagingSeed
   # The race people register for on staging: deposit + three tiers, questions.
   def create_current_race
     race = open_race("CHIditarod XXII (staging)", people_per_team: 5, max_teams: 150, jsonform: jsonform, classy: true)
+    race.update!(confirmation_text: CONFIRMATION_TEXT)
     deposit = payment(race, "Cart Deposit", [[8800, now - 1.day]])
     fee = payment(race, "Race Registration", [[13000, now - 1.day], [15000, now + 20.days], [17000, now + 40.days]])
     team(race, @frank, "Shopping Spree", people: 5, answered: true, paid: [deposit, fee], finalized_number: 1)
