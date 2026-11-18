@@ -155,7 +155,7 @@ export const en = {
   'roster.allPicked_one': 'The open spot is picked',
   'roster.allPicked_other': 'All {count} spots picked',
   'roster.reviewIntro':
-    'Check that each detail is still right, or change it, then tick it. Nothing is saved until you add them to the team.',
+    'Check that each detail is still right, or change it, then tick it. Nothing is saved until you press the button below.',
   'roster.reviewTitle': 'Review {name}',
   'roster.reviewProgress': '{index} of {total}',
   'roster.lastRacedWith': 'Last raced {year} with {team}',

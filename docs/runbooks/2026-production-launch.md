@@ -77,8 +77,16 @@ If `b354` can't be restored, upload the local dump to a temporary signed URL and
 Do **not** clear `stripe_customer_id`. Staging cleared it only because it runs on test keys.
 
 ### 5. Migrate and take a baseline backup
+The `add_tiktok_to_people_and_remove_twitter` migration adds `people.tiktok` and drops `people.twitter` (unused, but its data is lost if the migration is rolled back). The `Procfile` has no `release:` phase, so a push does not migrate. Order matters:
+
+1. Capture a production backup first: `heroku pg:backups:capture --app dogtag`.
+2. Run the migration on `dogtag-staging` first and check the registration flow there.
+3. On production, migrate right after the push and run `heroku restart -a dogtag` immediately. Dynos that booted before the migration still list `people.twitter` in every Person INSERT/UPDATE and fail with "column twitter does not exist" until restarted.
+
 ```bash
+heroku pg:backups:capture -a dogtag   # before migrating
 heroku run rails db:migrate -a dogtag
+heroku restart -a dogtag              # right after migrating
 heroku run 'rails runner "puts ActiveRecord::Base.connection_pool.migration_context.needs_migration?"' -a dogtag   # false
 heroku pg:backups:capture -a dogtag
 heroku pg:backups:schedule DATABASE_URL --at '03:00 America/Chicago' -a dogtag

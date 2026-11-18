@@ -374,7 +374,7 @@ curl -o file.dump `heroku pg:backups:url --app dogtag`
 pg_restore --verbose --clean --no-acl --no-owner -h localhost -d dogtag_development file.dump
 ```
 
-The `Procfile` has no `release:` phase, so a push does not migrate. When a deploy adds a column that views or JSON read (e.g. `people.instagram`, read by every person row), pages that read it fail from the push until the migration has run. Dynos that booted before the migration keep the old column list, so `heroku restart` after migrating. Run the migration right after the push, on `dogtag-staging` first.
+The `Procfile` has no `release:` phase, so a push does not migrate. When a deploy adds a column that views or JSON read (e.g. `people.instagram`, read by every person row), pages that read it fail from the push until the migration has run. Dynos that booted before the migration keep the old column list, so `heroku restart` after migrating. Run the migration right after the push, on `dogtag-staging` first. A migration that drops a column (e.g. `people.twitter`) also loses its data on rollback, so run `heroku pg:backups:capture --app dogtag` first; until `heroku restart`, dynos that booted earlier still list the dropped column in every INSERT/UPDATE and fail with "column does not exist".
 
 ## Registration SPA
 

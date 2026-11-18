@@ -189,6 +189,17 @@ describe PeopleController do
       end
     end
 
+    describe '#new rendered' do
+      render_views
+
+      it 'shows the instagram and tiktok fields on the person form' do
+        get :new, params: { :team_id => team.id }
+        expect(response).to be_successful
+        expect(response.body).to include('name="person[instagram]"', 'name="person[tiktok]"')
+        expect(response.body).to include('Got TikTok? Add your handle')
+      end
+    end
+
     describe '#create' do
       let (:team_no_people) { FactoryBot.create :team }
       let (:new_person_hash) { FactoryBot.attributes_for :person, :first_name => 'Dan', :last_name => 'Akroyd' }
