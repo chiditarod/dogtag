@@ -258,6 +258,12 @@ describe RacesController do
           expect(response).to redirect_to(edit_race_url race.id)
         end
 
+        it "saves the confirmation text" do
+          patch :update, params: { :id => race.id, :race => { :confirmation_text => "Welcome **racers**" } }
+          expect(response).to redirect_to(edit_race_url race.id)
+          expect(race.reload.confirmation_text).to eq("Welcome **racers**")
+        end
+
         it "accepts experience_labels_text" do
           patch :update, params: { :id => race.id, :race => { :experience_labels_text => "Rookie\nVet" } }
           expect(race.reload.experience_labels).to eq(%w[Rookie Vet])

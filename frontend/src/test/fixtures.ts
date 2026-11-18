@@ -54,6 +54,8 @@ export function buildChecklist(overrides: Partial<Checklist> = {}): Checklist {
     team_number: null,
     classy_fundraising_url: null,
     classy_expected: true,
+    confirmation_html: null,
+    show_confirmation: false,
     ...overrides,
   };
 }

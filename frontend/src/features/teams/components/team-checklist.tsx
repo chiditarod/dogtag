@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { useMe } from '@/features/auth/api/use-me';
+import { useMarkConfirmationSeen } from '@/features/teams/api/use-mark-confirmation-seen';
 import { useTeam } from '@/features/teams/api/use-team';
 import { ChecklistCard } from '@/features/teams/components/checklist-card';
 import {
@@ -9,6 +10,7 @@ import {
   QuestionsCardSlot,
   RosterCardSlot,
 } from '@/features/teams/components/checklist-slots';
+import { CompletionDialog } from '@/features/teams/components/completion-dialog';
 import { TeamHeader } from '@/features/teams/components/team-header';
 import {
   TeamErrorBanner,
@@ -18,7 +20,7 @@ import { YoureInCard } from '@/features/teams/components/youre-in-card';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
 import { markSeen, shouldAutoStart } from '@/features/tour/storage';
 import { noFeeDue, teamTourStops } from '@/features/tour/stops';
-import { feePill, stepStates } from '@/features/teams/utils';
+import { cardSteps, feePill } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 
@@ -28,6 +30,8 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   });
 
   const { data: me } = useMe();
+  const [dismissed, setDismissed] = useState(false);
+  const markConfirmationSeen = useMarkConfirmationSeen(Number(teamId));
   const [tourOpen, setTourOpen] = useState(false);
   const replayRef = useRef<HTMLButtonElement>(null);
   const autoStartChecked = useRef(false);
@@ -69,6 +73,13 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
     }
   }, [tourOpen]);
 
+  // The confirmation takes over: end an open tour rather than hide it, so it
+  // does not come back at stop 1 over a finalized team.
+  const confirmationShowing = !!team?.checklist.show_confirmation && !dismissed;
+  useEffect(() => {
+    if (confirmationShowing) setTourOpen(false);
+  }, [confirmationShowing]);
+
   function endTour() {
     if (me) markSeen(me.id);
     focusReplayOnClose.current = true;
@@ -93,8 +104,10 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   }
 
   const { checklist } = team;
-  // The same states drive the flag, so a heading star and the flag agree.
-  const [racersDone, questionsDone, feeDone] = stepStates(team);
+  const showDialog = checklist.show_confirmation && !dismissed;
+  // Card statuses come from the checklist, not stepStates: a finalized team's
+  // flag is forced full, but a regressed step's card should still read "to do".
+  const [racersDone, questionsDone, feeDone] = cardSteps(checklist);
   const status = (done: boolean) => (done ? 'done' : 'todo');
   return (
     <TeamPageErrorProvider teamId={teamId}>
@@ -147,7 +160,18 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
-      {tourOpen && <GuidedTour stops={stops} onEnd={endTour} />}
+      {showDialog && (
+        <CompletionDialog
+          team={team}
+          onClose={() => {
+            setDismissed(true);
+            // A failed POST is not worth a banner: the dialog just closes and
+            // shows again on the next visit.
+            markConfirmationSeen.mutate(undefined, { onError: () => {} });
+          }}
+        />
+      )}
+      {tourOpen && !showDialog && <GuidedTour stops={stops} onEnd={endTour} />}
     </TeamPageErrorProvider>
   );
 }

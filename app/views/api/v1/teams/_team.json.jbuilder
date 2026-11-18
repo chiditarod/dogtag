@@ -6,4 +6,4 @@ end
 json.people team.people.sort_by(&:id) do |person|
   json.partial! "api/v1/people/person", person: person
 end
-json.checklist TeamChecklist.new(team).to_h
+json.checklist TeamChecklist.new(team, viewer: current_user).to_h

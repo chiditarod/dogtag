@@ -504,6 +504,56 @@ describe('collapsed when full on load', () => {
   });
 });
 
+describe('collapsing when the team finishes', () => {
+  const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
+    buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
+  );
+  const full = { racers: { filled: 5, total: 5, done: true } };
+
+  it('collapses when the team becomes finalized during the visit', async () => {
+    serve({ people: five, checklist: full });
+    const u = userEvent.setup();
+    const { queryClient } = renderApp('/teams/9');
+    const roster = await openRoster();
+    await u.click(within(roster).getByRole('button', { name: 'Show racers' }));
+    expect(slots()).toHaveLength(5);
+
+    serve({
+      people: five,
+      checklist: { ...full, finalized: true, remaining: 0, team_number: 4, classy_fundraising_url: 'https://x.example' },
+    });
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    expect(await within(roster).findByText('Ada, Bo, Cy, Di, Ed')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Racer slots' })).toBeNull();
+  });
+
+  it('toggles with aria-expanded, a hidden chevron and Hide racers', async () => {
+    serve({ people: five, checklist: full });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    const roster = await openRoster();
+    const show = within(roster).getByRole('button', { name: 'Show racers' });
+    expect(show).toHaveAttribute('aria-expanded', 'false');
+    expect(show.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+
+    await u.click(show);
+    const hide = within(roster).getByRole('button', { name: 'Hide racers' });
+    expect(hide).toHaveAttribute('aria-expanded', 'true');
+    expect(hide.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+
+    await u.click(hide);
+    expect(screen.queryByRole('list', { name: 'Racer slots' })).toBeNull();
+    expect(within(roster).getByRole('button', { name: 'Show racers' })).toHaveFocus();
+  });
+
+  it('offers no Hide racers while a spot is open', async () => {
+    serve({ people: five.slice(0, 4) });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.queryByRole('button', { name: 'Hide racers' })).toBeNull();
+  });
+});
+
 describe('adding someone new', () => {
   it('posts phone as ddd-ddd-dddd when the user typed digits', async () => {
     serve();

@@ -126,6 +126,14 @@ describe "API v1 people", type: :request do
       expect(team.reload.finalized).to be(true)
       expect(Workers::TeamFinalizer.jobs.size).to eq(1)
     end
+
+    it "asks the SPA to show the confirmation when the last racer finalizes the team" do
+      FactoryBot.create(:person, team: team)
+
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
+
+      expect(json["checklist"]["show_confirmation"]).to be(true)
+    end
   end
 
   describe "PATCH /api/v1/teams/:team_id/people/:id" do

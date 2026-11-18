@@ -31,14 +31,22 @@ export function feePill(fee: Checklist['fee'], timeZone: string): string {
     : formatCents(fee.amount_due_cents);
 }
 
-/** Order: racers, questions (done when not required), fee (not done while it opens later), finalized. */
-export function stepStates({
-  checklist,
-}: Team): [boolean, boolean, boolean, boolean] {
+/** What each step card shows, from the checklist alone: racers, questions (done when not required), fee (not done while it opens later). */
+export function cardSteps(checklist: Checklist): [boolean, boolean, boolean] {
   return [
     checklist.racers.done,
     !checklist.questions.required || checklist.questions.done,
     checklist.fee.done && !isFeeOpensLater(checklist.fee),
-    checklist.finalized,
   ];
+}
+
+/**
+ * The flag's stars: team (always earned), racers, questions, fee. A finalized
+ * team shows all four filled even if a step later regresses.
+ */
+export function stepStates({
+  checklist,
+}: Team): [boolean, boolean, boolean, boolean] {
+  if (checklist.finalized) return [true, true, true, true];
+  return [true, ...cardSteps(checklist)];
 }

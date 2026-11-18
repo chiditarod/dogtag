@@ -192,7 +192,7 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
 
     const deposit = fee.getByRole('listitem').filter({ hasText: 'Cart Deposit' });
     const registration = fee.getByRole('listitem').filter({ hasText: 'Race Registration' });
-    const teamNumber = page.getByRole('group', { name: "You're in!" }).getByText(/^Team #\d+$/);
+    const teamNumber = page.getByRole('group', { name: "You're fully registered!" }).getByText(/^Team #\d+$/);
 
     await payFee(page, deposit, '$88', target.payments, publishableKey);
     await expect(page.getByText(/^Team #\d+$/)).toHaveCount(0);

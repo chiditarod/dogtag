@@ -1,11 +1,14 @@
 import { useState, type CSSProperties } from 'react';
 import { ChicagoStar } from '@/components/ui/chicago-star';
+import { t } from '@/locales/en';
 
 type Steps = [boolean, boolean, boolean, boolean];
 
 interface FlagProgressProps {
   steps: Steps;
   label: string;
+  /** Visible captions under the stars: team, racers, questions, fee. */
+  starLabels: [string, string, string, string];
 }
 
 /**
@@ -13,7 +16,7 @@ interface FlagProgressProps {
  * solid once its step is done. A star that just became done scales in; when
  * the fourth lands, all four pulse once in order.
  */
-export function FlagProgress({ steps, label }: FlagProgressProps) {
+export function FlagProgress({ steps, label, starLabels }: FlagProgressProps) {
   // The animation is derived from the last change of steps and kept until the
   // steps change again, so re-renders with equal steps do not cut it short.
   const [shown, setShown] = useState({
@@ -31,6 +34,16 @@ export function FlagProgress({ steps, label }: FlagProgressProps) {
     setShown(current);
   }
   const { landed, salute } = current;
+  const valueText = [
+    [true, t('team.stars.done')],
+    [false, t('team.stars.todo')],
+  ]
+    .map(([want, word]) => {
+      const names = starLabels.filter((_, i) => steps[i] === want);
+      return names.length ? `${names.join(', ')} ${word as string}` : null;
+    })
+    .filter(Boolean)
+    .join('; ');
 
   return (
     <div
@@ -40,17 +53,22 @@ export function FlagProgress({ steps, label }: FlagProgressProps) {
       aria-valuemin={0}
       aria-valuemax={4}
       aria-valuenow={steps.filter(Boolean).length}
+      aria-valuetext={valueText}
       className={`rounded-lg border border-flag bg-white py-1.5 ${salute ? 'flag-salute' : ''}`.trim()}
     >
       <div className="h-[13px] bg-flag lg:h-4" />
-      <div className="flex items-center justify-center gap-4 py-1.5">
+      <div className="grid grid-cols-4 gap-1 px-1 py-1.5">
         {steps.map((done, i) => (
-          <ChicagoStar
-            key={i}
-            filled={done}
-            className={`h-9 w-9 lg:h-11 lg:w-11 ${landed[i] && !salute ? 'star-land' : ''}`.trim()}
-            style={{ '--i': i } as CSSProperties}
-          />
+          <div key={i} className="flex min-w-0 flex-col items-center gap-0.5">
+            <ChicagoStar
+              filled={done}
+              className={`h-9 w-9 lg:h-11 lg:w-11 ${landed[i] && !salute ? 'star-land' : ''}`.trim()}
+              style={{ '--i': i } as CSSProperties}
+            />
+            <span className="max-w-full text-[11px] leading-tight text-navy/70 [overflow-wrap:anywhere] lg:text-xs">
+              {starLabels[i]}
+            </span>
+          </div>
         ))}
       </div>
       <div className="h-[13px] bg-flag lg:h-4" />

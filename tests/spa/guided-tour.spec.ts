@@ -38,8 +38,8 @@ test.describe('SPA guided tour', () => {
       await page.getByRole('link', { name: `View team: ${c.team_name}` }).click();
       await expect(page).toHaveURL(new RegExp(`/register/teams/${c.team_id}$`));
 
-      await expect(tour('Four stars, four steps')).toBeVisible();
-      await expect(tour('Four stars, four steps').getByText('1 of 3')).toBeVisible();
+      await expect(tour('Four stars to the start line')).toBeVisible();
+      await expect(tour('Four stars to the start line').getByText('1 of 3')).toBeVisible();
     });
 
     await test.step('Next walks the stops', async () => {
@@ -63,7 +63,7 @@ test.describe('SPA guided tour', () => {
 
     await test.step('Take the tour replays it, and End tour closes it', async () => {
       await page.getByRole('button', { name: 'Take the tour' }).click();
-      await expect(tour('Four stars, four steps')).toBeVisible();
+      await expect(tour('Four stars to the start line')).toBeVisible();
 
       await page.getByRole('dialog').getByRole('button', { name: 'End tour' }).click();
       await expect(page.getByRole('dialog')).toHaveCount(0);

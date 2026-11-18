@@ -72,6 +72,10 @@ export interface Checklist {
   classy_fundraising_url: string | null;
   /** The race has a Classy campaign, so a fundraising page will be created. */
   classy_expected: boolean;
+  /** The race's confirmation text rendered to safe HTML, or null when it has none. */
+  confirmation_html: string | null;
+  /** The captain has not yet seen the completion confirmation. */
+  show_confirmation: boolean;
 }
 
 export interface Team {

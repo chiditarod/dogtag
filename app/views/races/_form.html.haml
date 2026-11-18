@@ -89,5 +89,12 @@
       = f.text_field :classy_default_goal, :class => 'form-control'
 
   .form-group
+    .col-sm-4.control-label
+      = label_tag :confirmation_text, t('.confirmation_text')
+    .col-sm-8
+      = f.text_area :confirmation_text, :rows => 8, :maxlength => Race::CONFIRMATION_TEXT_MAX_LENGTH, :class => 'form-control'
+      %small= t('.confirmation_text_help')
+
+  .form-group
     .col-sm-offset-4.col-sm-8
       = f.submit t('save'), :class => ['btn', 'btn-default']

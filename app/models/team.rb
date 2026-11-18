@@ -165,6 +165,12 @@ class Team < ApplicationRecord
     jsonform.present?
   end
 
+  def classy_fundraising_url
+    return if classy_id.blank?
+
+    "https://www.classy.org/team/#{classy_id}?campaignId=#{race.classy_campaign_id}"
+  end
+
   def waitlist_position
     # assume we are not on the waitlist if race is not full
     return false if race.not_full?

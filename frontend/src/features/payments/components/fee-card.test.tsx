@@ -157,7 +157,7 @@ describe('FeeCard', () => {
     });
     const paid = await (await card()).findByText('Paid $300 total');
     expect(paid).toHaveFocus();
-    expect(screen.getByRole('heading', { name: /You're in/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /You're fully registered/ })).toBeInTheDocument();
   });
 
   it('guards against two clicks landing before React re-renders', async () => {

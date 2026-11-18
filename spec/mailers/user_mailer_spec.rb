@@ -87,7 +87,60 @@ describe UserMailer do
     include_examples "common tests"
   end
 
-  describe '#team_finalized_email' do
+  describe "#team_finalized_email body" do
+    let(:race) { FactoryBot.create(:race, confirmation_text: "Read the [guide](https://example.com/g)", classy_campaign_id: nil) }
+    let(:team) { FactoryBot.create(:team, race: race, assigned_team_number: 42) }
+    let(:mail) { UserMailer.team_finalized_email(team.user, team) }
+    let(:html) { mail.html_part.body.decoded }
+    let(:text) { mail.text_part.body.decoded }
+
+    it "includes the team number and the race's confirmation text" do
+      expect(html).to include("Team #42")
+      expect(html).to include('<a href="https://example.com/g">guide</a>')
+      expect(text).to include("Team #42")
+      expect(text).to include("Read the [guide](https://example.com/g)")
+    end
+
+    it "drops the old hardcoded fundraising copy" do
+      expect(html).not_to include("How about some Fundraising")
+      expect(text).not_to include("How about some Fundraising")
+    end
+
+    it "omits the fundraising line without a campaign" do
+      expect(html).not_to include("fundraising page")
+      expect(text).not_to include("fundraising page")
+    end
+
+    it "says the page is being set up" do
+      race.update!(classy_campaign_id: 777)
+      expect(html).to include("Your fundraising page is being set up")
+      expect(text).to include("Your fundraising page is being set up")
+    end
+
+    it "links an existing fundraising page" do
+      race.update!(classy_campaign_id: 777)
+      team.update!(classy_id: 99)
+      url = "https://www.classy.org/team/99?campaignId=777"
+      expect(html).to include(url)
+      expect(text).to include(url)
+    end
+
+    it "omits the text block when blank" do
+      with_text = UserMailer.team_finalized_email(team.user, team).html_part.body.decoded
+      race.update!(confirmation_text: nil)
+      expect(with_text).to include("Read the")
+      expect(html.scan("<div").size).to eq(with_text.scan("<div").size - 1)
+      expect(html).not_to include("example.com/g")
+      expect(html).not_to include("Read the")
+      expect(text).not_to include("Read the")
+      expect(text).not_to include("example.com/g")
+      expect(html).to include(RegistrationUi.team_url(team))
+      expect(html).to include("dogtag@chiditarod.org")
+      expect(text).to include("dogtag@chiditarod.org")
+    end
+  end
+
+  describe '#team_waitlisted_email' do
     let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }
     before do

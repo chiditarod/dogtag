@@ -1,6 +1,8 @@
 import type { Ref } from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmationText } from '@/features/teams/components/confirmation-text';
 import { DeleteTeam } from '@/features/teams/components/delete-team';
+import { FundraisingStatus } from '@/features/teams/components/fundraising-status';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
 import { formatDate, formatDeadline } from '@/lib/dates';
@@ -11,7 +13,7 @@ import { isFeeOpensLater, stepStates } from '@/features/teams/utils';
 function remainingText(team: Team): string {
   const { remaining, finalized, fee } = team.checklist;
   const { time_zone } = team.race;
-  if (finalized) return t('team.youreIn');
+  if (finalized) return t('team.fullyRegistered');
   if (remaining === 0) {
     return isFeeOpensLater(fee)
       ? t('team.nothingYet', {
@@ -62,7 +64,11 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
   const items = leftItems(team);
   return (
     <section aria-label={t('team.summary')} className="space-y-3">
-      <FlagProgress steps={stepStates(team)} label={t('team.progress')} />
+      <FlagProgress
+        steps={stepStates(team)}
+        label={t('team.progress')}
+        starLabels={[t('team.star.team'), t('team.star.racers'), t('team.star.questions'), t('team.star.fee')]}
+      />
       <div>
         <h1 className="font-display text-3xl font-bold [overflow-wrap:anywhere] lg:text-4xl">
           {team.name}
@@ -86,6 +92,18 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
           <EditTeamBasics team={team} />
         </div>
       </div>
+      {team.checklist.finalized && (
+        <div className="space-y-2">
+          {team.checklist.team_number !== null && (
+            <p className="font-display text-2xl font-semibold text-starText">
+              {t('team.teamNumber')}
+              {team.checklist.team_number}
+            </p>
+          )}
+          <FundraisingStatus checklist={team.checklist} compact />
+        </div>
+      )}
+      {team.checklist.finalized && <ConfirmationText html={team.checklist.confirmation_html} />}
       {items.length > 0 && (
         <div className="hidden border-t border-flag pt-3 lg:block">
           <ul aria-label={t('team.whatsLeft')}>

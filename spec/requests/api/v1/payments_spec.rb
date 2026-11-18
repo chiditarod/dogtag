@@ -262,6 +262,13 @@ describe "API v1 payments", type: :request do
       expect(cr.metadata).to include("amount" => 5000, "mock" => true, "charge_id" => a_string_starting_with("mock_ch_"))
     end
 
+    it "tells the owner to show the confirmation when the payment finalizes the team" do
+      post mock_path, params: { requirement_id: requirement.id }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(json["checklist"]).to include("finalized" => true, "show_confirmation" => true)
+    end
+
     it "returns 409 when already paid" do
       post mock_path, params: { requirement_id: requirement.id }, as: :json
       post mock_path, params: { requirement_id: requirement.id }, as: :json

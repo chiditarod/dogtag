@@ -12,6 +12,8 @@
     %p
       Team:
       = @team.name
+      - if @team.assigned_team_number.present?
+        (Team ##{@team.assigned_team_number})
     %p
       Racers:
       %ul
@@ -28,25 +30,24 @@
       = deadline_readable(@team.race.local(@team.race.registration_close))
       when registration closes.
 
-    %p
-      How about some Fundraising?! Fundraising for The CHIditarod Foundation
-      not only does good by giving out grants to other nonprofits in Chicago,
-      but it also helps raise awareness of all that great work and effort your team
-      is putting into the race. As you read this, our dogtag robots are setting up
-      your first fundraising page.  Stay tuned for a confirmation email.  If you do not receive one, please visit
-      %a{:href => "http://www.chiditarod.org/fundraising"}
-        www.chiditarod.org/fundraising
-      and follow the easy instructions to get started. There are some great
-      %a{:href => "http://www.chiditarod.org/fundraising-incentives"}
-        super bonus incentives
-      for fundraising, too!
+    - confirmation_html = ConfirmationText.to_html(@team.race.confirmation_text)
+    - if confirmation_html
+      %div= confirmation_html
+
+    - if @team.race.classy_campaign_id.present?
+      - if @team.classy_fundraising_url
+        %p
+          Your fundraising page:
+          %a{:href => @team.classy_fundraising_url}
+            = @team.classy_fundraising_url
+      - else
+        %p
+          Your fundraising page is being set up; watch for a separate email.
 
     %p
-      More communications will of course be on the way.
-      Now, go out and read our freshly-updated
-      %a{:href=>"http://www.chiditarod.org/"}
-        www.chiditarod.org
-      website content.
+      Problems? Email
+      %a{:href => "mailto:dogtag@chiditarod.org"}
+        dogtag@chiditarod.org
 
     %p
       glory,

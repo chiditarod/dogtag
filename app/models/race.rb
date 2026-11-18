@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Race < ApplicationRecord
+  CONFIRMATION_TEXT_MAX_LENGTH = 5000
+
   validates :name, :max_teams, :people_per_team, presence: true
   validates :race_datetime, :registration_open, :registration_close, :final_edits_close, presence: true
   validates :max_teams, :people_per_team, :numericality => {
@@ -26,6 +28,7 @@ class Race < ApplicationRecord
     allow_nil: true
   }
   validates :name, uniqueness: true
+  validates :confirmation_text, length: { maximum: CONFIRMATION_TEXT_MAX_LENGTH, message: :too_long_text }, allow_blank: true
   validate :time_zone_must_be_iana
   validates_with RaceValidator
 
