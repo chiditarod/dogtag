@@ -37,6 +37,9 @@ class Person < ApplicationRecord
 
   belongs_to :team
 
+  after_save :refresh_team_new_flag, if: -> { saved_change_to_experience? || saved_change_to_team_id? }
+  after_destroy :refresh_team_new_flag
+
   def phone=(val)
     super(PhoneNumber.normalize(val))
   end
@@ -49,6 +52,11 @@ class Person < ApplicationRecord
   end
 
   private
+
+  def refresh_team_new_flag
+    Team.find_by(id: team_id_before_last_save)&.refresh_new_team if saved_change_to_team_id? && team_id_before_last_save
+    team&.refresh_new_team
+  end
 
   def downcase_email
     self.email = email.downcase if email.present?

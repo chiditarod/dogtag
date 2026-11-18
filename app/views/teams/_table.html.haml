@@ -9,6 +9,7 @@
       %th Team
       - if current_user.is_any_of?(:admin, :operator, :refunder)
         %th Number
+        %th.filter-select New team
       - if filter_field.any?
         - filter_field.each do |f|
           %th.filter-select
@@ -58,6 +59,9 @@
         - if current_user.is_any_of?(:admin, :operator, :refunder)
           %h4
             = team.assigned_team_number
+
+      - if current_user.is_any_of?(:admin, :operator, :refunder)
+        %td= new_team_label(team)
 
       - if filter_field.any?
         - filter_field.each do |f|

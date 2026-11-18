@@ -36,6 +36,11 @@
           \#
           = @team.assigned_team_number
 
+      - if current_user.is_any_of?(:admin, :operator)
+        %p
+          %strong New team:
+          = new_team_label(@team)
+
       - if @team.race.open_for_registration?
         %i.lead.text-success
           = t('.can_change_until', :date => deadline_readable(@race.local(@race.registration_close)))

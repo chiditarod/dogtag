@@ -20,6 +20,11 @@
           .col-sm-6.col-md-5.control-label= label_tag :experience, t('.experience')
           .col-sm-6.col-md-3= f.select :experience, @team.race.experience_labels.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
 
+        - if current_user.is_any_of?(:admin, :operator) && @team.persisted?
+          .form-group
+            .col-sm-6.col-md-5.control-label= f.label :new_team_setting, "New team (staff only)"
+            .col-sm-6.col-md-3= f.select :new_team_setting, new_team_setting_options(@team), {}, class: "form-control"
+
         .form-group
           .col-sm-6.col-sm-offset-6.col-md-offset-5.col-md-8
             = f.submit t('save'), :class => ['btn', 'btn-default'], data: { disable_with: "Please wait..." }

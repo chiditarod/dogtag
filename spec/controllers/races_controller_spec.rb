@@ -110,6 +110,47 @@ describe RacesController do
         end
         include_examples 'empty_finalized_teams'
       end
+
+      context "showing the new team flag" do
+        render_views
+
+        let(:race) { FactoryBot.create :race }
+        let!(:new_team) { FactoryBot.create :team, race: race, name: "Fresh Carts" }
+        let!(:veteran_team) { FactoryBot.create :team, race: race, name: "Old Carts" }
+
+        before do
+          FactoryBot.create :person, team: new_team, experience: 0
+          FactoryBot.create :person, team: veteran_team, experience: 2
+        end
+
+        def new_team_cells
+          page = Nokogiri::HTML(response.body)
+          column = page.css("#waitlisted thead th").map { |th| th.text.strip }.index("New team")
+          return nil unless column
+          page.css("#waitlisted tr").select { |row| row.at_css("> td") }.to_h do |row|
+            cells = row.css("> td")
+            [cells[4].at_css("h4").text.strip, cells[column].text.strip]
+          end
+        end
+
+        it "shows staff which teams are new" do
+          get :registrations, params: { race_id: race.id }
+          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "No")
+        end
+
+        it "marks an admin override" do
+          veteran_team.update!(new_team_setting: "yes")
+          get :registrations, params: { race_id: race.id }
+          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "Yes (set by admin)")
+        end
+
+        it "hides the column from racers" do
+          login_user! FactoryBot.create(:user)
+          get :registrations, params: { race_id: race.id }
+          expect(response).to be_successful
+          expect(new_team_cells).to be_nil
+        end
+      end
     end
 
     describe '#export' do

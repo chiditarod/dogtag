@@ -387,6 +387,8 @@ The `Procfile` has no `release:` phase, so a push does not migrate. When a deplo
 - Wrapping inside a grid: `break-words` does not shrink a grid track's min-content width, so one long email widens the whole column. Use `grid-cols-[minmax(0,1fr)]` on the grid with `[overflow-wrap:anywhere]` on the values that must wrap.
 - Team page progress is `FlagProgress` (four Chicago-flag stars) driven by `stepStates(team)` in `features/teams/utils.ts`. The team route is the only wide one: `handle: { wide: true }` in `app/router.tsx`, read by `RegisterLayout`.
 - Racers give `instagram`, not `twitter` (model, API, SPA, legacy form). The `people.twitter` column still exists but nothing reads or writes it.
+- New team flag (#301): `teams.new_team` is true when the sum of `people.experience` is 0 (blank counts as 0), nil with no racers. `Person` after_save (when experience or team changes) and after_destroy call `Team#refresh_new_team`, a conditional `update_all` that skips teams with `new_team_overridden`; reload a team to see the new value. Staff set it through the virtual `new_team_setting` (`auto`/`yes`/`no`), which `TeamsController#team_params` permits only for admins and operators. Display text lives in `NewTeamHelper` (admin-only, untranslated). `teams.experience` is a separate self-reported team label index and does not feed the flag. Nothing reads the old `raced-in-past` JSONForm answer; it remains only in fixtures and the staging seed until #304.
+- Nokogiri's HTML parser does not add an implied `<tbody>`, so in `render_views` specs select legacy table rows with `#table_id tr` and filter for `> td`.
 
 ## Known Quirks
 
