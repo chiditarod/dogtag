@@ -188,4 +188,44 @@ describe 'validation' do
     expect(person).to be_invalid
     expect(person.errors.messages[:maximum]).to eq(['people already added to this team'])
   end
+
+  context "with an email already on the team" do
+    let(:race) { FactoryBot.create :race, people_per_team: 3 }
+    let(:team) { FactoryBot.create :team, :with_people, people_count: 1, race: race }
+    let(:taken) { team.people.first.email }
+
+    it "is invalid for a new person, whatever the case" do
+      person = FactoryBot.build :person, team: team, email: taken
+      expect(person).to be_invalid
+      expect(person.errors[:email]).to eq(["is already on this team"])
+
+      person.email = taken.upcase
+      expect(person).to be_invalid
+    end
+
+    it "collides with a legacy mixed-case row on the same team" do
+      legacy = FactoryBot.build :person, team: team, email: "Legacy.Racer@example.com"
+      legacy.save!(validate: false)
+
+      person = FactoryBot.build :person, team: team, email: "legacy.racer@example.com"
+      expect(person).to be_invalid
+      expect(person.errors[:email]).to eq(["is already on this team"])
+    end
+
+    it "is valid on a different team" do
+      expect(FactoryBot.build(:person, team: FactoryBot.create(:team), email: taken)).to be_valid
+    end
+
+    it "stays editable while the shared email is unchanged, but not when set to a taken one" do
+      twin = FactoryBot.build :person, team: team, email: taken
+      twin.save!(validate: false)
+
+      twin.first_name = "Changed"
+      expect(twin).to be_valid
+
+      other = FactoryBot.create :person, team: team
+      other.email = taken
+      expect(other).to be_invalid
+    end
+  end
 end

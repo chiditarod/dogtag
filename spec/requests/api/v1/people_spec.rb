@@ -41,6 +41,15 @@ describe "API v1 people", type: :request do
       expect(json["errors"]["phone"]).to be_present
     end
 
+    it "returns 422 and adds no one when the email is already on the team" do
+      FactoryBot.create(:person, team: team, email: "ada@example.com")
+      expect do
+        post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
+      end.not_to change(Person, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["errors"]["email"]).to be_present
+    end
+
     it "returns 400 when the person param is missing" do
       post "/api/v1/teams/#{team.id}/people", params: {}, as: :json
       expect(response).to have_http_status(:bad_request)
