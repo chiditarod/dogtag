@@ -325,6 +325,24 @@ describe Team do
       end
     end
 
+    it 'files team names by library rules' do
+      names = {
+        "The Secret Gentlemen" => "Secret Gentlemen, The",
+        "the lonely carts" => "lonely carts, the",
+        "  THE  Bold Ones " => "Bold Ones, THE",
+        "Theodore's Team" => "Theodore's Team",
+        "The" => "The",
+        "Cart Pushers" => "Cart Pushers"
+      }
+      names.each do |name, filed|
+        expect(FactoryBot.build(:team, name: name).library_name).to eq(filed)
+      end
+
+      team.update_column(:name, "The Secret Gentlemen")
+      expect(Team.export(race.id).last).to include("Secret Gentlemen, The")
+      expect(team.reload.name).to eq("The Secret Gentlemen")
+    end
+
     it 'returns a multi-dimensional array of teams' do
       result = Team.export(race.id)
 
