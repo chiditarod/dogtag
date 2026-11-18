@@ -10,6 +10,7 @@
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
+#   rails test_seeds:buddy_picker              (captain's team plus two other teams in a race with questions)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -466,6 +467,54 @@ namespace :test_seeds do
     puts "✅ Seeded captain #{captain.email} with #{racers.size} past racers"
   end
 
+  desc "Captain's team with answered questions, plus a finalized and an unfinalized team in the same open race"
+  task buddy_picker: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding team picker test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    answers = File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json"))
+
+    race = FactoryBot.create(:race_with_jsonform,
+      name: "Race Picker #{unique_id[0..7]}",
+      people_per_team: 2,
+      max_teams: 100
+    )
+
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "Picker",
+      email: "picker-captain-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    team = FactoryBot.create(:team, name: "Test Team Picker #{unique_id[0..7]}", race: race, user: captain, jsonform: answers)
+
+    # Names chosen so byte order (uppercase first) differs from case-insensitive order.
+    other_teams = [["Banana Crew", true], ["apple cart", false]].map.with_index do |(name, finalized), index|
+      owner = FactoryBot.create(:user, email: "picker-owner#{index + 1}-#{unique_id}@example.com")
+      other = FactoryBot.create(:team, name: name, race: race, user: owner, jsonform: answers)
+      if finalized
+        FactoryBot.create_list(:person, race.people_per_team, team: other)
+        # Not Team#finalize: that enqueues TeamFinalizer (email, Classy) into the shared Redis.
+        other.update_columns(finalized: true, notified_at: Time.zone.now, assigned_team_number: 1)
+      end
+      other
+    end
+
+    write_test_credentials(unique_id,
+      captain_email: captain.email,
+      captain_password: "password123",
+      race_name: race.name,
+      team_id: team.id,
+      team_name: team.name,
+      teams: other_teams.map { |t| { name: t.name, finalized: !!t.finalized } }
+    )
+    puts "✅ Seeded captain #{captain.email} with #{other_teams.size} other teams in #{race.name}"
+  end
+
   desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"
   task reminder: [:guard, :environment] do
     require "factory_bot_rails"
@@ -520,6 +569,8 @@ namespace :test_seeds do
     SentEmail.where("recipient LIKE ?", "%@example.com").delete_all
     User.where("email LIKE ? AND email NOT IN (?)", "%@example.com", keep).destroy_all
     Team.where("name LIKE ?", "Test Team%").destroy_all
+    # Seeded teams with their own names (e.g. buddy_picker); team_buddies rows go by FK cascade.
+    Team.where(race_id: Race.where("name LIKE ?", "Race %").select(:id)).destroy_all
     Race.where("name LIKE ?", "Race %").destroy_all
 
     puts "  ✓ Deleted #{count[:users]} test users"
