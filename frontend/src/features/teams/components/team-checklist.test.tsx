@@ -4,6 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOUR_OFF_KEY, tourSeenKey } from '@/features/tour/storage';
 import { clearCsrfToken } from '@/lib/api-client';
+import { t } from '@/locales/en';
 import { buildChecklist, buildRace, buildTeam, user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
@@ -393,6 +394,7 @@ describe('EditTeamBasics', () => {
     const name = await openForm();
     expect(name).toHaveValue('Cart Pushers');
     expect(screen.getByLabelText('Team years racing')).toHaveValue('1');
+    expect(screen.getByLabelText('Description')).toHaveAccessibleDescription(t('teams.descriptionHelp'));
     await userEvent.clear(name);
     await userEvent.type(name, 'Cart Pullers');
     await userEvent.clear(screen.getByLabelText('Description'));

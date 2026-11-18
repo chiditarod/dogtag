@@ -62,6 +62,7 @@ export function CreateTeamForm({ race }: { race: Race }) {
       </Field>
       <Field
         label={t('teams.description')}
+        help={t('teams.descriptionHelp')}
         name="description"
         error={fieldErrors.description}
       >

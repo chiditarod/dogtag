@@ -14,7 +14,11 @@
 
         .form-group
           .col-sm-6.col-md-5.control-label= label_tag :description, t('.description')
-          .col-sm-6.col-md-7= f.text_area :description, :class => 'form-control'
+          .col-sm-6.col-md-7
+            = f.text_area :description, :class => 'form-control'
+            %br
+            %small
+              = t('.description_instructions')
 
         .form-group
           .col-sm-6.col-md-5.control-label= label_tag :experience, t('.experience')

@@ -25,6 +25,12 @@ async function fillAndSubmit() {
 }
 
 describe('CreateTeamForm', () => {
+  it('tells racers the description is where their cart theme goes', async () => {
+    renderApp('/races/1/teams/new');
+    const description = await screen.findByLabelText(t('teams.description'));
+    expect(description).toHaveAccessibleDescription(t('teams.descriptionHelp'));
+  });
+
   it('offers the race experience labels, with the value as the index', async () => {
     renderApp('/races/1/teams/new');
     const select = await screen.findByLabelText(t('teams.experience'));
