@@ -1,6 +1,7 @@
 import type { Ref } from 'react';
 import { Button } from '@/components/ui/button';
 import { ConfirmationText } from '@/features/teams/components/confirmation-text';
+import { DeleteTeam } from '@/features/teams/components/delete-team';
 import { FundraisingStatus } from '@/features/teams/components/fundraising-status';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
@@ -125,6 +126,7 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
           {t('tour.replay')}
         </Button>
       </div>
+      <DeleteTeam team={team} />
     </section>
   );
 }

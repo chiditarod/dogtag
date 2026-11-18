@@ -13,6 +13,7 @@ export interface PersonPayload {
   zipcode: string;
   experience: number | null;
   instagram: string;
+  tiktok: string;
 }
 
 interface PersonResponse {

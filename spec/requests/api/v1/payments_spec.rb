@@ -5,7 +5,7 @@ describe "API v1 payments", type: :request do
   let(:stripe_helper) { StripeMock.create_test_helper }
   let!(:requirement) { FactoryBot.create(:payment_requirement_with_tier) }
   let!(:user) { FactoryBot.create(:user) }
-  let!(:team) { FactoryBot.create(:team, user: user, race: requirement.race) }
+  let!(:team) { FactoryBot.create(:team, :with_enough_people, user: user, race: requirement.race) }
   let(:login_user) { user }
   let(:token) { stripe_helper.generate_card_token }
   let(:path) { "/api/v1/teams/#{team.id}/payments" }
@@ -75,6 +75,20 @@ describe "API v1 payments", type: :request do
       expect(CompletedRequirement.find_by!(team: team, requirement: requirement).metadata["amount"]).to eq(5000)
     end
 
+    context "when the team has not added all of its racers" do
+      let!(:team) { FactoryBot.create(:team, user: user, race: requirement.race) }
+
+      it "returns 422 without calling Stripe" do
+        expect(Stripe::Charge).not_to receive(:create)
+
+        post path, params: params, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["code"]).to eq("roster_incomplete")
+        expect(CompletedRequirement.count).to eq(0)
+      end
+    end
+
     context "when the race is full" do
       before { team.race.update_column(:max_teams, 0) }
 
@@ -90,7 +104,7 @@ describe "API v1 payments", type: :request do
 
       context "as an operator" do
         let(:login_user) { FactoryBot.create(:operator_user) }
-        let!(:team) { FactoryBot.create(:team, race: requirement.race) }
+        let!(:team) { FactoryBot.create(:team, :with_enough_people, race: requirement.race) }
 
         it "allows the payment" do
           post path, params: params.merge(stripe_email: login_user.email), as: :json
@@ -116,7 +130,7 @@ describe "API v1 payments", type: :request do
 
       context "as an operator" do
         let(:login_user) { FactoryBot.create(:operator_user) }
-        let!(:team) { FactoryBot.create(:team, race: requirement.race) }
+        let!(:team) { FactoryBot.create(:team, :with_enough_people, race: requirement.race) }
 
         it "allows the payment" do
           post path, params: params.merge(stripe_email: login_user.email), as: :json

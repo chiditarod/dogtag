@@ -40,13 +40,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
     t.string "last_name"
     t.string "email"
     t.string "phone"
-    t.string "twitter"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
     t.bigint "team_id"
     t.integer "experience"
     t.string "zipcode", null: false
     t.text "instagram"
+    t.text "tiktok"
     t.index ["team_id"], name: "index_people_on_team_id"
   end
 
@@ -118,6 +118,8 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_18_091408) do
     t.integer "assigned_team_number"
     t.integer "classy_id"
     t.integer "classy_fundraiser_page_id"
+    t.boolean "new_team"
+    t.boolean "new_team_overridden"
     t.datetime "confirmation_seen_at"
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["user_id"], name: "index_teams_on_user_id"

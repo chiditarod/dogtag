@@ -1,5 +1,5 @@
 const CHECKOUT_SRC = 'https://checkout.stripe.com/checkout.js';
-const LOGO = '/register/logo.png';
+const LOGO = '/register/logo-square.png';
 
 interface CheckoutToken {
   id: string;

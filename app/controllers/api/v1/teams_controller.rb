@@ -42,4 +42,13 @@ class Api::V1::TeamsController < Api::V1::BaseController
       render_errors(@team)
     end
   end
+
+  def destroy
+    team = Team.find(params[:id])
+    authorize!(:destroy, team)
+    return render_errors(I18n.t("teams.destroy.has_payments"), status: :conflict, code: :has_payments) if team.completed_requirements.any?
+
+    team.destroy!
+    head :no_content
+  end
 end

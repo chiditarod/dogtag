@@ -44,6 +44,8 @@ en:
               taken_on_team: is already on this team
             instagram:
               invalid_handle: should look like @handle (letters, numbers, periods and underscores)
+            tiktok:
+              invalid_handle: should look like @handle (2-24 letters, numbers, periods and underscores, not ending in a period)
   dogpen: dogPen
 
   create_failed: Create failed.
@@ -58,11 +60,13 @@ en:
   not_found: Not found.
   create: Create
   save: Save
+  instagram: Instagram
+  tiktok: TikTok
   new: New
   edit: Edit
   register: Register
   register_for: "Register for %{race_name}"
-  global_questions: "Questions? Email <a href='mailto:registration@chiditarod.org'>registration@chiditarod.org</a>"
+  global_questions: "Questions? Email <a href='mailto:%{email}'>%{email}</a>"
   store_instructions: "All products are for <u><strong>Pickup Only</strong></u> on race day. No shipping is available. Buying these products is completely optional and unrelated to completing your team registration."
 
   login: Login
@@ -170,6 +174,7 @@ en:
     not_payable: This requirement cannot be paid by card.
     already_paid: This requirement has already been paid for this team, so your card was not charged.
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
+    roster_incomplete: Your team needs all of its racers before payment unlocks.
     race_full: This race is full. Your team is on the waitlist and can't pay yet, so your card was not charged.
     price_changed: "The registration fee has changed to %{amount}, so your card was not charged. Please review the new price and try again."
     mock_declined: Mock payment declined
@@ -192,6 +197,7 @@ en:
     form:
       experience: How many years has this person participated at Chiditarod?
       instagram: Got Instagram? Add your handle
+      tiktok: Got TikTok? Add your handle
       phone: Mobile Phone
       we_will_sms: Please be accurate; we will send you important texts on race day
   teams:
@@ -293,6 +299,7 @@ en:
       edit_team: "Edit team for %{race_name}"
       success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     destroy:
+      confirm: "Delete %{name}? Its racers are removed too. This cannot be undone."
       has_payments: This team has completed requirements and cannot be deleted. Please contact support if you need to delete this team.
     table:
       exp: exp
@@ -301,6 +308,7 @@ en:
   requirements:
     payment_requirement:
       no_pay_waitlist: You are on the waitlist. Payment is not available.
+      no_pay_roster: Your team needs all of its racers before payment unlocks.
       no_complete_when_closed: Registration closed
     table:
       tiers: tiers

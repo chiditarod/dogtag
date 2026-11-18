@@ -21,7 +21,7 @@ test.describe('SPA roster: past racers', () => {
   test.afterAll(() => seeded.dispose());
   test.beforeEach(() => clearInbox());
 
-  test('picking a past racer, confirming the six details and adding fills the slot', async ({ page }) => {
+  test('picking a past racer, confirming the seven details and adding fills the slot', async ({ page }) => {
     const c = seeded.credentials;
     const [ada] = c.past_racers;
 
@@ -57,7 +57,7 @@ test.describe('SPA roster: past racers', () => {
       await expect(dialog.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
     });
 
-    await test.step('Confirm all six details, then add her', async () => {
+    await test.step('Confirm all seven details, then add her', async () => {
       const lines = [
         `Name: ${ada.first_name} ${ada.last_name}`,
         `Email: ${ada.email}`,
@@ -65,6 +65,7 @@ test.describe('SPA roster: past racers', () => {
         `ZIP code: ${ada.zipcode}`,
         /^Years racing: ./,
         'Instagram: None',
+        'TikTok: None',
       ];
       for (const name of lines) {
         await dialog.getByRole('checkbox', { name }).click();

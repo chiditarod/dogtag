@@ -37,6 +37,11 @@
     .col-xs-4
       = f.text_field :instagram, :class => 'form-control'
   .form-group
+    .col-xs-4.control-label
+      = label_tag :tiktok, t('.tiktok')
+    .col-xs-4
+      = f.text_field :tiktok, :class => 'form-control'
+  .form-group
     .col-xs-offset-4.col-xs-8
       = f.submit t('save'), :class => ['btn', 'btn-default']
       = link_to team_path(@team.id) do

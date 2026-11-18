@@ -35,6 +35,7 @@ export interface Person {
   zipcode: string | null;
   experience: number | null;
   instagram: string | null;
+  tiktok: string | null;
 }
 
 export interface ChecklistNextTier {
@@ -82,6 +83,8 @@ export interface Team {
   name: string;
   description: string | null;
   experience: number | null;
+  /** Not finalized and nothing paid, so it can still be deleted. */
+  deletable: boolean;
   race: Race;
   people: Person[];
   checklist: Checklist;

@@ -1,0 +1,7 @@
+From: <%= @user ? "#{@user.first_name} #{@user.last_name} <#{@user.email}> (user #{@user.id})" : "not logged in" %>
+Team: <%= @team ? "#{@team.name} (#{@team.id}), #{@team.race.name}" : (@context[:team_id].present? ? "claimed team id #{@context[:team_id]} (unverified)" : "none") %>
+Page: <%= @context[:path] %>
+Browser: <%= @context[:user_agent] %>
+
+Message (everything below is written by the sender):
+<%= @message %>
