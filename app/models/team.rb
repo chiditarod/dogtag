@@ -38,6 +38,11 @@ class Team < ApplicationRecord
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
   scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
 
+  # Library filing order, so "The Secret Gentlemen" sorts under S: "Secret Gentlemen, The".
+  def library_name
+    name.to_s.sub(/\A\s*(the)\s+(\S.*?)\s*\z/i, '\2, \1')
+  end
+
   def unfinalized
     ! finalized
   end
@@ -181,8 +186,14 @@ class Team < ApplicationRecord
           %w(name experience description).include?(n)
         end)
 
-        # team basics
-        row.concat cols.map{ |n| n == "experience" ? race.experience_label(team[n]) : team[n] }
+        # team basics (the name uses library rules so "The" teams don't all file under T)
+        row.concat(cols.map { |n|
+          case n
+          when "experience" then race.experience_label(team[n])
+          when "name" then team.library_name
+          else team[n]
+          end
+        })
 
         # race-specific details
         row.concat race.question_fields.map{ |n| team.jsonform_value(n) }
