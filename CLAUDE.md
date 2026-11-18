@@ -241,6 +241,7 @@ include Wisper.model
 - Commands: `npm --prefix frontend run dev|build|test`.
 - The dev server runs on port 5173 and proxies `/api` to `http://localhost:3000`. The Rails redirect to the dev server is opt-in: set `VITE_DEV_SERVER=http://localhost:5173`.
 - SPA copy lives in `frontend/src/locales/en.ts`. Rails public strings live in `config/locales/en.yml`.
+- Header logo: `frontend/public/logo.png` (640x389, small ribbon lettering) is sized `h-16` / `min-[400px]:h-20` / `sm:h-24` in `RegisterLayout`; at 320px the logged-in nav leaves room for about `h-16`, so do not go taller without wrapping the nav. Stripe Checkout wants a roughly square image, so it uses `logo-square.png` (256x256, logo centered on opaque white); regenerate it with `sips --resampleWidth 256` then `sips -p 256 256 --padColor FFFFFF` if the logo changes.
 - Design tokens ("Chicago Flag"): page bg `#f4f8fb`, flag blue `#b3ddf2`, star red `#e4002b`, red text `#c4001f`, navy text `#12202f`, link blue `#2f5aae`, cards `#ffffff`. Headings use Oswald (500/700); body uses Inter (400-700).
 - Pages are mobile-first and work at 320px wide with no horizontal scroll.
 
