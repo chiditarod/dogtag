@@ -9,6 +9,7 @@ export interface PastRacer {
   zipcode: string | null;
   experience: number | null;
   instagram: string | null;
+  tiktok: string | null;
   last_team_name: string | null;
   last_race_name: string | null;
   last_raced_year: number | null;

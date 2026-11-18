@@ -178,6 +178,19 @@ export function PersonForm({
           onChange={(event) => set('instagram')(event.target.value)}
         />
       </Field>
+      <Field
+        label={t('roster.tiktok')}
+        name="tiktok"
+        error={fieldErrors.tiktok}
+      >
+        <Input
+          autoComplete="off"
+          autoCapitalize="none"
+          placeholder={t('roster.tiktokPlaceholder')}
+          value={draft.tiktok}
+          onChange={(event) => set('tiktok')(event.target.value)}
+        />
+      </Field>
       <div className="flex gap-2">
         <Button type="submit" loading={pending}>
           {t('roster.save')}

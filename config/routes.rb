@@ -109,6 +109,7 @@ Rails.application.routes.draw do
       resource :session, only: [:create, :destroy]
       resources :users, only: [:create]
       resources :password_resets, only: [:create]
+      resources :feedback, only: [:create]
       resources :races, only: [:index, :show]
       resources :teams, only: [:index, :show, :create, :update, :destroy] do
         resources :people, only: [:create, :update, :destroy]

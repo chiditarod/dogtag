@@ -10,6 +10,7 @@ describe('payloadFromDraft', () => {
     zipcode: ' 60614 ',
     experience: '2',
     instagram: ' @dee ',
+    tiktok: ' @Dee.Lamb ',
   };
 
   it('trims every field, lowercases the email and converts the phone', () => {
@@ -21,6 +22,7 @@ describe('payloadFromDraft', () => {
       zipcode: '60614',
       experience: 2,
       instagram: '@dee',
+      tiktok: '@Dee.Lamb',
     });
   });
 

@@ -20,6 +20,7 @@ const draft: PersonDraft = {
   zipcode: '60614',
   experience: '1',
   instagram: '@ada',
+  tiktok: '@ada',
 };
 
 const racer: PastRacer = {
@@ -30,6 +31,7 @@ const racer: PastRacer = {
   zipcode: '60614',
   experience: 0,
   instagram: null,
+  tiktok: null,
   last_team_name: 'Cart Pushers',
   last_race_name: 'CHIditarod 2025',
   last_raced_year: 2025,
@@ -38,7 +40,7 @@ const racer: PastRacer = {
 describe('initialLines', () => {
   it('starts every line of a complete draft unconfirmed and closed', () => {
     const lines = initialLines(draft);
-    expect(Object.values(lines)).toHaveLength(6);
+    expect(Object.values(lines)).toHaveLength(7);
     for (const line of Object.values(lines)) {
       expect(line).toEqual({ confirmed: false, editing: false, error: null });
     }
@@ -58,6 +60,12 @@ describe('initialLines', () => {
     const blank = { ...draft, instagram: '' };
     expect(initialLines(blank).instagram.editing).toBe(false);
     expect(lineValue('instagram', blank, race)).toBe('None');
+  });
+
+  it('leaves a blank tiktok closed and shows None', () => {
+    const blank = { ...draft, tiktok: '' };
+    expect(initialLines(blank).tiktok.editing).toBe(false);
+    expect(lineValue('tiktok', blank, race)).toBe('None');
   });
 
   it('opens the years line when there is no years value', () => {

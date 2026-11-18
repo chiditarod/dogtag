@@ -217,7 +217,7 @@ describe('the actions under the list', () => {
 
 describe('the crew picker from the roster', () => {
   const fillAll = async (u: ReturnType<typeof userEvent.setup>) => {
-    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram']) {
+    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram', 'TikTok']) {
       await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
     }
   };
@@ -419,7 +419,7 @@ describe('Add yourself', () => {
     await openRosterWithPicker(8);
     await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
     await screen.findByRole('heading', { name: 'Review Dee Lamb' });
-    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram']) {
+    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram', 'TikTok']) {
       await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
     }
     await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
@@ -536,6 +536,7 @@ describe('adding someone new', () => {
         zipcode: '60614',
         experience: 0,
         instagram: '',
+        tiktok: '',
       },
     });
   });

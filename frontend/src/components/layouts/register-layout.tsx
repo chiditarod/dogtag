@@ -1,6 +1,7 @@
 import { Link, Outlet, useMatches } from 'react-router-dom';
 import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
 import { UserMenu } from '@/features/auth/components/user-menu';
+import { FeedbackLink } from '@/features/feedback/components/feedback-link';
 import { t } from '@/locales/en';
 
 export function RegisterLayout() {
@@ -18,7 +19,9 @@ export function RegisterLayout() {
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt={t('layout.logoAlt')}
-              className="h-8 w-auto max-w-full object-contain object-left sm:h-10"
+              width={640}
+              height={389}
+              className="h-16 w-auto max-w-full object-contain object-left min-[400px]:h-20 sm:h-24"
             />
           </Link>
           <nav aria-label={t('layout.userMenu')} className="shrink-0 text-sm">
@@ -29,6 +32,9 @@ export function RegisterLayout() {
       <main className={`mx-auto w-full ${width} px-4 py-6`}>
         <Outlet />
       </main>
+      <footer className={`mx-auto w-full ${width} px-4 pb-8 text-sm`}>
+        <FeedbackLink />
+      </footer>
     </div>
   );
 }

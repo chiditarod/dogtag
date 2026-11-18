@@ -27,5 +27,5 @@
     .container
       .text-center
         %small
-          = raw t('global_questions')
+          = raw t('global_questions', email: UserMailer::STAFF_EMAIL)
         %br
