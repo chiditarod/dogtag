@@ -151,6 +151,7 @@ export const en = {
   'roster.openSpots_other': '{count} open spots',
   'roster.addYourself': 'Add yourself',
   'roster.showRacers': 'Show racers',
+  'roster.hideRacers': 'Hide racers',
   'roster.pickFromPast': 'Pick from past teams ({count})',
   'roster.pickTitle': 'Pick from past teams',
   'roster.searchPlaceholder': 'Search {count} past racers',

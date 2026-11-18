@@ -37,6 +37,21 @@ interface ActiveForm {
   draft: PersonDraft;
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className={`ml-1 h-4 w-4 ${open ? 'rotate-180' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <path d="M5 8l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function RosterCard({ team }: { team: Team }) {
   const { race, people, checklist } = team;
   const me = useMe().data;
@@ -49,6 +64,7 @@ export function RosterCard({ team }: { team: Team }) {
   const [picker, setPicker] = useState<{ reviewOnly?: PastRacer } | null>(null);
   // A roster that is already full when the page loads starts as a summary.
   const [collapsed, setCollapsed] = useState(() => checklist.racers.done);
+  const [wasFinalized, setWasFinalized] = useState(checklist.finalized);
   const [removing, setRemoving] = useState<number | null>(null);
   const [status, setStatus] = useState('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -234,9 +250,14 @@ export function RosterCard({ team }: { team: Team }) {
   // A spot can open later (e.g. after a refetch): show the rows, and keep them
   // shown if the roster fills again during the visit.
   if (collapsed && hasEmptySlot) setCollapsed(false);
+  // The team just became fully registered: fold the card away.
+  if (wasFinalized !== checklist.finalized) {
+    setWasFinalized(checklist.finalized);
+    if (checklist.finalized && !hasEmptySlot && !collapsed) setCollapsed(true);
+  }
   if (collapsed && !hasEmptySlot) {
     return (
-      <div className="space-y-1">
+      <div ref={rootRef} className="space-y-1">
         <p role="status" className="sr-only">
           {status}
         </p>
@@ -244,18 +265,22 @@ export function RosterCard({ team }: { team: Team }) {
         <Button
           variant="ghost"
           className="-ml-4"
+          data-focus-key="toggle"
+          aria-expanded={false}
           onClick={() => {
             restoreFocus.current = 'list';
             setCollapsed(false);
           }}
         >
           {t('roster.showRacers')}
+          <Chevron open={false} />
         </Button>
       </div>
     );
   }
 
   const showActions = open && hasEmptySlot && !addingNew;
+  const canHide = !hasEmptySlot && !active && !picker;
 
   return (
     <div ref={rootRef} className="space-y-3">
@@ -271,6 +296,20 @@ export function RosterCard({ team }: { team: Team }) {
         {rows}
         {hasEmptySlot && <OpenSpotsItem count={openSpots} open={open} />}
       </ol>
+      {canHide && (
+        <Button
+          variant="ghost"
+          className="-ml-4"
+          aria-expanded
+          onClick={() => {
+            restoreFocus.current = 'toggle';
+            setCollapsed(true);
+          }}
+        >
+          {t('roster.hideRacers')}
+          <Chevron open />
+        </Button>
+      )}
       {showActions && (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           {available.length > 0 && (
