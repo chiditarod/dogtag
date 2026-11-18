@@ -28,7 +28,7 @@ class Team < ApplicationRecord
   validates :user, :race, presence: true
 
   # A team has a certain number of people, per the settings for the race.
-  has_many :people
+  has_many :people, dependent: :destroy
 
   # A team must track which race requirements have been fulfilled.
   has_many :completed_requirements
@@ -41,6 +41,12 @@ class Team < ApplicationRecord
   # Library filing order, so "The Secret Gentlemen" sorts under S: "Secret Gentlemen, The".
   def library_name
     name.to_s.sub(/\A[[:space:]]*(?<the>the)[[:space:]]+(?<rest>[^[:space:]].*?)[[:space:]]*\z/i) { "#{$~[:rest]}, #{$~[:the]}" }
+  end
+
+  # A team that never finished registering: nothing paid and not finalized. Only these can be deleted
+  # by their captain or by operators.
+  def deletable?
+    !finalized && completed_requirements.none?
   end
 
   def unfinalized
@@ -81,8 +87,38 @@ class Team < ApplicationRecord
     self.save
   end
 
+  # Total years racing across the roster. A blank experience counts as 0.
   def person_experience
-    people.reduce(0) { |memo, person| person.experience + memo }
+    people.sum { |person| person.experience.to_i }
+  end
+
+  # A team is new when its racers' years racing add up to 0 (a blank counts as 0).
+  # nil until the team has racers. An admin override is left alone; it is checked in
+  # SQL so a stale copy of the team cannot overwrite it.
+  def refresh_new_team
+    Team.where(id: id, new_team_overridden: [nil, false]).update_all(new_team: computed_new_team)
+  end
+
+  # The flag the roster gives, ignoring any override.
+  def computed_new_team
+    return nil unless persisted? && people.exists?
+    people.sum("COALESCE(experience, 0)").zero?
+  end
+
+  def new_team_setting
+    return "auto" unless new_team_overridden
+    new_team ? "yes" : "no"
+  end
+
+  def new_team_setting=(value)
+    case value.to_s
+    when "yes", "no"
+      self.new_team_overridden = true
+      self.new_team = value.to_s == "yes"
+    when "auto"
+      self.new_team_overridden = nil
+      self.new_team = computed_new_team
+    end
   end
 
   def percent_complete
@@ -216,6 +252,10 @@ class Team < ApplicationRecord
           }
         end
 
+        # Appended last so the positions of every older column stay put for
+        # anyone reading the export by column.
+        row << { true => "yes", false => "no" }.fetch(team.new_team, "")
+
         memo << row
       end
     end
@@ -241,7 +281,7 @@ class Team < ApplicationRecord
         header.concat person_keys.map{ |k| "dawg_#{i}_#{k}" }
       end
 
-      header
+      header << 'new_team'
     end
   end
 end
