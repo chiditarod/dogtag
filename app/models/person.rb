@@ -20,8 +20,9 @@ class Person < ApplicationRecord
   validates :email, format: { :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i }
   validate :email_must_be_lowercase
   # Once per team. Only checked when the email is new or changed, so older teams that
-  # already share an address stay editable.
-  validates :email, uniqueness: { scope: :team_id, message: :taken_on_team },
+  # already share an address stay editable. Case-insensitive so a legacy mixed-case
+  # row still collides with its lowercase twin.
+  validates :email, uniqueness: { scope: :team_id, case_sensitive: false, message: :taken_on_team },
                     if: -> { new_record? || will_save_change_to_email? }
   # Instagram allows letters, numbers, periods and underscores, but no period
   # at either end and never two in a row.

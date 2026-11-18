@@ -203,6 +203,15 @@ describe 'validation' do
       expect(person).to be_invalid
     end
 
+    it "collides with a legacy mixed-case row on the same team" do
+      legacy = FactoryBot.build :person, team: team, email: "Legacy.Racer@example.com"
+      legacy.save!(validate: false)
+
+      person = FactoryBot.build :person, team: team, email: "legacy.racer@example.com"
+      expect(person).to be_invalid
+      expect(person.errors[:email]).to eq(["is already on this team"])
+    end
+
     it "is valid on a different team" do
       expect(FactoryBot.build(:person, team: FactoryBot.create(:team), email: taken)).to be_valid
     end
