@@ -263,8 +263,6 @@ describe "API v1 payments", type: :request do
     end
 
     it "tells the owner to show the confirmation when the payment finalizes the team" do
-      FactoryBot.create_list(:person, team.race.people_per_team, team: team)
-
       post mock_path, params: { requirement_id: requirement.id }, as: :json
 
       expect(response).to have_http_status(:created)
