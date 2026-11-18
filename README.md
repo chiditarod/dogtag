@@ -243,6 +243,7 @@ Here is an outline of the yearly cycle for using Dogtag with a single event ([CH
 
 1. Do a development cycle to incorporate any new features.
 1. Update the jsonform with any new questions and expected responses for the specific race.
+1. Fill in the race's confirmation text (Markdown) in the admin race form and review it. It is shown to teams when they are fully registered and is included in the confirmation email.
 1. Launch it all locally, make sure Stripe payments are functioning and a team can finalize their registration successfully.
 1. Use Mailpit (http://localhost:8025) to ensure emails are being created and sent.
 1. Check that the SSL certificate for dogtag.chiditarod.org is up to date and working
