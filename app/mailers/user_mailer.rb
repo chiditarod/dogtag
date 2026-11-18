@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UserMailer < ActionMailer::Base
+  # Where racer questions and feedback go; also shown in the site footer. ENV["FEEDBACK_EMAIL"] overrides it for feedback.
+  STAFF_EMAIL = "registration@chiditarod.org".freeze
+
   default from: "dogtag <dogtag@chiditarod.org>"
 
   helper MoneyHelper, DateHelper
@@ -67,14 +70,16 @@ class UserMailer < ActionMailer::Base
 
   # Sent to staff. `context` is what the SPA knew when the racer wrote in:
   # :path, :team_id, :user_agent. `user` is nil for visitors who are logged out.
-  def feedback_email(user, message, context)
+  # `team` is set only when the sender may see that team; a team_id without one
+  # is an unverified claim and is shown as such and not tracked.
+  def feedback_email(user, message, context, team = nil)
     @user = user
     @message = message
     @context = context
-    @team = Team.find_by(id: context[:team_id])
-    track(kind: "feedback", team: @team, user: user)
+    @team = team
+    track(kind: "feedback", team: team, user: user)
     mail(
-      to: ENV.fetch("FEEDBACK_EMAIL", "registration@chiditarod.org"),
+      to: ENV["FEEDBACK_EMAIL"].presence || STAFF_EMAIL,
       reply_to: user&.email,
       subject: "dogTag feedback#{" from #{user.email}" if user}"
     )
