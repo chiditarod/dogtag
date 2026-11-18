@@ -101,6 +101,17 @@ describe "API v1 teams", type: :request do
     end
 
     describe "GET /api/v1/teams/:id" do
+      it "asks the owner of a finalized, unconfirmed team to see the confirmation" do
+        race.update!(confirmation_text: "**Welcome**")
+        team = FactoryBot.create(:team, user: user, race: race)
+        team.update_columns(finalized: true)
+
+        get "/api/v1/teams/#{team.id}"
+
+        expect(json["team"]["checklist"]).to include("show_confirmation" => true)
+        expect(json["team"]["checklist"]["confirmation_html"]).to include("<strong>Welcome</strong>")
+      end
+
       let!(:team) { FactoryBot.create(:team, :with_people, user: user, race: race) }
 
       it "returns the team with race, people and checklist" do

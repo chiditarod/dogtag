@@ -1,9 +1,10 @@
 # Builds the registration checklist for a team: racers, team questions,
 # registration fee and finalization status.
 class TeamChecklist
-  def initialize(team)
+  def initialize(team, viewer: nil)
     @team = team
     @race = team.race
+    @viewer = viewer
   end
 
   def to_h
@@ -20,13 +21,20 @@ class TeamChecklist
       team_number: team.assigned_team_number,
       classy_fundraising_url: classy_fundraising_url,
       # Only races with a Classy campaign get a fundraising page, so only they should wait for one.
-      classy_expected: race.classy_campaign_id.present?
+      classy_expected: race.classy_campaign_id.present?,
+      confirmation_html: ConfirmationText.to_html(race.confirmation_text)&.to_str,
+      show_confirmation: show_confirmation?
     }
   end
 
   private
 
-  attr_reader :team, :race
+  attr_reader :team, :race, :viewer
+
+  # Only the captain is asked, and only until they have closed the confirmation once.
+  def show_confirmation?
+    !!team.finalized && team.confirmation_seen_at.nil? && !viewer.nil? && viewer.id == team.user_id
+  end
 
   def racers_item
     filled = team.people.size

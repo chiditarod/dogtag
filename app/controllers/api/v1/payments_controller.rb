@@ -34,7 +34,7 @@ class Api::V1::PaymentsController < Api::V1::BaseController
 
     if result.ok
       team.reload
-      render json: { checklist: TeamChecklist.new(team).to_h }, status: :created
+      render json: { checklist: TeamChecklist.new(team, viewer: current_user).to_h }, status: :created
     else
       render_errors(result.message, status: STATUSES.fetch(result.error_code), code: result.error_code)
     end

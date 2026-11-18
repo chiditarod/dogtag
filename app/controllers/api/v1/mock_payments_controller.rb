@@ -18,7 +18,7 @@ class Api::V1::MockPaymentsController < Api::V1::BaseController
     return mock_error(:unexpected, "mock_not_saved", :unprocessable_entity) unless requirement.complete(team.id, current_user, metadata)
 
     team.reload
-    render json: { checklist: TeamChecklist.new(team).to_h }, status: :created
+    render json: { checklist: TeamChecklist.new(team, viewer: current_user).to_h }, status: :created
   end
 
   private

@@ -37,7 +37,7 @@ class Api::V1::PeopleController < Api::V1::BaseController
     @person.subscribe(PersonAuditor.new)
     @person.destroy!
     @team.reload
-    @checklist = TeamChecklist.new(@team).to_h
+    @checklist = TeamChecklist.new(@team, viewer: current_user).to_h
     render :destroy
   end
 
@@ -56,7 +56,7 @@ class Api::V1::PeopleController < Api::V1::BaseController
   # Listeners may finalize the team, so reload before building the checklist.
   def render_person_and_checklist(status)
     @team.reload
-    @checklist = TeamChecklist.new(@team).to_h
+    @checklist = TeamChecklist.new(@team, viewer: current_user).to_h
     render :show, status: status
   end
 end

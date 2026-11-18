@@ -34,6 +34,8 @@ class Api::V1::BaseController < ActionController::Base
     render_errors("not_found", status: :not_found)
   end
 
+  helper_method :current_user
+
   private
 
   # Overridable seam: in development (consider_all_requests_local) let exceptions surface.

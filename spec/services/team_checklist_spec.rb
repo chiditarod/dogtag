@@ -176,4 +176,32 @@ describe TeamChecklist do
       )
     end
   end
+
+  describe "confirmation" do
+    it "exposes the race's confirmation HTML" do
+      race.update!(confirmation_text: "**Hi**")
+      expect(checklist[:confirmation_html]).to include("<strong>Hi</strong>")
+      expect(checklist[:confirmation_html]).to be_a(String)
+    end
+
+    it "is nil when the race has no confirmation text" do
+      expect(checklist[:confirmation_html]).to be_nil
+    end
+
+    it "asks the owner to see the confirmation once" do
+      team.update_columns(finalized: true, confirmation_seen_at: nil)
+      shown = ->(viewer) { TeamChecklist.new(team.reload, viewer: viewer).to_h[:show_confirmation] }
+
+      expect(shown.call(team.user)).to be(true)
+      expect(shown.call(nil)).to be(false)
+      expect(shown.call(FactoryBot.create(:user))).to be(false)
+      expect(shown.call(FactoryBot.create(:admin_user))).to be(false)
+
+      team.update_columns(finalized: false)
+      expect(shown.call(team.user)).to be(false)
+
+      team.update_columns(finalized: true, confirmation_seen_at: Time.current)
+      expect(shown.call(team.user)).to be(false)
+    end
+  end
 end

@@ -22,7 +22,7 @@ class Api::V1::QuestionsController < Api::V1::BaseController
 
     if @team.save
       @team.reload
-      render json: { answers: parse(@team.jsonform, {}), checklist: TeamChecklist.new(@team).to_h }
+      render json: { answers: parse(@team.jsonform, {}), checklist: TeamChecklist.new(@team, viewer: current_user).to_h }
     else
       render json: { error: "invalid_answers", errors: { questions: @team.errors[:questions] } },
              status: :unprocessable_entity
