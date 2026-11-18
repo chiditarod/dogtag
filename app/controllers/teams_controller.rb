@@ -121,7 +121,9 @@ class TeamsController < ApplicationController
       return redirect_to teams_path
     end
 
-    try_to_delete(@team, teams_path)
+    # Staff delete from the race's registrations page, so send them back there.
+    back = current_user.is_any_of?(:admin, :operator) ? race_registrations_path(@team.race) : teams_path
+    try_to_delete(@team, back)
   end
 
   private

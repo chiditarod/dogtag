@@ -28,7 +28,7 @@ class Team < ApplicationRecord
   validates :user, :race, presence: true
 
   # A team has a certain number of people, per the settings for the race.
-  has_many :people
+  has_many :people, dependent: :destroy
 
   # A team must track which race requirements have been fulfilled.
   has_many :completed_requirements
@@ -37,6 +37,12 @@ class Team < ApplicationRecord
   scope :all_finalized,   -> { where('teams.finalized = ?', true) }
   scope :all_unfinalized, -> { where('teams.finalized IS NULL') }
   scope :belonging_to, ->(user_id) { where("user_id = ?", user_id) }
+
+  # A team that never finished registering: nothing paid and not finalized. Only these can be deleted
+  # by their captain or by operators.
+  def deletable?
+    !finalized && completed_requirements.none?
+  end
 
   def unfinalized
     ! finalized

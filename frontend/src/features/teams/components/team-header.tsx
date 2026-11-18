@@ -1,5 +1,6 @@
 import type { Ref } from 'react';
 import { Button } from '@/components/ui/button';
+import { DeleteTeam } from '@/features/teams/components/delete-team';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
 import { formatDate, formatDeadline } from '@/lib/dates';
@@ -107,6 +108,7 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
           {t('tour.replay')}
         </Button>
       </div>
+      <DeleteTeam team={team} />
     </section>
   );
 }
