@@ -110,7 +110,7 @@ describe "API v1 teams", type: :request do
         expect(json["team"]["id"]).to eq(team.id)
         expect(json["team"]["race"]["name"]).to eq(race.name)
         expect(json["team"]["people"].size).to eq(team.people.size)
-        expect(json["team"]["people"].first.keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram])
+        expect(json["team"]["people"].first.keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram tiktok])
         expect(json["team"]["checklist"]["racers"]).to include("filled" => 1, "total" => 2, "done" => false)
       end
 

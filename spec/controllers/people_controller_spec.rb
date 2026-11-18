@@ -189,6 +189,17 @@ describe PeopleController do
       end
     end
 
+    describe '#new rendered' do
+      render_views
+
+      it 'shows the instagram and tiktok fields on the person form' do
+        get :new, params: { :team_id => team.id }
+        expect(response).to be_successful
+        expect(response.body).to include('name="person[instagram]"', 'name="person[tiktok]"')
+        expect(response.body).to include('Got TikTok? Add your handle')
+      end
+    end
+
     describe '#create' do
       let (:team_no_people) { FactoryBot.create :team }
       let (:new_person_hash) { FactoryBot.attributes_for :person, :first_name => 'Dan', :last_name => 'Akroyd' }
@@ -204,6 +215,11 @@ describe PeopleController do
         expect do
           post :create, params: { :team_id => team_no_people.id, :person => new_person_hash }
         end.to change(Person, :count).by 1
+      end
+
+      it 'saves the tiktok handle, normalized' do
+        post :create, params: { :team_id => team_no_people.id, :person => new_person_hash.merge(:tiktok => 'Sam_O') }
+        expect(team_no_people.people.last.tiktok).to eq('@sam_o')
       end
 
       it 'saves the instagram handle, normalized' do

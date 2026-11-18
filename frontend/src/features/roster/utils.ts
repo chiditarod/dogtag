@@ -15,6 +15,7 @@ export interface PersonDraft {
   zipcode: string;
   experience: string;
   instagram: string;
+  tiktok: string;
 }
 
 export const emptyDraft: PersonDraft = {
@@ -25,6 +26,7 @@ export const emptyDraft: PersonDraft = {
   zipcode: '',
   experience: '',
   instagram: '',
+  tiktok: '',
 };
 
 export const PERSON_FIELDS = [
@@ -35,6 +37,7 @@ export const PERSON_FIELDS = [
   'zipcode',
   'experience',
   'instagram',
+  'tiktok',
 ] as const;
 
 export const fullName = (person: { first_name: string; last_name: string }) =>
@@ -52,6 +55,7 @@ export function draftFromPerson(person: Person): PersonDraft {
     zipcode: person.zipcode ?? '',
     experience: person.experience === null ? '' : String(person.experience),
     instagram: person.instagram ?? '',
+    tiktok: person.tiktok ?? '',
   };
 }
 
@@ -69,6 +73,7 @@ export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
         ? ''
         : String(Math.min(racer.experience + 1, lastIndex)),
     instagram: racer.instagram ?? '',
+    tiktok: racer.tiktok ?? '',
   };
 }
 
@@ -96,6 +101,7 @@ export function payloadFromDraft(draft: PersonDraft): PersonPayload {
     zipcode: draft.zipcode.trim(),
     experience: draft.experience === '' ? null : Number(draft.experience),
     instagram: draft.instagram.trim(),
+    tiktok: draft.tiktok.trim(),
   };
 }
 

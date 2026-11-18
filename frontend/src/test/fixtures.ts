@@ -82,6 +82,7 @@ export function buildPerson(overrides: Partial<Person> = {}): Person {
     zipcode: '60601',
     experience: 1,
     instagram: null,
+    tiktok: null,
     ...overrides,
   };
 }

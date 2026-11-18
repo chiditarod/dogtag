@@ -411,8 +411,13 @@ describe Team do
 
       # People columns (dawg_0_*, dawg_1_*, etc. based on people_per_team)
       race.people_per_team.times do |i|
-        expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_instagram", "dawg_#{i}_experience")
+        expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_instagram", "dawg_#{i}_experience", "dawg_#{i}_tiktok")
       end
+    end
+
+    it 'appends the tiktok column after experience so existing column positions hold' do
+      header = Team.export(race.id).first
+      expect(header.index("dawg_0_tiktok")).to eq(header.index("dawg_0_experience") + 1)
     end
 
     it 'returns a multi-dimensional array of teams' do

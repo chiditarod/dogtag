@@ -38,7 +38,7 @@ SPA_BUILD=skip npx playwright test tests/spa  # skip the frontend build
 Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the rows are removed by `test_seeds:cleanup` at the next global setup, not by the spec itself):
 
 - The full sign-up to "You're in!" flow (welcome email, team, racers, questions, both fees, confirmation email) is `tests/e2e/registration.spec.ts`, run with `npm run e2e` (it uses the race the `race-setup` project creates, not a seed).
-- **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer in the crew picker, confirms the six details, and the slot is filled.
+- **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer in the crew picker, confirms the seven details, and the slot is filled.
 - **`guided-tour.spec.ts`** (`test_seeds:past_racers`): the team page opens the guided tour by itself, `Next` walks the three stops (that race has no questions and no fee), `Done` ends it for good (it stays closed after a reload), and `Take the tour` replays it. It clears the `dogtag:tour:off` switch that `playwright.config.ts` sets for every other spec.
 - **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
 - **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.

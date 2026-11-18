@@ -15,7 +15,7 @@ function setup(props: Partial<Parameters<typeof PersonForm>[0]> = {}) {
 }
 
 describe('PersonForm', () => {
-  it('has fields in order: first, last, email, phone, zip, years, instagram', () => {
+  it('has fields in order: first, last, email, phone, zip, years, instagram, tiktok', () => {
     setup();
     const form = document.querySelector('form')!;
     const order = Array.from(form.elements)
@@ -29,8 +29,9 @@ describe('PersonForm', () => {
       'zipcode',
       'experience',
       'instagram',
+      'tiktok',
     ]);
-    expect(screen.getByPlaceholderText('@handle')).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText('@handle')).toHaveLength(2);
   });
 
   it('offers the race experience labels and explains years racing', async () => {
@@ -61,10 +62,11 @@ describe('PersonForm', () => {
       zipcode: '60601',
       experience: 2,
       instagram: '',
+      tiktok: '',
     });
   });
 
-  it('submits the Instagram handle and no twitter key', async () => {
+  it('submits the Instagram and TikTok handles and no twitter key', async () => {
     const { user, onSubmit } = setup();
     await user.type(screen.getByLabelText('First name'), 'Sam');
     await user.type(screen.getByLabelText('Last name'), 'Okafor');
@@ -73,9 +75,12 @@ describe('PersonForm', () => {
     await user.type(screen.getByLabelText('ZIP code'), '60601');
     await user.selectOptions(screen.getByLabelText('Years racing'), '1');
     await user.type(screen.getByLabelText('Instagram (optional)'), '@sam.okafor');
+    await user.type(screen.getByLabelText('TikTok (optional)'), '@sam_o');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     const submitted = onSubmit.mock.calls[0][0];
     expect(submitted.instagram).toBe('@sam.okafor');
+    expect(submitted.tiktok).toBe('@sam_o');
+    await user.type(screen.getByLabelText('TikTok (optional)'), '@sam_o');
     expect(submitted).not.toHaveProperty('twitter');
   });
 
