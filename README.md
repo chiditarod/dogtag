@@ -58,6 +58,14 @@ Each race has a `jsonform` field. This field can contain a [jsonform](https://gi
 - Answer keys are taken from the race's schema, so new questions need no code changes.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
+## New teams
+
+A team is flagged as new when its racers' years racing add up to 0. A blank counts as 0, and a team with no racers yet has no flag. The flag updates whenever a racer is added, edited or removed.
+
+- Staff see it on the team page, in a "New team" column on the registrations page, and in a `new_team` column (`yes`, `no` or blank) in the CSV export.
+- Admins and operators can override it on the team's edit form ("New team (staff only)"). An override sticks through roster changes until it is set back to "Automatic".
+- It replaces the old "Have any of your team members raced CHIditarod in the past?" JSONForm question.
+
 ## Race time zones
 
 Each race has a `time_zone` (an IANA id, default `America/Chicago`), chosen on the race form. Datetimes are stored in UTC, but the race and tier forms read and show their date fields in the race's zone, and every page, email and the SPA display race dates in that zone. Pick the zone first, then enter dates as local wall-clock times (e.g. `00:00` on Dec 15 for a midnight opening).

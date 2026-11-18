@@ -232,6 +232,96 @@ describe Team do
       it "sums their total experience" do
         expect(team.person_experience).to eq(6)
       end
+
+      it "counts a blank experience as 0" do
+        team.people.first.update_columns(experience: nil)
+        expect(team.reload.person_experience).to eq(3)
+      end
+    end
+  end
+
+  describe "new team flag" do
+    let(:team) { FactoryBot.create :team }
+
+    it "is nil until the team has racers" do
+      expect(team.reload.new_team).to be_nil
+    end
+
+    it "is true when no racer has raced before" do
+      FactoryBot.create_list :person, 2, team: team, experience: 0
+      expect(team.reload.new_team).to be(true)
+    end
+
+    it "is false when any racer has raced before" do
+      FactoryBot.create :person, team: team, experience: 0
+      FactoryBot.create :person, team: team, experience: 1
+      expect(team.reload.new_team).to be(false)
+    end
+
+    it "follows racer edits and removals" do
+      FactoryBot.create :person, team: team, experience: 0
+      veteran = FactoryBot.create :person, team: team, experience: 2
+      expect(team.reload.new_team).to be(false)
+
+      veteran.update!(experience: 0)
+      expect(team.reload.new_team).to be(true)
+
+      veteran.update!(experience: 4)
+      expect(team.reload.new_team).to be(false)
+
+      veteran.destroy!
+      expect(team.reload.new_team).to be(true)
+    end
+
+    it "refreshes both teams when a racer moves between them" do
+      race = FactoryBot.create :race, people_per_team: 3
+      from = FactoryBot.create :team, race: race
+      to = FactoryBot.create :team, race: race
+      FactoryBot.create :person, team: from, experience: 0
+      veteran = FactoryBot.create :person, team: from, experience: 2
+      FactoryBot.create :person, team: to, experience: 0
+      expect([from.reload.new_team, to.reload.new_team]).to eq([false, true])
+
+      veteran.update!(team: to)
+      expect([from.reload.new_team, to.reload.new_team]).to eq([true, false])
+    end
+
+    it "counts a blank experience as 0" do
+      person = FactoryBot.create :person, team: team, experience: 2
+      person.update_columns(experience: nil)
+      team.reload.refresh_new_team
+      expect(team.reload.new_team).to be(true)
+    end
+
+    describe "#new_team_setting" do
+      before { FactoryBot.create :person, team: team, experience: 0 }
+
+      it "is auto by default" do
+        expect(team.reload.new_team_setting).to eq("auto")
+      end
+
+      it "lets an admin override the flag, and keeps the override when racers change" do
+        team.reload.update!(new_team_setting: "no")
+        expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true, new_team_setting: "no")
+
+        racer = FactoryBot.create :person, team: team, experience: 0
+        expect(team.reload.new_team).to be(false)
+
+        team.update!(new_team_setting: "yes")
+        racer.update!(experience: 5)
+        expect(team.reload).to have_attributes(new_team: true, new_team_setting: "yes")
+      end
+
+      it "goes back to the computed value when set to auto" do
+        team.reload.update!(new_team_setting: "no")
+        team.update!(new_team_setting: "auto")
+        expect(team.reload).to have_attributes(new_team: true, new_team_overridden: nil, new_team_setting: "auto")
+      end
+
+      it "ignores an unknown value" do
+        team.reload.update!(new_team_setting: "maybe")
+        expect(team.reload).to have_attributes(new_team: true, new_team_setting: "auto")
+      end
     end
   end
 
@@ -342,6 +432,23 @@ describe Team do
       header, team_row = result
       expect(team_row[header.index("experience")]).to eq(race.experience_label(team.experience))
       expect(team_row[header.index("dawg_0_experience")]).to eq(race.experience_label(team.people.first.experience))
+    end
+
+    it "includes the new team flag" do
+      new_team = FactoryBot.create :team, race: race
+      FactoryBot.create :person, team: new_team, experience: 0
+      empty_team = FactoryBot.create :team, race: race
+
+      header, *rows = Team.export(race.id)
+      flags = rows.to_h { |row| [row[header.index("name")], row[header.index("new_team")]] }
+      expect(flags).to eq(team.name => "no", new_team.name => "yes", empty_team.name => "")
+    end
+
+    it "puts the new team flag last so older columns keep their positions" do
+      header, team_row = Team.export(race.id)
+      expect(header.first(3)).to eq(%w[finalized number name])
+      expect(header.last).to eq("new_team")
+      expect(team_row.length).to eq(header.length)
     end
 
     context 'with finalized option' do

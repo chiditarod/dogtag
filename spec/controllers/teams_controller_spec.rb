@@ -343,6 +343,66 @@ describe TeamsController do
 
       context 'when validation fails on update'
 
+      context "overriding the new team flag" do
+        let(:race) { FactoryBot.create :race }
+        let(:team) { FactoryBot.create :team, race: race, user: normal_user }
+
+        before { FactoryBot.create :person, team: team, experience: 0 }
+
+        context "as an admin" do
+          it "stores the override" do
+            patch :update, params: { id: team.id, team: { new_team_setting: "no" } }
+            expect(response).to redirect_to(team_url(team.id))
+            expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true)
+          end
+        end
+
+        context "as an operator" do
+          let(:the_user) { FactoryBot.create :operator_user }
+
+          it "stores the override" do
+            patch :update, params: { id: team.id, team: { new_team_setting: "no" } }
+            expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true)
+          end
+        end
+
+        context "on the edit page" do
+          render_views
+
+          def new_team_select
+            Nokogiri::HTML(response.body).at_css("select#team_new_team_setting")
+          end
+
+          it "offers staff the override, showing the computed value" do
+            get :edit, params: { id: team.id }
+            expect(new_team_select.css("option").map { |o| [o["value"], o.text] })
+              .to eq([["auto", "Automatic (now Yes)"], ["yes", "Yes"], ["no", "No"]])
+            expect(new_team_select.at_css("option[selected]")["value"]).to eq("auto")
+          end
+
+          it "shows staff the flag on the team page" do
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).to match(/New team:\s+Yes/)
+          end
+
+          it "hides the override from the captain" do
+            login_user! normal_user
+            get :edit, params: { id: team.id }
+            expect(response).to be_successful
+            expect(new_team_select).to be_nil
+          end
+        end
+
+        context "as the team's captain" do
+          let(:the_user) { normal_user }
+
+          it "ignores the override" do
+            patch :update, params: { id: team.id, team: { description: "Ours", new_team_setting: "no" } }
+            expect(team.reload).to have_attributes(description: "Ours", new_team: true, new_team_overridden: nil)
+          end
+        end
+      end
+
       context 'with valid patch data' do
         let(:team) { FactoryBot.create :team }
 
