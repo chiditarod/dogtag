@@ -295,6 +295,7 @@ Required for production:
 
 Optional:
 - `REGISTRATION_UI` - `spa` or `legacy` (see above)
+- `FEEDBACK_EMAIL` - where the SPA's "Report a problem" link (`POST /api/v1/feedback`, `UserMailer#feedback_email`) sends mail; defaults to `registration@chiditarod.org`. Logged-in racers only (the SPA hides the link and the API answers 401 otherwise); capped at 5 sends per account per hour
 - `VITE_DEV_SERVER` - dev only; redirect SPA routes to the Vite dev server
 - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `CLASSY_ORGS` - Classy integration
 - `ROLLBAR_ACCESS_TOKEN` - Error tracking
@@ -409,6 +410,8 @@ The `Procfile` has no `release:` phase, so a push does not migrate. When a deplo
 7. **Race time zones**: `races.time_zone` holds an IANA id (default `America/Chicago`, validated by `Race.valid_time_zone?` against the ids the admin select offers, i.e. Rails' `ActiveSupport::TimeZone.all`, so the SPA's Intl always knows the zone); storage and `config.time_zone` stay UTC. `RacesController`/`TiersController` wrap new/create/edit/update in `Time.use_zone` via the `RaceTimeZone` concern (a submitted `race[time_zone]` wins). Display with `race.local(time)` plus `DateHelper` (`human_readable` adds `%Z`); deadlines use `deadline_readable`/`deadline_date` (and `formatDeadline` in `frontend/src/lib/dates.ts`), which show a local-midnight deadline as 11:59 PM the previous day. Openings/tier begins use the plain formatters. Specs run under Zonebie (random `Time.zone`), so build expected times with explicit zones.
 
 8. **Worker memory / Classy HTTP**: `ClassyClient` reuses one memoized `HTTPClient` (`http_client`); never build an `HTTPClient` per request. Each one allocates an OpenSSL context in native memory, and `Workers::ClassyCacheOrgMemberCacher` (every 20 min, ~318 pages) ratcheted the Basic worker's RSS into R14/R15 kills. Ruby `GC.stat[:heap_live_slots]` stayed flat, so check native churn, not just retained objects. Both Heroku apps also need `MALLOC_ARENA_MAX=2`: the worker boots with `RAILS_ENV=production`, so `config/sidekiq.yml` gives it 5 threads, and each thread's glibc arena kept ~70 MB (5 x 70 MB + ~190 MB boot > 512 MB). With both fixes the staging worker levels off at ~340 MB. Staging has `log-runtime-metrics` on (`sample#memory_total` in `heroku logs -d worker`).
+
+9. **Feedback (`POST /api/v1/feedback`)**: requires a logged-in user (`require_api_user!`; the SPA's `FeedbackLink` renders only when `useMe` has a user). The cap (`SEND_LIMIT` 5 per `SEND_WINDOW` 1 hour per account) counts the user's non-failed `kind: "feedback"` rows in `sent_emails`, so it holds across dynos without a cache store and failed deliveries do not count; two simultaneous requests can both pass the check, so it can overshoot by a send. The client's `context.team_id` is only a claim. The controller attaches the team (email body, `sent_emails` tracking) only when `Ability.new(current_user).can?(:show, team)` (CanCan checks the exact action asked, so `:read` does not match rules written for `:show`); otherwise the email says `claimed team id N (unverified)`. A non-hash `context` is ignored. The email puts sender, team and page above a labelled message so a sender cannot forge a footer. `UserMailer::STAFF_EMAIL` is the staff address (also the footer's `global_questions`); `FEEDBACK_EMAIL` overrides it when non-empty.
 
 ## E2E Learnings
 

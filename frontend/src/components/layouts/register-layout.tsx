@@ -1,6 +1,7 @@
 import { Link, Outlet, useMatches } from 'react-router-dom';
 import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
 import { UserMenu } from '@/features/auth/components/user-menu';
+import { FeedbackLink } from '@/features/feedback/components/feedback-link';
 import { t } from '@/locales/en';
 
 export function RegisterLayout() {
@@ -29,6 +30,9 @@ export function RegisterLayout() {
       <main className={`mx-auto w-full ${width} px-4 py-6`}>
         <Outlet />
       </main>
+      <footer className={`mx-auto w-full ${width} px-4 pb-8 text-sm`}>
+        <FeedbackLink />
+      </footer>
     </div>
   );
 }

@@ -206,4 +206,51 @@ describe UserMailer do
       expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
     end
   end
+
+  describe "#feedback_email" do
+    let(:team) { FactoryBot.create(:team) }
+    let(:user) { team.user }
+    let(:context) { { path: "/register/teams/#{team.id}", team_id: team.id.to_s, user_agent: "TestBrowser/1" } }
+
+    it "goes to staff, replies to the sender, and puts who they are above their message" do
+      mail = UserMailer.feedback_email(user, "The fee button is stuck", context, team)
+      body = mail.body.to_s
+
+      expect(mail.to).to eq([UserMailer::STAFF_EMAIL])
+      expect(mail.reply_to).to eq([user.email])
+      expect(mail.subject).to eq("dogTag feedback from #{user.email}")
+      expect(body).to include("(user #{user.id})", "#{team.name} (#{team.id}), #{team.race.name}", "/register/teams/#{team.id}", "TestBrowser/1")
+      expect(body.index("From: ")).to be < body.index("Message (everything below is written by the sender):")
+      expect(body.index("Message (everything below")).to be < body.index("The fee button is stuck")
+    end
+
+    it "shows a team id nobody vouched for as unverified and does not track the team" do
+      UserMailer.feedback_email(user, "Hi", context, nil).deliver_now
+
+      expect(deliveries.last.body.to_s).to include("claimed team id #{team.id} (unverified)")
+      expect(deliveries.last.body.to_s).not_to include(team.name)
+      expect(SentEmail.last).to have_attributes(kind: "feedback", user_id: user.id, team_id: nil)
+    end
+
+    it "tracks a verified team" do
+      UserMailer.feedback_email(user, "Hi", context, team).deliver_now
+
+      expect(SentEmail.last).to have_attributes(kind: "feedback", team_id: team.id, race_id: team.race_id)
+    end
+
+    it "says there is no team or user when neither is given" do
+      body = UserMailer.feedback_email(nil, "Hi", { path: "/register" }, nil).body.to_s
+
+      expect(body).to include("From: not logged in", "Team: none")
+    end
+
+    it "uses FEEDBACK_EMAIL when it has a value and the default when it is empty" do
+      allow(ENV).to receive(:[]).and_call_original
+      allow(ENV).to receive(:[]).with("FEEDBACK_EMAIL").and_return("help@example.com")
+      expect(UserMailer.feedback_email(nil, "Hi", {}, nil).to).to eq(["help@example.com"])
+
+      allow(ENV).to receive(:[]).with("FEEDBACK_EMAIL").and_return("")
+      expect(UserMailer.feedback_email(nil, "Hi", {}, nil).to).to eq([UserMailer::STAFF_EMAIL])
+    end
+  end
 end
