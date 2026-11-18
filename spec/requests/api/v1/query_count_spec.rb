@@ -43,4 +43,16 @@ describe "API v1 index query counts", type: :request do
     expect(query_count { get "/api/v1/races" }).to eq(one)
     expect(json["races"].size).to eq(3)
   end
+
+  it "GET /api/v1/teams/:id/buddy_options does not add queries per team" do
+    api_login(user)
+    race = FactoryBot.create(:race)
+    mine = FactoryBot.create(:team, user: user, race: race)
+    FactoryBot.create(:team, race: race)
+    one = query_count { get "/api/v1/teams/#{mine.id}/buddy_options" }
+    FactoryBot.create_list(:team, 3, race: race)
+
+    expect(query_count { get "/api/v1/teams/#{mine.id}/buddy_options" }).to eq(one)
+    expect(json["teams"].size).to eq(4)
+  end
 end
