@@ -61,7 +61,11 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
   const items = leftItems(team);
   return (
     <section aria-label={t('team.summary')} className="space-y-3">
-      <FlagProgress steps={stepStates(team)} label={t('team.progress')} />
+      <FlagProgress
+        steps={stepStates(team)}
+        label={t('team.progress')}
+        starLabels={[t('team.star.team'), t('team.star.racers'), t('team.star.questions'), t('team.star.fee')]}
+      />
       <div>
         <h1 className="font-display text-3xl font-bold [overflow-wrap:anywhere] lg:text-4xl">
           {team.name}

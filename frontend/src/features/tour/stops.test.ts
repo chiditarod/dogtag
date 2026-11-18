@@ -10,17 +10,17 @@ describe('teamTourStops', () => {
     const stops = teamTourStops(teamWithQuestions(true));
     expect(stops.map((stop) => stop.id)).toEqual(['flag', 'racers', 'questions', 'fee', 'in']);
     expect(stops.map((stop) => stop.title)).toEqual([
-      'Four stars, four steps',
+      'Four stars to the start line',
       'Add your racers',
       'Answer the team questions',
       'Pay the registration fee',
       "You're in",
     ]);
     expect(stops[0].body).toBe(
-      'Each star turns solid red when its step is done. Fill all four and your team is in.',
+      "You earned the first star by creating your team. Add racers, answer the questions and pay the fee to fill the rest. Four stars and you're fully registered.",
     );
     expect(stops[4].body).toBe(
-      'When the first three stars are solid red, your spot is locked in and you get your team number.',
+      "When all four stars are solid red, you're fully registered and get your team number.",
     );
   });
 

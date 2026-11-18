@@ -18,7 +18,7 @@ import { YoureInCard } from '@/features/teams/components/youre-in-card';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
 import { markSeen, shouldAutoStart } from '@/features/tour/storage';
 import { noFeeDue, teamTourStops } from '@/features/tour/stops';
-import { feePill, stepStates } from '@/features/teams/utils';
+import { cardSteps, feePill } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 
@@ -93,8 +93,9 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   }
 
   const { checklist } = team;
-  // The same states drive the flag, so a heading star and the flag agree.
-  const [racersDone, questionsDone, feeDone] = stepStates(team);
+  // Card statuses come from the checklist, not stepStates: a finalized team's
+  // flag is forced full, but a regressed step's card should still read "to do".
+  const [racersDone, questionsDone, feeDone] = cardSteps(checklist);
   const status = (done: boolean) => (done ? 'done' : 'todo');
   return (
     <TeamPageErrorProvider teamId={teamId}>

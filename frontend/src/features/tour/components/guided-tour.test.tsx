@@ -66,10 +66,10 @@ describe('GuidedTour', () => {
 
   it('opens on the first stop that is on the page and skips the missing ones', () => {
     renderTour();
-    const dialog = screen.getByRole('dialog', { name: 'Four stars, four steps' });
+    const dialog = screen.getByRole('dialog', { name: 'Four stars to the start line' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(dialog).toHaveTextContent('1 of 3');
-    expect(screen.getByRole('heading', { name: 'Four stars, four steps' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Four stars to the start line' })).toHaveFocus();
     expect(screen.queryByRole('button', { name: 'Prev' })).not.toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('GuidedTour', () => {
     expect(screen.getByRole('dialog', { name: 'Add your racers' })).toHaveTextContent('2 of 3');
     expect(screen.getByRole('heading', { name: 'Add your racers' })).toHaveFocus();
     await user.click(screen.getByRole('button', { name: 'Prev' }));
-    expect(screen.getByRole('dialog', { name: 'Four stars, four steps' })).toHaveTextContent(
+    expect(screen.getByRole('dialog', { name: 'Four stars to the start line' })).toHaveTextContent(
       '1 of 3',
     );
   });
@@ -175,7 +175,7 @@ describe('GuidedTour', () => {
       fireEvent.scroll(window);
     });
     expect(screen.queryByTestId('tour-ring')).not.toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: 'Four stars, four steps' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Four stars to the start line' })).toBeInTheDocument();
   });
 
   it('places the popup next to the target from lg and docks it to the bottom below', () => {
@@ -335,7 +335,7 @@ describe('GuidedTour', () => {
         <GuidedTour stops={stops()} onEnd={onEnd} />
       </>,
     );
-    expect(screen.getByRole('heading', { name: 'Four stars, four steps' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Four stars to the start line' })).toHaveFocus();
     rerender(
       <>
         <button type="button">Opener</button>

@@ -15,7 +15,7 @@ const ORDER: TourStopId[] = ['flag', 'racers', 'questions', 'fee', 'in'];
 export const noFeeDue = ({ checklist }: Team) =>
   checklist.fee.done && checklist.fee.items.length === 0;
 
-/** In order flag, racers, questions, fee, in; 'questions' and 'fee' are left out when the race has none. */
+/** In order flag (the four stars: team, racers, questions, fee), racers, questions, fee, in; 'questions' and 'fee' are left out when the race has none. */
 export function teamTourStops(team: Team): TourStop[] {
   return ORDER.filter(
     (id) =>

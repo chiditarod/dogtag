@@ -90,7 +90,7 @@ describe('TeamChecklist header', () => {
     expect(screen.queryByText(/things left/)).toBeNull();
   });
 
-  it('counts completed steps in the progress bar (questions skipped count as done)', async () => {
+  it('counts the team star plus completed steps in the progress bar (questions skipped count as done)', async () => {
     serveTeam({
       racers: { filled: 5, total: 5, done: true },
       questions: { required: false, done: true },
@@ -98,7 +98,14 @@ describe('TeamChecklist header', () => {
     });
     renderApp('/teams/9');
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '2');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '3');
+  });
+
+  it('shows one of four stars on a fresh team', async () => {
+    serveTeam({ questions: { required: true, done: false } });
+    renderApp('/teams/9');
+    await screen.findByRole('heading', { level: 1 });
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
   });
 });
 
@@ -118,6 +125,14 @@ describe('card stars', () => {
     expect(starOf(screen.getByRole('heading', { level: 2, name: 'Team questions' }))).toHaveAttribute('data-filled', 'false');
     expect(starOf(screen.getByRole('heading', { level: 2, name: 'Registration fee' }))).toHaveAttribute('data-filled', 'false');
     expect(starOf(screen.getByRole('heading', { level: 2, name: "You're in!" }))).toHaveAttribute('data-filled', 'false');
+  });
+
+  it('keeps a regressed card to do while the finalized flag stays full', async () => {
+    serveTeam({ finalized: true, remaining: 0, team_number: 12, questions: { required: true, done: false } });
+    renderApp('/teams/9');
+    const q = await screen.findByRole('heading', { level: 2, name: 'Team questions' });
+    expect(starOf(q)).toHaveAttribute('data-filled', 'false');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '4');
   });
 
   it('fills the last star once the team is finalized', async () => {
@@ -506,7 +521,7 @@ describe('team load failures', () => {
 });
 
 describe('guided tour', () => {
-  const flagTitle = 'Four stars, four steps';
+  const flagTitle = 'Four stars to the start line';
 
   function tourOn() {
     localStorage.removeItem(TOUR_OFF_KEY);
