@@ -69,7 +69,14 @@ class Api::V1::QuestionsController < Api::V1::BaseController
   def requested_buddy_ids
     return unless params.key?(:buddy_team_ids)
 
-    params[:buddy_team_ids].map { |id| Integer(id.to_s, exception: false) }.uniq
+    params[:buddy_team_ids].map { |id| parse_buddy_id(id) }.uniq
+  end
+
+  # Plain decimal digits only: Integer() alone also takes "0x1A", "0b1" and "1_0".
+  def parse_buddy_id(id)
+    return id if id.is_a?(Integer)
+
+    id.to_s.match?(/\A\d+\z/) ? Integer(id, 10) : nil
   end
 
   # Picks must be other teams in this team's race; an unparseable (nil) id is never valid.

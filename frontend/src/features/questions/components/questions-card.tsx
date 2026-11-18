@@ -1,8 +1,13 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
-import { useBuddyOptions } from '@/features/questions/api/use-buddy-options';
-import { useQuestions, useSaveAnswers } from '@/features/questions/api/use-questions';
+import { buddyOptionsQueryKey, useBuddyOptions } from '@/features/questions/api/use-buddy-options';
+import {
+  questionsQueryKey,
+  useQuestions,
+  useSaveAnswers,
+} from '@/features/questions/api/use-questions';
 import {
   BuddyFieldset,
   BuddyPicker,
@@ -53,6 +58,7 @@ export function QuestionsCard({ team }: { team: Team }) {
   const open = race.open_for_registration;
   const query = useQuestions(team.id);
   const save = useSaveAnswers(team.id);
+  const queryClient = useQueryClient();
   const { reportError, clearError } = useTeamPageError();
 
   const [editing, setEditing] = useState(false);
@@ -150,9 +156,12 @@ export function QuestionsCard({ team }: { team: Team }) {
     setFormErrors([]);
     setBuddyErrors([]);
 
+    // A saved pick whose team is gone from the loaded options has no checkbox to
+    // clear, so drop it; without loaded options, send the saved ids unchanged.
+    const known = buddyOptions.data && new Set(buddyOptions.data.map((option) => option.id));
     const input = {
       answers: payload,
-      buddy_team_ids: buddies.teamIds,
+      buddy_team_ids: known ? buddies.teamIds.filter((id) => known.has(id)) : buddies.teamIds,
       other_buddies: buddies.otherSelected ? buddies.otherText.trim() : '',
     };
     save.mutate(input, {
@@ -172,6 +181,9 @@ export function QuestionsCard({ team }: { team: Team }) {
         if (error instanceof ApiError && error.error === 'invalid_buddies') {
           const messages = Object.values(error.errors).flat();
           setBuddyErrors(messages.length ? messages : [t('common.genericError')]);
+          // Retry from fresh data in case the saved picks or the options went stale.
+          void queryClient.invalidateQueries({ queryKey: questionsQueryKey(team.id) });
+          void queryClient.invalidateQueries({ queryKey: buddyOptionsQueryKey(team.id) });
           return;
         }
         setFormErrors([t('common.genericError')]);
@@ -186,7 +198,7 @@ export function QuestionsCard({ team }: { team: Team }) {
       </div>
       {showForm ? (
         <form ref={formRef} noValidate onSubmit={handleSubmit} className="space-y-6">
-          {buddyOptions.isError ? (
+          {buddyOptions.isError && !buddyOptions.data ? (
             <BuddyFieldset>
               <QueryError onRetry={() => void buddyOptions.refetch()} />
             </BuddyFieldset>

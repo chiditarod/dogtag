@@ -227,10 +227,22 @@ describe "API v1 questions", type: :request do
         it_behaves_like "an invalid pick"
       end
 
+      %w[0x1A 1_0 0b1 1.5].each do |malformed|
+        it "returns 422 invalid_buddies for the non-decimal id #{malformed.inspect} and saves nothing" do
+          FactoryBot.create(:team_buddy, team: team, buddy_team: friend)
+          expect {
+            put_picks(answers: valid_answers, buddy_team_ids: [malformed])
+          }.not_to change(TeamBuddy, :count)
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json["error"]).to eq("invalid_buddies")
+          expect(team.reload.jsonform).to be_nil
+          expect(team.team_buddies.pluck(:buddy_team_id)).to eq([friend.id])
+        end
+      end
+
       it "returns 400 when buddy_team_ids is not an array" do
-        put_picks(buddy_team_ids: friend.id.to_s)
+        expect { put_picks(buddy_team_ids: friend.id.to_s) }.not_to change(TeamBuddy, :count)
         expect(response).to have_http_status(:bad_request)
-        expect(TeamBuddy.count).to eq(0)
       end
 
       it "rejects other_buddies over 1000 characters without saving anything" do

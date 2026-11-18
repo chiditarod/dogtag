@@ -56,7 +56,7 @@ function serve({
   });
   server.use(
     http.get('/api/v1/teams/9', () => HttpResponse.json({ team })),
-    http.get('/api/v1/teams/9/questions', () => 
+    http.get('/api/v1/teams/9/questions', () =>
       HttpResponse.json({
         jsonform,
         answers,
@@ -323,6 +323,86 @@ describe('QuestionsCard', () => {
       const group = await c.findByRole('group', { name: 'Teams you want to race with' });
       expect(await within(group).findByRole('alert')).toHaveTextContent('includes a team that is not in this race');
       expect(c.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
+
+    it('drops a saved pick that is no longer in the options and saves', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams, buddyTeamIds: [11, 99] });
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      expect(await c.findByRole('checkbox', { name: /Apple Cart/ })).toBeChecked();
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [11], other_buddies: '' });
+      expect(await c.findByRole('button', { name: 'Edit answers' })).toBeInTheDocument();
+    });
+
+    it('refetches the questions and the team list after an invalid_buddies error', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams });
+      let questionGets = 0;
+      let optionGets = 0;
+      server.use(
+        http.get('/api/v1/teams/9/questions', () => {
+          questionGets += 1;
+          return HttpResponse.json({
+            jsonform: fixture,
+            answers: valid,
+            buddy_team_ids: [],
+            other_buddies: null,
+          });
+        }),
+        http.get('/api/v1/teams/9/buddy_options', () => {
+          optionGets += 1;
+          return HttpResponse.json({ teams });
+        }),
+      );
+      putResponse = () =>
+        HttpResponse.json(
+          { error: 'invalid_buddies', errors: { buddy_team_ids: ['includes a team that is not in this race'] } },
+          { status: 422 },
+        );
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: /Zebra Crossing/ }));
+      const questionsBefore = questionGets;
+      const optionsBefore = optionGets;
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      const group = await c.findByRole('group', { name: 'Teams you want to race with' });
+      expect(await within(group).findByRole('alert')).toHaveTextContent('includes a team that is not in this race');
+      await waitFor(() => expect(questionGets).toBeGreaterThan(questionsBefore));
+      await waitFor(() => expect(optionGets).toBeGreaterThan(optionsBefore));
+    });
+
+    it('keeps the picker when a background refetch of the team list fails', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams });
+      let optionGets = 0;
+      server.use(
+        http.get('/api/v1/teams/9/buddy_options', () => {
+          optionGets += 1;
+          return optionGets === 1
+            ? HttpResponse.json({ teams })
+            : HttpResponse.json({ error: 'x' }, { status: 500 });
+        }),
+      );
+      putResponse = () =>
+        HttpResponse.json(
+          { error: 'invalid_buddies', errors: { buddy_team_ids: ['includes a team that is not in this race'] } },
+          { status: 422 },
+        );
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: /Zebra Crossing/ }));
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      // The 422 invalidates the options; that refetch fails (500, after retries) but the picker stays.
+      await waitFor(() => expect(optionGets).toBeGreaterThan(1));
+      const group = await c.findByRole('group', { name: 'Teams you want to race with' });
+      expect(within(group).queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+      expect(c.getByRole('checkbox', { name: /Apple Cart/ })).toBeInTheDocument();
     });
 
     it('a picker change alone saves when all other answers are unchanged', async () => {
