@@ -162,6 +162,7 @@ public/             # Public assets
 - Use WebMock for Classy and StripeMock for Stripe
 - Request and controller specs assert on status plus data changes
 - Sidekiq specs run in fake mode by default. Use `Sidekiq::Testing.inline!` blocks to run job chains end to end.
+- Every frontend (SPA) feature needs a Playwright e2e spec in `tests/spa/` as well as Vitest tests. Seed it with its own `test_seeds:*` task (unique `TEST_UNIQUE_ID`, `@example.com` emails) and add that data to `test_seeds:cleanup`. State in the PR whether the e2e spec was actually run.
 
 #### System Tests
 - When writing System Tests, use `css_id(*)` and `css_class(*)` instead of `"#{dom_id(*)}"` `"#{dom_class(*)}"`

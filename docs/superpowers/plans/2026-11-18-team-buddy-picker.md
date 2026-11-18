@@ -6,7 +6,7 @@
 
 **Architecture:** A `team_buddies` join table (directional: `team_id` names `buddy_team_id`) plus `teams.other_buddies` text. A read-only `buddy_options` endpoint lists the race's other teams as `{id, name, finalized}`. Picks are read and written through the existing questions endpoint. The SPA adds a `BuddyPicker` at the top of the Questions card.
 
-**Tech Stack:** Rails 8, RSpec + FactoryBot, React 19 + TypeScript, TanStack Query, Vitest + MSW, Tailwind.
+**Tech Stack:** Rails 8, RSpec + FactoryBot, React 19 + TypeScript, TanStack Query, Vitest + MSW, Playwright, Tailwind.
 
 **Spec:** `docs/superpowers/specs/2026-11-18-team-buddy-picker-design.md`
 
@@ -20,7 +20,7 @@
 - Picker is optional, never affects `checklist.questions.required/done` or finalization.
 - Teams listed alphabetically by name, case-insensitive; "The" is not moved. "Other…" is always the last option.
 - SPA copy goes in `frontend/src/locales/en.ts` via `t()`. Works at 320px with no horizontal scroll. Legacy HAML flow must keep working.
-- Tests: factories, no `double` (use `instance_double`), request specs assert status plus data changes. Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
+- Tests: every SPA feature also gets a Playwright e2e spec (CLAUDE.md Testing). Factories, no `double` (use `instance_double`), request specs assert status plus data changes. Commit messages end with `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`.
 
 ## Review Focus
 
