@@ -24,6 +24,7 @@ module Payments
       return failure(:not_payable) unless chargeable?
       return failure(:registration_closed, I18n.t("api.errors.registration_closed")) unless payable_now?
       return failure(:race_full) if waitlisted?
+      return failure(:roster_incomplete) if roster_incomplete?
 
       with_advisory_lock { charge_and_record }
     rescue Stripe::CardError => e
@@ -58,6 +59,11 @@ module Payments
     # When the race is full, unfinalized teams are on the waitlist and cannot pay, except through staff.
     def waitlisted?
       team.race.full? && !staff?
+    end
+
+    # A team must name all of its racers before paying; staff may take payment regardless.
+    def roster_incomplete?
+      team.needs_people? && !staff?
     end
 
     def staff? = user.is_any_of?(:admin, :operator)

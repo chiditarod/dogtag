@@ -343,6 +343,66 @@ describe TeamsController do
 
       context 'when validation fails on update'
 
+      context "overriding the new team flag" do
+        let(:race) { FactoryBot.create :race }
+        let(:team) { FactoryBot.create :team, race: race, user: normal_user }
+
+        before { FactoryBot.create :person, team: team, experience: 0 }
+
+        context "as an admin" do
+          it "stores the override" do
+            patch :update, params: { id: team.id, team: { new_team_setting: "no" } }
+            expect(response).to redirect_to(team_url(team.id))
+            expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true)
+          end
+        end
+
+        context "as an operator" do
+          let(:the_user) { FactoryBot.create :operator_user }
+
+          it "stores the override" do
+            patch :update, params: { id: team.id, team: { new_team_setting: "no" } }
+            expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true)
+          end
+        end
+
+        context "on the edit page" do
+          render_views
+
+          def new_team_select
+            Nokogiri::HTML(response.body).at_css("select#team_new_team_setting")
+          end
+
+          it "offers staff the override, showing the computed value" do
+            get :edit, params: { id: team.id }
+            expect(new_team_select.css("option").map { |o| [o["value"], o.text] })
+              .to eq([["auto", "Automatic (now Yes)"], ["yes", "Yes"], ["no", "No"]])
+            expect(new_team_select.at_css("option[selected]")["value"]).to eq("auto")
+          end
+
+          it "shows staff the flag on the team page" do
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).to match(/New team:\s+Yes/)
+          end
+
+          it "hides the override from the captain" do
+            login_user! normal_user
+            get :edit, params: { id: team.id }
+            expect(response).to be_successful
+            expect(new_team_select).to be_nil
+          end
+        end
+
+        context "as the team's captain" do
+          let(:the_user) { normal_user }
+
+          it "ignores the override" do
+            patch :update, params: { id: team.id, team: { description: "Ours", new_team_setting: "no" } }
+            expect(team.reload).to have_attributes(description: "Ours", new_team: true, new_team_overridden: nil)
+          end
+        end
+      end
+
       context 'with valid patch data' do
         let(:team) { FactoryBot.create :team }
 
@@ -398,6 +458,41 @@ describe TeamsController do
           expect(response).to be_successful
         end
 
+        context "with a payment due and racers still missing" do
+          render_views
+
+          let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+          let(:team) { FactoryBot.create :team, race: requirement.race }
+          let(:the_user) { team.user }
+          let(:locked) { I18n.t("requirements.payment_requirement.no_pay_roster") }
+
+          it "tells the captain payment is locked and offers no Stripe button" do
+            get :show, params: { :id => team.id }
+            expect(response.body).to include(locked)
+            expect(response.body).not_to include("stripe-button")
+          end
+
+          context "when staff views the team" do
+            let(:the_user) { FactoryBot.create :operator_user }
+
+            it "still offers the Stripe button" do
+              get :show, params: { :id => team.id }
+              expect(response.body).not_to include(locked)
+              expect(response.body).to include("stripe-button")
+            end
+          end
+
+          context "once the roster is full" do
+            let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }
+
+            it "offers the Stripe button to the captain" do
+              get :show, params: { :id => team.id }
+              expect(response.body).not_to include(locked)
+              expect(response.body).to include("stripe-button")
+            end
+          end
+        end
+
         it 'does not cache this page' do
           get :show, params: { :id => team.id }
           # Rails 7.0: Cache-Control header changed from 'no-cache, no-store' to 'no-store'
@@ -449,15 +544,42 @@ describe TeamsController do
         end.to broadcast(:destroy_team_successful)
       end
 
+      context 'as the team captain' do
+        let(:the_user) { FactoryBot.create :user }
+
+        it 'deletes their own pending team' do
+          team = FactoryBot.create :team, :with_people, people_count: 1, user: the_user
+          expect { delete :destroy, params: { id: team.id } }.to change(Team, :count).by(-1).and change(Person, :count).by(-1)
+          expect(response).to redirect_to(teams_path)
+        end
+
+        it 'cannot delete a team that has paid' do
+          team = FactoryBot.create :team, user: the_user
+          FactoryBot.create :completed_requirement, team: team, user: the_user
+          expect { delete :destroy, params: { id: team.id } }.to raise_error(CanCan::AccessDenied)
+          expect(Team.exists?(team.id)).to be(true)
+        end
+      end
+
+      context 'as an operator' do
+        let(:the_user) { FactoryBot.create :operator_user }
+
+        it 'deletes a pending team and returns to the race registrations page' do
+          team = FactoryBot.create :team
+          expect { delete :destroy, params: { id: team.id } }.to change(Team, :count).by(-1)
+          expect(response).to redirect_to(race_registrations_path(team.race))
+        end
+      end
+
       context 'with valid id' do
         let(:valid_team) { FactoryBot.create :team }
         before do
           delete :destroy, params: { :id => valid_team.id }
         end
 
-        it 'sets the flash notice and redirects to the team index' do
+        it 'sets the flash notice and sends staff back to the race registrations' do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
-          expect(response).to redirect_to(teams_path)
+          expect(response).to redirect_to(race_registrations_path(valid_team.race))
         end
       end
 

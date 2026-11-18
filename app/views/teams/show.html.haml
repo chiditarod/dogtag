@@ -36,6 +36,11 @@
           \#
           = @team.assigned_team_number
 
+      - if current_user.is_any_of?(:admin, :operator)
+        %p
+          %strong New team:
+          = new_team_label(@team)
+
       - if @team.race.open_for_registration?
         %i.lead.text-success
           = t('.can_change_until', :date => deadline_readable(@race.local(@race.registration_close)))
@@ -109,7 +114,9 @@
 
   .tab-pane.active{:id => "people"}
 
-    -#todo: consider delete; can't see it render
+    - if @team.deletable? && can?(:destroy, @team)
+      .pull-right
+        = button_to t('delete'), team_path(@team), :method => :delete, :data => { :confirm => t('teams.destroy.confirm', :name => @team.name) }, :class => 'btn btn-danger btn-sm'
     - if @team.needs_people?
       .pull-right
         .text-danger

@@ -39,6 +39,9 @@
     - if @race.full?
       %h4.text-warning
         = t('.no_pay_waitlist')
+    - elsif @team.needs_people? && !current_user.is_any_of?(:admin, :operator)
+      %h4.text-warning
+        = t('.no_pay_roster')
     - else
       = render 'charges/embed', :params => req.stripe_params(@team)
 

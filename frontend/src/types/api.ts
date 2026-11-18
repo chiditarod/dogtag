@@ -79,6 +79,8 @@ export interface Team {
   name: string;
   description: string | null;
   experience: number | null;
+  /** Not finalized and nothing paid, so it can still be deleted. */
+  deletable: boolean;
   race: Race;
   people: Person[];
   checklist: Checklist;

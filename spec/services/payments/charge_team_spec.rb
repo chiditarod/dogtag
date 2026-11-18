@@ -4,7 +4,7 @@ require "stripe_mock"
 describe Payments::ChargeTeam do
   let(:stripe_helper) { StripeMock.create_test_helper }
   let(:requirement) { FactoryBot.create(:payment_requirement_with_tier) }
-  let(:team) { FactoryBot.create(:team, race: requirement.race) }
+  let(:team) { FactoryBot.create(:team, :with_enough_people, race: requirement.race) }
   let(:user) { team.user }
   let(:token) { stripe_helper.generate_card_token }
 
@@ -81,6 +81,25 @@ describe Payments::ChargeTeam do
 
       expect(result.ok).to be(true)
       expect(CompletedRequirement.count).to eq(1)
+    end
+  end
+
+  context "when the team has not added all of its racers" do
+    let(:team) { FactoryBot.create(:team, race: requirement.race) }
+
+    it "returns :roster_incomplete without calling Stripe" do
+      expect(Stripe::Charge).not_to receive(:create)
+
+      result = call
+
+      expect(result.ok).to be(false)
+      expect(result.error_code).to eq(:roster_incomplete)
+      expect(result.message).to eq(I18n.t("charges.roster_incomplete"))
+      expect(CompletedRequirement.count).to eq(0)
+    end
+
+    it "still allows an operator to take payment" do
+      expect(call(user: FactoryBot.create(:operator_user)).ok).to be(true)
     end
   end
 

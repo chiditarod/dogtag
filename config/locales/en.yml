@@ -36,6 +36,8 @@ en:
       models:
         person:
           attributes:
+            email:
+              taken_on_team: is already on this team
             instagram:
               invalid_handle: should look like @handle (letters, numbers, periods and underscores)
             tiktok:
@@ -168,6 +170,7 @@ en:
     not_payable: This requirement cannot be paid by card.
     already_paid: This requirement has already been paid for this team, so your card was not charged.
     wrong_race: This payment does not belong to this team's race, so your card was not charged.
+    roster_incomplete: Your team needs all of its racers before payment unlocks.
     race_full: This race is full. Your team is on the waitlist and can't pay yet, so your card was not charged.
     price_changed: "The registration fee has changed to %{amount}, so your card was not charged. Please review the new price and try again."
     mock_declined: Mock payment declined
@@ -235,6 +238,7 @@ en:
       # from reg
       name: What's your team name?
       description: Sum up your team in a montage of prose
+      description_instructions: Every cart needs a theme. Tell us what your team and cart are all about, and don't be afraid to get creative.
       twitter: Got twitter? Please include the @ sign
       racer_type: What type of racer are you?
       primary_inspiration: What's your primary inspiration?
@@ -291,6 +295,7 @@ en:
       edit_team: "Edit team for %{race_name}"
       success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     destroy:
+      confirm: "Delete %{name}? Its racers are removed too. This cannot be undone."
       has_payments: This team has completed requirements and cannot be deleted. Please contact support if you need to delete this team.
     table:
       exp: exp
@@ -299,6 +304,7 @@ en:
   requirements:
     payment_requirement:
       no_pay_waitlist: You are on the waitlist. Payment is not available.
+      no_pay_roster: Your team needs all of its racers before payment unlocks.
       no_complete_when_closed: Registration closed
     table:
       tiers: tiers

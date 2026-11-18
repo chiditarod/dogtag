@@ -167,5 +167,53 @@ describe "API v1 teams", type: :request do
         expect(team.reload.name).not_to eq("Hax")
       end
     end
+
+    describe "DELETE /api/v1/teams/:id" do
+      let!(:team) { FactoryBot.create(:team, :with_people, people_count: 1, user: user, race: race) }
+
+      it "lets the captain delete their own pending team and its racers" do
+        expect { delete "/api/v1/teams/#{team.id}" }.to change(Team, :count).by(-1).and change(Person, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it "refuses a team someone else owns" do
+        other = FactoryBot.create(:team, race: race)
+        expect { delete "/api/v1/teams/#{other.id}" }.not_to change(Team, :count)
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "refuses a finalized team" do
+        team.update_column(:finalized, true)
+        expect { delete "/api/v1/teams/#{team.id}" }.not_to change(Team, :count)
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "refuses a team that has paid" do
+        FactoryBot.create(:completed_requirement, team: team, user: user)
+        expect { delete "/api/v1/teams/#{team.id}" }.not_to change(Team, :count)
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "returns 404 for a missing team" do
+        delete "/api/v1/teams/0"
+        expect(response).to have_http_status(:not_found)
+      end
+
+      it "lets an operator delete anyone's pending team" do
+        delete "/api/v1/session"
+        api_login(FactoryBot.create(:operator_user))
+        expect { delete "/api/v1/teams/#{team.id}" }.to change(Team, :count).by(-1)
+        expect(response).to have_http_status(:no_content)
+      end
+
+      it "tells an admin a paid team cannot be deleted" do
+        FactoryBot.create(:completed_requirement, team: team, user: user)
+        delete "/api/v1/session"
+        api_login(FactoryBot.create(:admin_user))
+        expect { delete "/api/v1/teams/#{team.id}" }.not_to change(Team, :count)
+        expect(response).to have_http_status(:conflict)
+        expect(json["code"]).to eq("has_payments")
+      end
+    end
   end
 end
