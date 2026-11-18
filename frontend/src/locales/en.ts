@@ -1,6 +1,6 @@
 export const en = {
   'app.title': 'CHIditarod Registration',
-  'layout.logoAlt': 'dogtag',
+  'layout.logoAlt': 'dogtag, CHIditarod registration',
   'layout.userMenu': 'Account',
   'layout.login': 'Log in',
   'layout.signup': 'Sign up',
