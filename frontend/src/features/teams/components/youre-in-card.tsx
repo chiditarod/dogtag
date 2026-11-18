@@ -1,4 +1,5 @@
 import { ChecklistCard } from '@/features/teams/components/checklist-card';
+import { FundraisingStatus } from '@/features/teams/components/fundraising-status';
 import { t } from '@/locales/en';
 import type { Checklist } from '@/types/api';
 
@@ -21,7 +22,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
   return (
     <ChecklistCard
       anchor="step-in"
-      title={t('team.youreIn')}
+      title={t('team.fullyRegistered')}
       status="done"
       pill={t('team.pillDone')}
       tourId="in"
@@ -32,23 +33,7 @@ export function YoureInCard({ checklist }: { checklist: Checklist }) {
           {checklist.team_number}
         </p>
       )}
-      {checklist.classy_fundraising_url ? (
-        <a
-          href={checklist.classy_fundraising_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-11 items-center rounded-md bg-star px-4 py-2 text-sm font-semibold text-white hover:bg-starText focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
-        >
-          {t('team.fundraisingLink')}
-        </a>
-      ) : (
-        checklist.classy_expected && (
-          <div role="status" className="space-y-1 text-sm">
-            <p>{t('team.fundraisingPending')}</p>
-            <p className="text-navy/70">{t('team.fundraisingPendingHint')}</p>
-          </div>
-        )
-      )}
+      <FundraisingStatus checklist={checklist} />
     </ChecklistCard>
   );
 }

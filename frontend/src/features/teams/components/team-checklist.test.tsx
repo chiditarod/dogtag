@@ -82,12 +82,66 @@ describe('TeamChecklist header', () => {
     expect(screen.queryByText(/things left/)).toBeNull();
   });
 
-  it("says You're in! when finalized", async () => {
-    serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
+  it('shows the finished state, team number, fundraising link and confirmation text', async () => {
+    serveTeam({
+      finalized: true,
+      remaining: 0,
+      team_number: 42,
+      classy_expected: true,
+      classy_fundraising_url: 'https://classy.example/t/42',
+      confirmation_html: '<p>Build your <strong>cart</strong></p>',
+    });
     renderApp('/teams/9');
     const header = await screen.findByRole('region', { name: 'Team summary' });
-    expect(within(header).getByText("You're in!")).toBeInTheDocument();
+    expect(within(header).getByText("You're fully registered!")).toBeInTheDocument();
+    expect(within(header).getByText('Team #42')).toBeInTheDocument();
+    expect(within(header).getByRole('link', { name: 'Open your fundraising page' })).toHaveAttribute(
+      'href',
+      'https://classy.example/t/42',
+    );
+    expect(within(header).getByTestId('confirmation-text')).toHaveTextContent('Build your cart');
+    expect(screen.getAllByTestId('confirmation-text')).toHaveLength(1);
     expect(screen.queryByText(/things left/)).toBeNull();
+  });
+
+  it('shows no fundraising link or pending text when Classy is not expected', async () => {
+    serveTeam({ finalized: true, remaining: 0, team_number: 42, classy_expected: false });
+    renderApp('/teams/9');
+    await screen.findAllByText('Team #42');
+    expect(screen.queryByRole('link', { name: 'Open your fundraising page' })).toBeNull();
+    expect(screen.queryByText(/being set up/)).toBeNull();
+  });
+
+  it('renders no confirmation block without text, or before the team is finalized', async () => {
+    serveTeam({ finalized: true, remaining: 0, team_number: 42, confirmation_html: null });
+    renderApp('/teams/9');
+    await screen.findByRole('region', { name: 'Team summary' });
+    expect(screen.queryByTestId('confirmation-text')).toBeNull();
+  });
+
+  it('hides confirmation text for an unfinalized team', async () => {
+    serveTeam({ confirmation_html: '<p>Hidden</p>' });
+    renderApp('/teams/9');
+    await screen.findByRole('region', { name: 'Team summary' });
+    expect(screen.queryByTestId('confirmation-text')).toBeNull();
+  });
+
+  it('slims the finished final card: heading, number and fundraising, no confirmation text', async () => {
+    serveTeam({
+      finalized: true,
+      remaining: 0,
+      team_number: 42,
+      classy_expected: true,
+      classy_fundraising_url: 'https://classy.example/t/42',
+      confirmation_html: '<p>Build your cart</p>',
+    });
+    renderApp('/teams/9');
+    const card = (await screen.findByRole('heading', { level: 2, name: "You're fully registered!" })).closest(
+      '[role="group"]',
+    ) as HTMLElement;
+    expect(within(card).getByText('Team #42')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Open your fundraising page' })).toBeInTheDocument();
+    expect(within(card).queryByTestId('confirmation-text')).toBeNull();
   });
 
   it('counts the team star plus completed steps in the progress bar (questions skipped count as done)', async () => {
@@ -138,7 +192,7 @@ describe('card stars', () => {
   it('fills the last star once the team is finalized', async () => {
     serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
     renderApp('/teams/9');
-    const final = await screen.findByRole('heading', { level: 2, name: "You're in!" });
+    const final = await screen.findByRole('heading', { level: 2, name: "You're fully registered!" });
     expect(starOf(final)).toHaveAttribute('data-filled', 'true');
   });
 });
@@ -309,8 +363,8 @@ describe('YoureInCard', () => {
   it('shows the team number and the fundraising link when finalized', async () => {
     serveTeam({ finalized: true, remaining: 0, team_number: 12, classy_fundraising_url: 'https://classy.example/t/12' });
     renderApp('/teams/9');
-    expect(await screen.findByText('Team #12')).toBeInTheDocument();
-    const link = screen.getByRole('link', { name: 'Open your fundraising page' });
+    expect(await screen.findAllByText('Team #12')).toHaveLength(2);
+    const [link] = screen.getAllByRole('link', { name: 'Open your fundraising page' });
     expect(link).toHaveAttribute('href', 'https://classy.example/t/12');
     expect(screen.queryByText(/Finish the steps above/)).toBeNull();
   });
@@ -329,7 +383,7 @@ describe('YoureInCard', () => {
       }),
     );
     renderApp('/teams/9');
-    expect(await screen.findByText('Team #12')).toBeInTheDocument();
+    expect(await screen.findAllByText('Team #12')).toHaveLength(2);
     expect(screen.queryByText('Your fundraising page is being set up…')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Open your fundraising page' })).toBeNull();
 
@@ -352,13 +406,13 @@ describe('YoureInCard', () => {
       }),
     );
     renderApp('/teams/9');
-    expect(await screen.findByText('Your fundraising page is being set up…')).toBeInTheDocument();
+    expect(await screen.findAllByText('Your fundraising page is being set up…')).toHaveLength(2);
     expect(requests).toBe(1);
 
     await act(() => vi.advanceTimersByTimeAsync(10_000));
     await waitFor(() => expect(requests).toBe(2));
     await act(() => vi.advanceTimersByTimeAsync(10_000));
-    expect(await screen.findByRole('link', { name: 'Open your fundraising page' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('link', { name: 'Open your fundraising page' })).toHaveLength(2);
     expect(requests).toBe(3);
 
     await act(() => vi.advanceTimersByTimeAsync(60_000));
@@ -377,7 +431,7 @@ describe('YoureInCard', () => {
       }),
     );
     renderApp('/teams/9');
-    await screen.findByText('Your fundraising page is being set up…');
+    await screen.findAllByText('Your fundraising page is being set up…');
     for (let i = 0; i < 35; i += 1) {
       await act(() => vi.advanceTimersByTimeAsync(10_000));
       // Let the mocked response land so the next interval is scheduled.

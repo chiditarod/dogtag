@@ -61,6 +61,7 @@ export const en = {
   'team.summary': 'Team summary',
   'team.closes': 'Registration closes',
   'team.youreIn': "You're in!",
+  'team.fullyRegistered': "You're fully registered!",
   'team.progress': 'Registration progress',
   'team.star.team': 'Team',
   'team.star.racers': 'Racers',
