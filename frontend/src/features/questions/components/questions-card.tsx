@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
+import { useBuddyOptions } from '@/features/questions/api/use-buddy-options';
 import { useQuestions, useSaveAnswers } from '@/features/questions/api/use-questions';
+import {
+  BuddyFieldset,
+  BuddyPicker,
+} from '@/features/questions/components/buddy-picker';
 import { JsonformRenderer } from '@/features/questions/components/jsonform-renderer';
-import type { AnswerErrors, Answers, JsonformSchema } from '@/features/questions/types';
+import type {
+  AnswerErrors,
+  Answers,
+  BuddySelection,
+  JsonformSchema,
+} from '@/features/questions/types';
 import {
   defaultAnswers,
   mapServerErrors,
@@ -26,6 +36,18 @@ function buildPayload(schema: JsonformSchema, draft: Answers): Answers {
   return payload;
 }
 
+function savedSelection(data: {
+  buddy_team_ids: number[];
+  other_buddies: string | null;
+}): BuddySelection {
+  const otherText = data.other_buddies ?? '';
+  return {
+    teamIds: data.buddy_team_ids,
+    otherSelected: otherText.trim() !== '',
+    otherText,
+  };
+}
+
 export function QuestionsCard({ team }: { team: Team }) {
   const { checklist, race } = team;
   const open = race.open_for_registration;
@@ -35,6 +57,8 @@ export function QuestionsCard({ team }: { team: Team }) {
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Answers | null>(null);
+  const [buddyDraft, setBuddyDraft] = useState<BuddySelection | null>(null);
+  const [buddyErrors, setBuddyErrors] = useState<string[]>([]);
   const [errors, setErrors] = useState<AnswerErrors>({});
   const [formErrors, setFormErrors] = useState<string[]>([]);
   const [status, setStatus] = useState('');
@@ -45,6 +69,7 @@ export function QuestionsCard({ team }: { team: Team }) {
 
   const showForm = open && (editing || !checklist.questions.done);
   const jsonform = query.data?.jsonform;
+  const buddyOptions = useBuddyOptions(team.id, showForm && !!jsonform);
 
   // Focus management: first invalid field after a failed save/validation, and
   // the Edit button after the form collapses.
@@ -65,14 +90,18 @@ export function QuestionsCard({ team }: { team: Team }) {
   if (!jsonform) return null;
 
   const { schema } = jsonform;
-  const saved = query.data.answers;
+  const data = query.data;
+  const saved = data.answers;
   const keys = Object.keys(schema.properties);
   const answered = keys.filter((key) => isAnswered(saved[key])).length;
   const value = draft ?? defaultAnswers(schema, saved);
+  const buddies = buddyDraft ?? savedSelection(data);
 
   function collapse() {
     setEditing(false);
     setDraft(null);
+    setBuddyDraft(null);
+    setBuddyErrors([]);
     setErrors({});
     setFormErrors([]);
     focusEditButton.current = true;
@@ -80,6 +109,8 @@ export function QuestionsCard({ team }: { team: Team }) {
 
   function startEditing() {
     setDraft(defaultAnswers(schema, saved));
+    setBuddyDraft(savedSelection(data));
+    setBuddyErrors([]);
     setStatus('');
     setEditing(true);
     requestAnimationFrame(() => {
@@ -94,6 +125,11 @@ export function QuestionsCard({ team }: { team: Team }) {
       delete remaining[key];
       setErrors(remaining);
     }
+  }
+
+  function handleBuddyChange(next: BuddySelection) {
+    setBuddyDraft(next);
+    setBuddyErrors([]);
   }
 
   function showErrors(byKey: AnswerErrors, form: string[]) {
@@ -112,8 +148,14 @@ export function QuestionsCard({ team }: { team: Team }) {
     }
     setErrors({});
     setFormErrors([]);
+    setBuddyErrors([]);
 
-    save.mutate(payload, {
+    const input = {
+      answers: payload,
+      buddy_team_ids: buddies.teamIds,
+      other_buddies: buddies.otherSelected ? buddies.otherText.trim() : '',
+    };
+    save.mutate(input, {
       onSuccess: () => {
         clearError();
         setStatus(t('questions.saved'));
@@ -125,6 +167,11 @@ export function QuestionsCard({ team }: { team: Team }) {
           const messages = Object.values(error.errors).flat();
           const { byKey, form } = mapServerErrors(messages, schema);
           showErrors(byKey, form);
+          return;
+        }
+        if (error instanceof ApiError && error.error === 'invalid_buddies') {
+          const messages = Object.values(error.errors).flat();
+          setBuddyErrors(messages.length ? messages : [t('common.genericError')]);
           return;
         }
         setFormErrors([t('common.genericError')]);
@@ -139,6 +186,23 @@ export function QuestionsCard({ team }: { team: Team }) {
       </div>
       {showForm ? (
         <form ref={formRef} noValidate onSubmit={handleSubmit} className="space-y-6">
+          {buddyOptions.isError ? (
+            <BuddyFieldset>
+              <QueryError onRetry={() => void buddyOptions.refetch()} />
+            </BuddyFieldset>
+          ) : buddyOptions.isPending ? (
+            <BuddyFieldset>
+              <QueryLoading />
+            </BuddyFieldset>
+          ) : (
+            <BuddyPicker
+              options={buddyOptions.data}
+              value={buddies}
+              onChange={handleBuddyChange}
+              disabled={save.isPending}
+              error={buddyErrors}
+            />
+          )}
           <JsonformRenderer
             jsonform={jsonform}
             value={value}

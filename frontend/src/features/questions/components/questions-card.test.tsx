@@ -38,11 +38,17 @@ function serve({
   checklist = {},
   race = {},
   jsonform = fixture,
+  buddyOptions = [],
+  buddyTeamIds = [],
+  otherBuddies = null,
 }: {
   answers?: Record<string, string>;
   checklist?: Partial<Checklist>;
   race?: Partial<Race>;
   jsonform?: unknown;
+  buddyOptions?: Array<{ id: number; name: string; finalized: boolean }>;
+  buddyTeamIds?: number[];
+  otherBuddies?: string | null;
 } = {}) {
   const team = buildTeam({
     race: buildRace(race),
@@ -50,7 +56,15 @@ function serve({
   });
   server.use(
     http.get('/api/v1/teams/9', () => HttpResponse.json({ team })),
-    http.get('/api/v1/teams/9/questions', () => HttpResponse.json({ jsonform, answers })),
+    http.get('/api/v1/teams/9/questions', () => 
+      HttpResponse.json({
+        jsonform,
+        answers,
+        buddy_team_ids: buddyTeamIds,
+        other_buddies: otherBuddies,
+      }),
+    ),
+    http.get('/api/v1/teams/9/buddy_options', () => HttpResponse.json({ teams: buddyOptions })),
     http.put('/api/v1/teams/9/questions', async ({ request }) => {
       puts.push(await request.json());
       return putResponse();
@@ -63,6 +77,8 @@ beforeEach(() => {
   putResponse = () =>
     HttpResponse.json({
       answers: valid,
+      buddy_team_ids: [],
+      other_buddies: null,
       checklist: buildChecklist({ questions: { required: true, done: true } }),
     });
   server.use(
@@ -90,7 +106,8 @@ async function fillAll(c: ReturnType<typeof within>, skip: string[] = []) {
   await pick(/primarily racing for time/, 'No');
   await pick(/collaborating with any other teams/, 'No');
   for (const box of c.getAllByRole('checkbox')) {
-    if (!skip.some((s) => (box as HTMLInputElement).name === s)) await user.click(box);
+    const name = (box as HTMLInputElement).name;
+    if (name && !skip.includes(name)) await user.click(box);
   }
   await pick(/Fire Effects/, 'No');
   await user.selectOptions(c.getByRole('combobox', { name: /Fundraising/ }), 'Probably');
@@ -106,7 +123,7 @@ describe('QuestionsCard', () => {
     await fillAll(c);
     await userEvent.click(c.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(puts).toHaveLength(1));
-    expect(puts[0]).toEqual({ answers: valid });
+    expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
     expect(await screen.findByText('Done')).toBeInTheDocument();
     expect(await c.findByRole('button', { name: 'Edit answers' })).toBeInTheDocument();
     expect(c.queryByRole('radiogroup')).not.toBeInTheDocument();
@@ -180,7 +197,7 @@ describe('QuestionsCard', () => {
     await userEvent.click(await c.findByRole('button', { name: 'Edit answers' }));
     await userEvent.click(c.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(puts).toHaveLength(1));
-    expect(puts[0]).toEqual({ answers: { ...valid, buddies: 'Dee' } });
+    expect(puts[0]).toEqual({ answers: { ...valid, buddies: 'Dee' }, buddy_team_ids: [], other_buddies: '' });
   });
 
   it('maps 422 messages to their question keys and shows the rest as form-level errors', async () => {
@@ -237,5 +254,102 @@ describe('QuestionsCard', () => {
     renderApp('/teams/9');
     const c = await card();
     expect(await c.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
+  });
+
+  describe('team picker', () => {
+    const teams = [
+      { id: 11, name: 'Apple Cart', finalized: false },
+      { id: 12, name: 'Zebra Crossing', finalized: true },
+    ];
+    const done = { questions: { required: true, done: true } };
+
+    it('saves picked teams and other text with the answers', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams });
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: 'Zebra Crossing, Fully registered' }));
+      await user.click(c.getByRole('checkbox', { name: 'Other…' }));
+      await user.type(c.getByRole('textbox', { name: 'Which other teams or people?' }), ' Dee Team ');
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [12], other_buddies: 'Dee Team' });
+    });
+
+    it('opens with saved picks and Other… selected when other_buddies exists', async () => {
+      const user = userEvent.setup();
+      serve({
+        answers: valid,
+        checklist: done,
+        buddyOptions: teams,
+        buddyTeamIds: [11],
+        otherBuddies: 'Dee Team',
+      });
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      expect(await c.findByRole('checkbox', { name: 'Apple Cart, Still registering' })).toBeChecked();
+      expect(c.getByRole('checkbox', { name: 'Zebra Crossing, Fully registered' })).not.toBeChecked();
+      expect(c.getByRole('checkbox', { name: 'Other…' })).toBeChecked();
+      expect(c.getByRole('textbox', { name: 'Which other teams or people?' })).toHaveValue('Dee Team');
+    });
+
+    it('clearing Other… sends an empty other_buddies', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams, otherBuddies: 'Dee Team' });
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: 'Other…' }));
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
+    });
+
+    it('shows an invalid_buddies server error on the picker', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams });
+      putResponse = () =>
+        HttpResponse.json(
+          { error: 'invalid_buddies', errors: { buddy_team_ids: ['includes a team that is not in this race'] } },
+          { status: 422 },
+        );
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: /Zebra Crossing/ }));
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      const group = await c.findByRole('group', { name: 'Teams you want to race with' });
+      expect(await within(group).findByRole('alert')).toHaveTextContent('includes a team that is not in this race');
+      expect(c.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+    });
+
+    it('a picker change alone saves when all other answers are unchanged', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams, buddyTeamIds: [11] });
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      await user.click(await c.findByRole('checkbox', { name: /Zebra Crossing/ }));
+      await user.click(c.getByRole('checkbox', { name: /Apple Cart/ }));
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [12], other_buddies: '' });
+    });
+
+    it('keeps the questions usable and offers a retry when the team list fails to load', async () => {
+      const user = userEvent.setup();
+      serve({ answers: valid, checklist: done, buddyOptions: teams });
+      server.use(http.get('/api/v1/teams/9/buddy_options', () => HttpResponse.json({ error: 'x' }, { status: 500 })));
+      renderApp('/teams/9');
+      const c = await card();
+      await user.click(await c.findByRole('button', { name: 'Edit answers' }));
+      const group = await c.findByRole('group', { name: 'Teams you want to race with' });
+      expect(await within(group).findByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(c.getByRole('radio', { name: 'Racer' })).toBeChecked();
+      await user.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+    });
   });
 });

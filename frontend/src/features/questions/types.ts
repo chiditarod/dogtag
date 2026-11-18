@@ -38,3 +38,15 @@ export interface Jsonform {
 
 export type Answers = Record<string, string>;
 export type AnswerErrors = Record<string, string[]>;
+
+export interface BuddyOption {
+  id: number;
+  name: string;
+  finalized: boolean;
+}
+
+export interface BuddySelection {
+  teamIds: number[];
+  otherSelected: boolean;
+  otherText: string;
+}

@@ -8,6 +8,14 @@ import type { Checklist } from '@/types/api';
 interface QuestionsResponse {
   jsonform: Jsonform | null;
   answers: Answers;
+  buddy_team_ids: number[];
+  other_buddies: string | null;
+}
+
+export interface SaveAnswersInput {
+  answers: Answers;
+  buddy_team_ids: number[];
+  other_buddies: string;
 }
 
 export const questionsQueryKey = (teamId: string | number) =>
@@ -23,15 +31,18 @@ export function useQuestions(teamId: string | number) {
 export function useSaveAnswers(teamId: string | number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (answers: Answers) =>
-      apiFetch<{ answers: Answers; checklist: Checklist }>(
-        `/teams/${teamId}/questions`,
-        { method: 'PUT', json: { answers } },
-      ),
-    onSuccess: ({ answers, checklist }) => {
+    mutationFn: (input: SaveAnswersInput) =>
+      apiFetch<{
+        answers: Answers;
+        buddy_team_ids: number[];
+        other_buddies: string | null;
+        checklist: Checklist;
+      }>(`/teams/${teamId}/questions`, { method: 'PUT', json: input }),
+    onSuccess: ({ answers, buddy_team_ids, other_buddies, checklist }) => {
       queryClient.setQueryData<QuestionsResponse>(
         questionsQueryKey(teamId),
-        (existing) => (existing ? { ...existing, answers } : existing),
+        (existing) =>
+          existing ? { ...existing, answers, buddy_team_ids, other_buddies } : existing,
       );
       setTeamChecklist(queryClient, teamId, checklist);
       void queryClient.invalidateQueries({ queryKey: teamsQueryKey });
