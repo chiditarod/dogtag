@@ -42,7 +42,7 @@ describe('openStripeCheckout', () => {
     expect(await first).toEqual({ token: 'tok_1', email: 'x@example.com' });
     expect(await second).toEqual({ token: 'tok_1', email: 'x@example.com' });
     expect(configure).toHaveBeenCalledWith(
-      expect.objectContaining({ key: 'pk_test', locale: 'auto', image: '/register/logo.png' }),
+      expect.objectContaining({ key: 'pk_test', locale: 'auto', image: '/register/logo-square.png' }),
     );
   });
 

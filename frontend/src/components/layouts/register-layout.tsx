@@ -19,7 +19,9 @@ export function RegisterLayout() {
             <img
               src={`${import.meta.env.BASE_URL}logo.png`}
               alt={t('layout.logoAlt')}
-              className="h-8 w-auto max-w-full object-contain object-left sm:h-10"
+              width={640}
+              height={389}
+              className="h-16 w-auto max-w-full object-contain object-left min-[400px]:h-20 sm:h-24"
             />
           </Link>
           <nav aria-label={t('layout.userMenu')} className="shrink-0 text-sm">
