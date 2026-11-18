@@ -19,7 +19,7 @@ class TeamChecklist
       finalized: !!team.finalized,
       remaining: remaining(racers, questions, fee),
       team_number: team.assigned_team_number,
-      classy_fundraising_url: classy_fundraising_url,
+      classy_fundraising_url: team.classy_fundraising_url,
       # Only races with a Classy campaign get a fundraising page, so only they should wait for one.
       classy_expected: race.classy_campaign_id.present?,
       confirmation_html: ConfirmationText.to_html(race.confirmation_text)&.to_str,
@@ -100,11 +100,5 @@ class TeamChecklist
 
   def remaining(racers, questions, fee)
     [racers[:done], !questions[:required] || questions[:done], fee[:done]].count(false)
-  end
-
-  def classy_fundraising_url
-    return if team.classy_id.blank?
-
-    "https://www.classy.org/team/#{team.classy_id}?campaignId=#{race.classy_campaign_id}"
   end
 end
