@@ -72,6 +72,7 @@ function serve({
     }),
   });
   const paid = buildChecklist({
+    racers: { filled: 5, total: 5, done: true },
     fee: feeOf([item({ done: true, amount_due_cents: null, paid_cents: 30000 })]),
     finalized: true,
     team_number: 12,
@@ -366,6 +367,14 @@ describe('FeeCard', () => {
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('asks for the full roster first and hides Pay while racers are missing', async () => {
+    serve({ checklist: { racers: { filled: 3, total: 5, done: false } } });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText(/Add all of your racers first/)).toBeInTheDocument();
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   it('says when the fee opens later, with no button', async () => {
     serve({
       checklist: {
@@ -443,7 +452,10 @@ describe('FeeCard', () => {
         race: { payment_requirements: [deposit, registration] },
         checklist: { fee: feeOf([depositItem(), registrationItem()]) },
         paymentResponse: () =>
-          HttpResponse.json({ checklist: buildChecklist({ fee: depositPaid }) }, { status: 201 }),
+          HttpResponse.json(
+            { checklist: buildChecklist({ racers: { filled: 5, total: 5, done: true }, fee: depositPaid }) },
+            { status: 201 },
+          ),
         ...options,
       });
     }
