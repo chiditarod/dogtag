@@ -201,6 +201,14 @@ class Team < ApplicationRecord
     waitlisted_teams.index(id) + 1
   end
 
+  # Names of the teams this team picked (as stored, alphabetical like the picker),
+  # then the free-text other_buddies when present.
+  def racing_with_names
+    picked = buddy_teams.sort_by { |t| [t.name.to_s.downcase, t.id] }.map(&:name)
+    picked << other_buddies if other_buddies.present?
+    picked
+  end
+
   private
 
   def normalize_other_buddies
@@ -235,8 +243,13 @@ class Team < ApplicationRecord
       value.start_with?("=", "+", "-", "@") ? "'#{value}" : value
     end
 
+    def racing_with_cell(team)
+      team.racing_with_names.map { |name| spreadsheet_safe(name) }.join("; ")
+    end
+
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams
+      teams = teams.preload(:buddy_teams)
       teams.inject([]) do |memo, team|
         row = []
         row << team.finalized.to_s
@@ -276,6 +289,8 @@ class Team < ApplicationRecord
         # anyone reading the export by column.
         row << { true => "yes", false => "no" }.fetch(team.new_team, "")
 
+        row << racing_with_cell(team)
+
         memo << row
       end
     end
@@ -302,6 +317,7 @@ class Team < ApplicationRecord
       end
 
       header << 'new_team'
+      header << 'racing_with'
     end
   end
 end

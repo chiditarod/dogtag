@@ -564,8 +564,53 @@ describe Team do
     it "puts the new team flag last so older columns keep their positions" do
       header, team_row = Team.export(race.id)
       expect(header.first(3)).to eq(%w[finalized number name])
-      expect(header.last).to eq("new_team")
+      expect(header.last(2)).to eq(%w[new_team racing_with])
       expect(team_row.length).to eq(header.length)
+    end
+
+    context "with racing_with picks" do
+      let(:cherry) { FactoryBot.create :team, race: race, name: "Cherry" }
+      let(:apple) { FactoryBot.create :team, race: race, name: "apple" }
+
+      def racing_with_of(team)
+        header, *rows = Team.export(race.id)
+        rows.find { |row| row[header.index("name")] == team.library_name }[header.index("racing_with")]
+      end
+
+      it "includes picked names then other, in the picker's order and without library names" do
+        team.update!(buddy_teams: [cherry, apple], other_buddies: "The Other Crew")
+        expect(racing_with_of(team)).to eq("apple; Cherry; The Other Crew")
+
+        cherry.update_column(:name, "The Cherry Bombs")
+        expect(racing_with_of(team)).to eq("apple; The Cherry Bombs; The Other Crew")
+      end
+
+      it "prefixes a formula-looking other_buddies with an apostrophe" do
+        team.update!(buddy_teams: [apple], other_buddies: "=HYPERLINK(\"x\")")
+        expect(racing_with_of(team)).to eq("apple; '=HYPERLINK(\"x\")")
+      end
+
+      it "prefixes a formula-looking picked team name" do
+        apple.update_column(:name, "=cmd")
+        team.update!(buddy_teams: [apple, cherry])
+        expect(racing_with_of(team)).to eq("'=cmd; Cherry")
+      end
+
+      it "leaves racing_with empty when nothing is picked" do
+        expect(racing_with_of(team)).to eq("")
+      end
+
+      it "does not query picks once per team" do
+        3.times { |i| team.team_buddies.create!(buddy_team: FactoryBot.create(:team, race: race)) }
+        FactoryBot.create_list(:team, 3, race: race).each do |t|
+          t.team_buddies.create!(buddy_team: team)
+        end
+
+        queries = []
+        counter = ->(*, payload) { queries << payload[:sql] if payload[:sql].match?(/team_buddies/) }
+        ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { Team.export(race.id) }
+        expect(queries.size).to be <= 1
+      end
     end
 
     context 'with finalized option' do
