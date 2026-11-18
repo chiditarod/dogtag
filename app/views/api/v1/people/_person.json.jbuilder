@@ -1,1 +1,1 @@
-json.extract! person, :id, :first_name, :last_name, :email, :phone, :zipcode, :experience, :instagram
+json.extract! person, :id, :first_name, :last_name, :email, :phone, :zipcode, :experience, :instagram, :tiktok

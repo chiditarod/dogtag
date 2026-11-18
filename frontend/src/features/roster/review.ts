@@ -10,7 +10,8 @@ export type LineKey =
   | 'phone'
   | 'zipcode'
   | 'experience'
-  | 'instagram';
+  | 'instagram'
+  | 'tiktok';
 
 export const LINE_KEYS: readonly LineKey[] = [
   'name',
@@ -19,6 +20,7 @@ export const LINE_KEYS: readonly LineKey[] = [
   'zipcode',
   'experience',
   'instagram',
+  'tiktok',
 ];
 
 export interface LineState {
@@ -43,15 +45,18 @@ export function lineLabel(key: LineKey): string {
       return t('roster.years');
     case 'instagram':
       return t('roster.instagramLine');
+    case 'tiktok':
+      return t('roster.tiktokLine');
   }
 }
 
-/** Instagram is optional, so it is never blank. */
+/** Instagram and TikTok are optional, so it is never blank. */
 export function isLineBlank(key: LineKey, draft: PersonDraft): boolean {
   switch (key) {
     case 'name':
       return !draft.first_name.trim() || !draft.last_name.trim();
     case 'instagram':
+    case 'tiktok':
       return false;
     default:
       return !draft[key].trim();
@@ -85,7 +90,8 @@ export function lineValue(key: LineKey, draft: PersonDraft, race: Race): string 
         ? ''
         : (race.experience_labels[Number(draft.experience)] ?? '');
     case 'instagram':
-      return draft.instagram.trim() || t('roster.none');
+    case 'tiktok':
+      return draft[key].trim() || t('roster.none');
     default:
       return draft[key];
   }

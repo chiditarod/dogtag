@@ -35,6 +35,7 @@ export interface Person {
   zipcode: string | null;
   experience: number | null;
   instagram: string | null;
+  tiktok: string | null;
 }
 
 export interface ChecklistNextTier {

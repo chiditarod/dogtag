@@ -146,6 +146,25 @@ describe 'validation' do
     end
   end
 
+  describe "tiktok" do
+    it "saves a handle lowercased with a leading @" do
+      expect(FactoryBot.create(:person, tiktok: " Sam.Okafor ").tiktok).to eq("@sam.okafor")
+      expect(FactoryBot.create(:person, tiktok: "@Cart_Pusher9").tiktok).to eq("@cart_pusher9")
+    end
+
+    it "stores a blank handle as nil" do
+      expect(FactoryBot.create(:person, tiktok: "  ").tiktok).to be_nil
+    end
+
+    it "is invalid for a URL, spaces, a bad length, or a trailing period" do
+      ["https://tiktok.com/@sam", "sam okafor", "@a", "@#{'a' * 25}", "sam.", "sam!"].each do |handle|
+        person = FactoryBot.build(:person, tiktok: handle)
+        expect(person).not_to be_valid
+        expect(person.errors[:tiktok]).to eq(["should look like @handle (2-24 letters, numbers, periods and underscores, not ending in a period)"])
+      end
+    end
+  end
+
   it 'converts phone numbers into the right format' do
     person = FactoryBot.build(:person)
     [1111111111, "1111111111"].each do |num|

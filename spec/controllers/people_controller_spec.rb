@@ -206,6 +206,11 @@ describe PeopleController do
         end.to change(Person, :count).by 1
       end
 
+      it 'saves the tiktok handle, normalized' do
+        post :create, params: { :team_id => team_no_people.id, :person => new_person_hash.merge(:tiktok => 'Sam_O') }
+        expect(team_no_people.people.last.tiktok).to eq('@sam_o')
+      end
+
       it 'saves the instagram handle, normalized' do
         post :create, params: { :team_id => team_no_people.id, :person => new_person_hash.merge(:instagram => 'Sam.Okafor') }
         expect(team_no_people.people.last.instagram).to eq('@sam.okafor')

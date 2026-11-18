@@ -19,7 +19,7 @@ describe "API v1 people", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(json["person"]).to include("first_name" => "Ada", "phone" => "312-555-0144", "instagram" => "@ada")
-      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram])
+      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram tiktok])
       expect(json["checklist"]["racers"]).to include("filled" => 1, "total" => 2)
     end
 
@@ -27,6 +27,22 @@ describe "API v1 people", type: :request do
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(instagram: "Sam.Okafor") }, as: :json
       expect(response).to have_http_status(:created)
       expect(json["person"]["instagram"]).to eq("@sam.okafor")
+    end
+
+    it "round trips a normalized tiktok handle on create and update" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(tiktok: "Sam.Okafor") }, as: :json
+      expect(response).to have_http_status(:created)
+      expect(json["person"]["tiktok"]).to eq("@sam.okafor")
+
+      patch "/api/v1/teams/#{team.id}/people/#{json["person"]["id"]}", params: { person: { tiktok: "@new_handle" } }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(json["person"]["tiktok"]).to eq("@new_handle")
+    end
+
+    it "returns 422 for a tiktok URL" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(tiktok: "https://tiktok.com/@sam") }, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["errors"]["tiktok"]).to be_present
     end
 
     it "returns 422 for an instagram URL" do

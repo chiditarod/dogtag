@@ -17,7 +17,7 @@ describe "API v1 past racers", type: :request do
       it "returns past racers with last team and race details, without ids" do
         race = FactoryBot.create(:race, name: "CHIditarod 2024")
         old_team = FactoryBot.create(:team, user: user, race: race, name: "Cart Wheelers")
-        racer = FactoryBot.create(:person, team: old_team, instagram: "@racer")
+        racer = FactoryBot.create(:person, team: old_team, instagram: "@racer", tiktok: "@racer.tt")
         # Person validations lock edits after a race, so move it into the past afterwards.
         race.update_columns(race_datetime: Time.zone.local(2024, 3, 2))
 
@@ -28,7 +28,8 @@ describe "API v1 past racers", type: :request do
         expect(json["past_racers"].first).to eq(
           "first_name" => racer.first_name, "last_name" => racer.last_name, "email" => racer.email,
           "phone" => racer.phone, "zipcode" => racer.zipcode, "experience" => racer.experience,
-          "instagram" => "@racer", "last_team_name" => "Cart Wheelers",
+          "instagram" => "@racer", "tiktok" => "@racer.tt",
+          "last_team_name" => "Cart Wheelers",
           "last_race_name" => "CHIditarod 2024", "last_raced_year" => 2024
         )
       end
