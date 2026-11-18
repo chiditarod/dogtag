@@ -293,6 +293,7 @@ Required for production:
 
 Optional:
 - `REGISTRATION_UI` - `spa` or `legacy` (see above)
+- `FEEDBACK_EMAIL` - where the SPA's "Report a problem" link (`POST /api/v1/feedback`, `UserMailer#feedback_email`) sends mail; defaults to `registration@chiditarod.org`. Works logged out; limited to 5 per minute per IP
 - `VITE_DEV_SERVER` - dev only; redirect SPA routes to the Vite dev server
 - `CLASSY_CLIENT_ID`, `CLASSY_CLIENT_SECRET`, `CLASSY_ORGS` - Classy integration
 - `ROLLBAR_ACCESS_TOKEN` - Error tracking

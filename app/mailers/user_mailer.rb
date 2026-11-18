@@ -65,6 +65,21 @@ class UserMailer < ActionMailer::Base
     mail(to: team.user.email, subject: "#{team.race.name}: #{t(".subject_#{kind}", date: @date)}")
   end
 
+  # Sent to staff. `context` is what the SPA knew when the racer wrote in:
+  # :path, :team_id, :user_agent. `user` is nil for visitors who are logged out.
+  def feedback_email(user, message, context)
+    @user = user
+    @message = message
+    @context = context
+    @team = Team.find_by(id: context[:team_id])
+    track(kind: "feedback", team: @team, user: user)
+    mail(
+      to: ENV.fetch("FEEDBACK_EMAIL", "registration@chiditarod.org"),
+      reply_to: user&.email,
+      subject: "dogTag feedback#{" from #{user.email}" if user}"
+    )
+  end
+
   private
 
   # A tier change shows when the new price begins; otherwise the reminder is
