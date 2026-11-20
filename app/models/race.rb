@@ -186,6 +186,26 @@ class Race < ApplicationRecord
     registration_close < Time.zone.now
   end
 
+  # Position of each status in the race list: races a racer can act on come first.
+  REGISTRATION_STATUS_RANKS = { open: 0, waitlist: 1, closed: 2, not_yet_open: 3 }.freeze
+
+  # :open and :waitlist are open_for_registration?; :closed covers everything after
+  # registration closes (race datetime still ahead for any race in Race.current).
+  def registration_status
+    return :not_yet_open if not_yet_open?
+    return :closed unless open_for_registration?
+
+    full? ? :waitlist : :open
+  end
+
+  # Sort key for the race list: status rank, then soonest race (soonest opening for
+  # not-yet-open races), then id. The rank comes first, so times from different
+  # groups are never compared.
+  def registration_sort_key
+    status = registration_status
+    [REGISTRATION_STATUS_RANKS.fetch(status), status == :not_yet_open ? registration_open : race_datetime, id]
+  end
+
   def in_final_edits_window?
     now = Time.zone.now
     return false if now < registration_close
