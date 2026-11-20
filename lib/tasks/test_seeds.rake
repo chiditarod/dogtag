@@ -11,6 +11,7 @@
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:buddy_picker              (captain's team plus two other teams in a race with questions)
+#   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -513,6 +514,67 @@ namespace :test_seeds do
       teams: other_teams.map { |t| { name: t.name, finalized: !!t.finalized } }
     )
     puts "✅ Seeded captain #{captain.email} with #{other_teams.size} other teams in #{race.name}"
+  end
+
+  desc "Four races in each registration state (race dates run opposite to the list order) and a captain with a team in the open and the closed race"
+  task race_list_order: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding race list order test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "RaceList",
+      email: "race-list-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    # Race dates run opposite to the expected list order, so date order alone cannot pass.
+    open_race = FactoryBot.create(:race, name: "Race #{short} Open", people_per_team: 2, max_teams: 100,
+      race_datetime: 8.weeks.from_now)
+    open_team = FactoryBot.create(:team, name: "Test Team Open #{short}", race: open_race, user: captain)
+
+    waitlist_race = FactoryBot.create(:race, name: "Race #{short} Waitlist", people_per_team: 2, max_teams: 1,
+      race_datetime: 6.weeks.from_now)
+    filler = FactoryBot.create(:user, email: "race-list-filler-#{unique_id}@example.com")
+    filler_team = FactoryBot.create(:team, name: "Test Team Filler #{short}", race: waitlist_race, user: filler)
+    FactoryBot.create_list(:person, waitlist_race.people_per_team, team: filler_team)
+    # Not Team#finalize: that enqueues TeamFinalizer (email, Classy) into the shared Redis.
+    filler_team.update_columns(finalized: true, notified_at: Time.zone.now, assigned_team_number: 1)
+
+    closed_race = FactoryBot.create(:race, name: "Race #{short} Closed", people_per_team: 2, max_teams: 100,
+      race_datetime: 5.weeks.from_now)
+    closed_team = FactoryBot.create(:team, name: "Test Team Closed #{short}", race: closed_race, user: captain)
+    # Teams can only be created while a race is open, so close registration afterwards.
+    closed_race.update_columns(
+      registration_open: 3.weeks.ago,
+      registration_close: 1.day.ago,
+      final_edits_close: 1.week.from_now
+    )
+
+    not_yet_open_race = FactoryBot.create(:race, name: "Race #{short} Not Yet Open", people_per_team: 2, max_teams: 100,
+      registration_open: 1.week.from_now, registration_close: 2.weeks.from_now,
+      final_edits_close: 3.weeks.from_now, race_datetime: 4.weeks.from_now)
+
+    write_test_credentials(unique_id,
+      short_id: short,
+      captain_email: captain.email,
+      captain_password: "password123",
+      race_names: {
+        open: open_race.name,
+        waitlist: waitlist_race.name,
+        closed: closed_race.name,
+        not_yet_open: not_yet_open_race.name
+      },
+      open_team_name: open_team.name,
+      closed_team_name: closed_team.name
+    )
+    puts "✅ Seeded four races for #{short} and captain #{captain.email}"
   end
 
   desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"
