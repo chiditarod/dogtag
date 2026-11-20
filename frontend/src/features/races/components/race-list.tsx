@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
+import { useMyTeamsByRace } from '@/features/races/api/use-my-teams-by-race';
 import { useRaces } from '@/features/races/api/use-races';
+import { RaceTeams } from '@/features/races/components/race-teams';
 import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Race } from '@/types/api';
@@ -29,6 +31,7 @@ function RaceStatus({ race }: { race: Race }) {
 
 export function RaceList() {
   const { data, isPending, isError, refetch } = useRaces();
+  const teamsByRace = useMyTeamsByRace();
 
   if (isPending) return <QueryLoading />;
   if (isError) return <QueryError onRetry={() => void refetch()} />;
@@ -36,29 +39,38 @@ export function RaceList() {
 
   return (
     <ul className="space-y-4">
-      {data.map((race) => (
-        <li key={race.id}>
-          <Card className="space-y-2">
-            <h2 className="font-display text-xl font-semibold">{race.name}</h2>
-            <p>{formatDate(race.race_datetime, race.time_zone)}</p>
-            <p className="text-sm">
-              {t('races.closes')}{' '}
-              {formatDeadline(race.registration_close, race.time_zone)}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <RaceStatus race={race} />
-            </div>
-            {race.open_for_registration && (
-              <Link
-                to={`/races/${race.id}/teams/new`}
-                className="inline-flex min-h-11 items-center justify-center rounded-md bg-star px-4 py-2 text-sm font-semibold text-white hover:bg-starText"
-              >
-                {t('races.start')}
-              </Link>
-            )}
-          </Card>
-        </li>
-      ))}
+      {data.map((race) => {
+        const myTeams = teamsByRace.get(race.id) ?? [];
+        const hasTeam = myTeams.length > 0;
+        return (
+          <li key={race.id}>
+            <Card className="space-y-2">
+              <h2 className="font-display text-xl font-semibold">{race.name}</h2>
+              <p>{formatDate(race.race_datetime, race.time_zone)}</p>
+              <p className="text-sm">
+                {t('races.closes')}{' '}
+                {formatDeadline(race.registration_close, race.time_zone)}
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <RaceStatus race={race} />
+              </div>
+              {hasTeam && <RaceTeams teams={myTeams} />}
+              {race.open_for_registration && (
+                <Link
+                  to={`/races/${race.id}/teams/new`}
+                  className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold ${
+                    hasTeam
+                      ? 'border border-link text-link hover:bg-flag/20'
+                      : 'bg-star text-white hover:bg-starText'
+                  }`}
+                >
+                  {hasTeam ? t('races.startAnother') : t('races.start')}
+                </Link>
+              )}
+            </Card>
+          </li>
+        );
+      })}
     </ul>
   );
 }

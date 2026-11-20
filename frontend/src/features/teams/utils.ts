@@ -50,3 +50,16 @@ export function stepStates({
   if (checklist.finalized) return [true, true, true, true];
   return [true, ...cardSteps(checklist)];
 }
+
+/** Short status for a team row (race list): amber while things are left, green once finalized. */
+export function teamChip({ checklist }: Team): { tone: 'warning' | 'success'; text: string } {
+  if (checklist.finalized) {
+    return {
+      tone: 'success',
+      text: `${t('races.teamFinalized')}${checklist.team_number ?? ''}`,
+    };
+  }
+  const unit =
+    checklist.remaining === 1 ? 'teams.thingsLeft_one' : 'teams.thingsLeft_other';
+  return { tone: 'warning', text: `${checklist.remaining} ${t(unit)}` };
+}
