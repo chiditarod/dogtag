@@ -257,7 +257,7 @@ en:
       # from reg
       name: What's your team name?
       description: Sum up your team in a montage of prose
-      description_instructions: Every cart needs a theme. Tell us what your team and cart are all about, and don't be afraid to get creative.
+      description_instructions: "Do you have a theme chosen for your cart yet? All carts need a theme. Tell us what your team and cart are all about, and don't be afraid to get creative. If you don't know yet, put TBD."
       twitter: Got twitter? Please include the @ sign
       racer_type: What type of racer are you?
       primary_inspiration: What's your primary inspiration?

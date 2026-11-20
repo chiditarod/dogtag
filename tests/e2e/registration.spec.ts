@@ -29,17 +29,13 @@ const jsonform = JSON.parse(readFileSync(join(__dirname, 'fixtures', 'jsonform.j
   schema: { properties: Record<string, JsonformProperty> };
 };
 
-/** Schema-valid answers for every chiditarod_21 question (required ones match lib/staging_seed.rb). */
+/** Schema-valid answers for every question in tests/e2e/fixtures/jsonform.json (the 2027 payload). */
 const ANSWERS: Record<string, string> = {
   instagram: '@e2e_test',
   'racer-type': 'Racer',
   'private-comments': 'Automated end-to-end test team.',
-  buddies: 'Nobody',
-  'theme-chosen': 'Yes',
   'racing-for-time': 'No',
-  'explain-theme': 'Supermarket sweep, but for charity.',
   'primary-inspiration': 'Food driving',
-  'secondary-inspiration': 'Making a difference',
   'agree-to-core-philosophy': 'Yes',
   'agree-to-rules': 'Yes',
   'agree-to-sabotage': 'Yes',
@@ -47,12 +43,9 @@ const ANSWERS: Record<string, string> = {
   'agree-to-cart-food-poundage': 'Yes',
   'agree-not-a-donation': 'Yes',
   'agree-to-orientation': 'Yes',
-  'flame-effects': 'No',
+  'flame-effects': 'Yes',
+  'fire-details': 'One small, approved grill.',
   fundraising: 'Probably',
-  'cart-parking': 'Short Term',
-  'referred-by': 'The e2e suite',
-  collaborating: 'No',
-  'raced-in-past': 'Yes',
 };
 
 /** The accessible name of a JSONForm title, which may carry HTML links. */

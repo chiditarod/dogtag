@@ -61,7 +61,7 @@ export const en = {
   'teams.name': 'Team name',
   'teams.description': 'Description',
   'teams.descriptionHelp':
-    "Every cart needs a theme. Tell us what your team and cart are all about, and don't be afraid to get creative.",
+    "Do you have a theme chosen for your cart yet? All carts need a theme. Tell us what your team and cart are all about, and don't be afraid to get creative. If you don't know yet, put TBD.",
   'teams.experience': 'Team years racing',
   'teams.experiencePlaceholder': 'Select one',
   'teams.experienceRequired': 'Choose how many years your team has raced',
