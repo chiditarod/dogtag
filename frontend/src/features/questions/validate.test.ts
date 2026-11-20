@@ -177,6 +177,12 @@ describe('hiddenKeys', () => {
     expect(hiddenKeys(jsonform, {})).toEqual(new Set(['c']));
   });
 
+  it('compares the trimmed answer, as it will be saved', () => {
+    const jsonform = showC({ a: 'Yes' });
+    expect(hiddenKeys(jsonform, { a: ' Yes ' })).toEqual(new Set());
+    expect(hiddenKeys(jsonform, { a: 'yes' })).toEqual(new Set(['c']));
+  });
+
   it('finds showWhen on items nested in fieldsets', () => {
     const jsonform = jsonformWith([
       'a',

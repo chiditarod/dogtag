@@ -153,8 +153,8 @@ function collectConditions(
 /**
  * Schema keys hidden by a `showWhen` on their form item, given the current
  * answers (defaults already applied). A field is hidden when its controlling
- * answer is not exactly the expected value, or when its controller is itself
- * hidden. A cycle leaves its fields visible.
+ * answer, trimmed as it will be saved, is not exactly the expected value, or
+ * when its controller is itself hidden. A cycle leaves its fields visible.
  */
 export function hiddenKeys(jsonform: Jsonform, answers: Answers): Set<string> {
   const conditions = new Map<string, Condition>();
@@ -168,7 +168,7 @@ export function hiddenKeys(jsonform: Jsonform, answers: Answers): Set<string> {
     seen.add(key);
     const controllerHidden = isHidden(condition.controller, seen);
     if (controllerHidden === undefined) return undefined;
-    return controllerHidden || answers[condition.controller] !== condition.expected;
+    return controllerHidden || answers[condition.controller]?.trim() !== condition.expected;
   }
 
   const hidden = new Set<string>();
