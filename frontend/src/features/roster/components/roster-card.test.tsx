@@ -84,7 +84,7 @@ async function openRoster() {
 /** Past racers load after the team; wait for the picker button. */
 async function openRosterWithPicker(count: number) {
   const roster = await openRoster();
-  await screen.findByRole('button', { name: `Pick from past teams (${count})` });
+  await screen.findByRole('button', { name: `Pick racers from past teams (${count})` });
   return roster;
 }
 
@@ -124,9 +124,9 @@ describe('RosterCard slots', () => {
     expect(within(first).getByText(/ada@example\.com/)).toBeInTheDocument();
     expect(within(first).getByText(/\(312\) 555-0100/)).toBeInTheDocument();
     expect(within(first).getByText(/@ada/)).toBeInTheDocument();
-    expect(within(first).getByText('Raced once before')).toBeInTheDocument();
+    expect(within(first).getByText('1 year racing')).toBeInTheDocument();
     expect(within(second).queryByText('Captain')).toBeNull();
-    expect(within(second).getByText('Twice')).toBeInTheDocument();
+    expect(within(second).getByText('2 years racing')).toBeInTheDocument();
   });
 
   it('lays contact details out as separate, non-wrapping items', async () => {
@@ -172,7 +172,7 @@ describe('the actions under the list', () => {
     serve({ people: [buildPerson(), bo()], past: eight });
     renderApp('/teams/9');
     await openRosterWithPicker(8);
-    expect(screen.getAllByRole('button', { name: /^Pick from past teams/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Pick racers from past teams/ })).toHaveLength(1);
     expect(screen.getAllByRole('button', { name: '+ Add someone new' })).toHaveLength(1);
     expect(screen.getByText('3 spots to fill')).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Past racers' })).toBeNull();
@@ -187,7 +187,7 @@ describe('the actions under the list', () => {
     await waitFor(() =>
       expect(queryClient.getQueryState(['past-racers', '9'])?.status).toBe('success'),
     );
-    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick racers from past teams/ })).toBeNull();
     expect(screen.getByRole('button', { name: '+ Add someone new' })).toBeInTheDocument();
   });
 
@@ -206,7 +206,7 @@ describe('the actions under the list', () => {
     renderApp('/teams/9');
     await openRoster();
     expect(slots()[2]).toHaveTextContent('3 open spots');
-    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick racers from past teams/ })).toBeNull();
     expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
   });
@@ -236,8 +236,8 @@ describe('the crew picker from the roster', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRosterWithPicker(8);
-    await u.click(screen.getByRole('button', { name: 'Pick from past teams (8)' }));
-    expect(await screen.findByRole('dialog', { name: 'Pick from past teams' })).toBeInTheDocument();
+    await u.click(screen.getByRole('button', { name: 'Pick racers from past teams (8)' }));
+    expect(await screen.findByRole('dialog', { name: 'Pick racers from past teams' })).toBeInTheDocument();
     await u.click(screen.getByRole('checkbox', { name: /^Dee Lamb/ }));
     await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
     await fillAll(u);
@@ -247,7 +247,7 @@ describe('the crew picker from the roster', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(within(screen.getByRole('list', { name: 'Racer slots' })).getByText('Dee Lamb')).toBeInTheDocument();
     expect(screen.getByText('3 of 5')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Pick from past teams (7)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Pick racers from past teams (7)' })).toBeInTheDocument();
   });
 
   it('closes itself and moves focus to the list when the last spot is filled', async () => {
@@ -266,7 +266,7 @@ describe('the crew picker from the roster', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRosterWithPicker(1);
-    await u.click(screen.getByRole('button', { name: 'Pick from past teams (1)' }));
+    await u.click(screen.getByRole('button', { name: 'Pick racers from past teams (1)' }));
     await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
     await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
     await fillAll(u);
@@ -295,14 +295,14 @@ describe('the crew picker from the roster', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRosterWithPicker(1);
-    await u.click(screen.getByRole('button', { name: 'Pick from past teams (1)' }));
+    await u.click(screen.getByRole('button', { name: 'Pick racers from past teams (1)' }));
     await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
     await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
     await fillAll(u);
     await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick racers from past teams/ })).toBeNull();
     await waitFor(() =>
       expect(screen.getByRole('button', { name: '+ Add someone new' })).toHaveFocus(),
     );
@@ -325,7 +325,7 @@ describe('the crew picker from the roster', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRosterWithPicker(8);
-    await u.click(screen.getByRole('button', { name: 'Pick from past teams (8)' }));
+    await u.click(screen.getByRole('button', { name: 'Pick racers from past teams (8)' }));
     await u.click(await screen.findByRole('checkbox', { name: /^Dee Lamb/ }));
     await u.click(screen.getByRole('button', { name: 'Review 1 racer' }));
     await u.click(screen.getByRole('button', { name: 'Change email' }));
@@ -340,7 +340,7 @@ describe('the crew picker from the roster', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(requests[0].body).toMatchObject({ person: { email: 'dee.new@example.com' } });
-    expect(await screen.findByRole('button', { name: 'Pick from past teams (7)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Pick racers from past teams (7)' })).toBeInTheDocument();
   });
 
   it('Escape closes the dialog and returns focus to the picker button', async () => {
@@ -348,9 +348,9 @@ describe('the crew picker from the roster', () => {
     const u = userEvent.setup();
     renderApp('/teams/9');
     await openRosterWithPicker(8);
-    const button = screen.getByRole('button', { name: 'Pick from past teams (8)' });
+    const button = screen.getByRole('button', { name: 'Pick racers from past teams (8)' });
     await u.click(button);
-    await screen.findByRole('dialog', { name: 'Pick from past teams' });
+    await screen.findByRole('dialog', { name: 'Pick racers from past teams' });
     await u.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(button).toHaveFocus();
@@ -490,7 +490,7 @@ describe('collapsed when full on load', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
-    await u.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await u.type(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
     await screen.findByText('Dee Lamb');
     expect(slots()).toHaveLength(5);
@@ -568,7 +568,7 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Email'), 'Dee@Example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
     expect(screen.getByLabelText('Years racing')).toHaveFocus();
-    await u.selectOptions(screen.getByLabelText('Years racing'), '0');
+    await u.type(screen.getByLabelText('Years racing'), '0');
     await u.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(requests).toHaveLength(1));
     expect(requests[0].body).toEqual({
@@ -590,7 +590,7 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '312555');
-    await u.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await u.type(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
   }
 
@@ -653,7 +653,7 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
-    await u.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await u.type(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
   }
 
@@ -737,6 +737,36 @@ describe('editing and removing', () => {
     expect(await screen.findByText('Bobby Z')).toBeInTheDocument();
     expect(screen.queryByLabelText('First name')).toBeNull();
     await waitFor(() => expect(screen.getByRole('button', { name: 'Edit Bobby Z' })).toHaveFocus());
+  });
+
+  it('shows no email error when a racer is edited without changing their email', async () => {
+    serve({ people });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: 'Edit Bo Z' }));
+    await u.click(screen.getByLabelText('Email'));
+    await u.tab();
+    expect(screen.getByLabelText('Email')).not.toBeInvalid();
+    expect(screen.queryByText('Is already on this team')).toBeNull();
+
+    // Changing it to another racer's email is still caught.
+    await u.clear(screen.getByLabelText('Email'));
+    await u.type(screen.getByLabelText('Email'), 'ada@example.com');
+    await u.tab();
+    expect(screen.getByText('Is already on this team')).toBeInTheDocument();
+  });
+
+  it('flags a roster duplicate when tabbing out of the email on a new racer', async () => {
+    serve({ people });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: '+ Add someone new' }));
+    await u.type(screen.getByLabelText('Email'), 'BO@example.com');
+    await u.tab();
+    expect(screen.getByText('Is already on this team')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInvalid();
   });
 
   it('Edit then Cancel restores focus to Edit and does not save', async () => {
@@ -839,7 +869,7 @@ describe('registration closed', () => {
     const roster = await openRoster();
     expect(slots()).toHaveLength(3);
     expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
-    expect(screen.queryByRole('button', { name: /^Pick from past teams/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Pick racers from past teams/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     expect(within(roster).getAllByRole('button', { name: /^Edit / })).toHaveLength(2);
   });
@@ -855,7 +885,7 @@ describe('registration closed', () => {
     renderApp('/teams/9');
     await openRoster();
     await u.click(screen.getByRole('button', { name: 'Edit Ada L' }));
-    await u.selectOptions(screen.getByLabelText('Years racing'), '2');
+    await u.type(screen.getByLabelText('Years racing'), '2');
     await u.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Registration is closed for this race.')).toBeInTheDocument();
   });

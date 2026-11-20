@@ -18,6 +18,7 @@ export function Avatar({ person }: { person: Person }) {
 
 interface FilledSlotProps {
   person: Person;
+  /** "12 years racing"; absent when the racer has no years yet. */
   experienceLabel: string | undefined;
   captain: boolean;
   /** Edit is allowed through the final-edits window. */

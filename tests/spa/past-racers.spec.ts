@@ -41,9 +41,9 @@ test.describe('SPA roster: past racers', () => {
 
     await test.step('Open the picker: racers from the 2025 team are listed', async () => {
       await expect(racers.getByText('3 spots to fill')).toBeVisible();
-      await racers.getByRole('button', { name: 'Pick from past teams (3)' }).click();
+      await racers.getByRole('button', { name: 'Pick racers from past teams (3)' }).click();
 
-      await expect(page.getByRole('dialog', { name: 'Pick from past teams' })).toBeVisible();
+      await expect(page.getByRole('dialog', { name: 'Pick racers from past teams' })).toBeVisible();
       await expect(dialog.getByRole('checkbox', { name: 'Ada Racer' })).toBeVisible();
       await expect(dialog.getByRole('checkbox', { name: 'Grace Racer' })).toBeVisible();
       await expect(dialog.getByRole('checkbox', { name: 'Edsger Racer' })).toBeVisible();
@@ -77,7 +77,7 @@ test.describe('SPA roster: past racers', () => {
       await expect(racers.getByText('Ada Racer', { exact: true })).toBeVisible();
       await expect(racers.getByText(ada.email)).toBeVisible();
       await expect(racers.getByText('1 of 3')).toBeVisible();
-      await expect(racers.getByRole('button', { name: 'Pick from past teams (2)' })).toBeVisible();
+      await expect(racers.getByRole('button', { name: 'Pick racers from past teams (2)' })).toBeVisible();
     });
   });
 });

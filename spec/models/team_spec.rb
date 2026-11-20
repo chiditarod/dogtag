@@ -543,12 +543,12 @@ describe Team do
       expect(team_row).to include(team.description)
     end
 
-    it "emits experience labels rather than raw integers" do
+    it "emits the team experience as a label and each racer's years as a plain number" do
       race.update!(experience_labels: %w[Zero One Two Three Four Five Six])
       result = Team.export(race.id)
       header, team_row = result
       expect(team_row[header.index("experience")]).to eq(race.experience_label(team.experience))
-      expect(team_row[header.index("dawg_0_experience")]).to eq(race.experience_label(team.people.first.experience))
+      expect(team_row[header.index("dawg_0_experience")]).to eq(team.people.first.experience)
     end
 
     it "includes the new team flag" do

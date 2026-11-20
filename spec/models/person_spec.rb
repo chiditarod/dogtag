@@ -72,6 +72,8 @@ describe 'validation' do
 
   it 'fails with invalid years of experience' do
     expect(FactoryBot.build(:person, :experience => -10)).to be_invalid
+    expect(FactoryBot.build(:person, :experience => 100)).to be_invalid
+    expect(FactoryBot.build(:person, :experience => 99)).to be_valid
   end
 
   ['bad@email', 'bad@email.', 'bademail.com', '@bademail.com', 'bad@email.a'].each do |email|

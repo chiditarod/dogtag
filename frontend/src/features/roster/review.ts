@@ -1,8 +1,7 @@
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
-import { fullName, type PersonDraft } from '@/features/roster/utils';
+import { fullName, yearsCount, yearsProblem, type PersonDraft } from '@/features/roster/utils';
 import type { FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import type { Race } from '@/types/api';
 
 export type LineKey =
   | 'name'
@@ -59,6 +58,12 @@ export function isLineBlank(key: LineKey, draft: PersonDraft): boolean {
   }
 }
 
+/** Why a line cannot be confirmed yet: it is blank, or the years are not digits. */
+export function lineProblem(key: LineKey, draft: PersonDraft): string | null {
+  if (isLineBlank(key, draft)) return missingMessage(key);
+  return key === 'experience' ? yearsProblem(draft.experience) : null;
+}
+
 export const missingMessage = (key: LineKey) =>
   t('roster.missing', { label: lineLabel(key) });
 
@@ -77,14 +82,14 @@ export function initialLines(draft: PersonDraft): ReviewLines {
   ) as ReviewLines;
 }
 
-export function lineValue(key: LineKey, draft: PersonDraft, race: Race): string {
+export function lineValue(key: LineKey, draft: PersonDraft): string {
   switch (key) {
     case 'name':
       return fullName(draft);
     case 'experience':
-      return draft.experience === ''
-        ? ''
-        : (race.experience_labels[Number(draft.experience)] ?? '');
+      return draft.experience === '' || yearsProblem(draft.experience)
+        ? draft.experience
+        : yearsCount(Number(draft.experience));
     case 'instagram':
     case 'tiktok':
       return draft[key].trim() || t('roster.none');
@@ -94,15 +99,10 @@ export function lineValue(key: LineKey, draft: PersonDraft, race: Race): string 
 }
 
 /** Says what the years value was when carrying it forward changed it. */
-export function experienceNote(
-  racer: PastRacer,
-  draft: PersonDraft,
-  race: Race,
-): string | null {
+export function experienceNote(racer: PastRacer, draft: PersonDraft): string | null {
   if (racer.experience === null || draft.experience === '') return null;
   if (Number(draft.experience) === racer.experience) return null;
-  const label = race.experience_labels[racer.experience];
-  return label === undefined ? null : t('roster.yearsWas', { label });
+  return t('roster.yearsWas', { count: racer.experience });
 }
 
 /** Server field errors reopen their lines, unconfirmed, with the first message. */

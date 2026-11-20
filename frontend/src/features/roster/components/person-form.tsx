@@ -1,18 +1,24 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { EmailInput } from '@/components/inputs/email-input';
 import { PhoneInput } from '@/components/inputs/phone-input';
 import { useAutoAdvance } from '@/components/inputs/use-auto-advance';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
+import { RosterEmailField } from '@/features/roster/components/roster-email-field';
+import { YearsInput } from '@/features/roster/components/years-input';
 import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
-import { emptyDraft, payloadFromDraft, type PersonDraft } from '@/features/roster/utils';
+import {
+  emptyDraft,
+  payloadFromDraft,
+  yearsProblem,
+  type PersonDraft,
+} from '@/features/roster/utils';
 import type { FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import type { Race } from '@/types/api';
 
 interface PersonFormProps {
-  race: Race;
+  /** Emails of the other racers on the team, excluding the one being edited. */
+  otherEmails: readonly string[];
   initial?: PersonDraft;
   /** Accessible name for the form, e.g. "Add a racer". */
   title?: string;
@@ -23,11 +29,8 @@ interface PersonFormProps {
   onCancel: () => void;
 }
 
-const selectClass =
-  'block min-h-11 w-full rounded-md border border-flag bg-white px-3 py-2 font-sans text-base text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-link aria-[invalid=true]:border-star';
-
 export function PersonForm({
-  race,
+  otherEmails,
   initial = emptyDraft,
   title,
   pending = false,
@@ -37,10 +40,10 @@ export function PersonForm({
   onCancel,
 }: PersonFormProps) {
   const [draft, setDraft] = useState(initial);
-  const [missingExperience, setMissingExperience] = useState(false);
+  const [yearsInvalid, setYearsInvalid] = useState(false);
   const firstNameRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
-  const experienceRef = useRef<HTMLSelectElement>(null);
+  const experienceRef = useRef<HTMLInputElement>(null);
   const advance = useAutoAdvance();
 
   useEffect(() => {
@@ -52,8 +55,8 @@ export function PersonForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (draft.experience === '') {
-      setMissingExperience(true);
+    if (yearsProblem(draft.experience)) {
+      setYearsInvalid(true);
       experienceRef.current?.focus();
       return;
     }
@@ -104,13 +107,12 @@ export function PersonForm({
           />
         </Field>
       </div>
-      <Field label={t('roster.email')} name="email" error={fieldErrors.email}>
-        <EmailInput
-          autoComplete="off"
-          value={draft.email}
-          onChange={set('email')}
-        />
-      </Field>
+      <RosterEmailField
+        value={draft.email}
+        onChange={set('email')}
+        otherEmails={otherEmails}
+        error={fieldErrors.email}
+      />
       <Field label={t('roster.phone')} name="phone" error={fieldErrors.phone}>
         <PhoneInput
           ref={phoneRef}
@@ -124,7 +126,7 @@ export function PersonForm({
         label={t('roster.years')}
         name="experience"
         error={
-          missingExperience
+          yearsInvalid
             ? [t('roster.yearsRequired')]
             : fieldErrors.experience
         }
@@ -135,23 +137,15 @@ export function PersonForm({
         }
       >
         {(control) => (
-          <select
+          <YearsInput
             {...control}
             ref={experienceRef}
             value={draft.experience}
-            onChange={(event) => {
-              set('experience')(event.target.value);
-              setMissingExperience(false);
+            onChange={(value) => {
+              set('experience')(value);
+              setYearsInvalid(false);
             }}
-            className={selectClass}
-          >
-            <option value="">{t('roster.yearsPlaceholder')}</option>
-            {race.experience_labels.map((label, index) => (
-              <option key={index} value={index}>
-                {label}
-              </option>
-            ))}
-          </select>
+          />
         )}
       </Field>
       <Field

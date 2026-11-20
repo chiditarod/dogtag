@@ -207,6 +207,13 @@ describe PeopleController do
         expect(response.body).to include('name="person[instagram]"', 'name="person[tiktok]"')
         expect(response.body).to include('Got TikTok? Add your handle')
       end
+
+      it 'asks for years racing as a number from 0 to 99' do
+        get :new, params: { :team_id => team.id }
+        expect(response.body).to match(/<input[^>]*type="number"[^>]*name="person\[experience\]"/)
+        expect(response.body).to include('min="0"', 'max="99"')
+        expect(response.body).not_to include('Please Select')
+      end
     end
 
     describe '#create' do
@@ -224,6 +231,11 @@ describe PeopleController do
         expect do
           post :create, params: { :team_id => team_no_people.id, :person => new_person_hash }
         end.to change(Person, :count).by 1
+      end
+
+      it 'saves the typed years racing' do
+        post :create, params: { :team_id => team_no_people.id, :person => new_person_hash.merge(:experience => '12') }
+        expect(team_no_people.people.last.experience).to eq(12)
       end
 
       it 'saves the tiktok handle, normalized' do

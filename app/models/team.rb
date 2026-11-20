@@ -278,10 +278,7 @@ class Team < ApplicationRecord
         race.people_per_team.times do |i|
           person = team.people[i]
           row.concat person_keys.map { |k|
-            if person.blank? then ""
-            elsif k == "experience" then race.experience_label(person[k])
-            else person[k]
-            end
+            person.blank? ? "" : person[k]
           }
         end
 

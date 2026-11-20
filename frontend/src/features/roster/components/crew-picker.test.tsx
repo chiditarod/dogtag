@@ -126,7 +126,7 @@ async function reviewOne(user: ReturnType<typeof userEvent.setup>, name = 'Ada')
 describe('pick step', () => {
   it('stops at the number of open spots and says so', async () => {
     const { user } = setup({ openSpots: 2 });
-    expect(screen.getByRole('dialog', { name: 'Pick from past teams' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Pick racers from past teams' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review racers' })).toBeDisabled();
     expect(screen.getByText('2 spots left')).toBeInTheDocument();
     expect(row('Ada')).toHaveTextContent('2025, Cart Pushers');
@@ -200,7 +200,7 @@ describe('pick step', () => {
   it('focuses the title, not the search box, on a touch screen', () => {
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query }));
     setup({ racers: [ada, grace, edsger, racer(1), racer(2), racer(3), racer(4)] });
-    expect(screen.getByRole('heading', { name: 'Pick from past teams' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Pick racers from past teams' })).toHaveFocus();
   });
 
   it('brings Tab back into the dialog when focus has fallen to the page', async () => {
@@ -218,7 +218,7 @@ describe('pick step', () => {
 
   it('keeps Shift+Tab from the title inside the dialog', async () => {
     const { user } = setup();
-    expect(screen.getByRole('heading', { name: 'Pick from past teams' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Pick racers from past teams' })).toHaveFocus();
     await user.tab({ shift: true });
     expect(row('Edsger')).toHaveFocus();
   });
@@ -263,8 +263,8 @@ describe('review step', () => {
   it('notes the years it was bumped from', async () => {
     const { user } = setup();
     await reviewOne(user);
-    expect(line('Years racing')).toHaveAccessibleName('Years racing: Raced once before');
-    expect(screen.getByText('was "This is our first" last time')).toBeInTheDocument();
+    expect(line('Years racing')).toHaveAccessibleName('Years racing: 1 year racing');
+    expect(screen.getByText('was 0 last time')).toBeInTheDocument();
   });
 
   it('lets a line be changed and confirms it on Done', async () => {
@@ -342,16 +342,45 @@ describe('review step', () => {
   it('keeps the years line open until something is chosen', async () => {
     const { user } = setup({ racers: [{ ...ada, experience: null }] });
     await reviewOne(user);
-    const select = screen.getByRole('combobox', { name: 'Years racing' });
-    expect(select).toHaveDisplayValue('Select one');
+    const years = screen.getByRole('textbox', { name: 'Years racing' });
+    expect(years).toHaveValue('');
+    expect(years).toHaveAttribute('inputmode', 'numeric');
 
     await user.click(screen.getByRole('button', { name: 'Done' }));
-    expect(screen.getByRole('combobox', { name: 'Years racing' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Years racing' })).toBeInTheDocument();
     expect(screen.getByText('Years racing is missing. Add it to continue.')).toBeInTheDocument();
 
-    await user.selectOptions(select, 'Twice');
+    await user.type(years, 'abc');
     await user.click(screen.getByRole('button', { name: 'Done' }));
-    expect(line('Years racing')).toHaveAccessibleName('Years racing: Twice');
+    expect(screen.getByText('Enter how many years they have raced')).toBeInTheDocument();
+
+    await user.clear(years);
+    await user.type(years, '12');
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    expect(line('Years racing')).toHaveAccessibleName('Years racing: 12 years racing');
+  });
+
+  it('checks a changed email against the roster when it loses focus', async () => {
+    const { user } = setup({
+      reviewOnly: ada,
+      team: buildTeam({
+        race: buildRace(),
+        people: [buildPerson({ id: 5, email: 'bo@example.com' })],
+      }),
+    });
+    await confirmAll(user);
+    await user.click(screen.getByRole('button', { name: 'Change email' }));
+    const email = screen.getByRole('textbox', { name: 'Email' });
+    await user.clear(email);
+    await user.type(email, 'Bo@Example.com');
+    await user.tab();
+    expect(screen.getByText('Is already on this team')).toBeInTheDocument();
+    expect(email).toBeInvalid();
+
+    await user.clear(email);
+    await user.type(email, 'ada');
+    await user.tab();
+    expect(screen.getByText('Enter a valid email address')).toBeInTheDocument();
   });
 
   it('blocks adding again as soon as a confirmed line is reopened', async () => {
@@ -370,10 +399,10 @@ describe('review step', () => {
     const { user } = setup({ reviewOnly: ada });
     await confirmAll(user);
     await user.click(screen.getByRole('button', { name: 'Change years racing' }));
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Years racing' }), 'Select one');
+    await user.clear(screen.getByRole('textbox', { name: 'Years racing' }));
     await user.click(screen.getByRole('button', { name: 'Done' }));
 
-    expect(screen.getByRole('combobox', { name: 'Years racing' })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Years racing' })).toBeInTheDocument();
     expect(screen.getByText('Years racing is missing. Add it to continue.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
     expect(posts).toHaveLength(0);

@@ -8,9 +8,6 @@ import {
   unconfirmedCount,
 } from '@/features/roster/review';
 import type { PersonDraft } from '@/features/roster/utils';
-import { buildRace } from '@/test/fixtures';
-
-const race = buildRace();
 
 const draft: PersonDraft = {
   first_name: 'Ada',
@@ -57,13 +54,13 @@ describe('initialLines', () => {
   it('leaves a blank instagram closed and shows None', () => {
     const blank = { ...draft, instagram: '' };
     expect(initialLines(blank).instagram.editing).toBe(false);
-    expect(lineValue('instagram', blank, race)).toBe('None');
+    expect(lineValue('instagram', blank)).toBe('None');
   });
 
   it('leaves a blank tiktok closed and shows None', () => {
     const blank = { ...draft, tiktok: '' };
     expect(initialLines(blank).tiktok.editing).toBe(false);
-    expect(lineValue('tiktok', blank, race)).toBe('None');
+    expect(lineValue('tiktok', blank)).toBe('None');
   });
 
   it('opens the years line when there is no years value', () => {
@@ -72,21 +69,22 @@ describe('initialLines', () => {
 });
 
 describe('lineValue', () => {
-  it('joins the name and shows the experience label', () => {
-    expect(lineValue('name', draft, race)).toBe('Ada Lovelace');
-    expect(lineValue('experience', draft, race)).toBe('Raced once before');
-    expect(lineValue('experience', { ...draft, experience: '' }, race)).toBe('');
+  it('joins the name and shows the years as a count', () => {
+    expect(lineValue('name', draft)).toBe('Ada Lovelace');
+    expect(lineValue('experience', draft)).toBe('1 year racing');
+    expect(lineValue('experience', { ...draft, experience: '12' })).toBe('12 years racing');
+    expect(lineValue('experience', { ...draft, experience: '' })).toBe('');
   });
 });
 
 describe('experienceNote', () => {
   it('says what the value was when it was bumped', () => {
-    expect(experienceNote(racer, draft, race)).toBe('was "This is our first" last time');
+    expect(experienceNote(racer, draft)).toBe('was 0 last time');
   });
 
-  it('is null when the racer was already at the last label', () => {
+  it('is null when the years did not change', () => {
     expect(
-      experienceNote({ ...racer, experience: 2 }, { ...draft, experience: '2' }, race),
+      experienceNote({ ...racer, experience: 2 }, { ...draft, experience: '2' }),
     ).toBeNull();
   });
 });
