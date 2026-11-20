@@ -155,6 +155,14 @@ describe "API v1 people", type: :request do
       expect(person.reload.first_name).to eq("Grace")
     end
 
+    it "ignores a stray zipcode param" do
+      patch "/api/v1/teams/#{team.id}/people/#{person.id}", params: { person: { first_name: "Grace", zipcode: "60614" } }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json["person"]["first_name"]).to eq("Grace")
+      expect(json["person"]).not_to have_key("zipcode")
+    end
+
     it "returns 422 when invalid" do
       patch "/api/v1/teams/#{team.id}/people/#{person.id}", params: { person: { email: "x" } }, as: :json
       expect(response).to have_http_status(:unprocessable_entity)
