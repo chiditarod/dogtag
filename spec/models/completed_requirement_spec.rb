@@ -38,6 +38,13 @@ describe CompletedRequirement do
       cr.metadata = nil
       expect(cr.metadata).to be_nil
     end
+
+    it 'returns a hash for legacy rows that were JSON-encoded more than twice' do
+      raw = JSON.generate(JSON.generate(JSON.generate(hash)))
+      CompletedRequirement.where(id: cr.id).update_all(["metadata = ?", raw])
+
+      expect(CompletedRequirement.find(cr.id).metadata).to eq(hash)
+    end
   end
 
   describe 'validation' do
