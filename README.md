@@ -57,6 +57,7 @@ Each race has a `jsonform` field. This field can contain a [jsonform](https://gi
 
 - Answer keys are taken from the race's schema, so new questions need no code changes.
 - Racers also pick the teams they want to race with (and an optional free-text "other") in the SPA's Questions card. The CSV export has a final `racing_with` column and the team page shows "Racing with" to admins and operators. These are not part of the jsonform schema.
+- A `form` item can be shown only when another answer matches: `{ "key": "fire-details", "type": "textarea", "showWhen": { "flame-effects": "Yes" } }`. Only optional fields may use `showWhen` (the race form rejects a required one). The racer SPA hides the field and drops its answer on save; the legacy flow always shows it.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)
 
 ## New teams
