@@ -159,6 +159,7 @@ public/             # Public assets
 - Don't test declarative configuration. For validations, only test that it's not valid when the validation is violated. `shoulda-matchers` is not used.
 - Test controllers behaviorally: assert on status code and/or data changes
 - Use Timecop for time traveling
+- Migration specs (`spec/migrations/`) call a data method on the migration (e.g. `backfill`), never `down`/`up`: re-adding a column inside the test transaction can reorder the table and break prepared statements in later specs
 - Use WebMock for Classy and StripeMock for Stripe
 - Request and controller specs assert on status plus data changes
 - Sidekiq specs run in fake mode by default. Use `Sidekiq::Testing.inline!` blocks to run job chains end to end.
