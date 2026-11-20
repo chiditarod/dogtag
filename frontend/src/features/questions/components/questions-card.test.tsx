@@ -242,7 +242,7 @@ describe('QuestionsCard', () => {
     }
 
     async function openEditor(answers: Record<string, string>, jsonform: unknown = withFireDetails()) {
-      serve({ answers, checklist: done, jsonform });
+      serve({ answers, checklist: done, jsonform, collaborating: false });
       renderApp('/teams/9');
       const c = await card();
       await userEvent.click(await c.findByRole('button', { name: 'Edit answers' }));
@@ -254,7 +254,7 @@ describe('QuestionsCard', () => {
       expect(c.queryByRole('textbox', { name: /Details about your fire effects/ })).not.toBeInTheDocument();
       await userEvent.click(c.getByRole('button', { name: 'Save' }));
       await waitFor(() => expect(puts).toHaveLength(1));
-      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
+      expect(puts[0]).toEqual({ answers: valid, collaborating: false, buddy_team_ids: [], other_buddies: '' });
     });
 
     it('sends the field once it is shown', async () => {
@@ -265,13 +265,14 @@ describe('QuestionsCard', () => {
       await waitFor(() => expect(puts).toHaveLength(1));
       expect(puts[0]).toEqual({
         answers: { ...valid, 'flame-effects': 'Yes', 'fire-details': 'propane poi' },
+        collaborating: false,
         buddy_team_ids: [],
         other_buddies: '',
       });
     });
 
     it('counts only visible fields in the answered summary', async () => {
-      serve({ answers: { ...valid, 'fire-details': 'old text' }, checklist: done, jsonform: withFireDetails() });
+      serve({ answers: { ...valid, 'fire-details': 'old text' }, checklist: done, jsonform: withFireDetails(), collaborating: false });
       renderApp('/teams/9');
       const c = await card();
       // 22 schema keys without fire-details; its stale saved answer is not counted either.
@@ -282,7 +283,7 @@ describe('QuestionsCard', () => {
       const c = await openEditor({ ...valid, 'fire-details': 'way too long' }, withFireDetails(5));
       await userEvent.click(c.getByRole('button', { name: 'Save' }));
       await waitFor(() => expect(puts).toHaveLength(1));
-      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
+      expect(puts[0]).toEqual({ answers: valid, collaborating: false, buddy_team_ids: [], other_buddies: '' });
     });
   });
 

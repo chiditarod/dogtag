@@ -617,7 +617,8 @@ namespace :test_seeds do
       password: "password123",
       password_confirmation: "password123"
     )
-    team = FactoryBot.create(:team, name: "Test Team ShowWhen #{unique_id[0..7]}", race: race, user: captain, jsonform: JSON.generate(answers))
+    team = FactoryBot.create(:team, name: "Test Team ShowWhen #{unique_id[0..7]}", race: race, user: captain, jsonform: JSON.generate(answers),
+                                collaborating: false)
 
     write_test_credentials(unique_id,
       captain_email: captain.email,
