@@ -2,6 +2,8 @@ import Ajv, { type ErrorObject, type ValidateFunction } from 'ajv';
 import type {
   AnswerErrors,
   Answers,
+  Jsonform,
+  JsonformItem,
   JsonformProperty,
   JsonformSchema,
 } from '@/features/questions/types';
@@ -118,7 +120,65 @@ export function defaultAnswers(schema: JsonformSchema, answers: Answers): Answer
   return result;
 }
 
-const SCHEMA_SUFFIX = / in schema \S+.*$/;
+interface Condition {
+  controller: string;
+  expected: string;
+}
+
+/** A valid showWhen is a one-pair object of strings naming a schema key; anything else is ignored. */
+function parseShowWhen(showWhen: unknown, schema: JsonformSchema): Condition | undefined {
+  if (typeof showWhen !== 'object' || showWhen === null || Array.isArray(showWhen)) return;
+  const entries = Object.entries(showWhen);
+  if (entries.length !== 1) return;
+  const [controller, expected] = entries[0];
+  if (typeof expected !== 'string' || !(controller in schema.properties)) return;
+  return { controller, expected };
+}
+
+function collectConditions(
+  items: JsonformItem[] | undefined,
+  schema: JsonformSchema,
+  conditions: Map<string, Condition>,
+) {
+  for (const item of items ?? []) {
+    if (typeof item === 'string') continue;
+    if (item.key !== undefined && !conditions.has(item.key)) {
+      const condition = parseShowWhen(item.showWhen, schema);
+      if (condition) conditions.set(item.key, condition);
+    }
+    collectConditions(item.items, schema, conditions);
+  }
+}
+
+/**
+ * Schema keys hidden by a `showWhen` on their form item, given the current
+ * answers (defaults already applied). A field is hidden when its controlling
+ * answer is not exactly the expected value, or when its controller is itself
+ * hidden. A cycle leaves its fields visible.
+ */
+export function hiddenKeys(jsonform: Jsonform, answers: Answers): Set<string> {
+  const conditions = new Map<string, Condition>();
+  collectConditions(jsonform.form, jsonform.schema, conditions);
+
+  // Walks the controller chain; undefined means the chain loops.
+  function isHidden(key: string, seen: Set<string>): boolean | undefined {
+    const condition = conditions.get(key);
+    if (!condition) return false;
+    if (seen.has(key)) return undefined;
+    seen.add(key);
+    const controllerHidden = isHidden(condition.controller, seen);
+    if (controllerHidden === undefined) return undefined;
+    return controllerHidden || answers[condition.controller] !== condition.expected;
+  }
+
+  const hidden = new Set<string>();
+  for (const key of conditions.keys()) {
+    if (isHidden(key, new Set()) === true) hidden.add(key);
+  }
+  return hidden;
+}
+
+const SCHEMA_SUFFIX =/ in schema \S+.*$/;
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**

@@ -27,6 +27,8 @@ export interface JsonformItemObject {
   titleMap?: TitleMap;
   items?: JsonformItem[];
   helpvalue?: string;
+  /** `{ "<schema key>": "<value>" }`: show the field only while that answer matches. Untrusted shape. */
+  showWhen?: unknown;
 }
 
 export type JsonformItem = string | JsonformItemObject;
