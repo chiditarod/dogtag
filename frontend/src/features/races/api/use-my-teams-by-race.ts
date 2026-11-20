@@ -10,7 +10,7 @@ import type { Team } from '@/types/api';
  */
 export function useMyTeamsByRace(): Map<number, Team[]> {
   const me = useMe();
-  const { data } = useTeams({ enabled: Boolean(me.data) });
+  const { data } = useTeams({ enabled: Boolean(me.data), skipUnauthorized: true });
 
   return useMemo(() => {
     const byRace = new Map<number, Team[]>();

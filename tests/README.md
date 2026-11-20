@@ -42,6 +42,7 @@ Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the
 - **`buddy-picker.spec.ts`** (`test_seeds:buddy_picker`): in the Questions card a captain sees the race's other teams in case-insensitive alphabetical order with `Other…` last, ticks two teams plus `Other…` with free text, saves, and finds them selected after a reload; unticking `Other…` and saving clears the text.
 - **`guided-tour.spec.ts`** (`test_seeds:past_racers`): the team page opens the guided tour by itself, `Next` walks the three stops (that race has no questions and no fee), `Done` ends it for good (it stays closed after a reload), and `Take the tour` replays it. It clears the `dogtag:tour:off` switch that `playwright.config.ts` sets for every other spec.
 - **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
+- **`race-list-order.spec.ts`** (`test_seeds:race_list_order`): the race list shows open races first, then waitlist, registration-over and not-yet-open races (the seeded race dates run in the opposite order) with the right badges and start links; a logged-in captain also sees their teams (status chip, `Start another team`) on the tiles of the races they joined, and none on the others.
 - **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.
 
 ## Running Tests

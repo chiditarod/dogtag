@@ -127,4 +127,24 @@ describe('RaceList: your teams', () => {
     expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.queryByText(t('races.yourTeams'))).toBeNull();
   });
+
+  it('stays on the public race list when the teams request answers 401', async () => {
+    let teamsRequested = false;
+    server.use(
+      // The cached "me" still says logged in, but the session has ended.
+      http.get('/api/v1/me', () => HttpResponse.json({ user })),
+      http.get('/api/v1/races', () => HttpResponse.json({ races: [raceOne] })),
+      http.get('/api/v1/teams', () => {
+        teamsRequested = true;
+        return HttpResponse.json({ error: 'Not logged in', errors: {} }, { status: 401 });
+      }),
+    );
+    const { router } = renderApp('/');
+
+    expect(await tileFor('Race One')).toBeInTheDocument();
+    await waitFor(() => expect(teamsRequested).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(router.state.location.pathname).toBe('/register/');
+    expect(screen.queryByText(t('races.yourTeams'))).toBeNull();
+  });
 });
