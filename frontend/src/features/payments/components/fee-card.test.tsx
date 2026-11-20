@@ -383,6 +383,14 @@ describe('FeeCard', () => {
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('offers Pay to a full roster that has not chosen a captain yet', async () => {
+    serve({ checklist: { racers: { filled: 5, total: 5, captain: false, done: false } } });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByRole('button', { name: /^Pay/ })).toBeInTheDocument();
+    expect(fee.queryByText(t('fee.rosterFirst'))).not.toBeInTheDocument();
+  });
+
   it('keeps an already-paid row visible when the roster later drops below full', async () => {
     serve({
       checklist: {

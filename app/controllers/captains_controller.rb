@@ -7,7 +7,8 @@ class CaptainsController < ApplicationController
     person = @team.people.find_by(id: params.expect(:person_id))
     return redirect_to(team_url(id: @team.id), flash: { error: t(".not_on_team") }) unless person
 
-    authorize! :update, person
+    # The Team update rule: owners only while registration is open, staff any time (same as the API).
+    authorize! :update, @team
 
     # Through the auditor so a team that is otherwise complete finalizes as soon as it has a captain.
     @team.subscribe(TeamAuditor.new)

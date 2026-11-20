@@ -215,7 +215,10 @@ export function RosterCard({ team }: { team: Team }) {
   }
 
   const { fieldErrors, formErrors } = splitPersonErrors(save.error);
-  const canRemove = open && !checklist.finalized;
+  // The server refuses to remove a racer from a team that is complete apart from its captain.
+  const completeButCaptain =
+    checklist.racers.filled >= checklist.racers.total && checklist.questions.done && checklist.fee.done;
+  const canRemove = open && !checklist.finalized && !completeButCaptain;
 
   const formFor = (title: string, initial: PersonDraft) => (
     <PersonForm
@@ -251,7 +254,7 @@ export function RosterCard({ team }: { team: Team }) {
               : yearsCount(person.experience)
           }
           captain={person.id === captainId}
-          onMakeCaptain={() => makeCaptain(person)}
+          onMakeCaptain={open ? () => makeCaptain(person) : undefined}
           settingCaptain={setCaptain.isPending}
           canEdit
           canRemove={canRemove}

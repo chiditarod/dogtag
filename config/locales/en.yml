@@ -199,10 +199,11 @@ en:
     update:
       success: "%{name} is now the team captain."
       not_on_team: That racer is not on this team.
+  people:
     table:
       captain: Team captain
       make_captain: Make captain
-  people:
+      make_captain_label: "Make %{name} captain"
     index:
       title: People
       no_people_added: omg, you need to add racers!
@@ -288,6 +289,7 @@ en:
       registered_for: Registered for
       captain: Team captain
       no_captain: No captain chosen yet
+      choose_captain: Choose one racer as your team captain. Your team cannot be finalized without one.
       account_holder: Account holder
       registration_closed: "Registration closed. No further updates are possible."
       can_change_until: "Finish all registration steps by %{date}"

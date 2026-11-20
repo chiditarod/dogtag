@@ -65,8 +65,8 @@ class Person < ApplicationRecord
   def become_captain_if_account_holder
     return unless team&.user && email == team.user.email.to_s.downcase
 
-    Team.where(id: team_id, captain_id: nil).update_all(captain_id: id)
-    team.captain_id = id if team.captain_id.nil?
+    # Mirror the row only when it changed, so the in-memory team never holds a captain the database lacks.
+    team.captain_id = id if Team.where(id: team_id, captain_id: nil).update_all(captain_id: id) == 1
   end
 
   def refresh_team_new_flag

@@ -7,7 +7,9 @@
       %th= t('cell_phone')
       %th= t('instagram')
       %th= t('tiktok')
-  - editable = current_user.is_any_of?(:admin, :operator) || race.open_for_registration? || race.in_final_edits_window?
+  - staff = current_user.is_any_of?(:admin, :operator)
+  - editable = staff || race.open_for_registration? || race.in_final_edits_window?
+  - captain_editable = staff || race.open_for_registration?
   - people.each do |person|
     %tr
       %td
@@ -18,12 +20,13 @@
           = button_to t('delete'), team_person_url(:team_id => person.team.id, :id => person.id), :method=>:delete,  :data => { :confirm => 'Are you sure?' }
       %td
         - captain = person.id == captain_id
+        - name = "#{person.first_name} #{person.last_name}"
         - if captain
-          %i.fa.fa-star.text-warning{ title: t('captains.table.captain') }
-        = person.first_name
-        = person.last_name
-        - if !captain && editable
-          = button_to t('captains.table.make_captain'), team_captain_url(person.team_id), :method => :put, :params => { :person_id => person.id }, :class => 'btn btn-default btn-xs', :form_class => 'make-captain'
+          %i.fa.fa-star.text-warning{ title: t('.captain'), 'aria-hidden': 'true' }
+          %span.sr-only= t('.captain')
+        = name
+        - if !captain && captain_editable
+          = button_to t('.make_captain'), team_captain_url(person.team_id), :method => :put, :params => { :person_id => person.id }, :class => 'btn btn-default btn-xs', :form_class => 'make-captain', 'aria-label': t('.make_captain_label', name: name)
       %td= person.email
       %td= person.phone
       %td= person.instagram

@@ -176,6 +176,8 @@
       %br
       .lead= t ('.no_people_added')
     - else
+      - if @team.captain_id.nil?
+        .alert.alert-warning#choose-captain= t('.choose_captain')
       = render 'people/table', :people => @team.people, :race => @team.race, :captain_id => @team.captain_id
 
     %br

@@ -230,8 +230,8 @@ describe('team captain', () => {
     expect(screen.getByRole('button', { name: 'Make Bo Z captain' })).toBeEnabled();
   });
 
-  it('shows a 403 (registration closed) in the page banner and rolls back', async () => {
-    serve({ people: [ada(), bo()], captainId: 1, race: { open_for_registration: false } });
+  it('shows a 403 (registration closed since the page loaded) in the page banner and rolls back', async () => {
+    serve({ people: [ada(), bo()], captainId: 1 });
     server.use(
       http.put('/api/v1/teams/9/captain', () =>
         HttpResponse.json({ error: 'Registration is closed.', errors: {} }, { status: 403 }),
@@ -242,6 +242,79 @@ describe('team captain', () => {
     await openRoster();
     await u.click(screen.getByRole('button', { name: 'Make Bo Z captain' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Registration is closed.');
+    expect(within(captainRow()).getByTestId('captain-star')).toBeInTheDocument();
+  });
+
+  it('offers no Make captain once registration has closed, while Edit stays', async () => {
+    serve({ people: [ada(), bo()], captainId: 1, race: { open_for_registration: false } });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.getByRole('button', { name: 'Edit Bo Z' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Make / })).toBeNull();
+  });
+
+  it('stars you, with no hint, when adding yourself makes you captain', async () => {
+    server.use(
+      http.post('/api/v1/teams/9/people', () =>
+        HttpResponse.json(
+          {
+            person: ada(),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, captain: true, done: false } }),
+            captain_id: 1,
+          },
+          { status: 201 },
+        ),
+      ),
+    );
+    serve({ people: [bo()] });
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.getByText('Choose one racer as your team captain.')).toBeInTheDocument();
+    await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
+    await u.type(screen.getByLabelText('Years racing'), '2');
+    await u.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(within(slots()[1]).getByTestId('captain-star')).toBeInTheDocument());
+    expect(within(slots()[1]).queryByRole('button', { name: /^Make / })).toBeNull();
+    expect(screen.queryByText('Choose one racer as your team captain.')).toBeNull();
+  });
+
+  it('asks for a new captain after the captain is removed', async () => {
+    serve({ people: [ada(), bo()], captainId: 2 });
+    server.use(
+      http.delete('/api/v1/teams/9/people/2', () =>
+        HttpResponse.json({
+          checklist: buildChecklist({ racers: { filled: 1, total: 5, captain: false, done: false } }),
+          captain_id: null,
+        }),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.queryByText('Choose one racer as your team captain.')).toBeNull();
+    await u.click(screen.getByRole('button', { name: 'Remove Bo Z' }));
+    await u.click(screen.getByRole('button', { name: 'Yes, remove' }));
+    expect(await screen.findByText('Choose one racer as your team captain.')).toBeInTheDocument();
+    expect(screen.queryByTestId('captain-star')).toBeNull();
+  });
+
+  it('hides Remove on a team that is complete except for its captain', async () => {
+    const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
+      buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
+    );
+    const paid = buildChecklist().fee;
+    serve({
+      people: five,
+      checklist: {
+        racers: { filled: 5, total: 5, captain: false, done: false },
+        fee: { ...paid, done: true, amount_due_cents: null, requirement_id: null, items: [] },
+      },
+    });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.getByRole('button', { name: 'Make Bo Z captain' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
   });
 
   it('asks the racers to choose a captain while the roster has people and no captain', async () => {

@@ -22,7 +22,7 @@ interface FilledSlotProps {
   /** "12 years racing"; absent when the racer has no years yet. */
   experienceLabel: string | undefined;
   captain: boolean;
-  /** Shown on every other racer where Edit is shown; absent hides the button. */
+  /** Shown on every other racer while registration is open; absent hides the button. */
   onMakeCaptain?: () => void;
   /** A captain change is in flight: every Make captain button waits. */
   settingCaptain?: boolean;
@@ -97,7 +97,7 @@ export function FilledSlot({
           </div>
         </div>
         {!confirmingRemove && (
-          <div className="flex shrink-0 gap-1 pl-[3.25rem] sm:pl-0">
+          <div className="flex flex-wrap gap-1 pl-[3.25rem] sm:shrink-0 sm:flex-nowrap sm:pl-0">
             {canEdit && (
               <Button
                 variant="ghost"

@@ -43,6 +43,17 @@ describe Person do
       expect(team.reload.captain_id).to eq(other.id)
     end
 
+    it "leaves a stale in-memory team alone when a captain was chosen in the meantime" do
+      other = FactoryBot.create(:person, team: team)
+      team.captain_id # loaded with no captain
+      Team.where(id: team.id).update_all(captain_id: other.id)
+
+      FactoryBot.create(:person, team: team, email: team.user.email)
+
+      expect(team.captain_id).to be_nil
+      expect(team.reload.captain_id).to eq(other.id)
+    end
+
     it "finalizes a complete team through PersonAuditor once the account holder is the last racer" do
       FactoryBot.create(:person, team: team)
       last = FactoryBot.build(:person, team: team, email: team.user.email)

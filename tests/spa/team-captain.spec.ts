@@ -65,4 +65,33 @@ test.describe('SPA racers: team captain', () => {
       await expect(page.getByTestId('choose-captain')).toHaveCount(0);
     });
   });
+
+  test('at 320px a racer row wraps Edit, Make captain and Remove with no horizontal scroll', async ({ page }) => {
+    const c = seeded.credentials;
+    const [racer] = c.racers;
+    await page.setViewportSize({ width: 320, height: 800 });
+    await page.goto('/register/login');
+    await page.getByLabel('Email', { exact: true }).fill(c.captain_email);
+    await page.getByLabel('Password', { exact: true }).fill(c.captain_password);
+    await page.getByRole('button', { name: 'Log in' }).click();
+    await page.getByRole('link', { name: `View team: ${c.team_name}` }).click();
+    await expect(page).toHaveURL(new RegExp(`/register/teams/${c.team_id}$`));
+
+    const racers = page.getByRole('group', { name: 'Racers' });
+    const row = racers.getByRole('listitem').filter({ hasText: racer.name }).first();
+    await expect(row.getByRole('button', { name: `Edit ${racer.name}` })).toBeVisible();
+    // Whoever is captain now, one of the two racers still offers Make captain.
+    await expect(racers.getByRole('button', { name: /^Make .* captain$/ }).first()).toBeVisible();
+    await expect(row.getByRole('button', { name: `Remove ${racer.name}` })).toBeVisible();
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    // Each button stays inside its row (not just the viewport) and on one line.
+    const rowBox = (await row.boundingBox())!;
+    for (const button of await row.getByRole('button').all()) {
+      const box = (await button.boundingBox())!;
+      expect(box.x + box.width).toBeLessThanOrEqual(rowBox.x + rowBox.width);
+      expect(box.height).toBeLessThanOrEqual(48);
+    }
+  });
 });

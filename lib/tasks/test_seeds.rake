@@ -121,7 +121,8 @@ namespace :test_seeds do
     4.times do |i|
       person = FactoryBot.create(:person,
         team: team,
-        email: "person#{i + 1}-#{unique_id}@example.com"
+        # The first racer is the account holder, so the team gets a captain and can finalize.
+        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
       )
       puts "    ✓ Added person #{i + 1}: #{person.first_name} #{person.last_name} (#{person.email})"
     end
@@ -213,7 +214,8 @@ namespace :test_seeds do
     5.times do |i|
       FactoryBot.create(:person,
         team: team,
-        email: "person#{i + 1}-#{unique_id}@example.com"
+        # The first racer is the account holder, so the team gets a captain and can finalize.
+        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
       )
     end
 
@@ -288,7 +290,8 @@ namespace :test_seeds do
     5.times do |i|
       FactoryBot.create(:person,
         team: team,
-        email: "person#{i + 1}-#{unique_id}@example.com"
+        # The first racer is the account holder, so the team gets a captain and can finalize.
+        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
       )
     end
 
