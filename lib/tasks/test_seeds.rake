@@ -12,6 +12,7 @@
 #   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
+#   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -574,6 +575,58 @@ namespace :test_seeds do
       teams: other_teams.map { |t| { name: t.name, finalized: !!t.finalized } }
     )
     puts "✅ Seeded captain #{captain.email} with #{other_teams.size} other teams in #{race.name}"
+  end
+
+  desc "Captain's team in a race whose form hides fire-details unless flame-effects is Yes (showWhen)"
+  task show_when: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding showWhen test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    answers = JSON.parse(File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json")))
+    answers["flame-effects"] = "No"
+
+    # The standard form plus an optional fire-details textarea right after flame-effects.
+    jsonform = JSON.parse(File.read(Rails.root.join("spec", "fixtures", "files", "valid_jsonform.json")))
+    jsonform["schema"]["properties"]["fire-details"] = { "type" => "string", "title" => "Details about your fire effects" }
+    add_fire_details = lambda do |items|
+      items.flat_map do |item|
+        if item == "flame-effects"
+          [item, { "key" => "fire-details", "type" => "textarea", "showWhen" => { "flame-effects" => "Yes" } }]
+        elsif item.is_a?(Hash) && item["items"].is_a?(Array)
+          [item.merge("items" => add_fire_details.call(item["items"]))]
+        else
+          [item]
+        end
+      end
+    end
+    jsonform["form"] = add_fire_details.call(jsonform["form"])
+
+    race = FactoryBot.create(:race_with_jsonform,
+      name: "Race ShowWhen #{unique_id[0..7]}",
+      people_per_team: 2,
+      max_teams: 100,
+      json_data: JSON.generate(jsonform)
+    )
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "ShowWhen",
+      email: "showwhen-captain-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    team = FactoryBot.create(:team, name: "Test Team ShowWhen #{unique_id[0..7]}", race: race, user: captain, jsonform: JSON.generate(answers))
+
+    write_test_credentials(unique_id,
+      captain_email: captain.email,
+      captain_password: "password123",
+      race_name: race.name,
+      team_id: team.id,
+      team_name: team.name
+    )
+    puts "✅ Seeded captain #{captain.email} with #{team.name} in #{race.name}"
   end
 
   desc "Four races in each registration state (race dates run opposite to the list order) and a captain with a team in the open and the closed race"
