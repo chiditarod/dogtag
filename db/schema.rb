@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_20_065327) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -131,6 +131,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_20_065327) do
     t.boolean "new_team_overridden"
     t.datetime "confirmation_seen_at"
     t.text "other_buddies"
+    t.boolean "collaborating"
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["user_id"], name: "index_teams_on_user_id"
   end

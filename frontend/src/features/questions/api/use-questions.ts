@@ -8,12 +8,15 @@ import type { Checklist } from '@/types/api';
 interface QuestionsResponse {
   jsonform: Jsonform | null;
   answers: Answers;
+  /** null until the team answers the same-route question. */
+  collaborating: boolean | null;
   buddy_team_ids: number[];
   other_buddies: string | null;
 }
 
 export interface SaveAnswersInput {
   answers: Answers;
+  collaborating: boolean;
   buddy_team_ids: number[];
   other_buddies: string;
 }
@@ -34,15 +37,18 @@ export function useSaveAnswers(teamId: string | number) {
     mutationFn: (input: SaveAnswersInput) =>
       apiFetch<{
         answers: Answers;
+        collaborating: boolean | null;
         buddy_team_ids: number[];
         other_buddies: string | null;
         checklist: Checklist;
       }>(`/teams/${teamId}/questions`, { method: 'PUT', json: input }),
-    onSuccess: ({ answers, buddy_team_ids, other_buddies, checklist }) => {
+    onSuccess: ({ answers, collaborating, buddy_team_ids, other_buddies, checklist }) => {
       queryClient.setQueryData<QuestionsResponse>(
         questionsQueryKey(teamId),
         (existing) =>
-          existing ? { ...existing, answers, buddy_team_ids, other_buddies } : existing,
+          existing
+            ? { ...existing, answers, collaborating, buddy_team_ids, other_buddies }
+            : existing,
       );
       setTeamChecklist(queryClient, teamId, checklist);
       void queryClient.invalidateQueries({ queryKey: teamsQueryKey });

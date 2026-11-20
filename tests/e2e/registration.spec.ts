@@ -160,6 +160,11 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
 
   await test.step('Answer every team question', async () => {
     const questions = page.getByRole('group', { name: 'Team questions' });
+    // The SPA's own same-route question comes first and is required; No keeps the team picker hidden.
+    await questions
+      .getByRole('radiogroup', { name: /same route as another person or team/ })
+      .getByRole('radio', { name: 'No', exact: true })
+      .check();
     const properties = Object.entries(jsonform.schema.properties);
     for (const [key, property] of properties) {
       const value = ANSWERS[key];

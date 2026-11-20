@@ -289,6 +289,7 @@ class Team < ApplicationRecord
         # anyone reading the export by column.
         row << { true => "yes", false => "no" }.fetch(team.new_team, "")
 
+        row << { true => "Yes", false => "No" }.fetch(team.collaborating, "")
         row << racing_with_cell(team)
 
         memo << row
@@ -317,6 +318,7 @@ class Team < ApplicationRecord
       end
 
       header << 'new_team'
+      header << 'collaborating'
       header << 'racing_with'
     end
   end

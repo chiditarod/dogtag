@@ -564,8 +564,17 @@ describe Team do
     it "puts the new team flag last so older columns keep their positions" do
       header, team_row = Team.export(race.id)
       expect(header.first(3)).to eq(%w[finalized number name])
-      expect(header.last(2)).to eq(%w[new_team racing_with])
+      expect(header.last(3)).to eq(%w[new_team collaborating racing_with])
       expect(team_row.length).to eq(header.length)
+    end
+
+    it "writes the same-route answer as Yes, No or blank" do
+      yes_team = FactoryBot.create :team, race: race, collaborating: true
+      no_team = FactoryBot.create :team, race: race, collaborating: false
+
+      header, *rows = Team.export(race.id)
+      answers = rows.to_h { |row| [row[header.index("name")], row[header.index("collaborating")]] }
+      expect(answers).to eq(team.name => "", yes_team.name => "Yes", no_team.name => "No")
     end
 
     context "with racing_with picks" do

@@ -10,7 +10,7 @@
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
-#   rails test_seeds:buddy_picker              (captain's team plus two other teams in a race with questions)
+#   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -490,7 +490,9 @@ namespace :test_seeds do
       password: "password123",
       password_confirmation: "password123"
     )
-    team = FactoryBot.create(:team, name: "Test Team Picker #{unique_id[0..7]}", race: race, user: captain, jsonform: answers)
+    # Answers saved but the same-route question left unanswered, like a team from before it existed.
+    team = FactoryBot.create(:team, name: "Test Team Picker #{unique_id[0..7]}", race: race, user: captain,
+                             jsonform: answers, collaborating: nil)
 
     # Names chosen so byte order (uppercase first) differs from case-insensitive order.
     other_teams = [["Banana Crew", true], ["apple cart", false]].map.with_index do |(name, finalized), index|

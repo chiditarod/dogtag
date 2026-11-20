@@ -17,14 +17,23 @@ class Api::V1::QuestionsController < Api::V1::BaseController
     answers = params.fetch(:answers, {})
     return render_errors("bad_request", status: :bad_request) unless answers.is_a?(ActionController::Parameters)
 
-    return render_errors("bad_request", status: :bad_request) unless buddy_params_wellformed?
+    return render_errors("bad_request", status: :bad_request) unless buddy_params_wellformed? && collaborating_wellformed?
 
+    collaborating = params.key?(:collaborating) ? params[:collaborating] : @team.collaborating
     buddy_ids = requested_buddy_ids
+    if collaborating != true && sends_picks?(buddy_ids)
+      return render_invalid_buddies(collaborating: [I18n.t("api.errors.buddies_need_collaborating")])
+    end
     return render_invalid_buddies(buddy_team_ids: [I18n.t("api.errors.invalid_buddies")]) if buddy_ids && !pickable?(buddy_ids)
+
+    # Answering No discards the picks along with it.
+    buddy_ids = [] if collaborating == false
 
     @team.subscribe(TeamAuditor.new)
     saved = Team.transaction do
+      @team.collaborating = collaborating
       @team.other_buddies = params[:other_buddies] if params.key?(:other_buddies)
+      @team.other_buddies = nil if collaborating == false
       @team.jsonform = JsonForm.filter_answers(@team.race, answers).to_json
       raise ActiveRecord::Rollback unless @team.save
 
@@ -52,6 +61,7 @@ class Api::V1::QuestionsController < Api::V1::BaseController
   def saved_payload
     {
       answers: parse(@team.jsonform, {}),
+      collaborating: @team.collaborating,
       buddy_team_ids: @team.team_buddies.order(:buddy_team_id).pluck(:buddy_team_id),
       other_buddies: @team.other_buddies
     }
@@ -63,6 +73,16 @@ class Api::V1::QuestionsController < Api::V1::BaseController
     other = params[:other_buddies]
     ids_ok = !params.key?(:buddy_team_ids) || (ids.is_a?(Array) && ids.all? { |id| id.is_a?(Integer) || id.is_a?(String) })
     ids_ok && (other.nil? || other.is_a?(String))
+  end
+
+  # collaborating, when sent, must be a JSON true, false or null.
+  def collaborating_wellformed?
+    !params.key?(:collaborating) || [true, false, nil].include?(params[:collaborating])
+  end
+
+  # Non-empty buddy_team_ids or non-blank other_buddies.
+  def sends_picks?(buddy_ids)
+    buddy_ids.present? || params[:other_buddies].to_s.strip.present?
   end
 
   # nil when the key is absent (leave the picks alone); otherwise the unique ids (nil for an unparseable one).

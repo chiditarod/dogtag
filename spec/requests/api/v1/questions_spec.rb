@@ -29,7 +29,7 @@ describe "API v1 questions", type: :request do
       plain = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race))
       get "/api/v1/teams/#{plain.id}/questions"
       expect(response).to have_http_status(:ok)
-      expect(json).to eq("jsonform" => nil, "answers" => {}, "buddy_team_ids" => [], "other_buddies" => nil)
+      expect(json).to eq("jsonform" => nil, "answers" => {}, "collaborating" => nil, "buddy_team_ids" => [], "other_buddies" => nil)
     end
 
     it "returns picked team ids and other_buddies" do
@@ -44,10 +44,17 @@ describe "API v1 questions", type: :request do
       expect(json["other_buddies"]).to eq("The Rolling Pins")
     end
 
-    it "returns no picks and a null other_buddies by default" do
+    it "returns no picks, a null other_buddies and an unanswered collaborating by default" do
       get path
       expect(json["buddy_team_ids"]).to eq([])
       expect(json["other_buddies"]).to be_nil
+      expect(json).to include("collaborating" => nil)
+    end
+
+    it "returns the saved collaborating answer" do
+      team.update_column(:collaborating, false)
+      get path
+      expect(json["collaborating"]).to be(false)
     end
 
     it "omits a picked team after it is deleted and still returns 200" do
@@ -138,6 +145,8 @@ describe "API v1 questions", type: :request do
     describe "team picks" do
       let!(:friend) { FactoryBot.create(:team, race: race) }
       let!(:rival) { FactoryBot.create(:team, race: race) }
+
+      before { team.update_column(:collaborating, true) }
 
       def put_picks(body)
         put path, params: body, as: :json
@@ -254,6 +263,119 @@ describe "API v1 questions", type: :request do
         expect(team.reload.jsonform).to be_nil
         expect(team.other_buddies).to be_nil
         expect(team.team_buddies.pluck(:buddy_team_id)).to eq([friend.id])
+      end
+    end
+
+    describe "collaborating" do
+      let!(:friend) { FactoryBot.create(:team, race: race) }
+
+      def put_body(body)
+        put path, params: { answers: valid_answers }.merge(body), as: :json
+      end
+
+      def with_picks
+        team.update_columns(collaborating: true, other_buddies: "Outsiders")
+        FactoryBot.create(:team_buddy, team: team, buddy_team: friend)
+      end
+
+      it "leaves the answer and the picks unchanged when the key is absent" do
+        with_picks
+        put_body({})
+        expect(response).to have_http_status(:ok)
+        expect(team.reload.collaborating).to be(true)
+        expect(team.other_buddies).to eq("Outsiders")
+        expect(team.team_buddies.pluck(:buddy_team_id)).to eq([friend.id])
+        expect(json["collaborating"]).to be(true)
+      end
+
+      it "saves true together with picks" do
+        put_body(collaborating: true, buddy_team_ids: [friend.id], other_buddies: "Outsiders")
+        expect(response).to have_http_status(:ok)
+        expect(team.reload.collaborating).to be(true)
+        expect(team.team_buddies.pluck(:buddy_team_id)).to eq([friend.id])
+        expect(json).to include("collaborating" => true, "buddy_team_ids" => [friend.id], "other_buddies" => "Outsiders")
+      end
+
+      it "saves false and clears the picks and other_buddies" do
+        with_picks
+        put_body(collaborating: false)
+        expect(response).to have_http_status(:ok)
+        expect(team.reload.collaborating).to be(false)
+        expect(team.other_buddies).to be_nil
+        expect(team.team_buddies.count).to eq(0)
+        expect(json).to include("collaborating" => false, "buddy_team_ids" => [], "other_buddies" => nil)
+        racing_with = Team.export(race.id).then { |header, *rows| rows.map { |r| r[header.index("racing_with")] } }
+        expect(racing_with).to all(eq(""))
+      end
+
+      it "saves false with empty picks" do
+        with_picks
+        put_body(collaborating: false, buddy_team_ids: [], other_buddies: " ")
+        expect(response).to have_http_status(:ok)
+        expect(team.reload.collaborating).to be(false)
+        expect(team.team_buddies.count).to eq(0)
+      end
+
+      it "keeps the picks when a failed save rolls back a No" do
+        with_picks
+        put_body(collaborating: false, answers: valid_answers.merge("racer-type" => "Spaceship"))
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(team.reload.collaborating).to be(true)
+        expect(team.other_buddies).to eq("Outsiders")
+        expect(team.team_buddies.pluck(:buddy_team_id)).to eq([friend.id])
+      end
+
+      it "saves null back to unanswered" do
+        team.update_column(:collaborating, false)
+        put_body(collaborating: nil)
+        expect(response).to have_http_status(:ok)
+        expect(team.reload.collaborating).to be_nil
+        expect(json).to include("collaborating" => nil)
+      end
+
+      [
+        [{ collaborating: false, buddy_team_ids: [:friend] }, "false with picked teams"],
+        [{ collaborating: false, other_buddies: "Outsiders" }, "false with other_buddies"],
+        [{ collaborating: nil, buddy_team_ids: [:friend] }, "null with picked teams"],
+        [{ buddy_team_ids: [:friend] }, "picked teams while still unanswered"],
+        [{ other_buddies: "Outsiders" }, "other_buddies while still unanswered"]
+      ].each do |body, label|
+        it "returns 422 invalid_buddies for #{label} and saves nothing" do
+          ids = body[:buddy_team_ids]&.map { friend.id }
+          expect { put_body(body.merge(ids ? { buddy_team_ids: ids } : {})) }.not_to change(TeamBuddy, :count)
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(json["error"]).to eq("invalid_buddies")
+          expect(json["errors"]["collaborating"]).to be_present
+          expect(team.reload.jsonform).to be_nil
+          expect(team.collaborating).to be_nil
+          expect(team.other_buddies).to be_nil
+        end
+      end
+
+      it "returns 422 invalid_buddies for picks sent while the saved answer is No" do
+        team.update_column(:collaborating, false)
+        put_body(buddy_team_ids: [friend.id])
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["error"]).to eq("invalid_buddies")
+        expect(team.reload.team_buddies.count).to eq(0)
+      end
+
+      ["yes", "true", 1, 0, [], {}].each do |bad|
+        it "returns 400 bad_request for collaborating #{bad.inspect} and saves nothing" do
+          put_body(collaborating: bad)
+          expect(response).to have_http_status(:bad_request)
+          expect(json["error"]).to eq("bad_request")
+          expect(team.reload.jsonform).to be_nil
+          expect(team.collaborating).to be_nil
+        end
+      end
+
+      it "still answers no_questions first for a race without a jsonform" do
+        plain = FactoryBot.create(:team, user: user, race: FactoryBot.create(:race))
+        put "/api/v1/teams/#{plain.id}/questions", params: { collaborating: "maybe" }, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["error"]).to eq("no_questions")
+        expect(plain.reload.collaborating).to be_nil
       end
     end
 

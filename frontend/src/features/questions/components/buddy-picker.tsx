@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { InfoTip } from '@/components/ui/info-tip';
 import type { BuddyOption, BuddySelection } from '@/features/questions/types';
 import { t } from '@/locales/en';
 
@@ -27,10 +28,15 @@ export function BuddyFieldset({
   children: ReactNode;
   describedBy?: string;
 }) {
+  const legendId = useId();
+  // Named by the legend text alone, so the info button's label stays out of the group's name.
   return (
-    <fieldset className="min-w-0 space-y-3" aria-describedby={describedBy}>
-      <legend className="font-heading text-lg font-medium text-navy">
-        {t('questions.buddies.legend')}
+    <fieldset className="min-w-0 space-y-3" aria-labelledby={legendId} aria-describedby={describedBy}>
+      <legend className="flex items-center gap-1">
+        <span id={legendId} className="font-heading text-lg font-medium text-navy">
+          {t('questions.buddies.legend')}
+        </span>
+        <InfoTip label={t('questions.buddies.tip')}>{t('questions.buddies.tipBody')}</InfoTip>
       </legend>
       {children}
     </fieldset>
@@ -39,7 +45,6 @@ export function BuddyFieldset({
 
 export function BuddyPicker({ options, value, onChange, disabled, error }: BuddyPickerProps) {
   const id = useId();
-  const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
   const [search, setSearch] = useState('');
   const needle = search.trim().toLowerCase();
@@ -56,10 +61,7 @@ export function BuddyPicker({ options, value, onChange, disabled, error }: Buddy
   }
 
   return (
-    <BuddyFieldset describedBy={[hintId, hasError && errorId].filter(Boolean).join(' ')}>
-      <p id={hintId} className="text-sm text-navy/80">
-        {t('questions.buddies.hint')}
-      </p>
+    <BuddyFieldset describedBy={hasError ? errorId : undefined}>
       {options.length === 0 ? (
         <p className="text-base text-navy">{t('questions.buddies.empty')}</p>
       ) : (

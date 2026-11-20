@@ -33,7 +33,7 @@ function Harness({ teams = options, initial = empty }: { teams?: BuddyOption[]; 
 describe('BuddyPicker', () => {
   it('lists teams in the order given with a status tag each and Other… last', () => {
     render(<Harness />);
-    const group = screen.getByRole('group', { name: 'Teams you want to race with' });
+    const group = screen.getByRole('group', { name: 'Teams you want to race alongside' });
     const boxes = within(group).getAllByRole('checkbox');
     expect(boxes.map((box) => box.getAttribute('aria-label') ?? '')).toEqual([
       'Apple Cart, Still registering',
@@ -78,6 +78,16 @@ describe('BuddyPicker', () => {
     expect(latest).toEqual({ teamIds: [], otherSelected: true, otherText: 'The Dee Team' });
     await user.click(screen.getByRole('checkbox', { name: 'Other…' }));
     expect(screen.queryByRole('textbox', { name: 'Which other teams or people?' })).not.toBeInTheDocument();
+  });
+
+  it('puts the explanation in an info tip beside the legend instead of a visible hint', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    expect(screen.queryByText(/Names only; teams are told nothing/)).not.toBeInTheDocument();
+    const group = screen.getByRole('group', { name: 'Teams you want to race alongside' });
+    await user.click(within(group).getByRole('button', { name: 'About picking teams' }));
+    expect(await screen.findByText(/You can request other teams you would like to share a race route with/)).toBeInTheDocument();
+    expect(screen.getByText(/marked 'Fully registered'; teams still signing up are marked 'Still registering'/)).toBeInTheDocument();
   });
 
   it('shows the empty state when there are no teams but still offers Other…', () => {
