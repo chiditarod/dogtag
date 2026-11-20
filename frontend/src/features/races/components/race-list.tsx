@@ -8,23 +8,23 @@ import { t } from '@/locales/en';
 import type { Race } from '@/types/api';
 
 function RaceStatus({ race }: { race: Race }) {
-  if (race.open_for_registration && !race.full) {
-    return <Badge tone="success">{t('races.open')}</Badge>;
+  switch (race.registration_status) {
+    case 'open':
+      return <Badge tone="success">{t('races.open')}</Badge>;
+    case 'waitlist':
+      return <Badge tone="warning">{t('races.waitlist')}</Badge>;
+    case 'closed':
+      return <Badge tone="danger">{t('races.closed')}</Badge>;
+    case 'not_yet_open':
+      return (
+        <>
+          <Badge tone="danger">{t('races.closed')}</Badge>
+          <span className="text-sm">
+            {t('races.opens')} {formatDate(race.registration_open, race.time_zone)}
+          </span>
+        </>
+      );
   }
-  if (race.open_for_registration) {
-    return <Badge tone="warning">{t('races.waitlist')}</Badge>;
-  }
-  const opensLater = new Date(race.registration_open).getTime() > Date.now();
-  return (
-    <>
-      <Badge tone="danger">{t('races.closed')}</Badge>
-      {opensLater && (
-        <span className="text-sm">
-          {t('races.opens')} {formatDate(race.registration_open, race.time_zone)}
-        </span>
-      )}
-    </>
-  );
 }
 
 export function RaceList() {

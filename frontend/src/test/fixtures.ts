@@ -19,6 +19,7 @@ export function buildRace(overrides: Partial<Race> = {}): Race {
     time_zone: 'America/Chicago',
     open_for_registration: true,
     full: false,
+    registration_status: 'open',
     people_per_team: 5,
     experience_labels: ['This is our first', 'Raced once before', 'Twice'],
     jsonform: null,

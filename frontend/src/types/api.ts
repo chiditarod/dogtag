@@ -8,6 +8,8 @@ export interface PaymentRequirement {
   next_tier: { price_cents: number; begins_at: string } | null;
 }
 
+export type RegistrationStatus = 'open' | 'waitlist' | 'closed' | 'not_yet_open';
+
 export interface Race {
   id: number;
   name: string;
@@ -19,6 +21,8 @@ export interface Race {
   time_zone: string;
   open_for_registration: boolean;
   full: boolean;
+  /** Server-decided group: open, waitlist, closed (registration over) or not_yet_open. */
+  registration_status: RegistrationStatus;
   people_per_team: number;
   experience_labels: string[];
   jsonform: Record<string, unknown> | null;
