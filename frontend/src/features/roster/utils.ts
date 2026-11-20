@@ -12,7 +12,6 @@ export interface PersonDraft {
   last_name: string;
   email: string;
   phone: string;
-  zipcode: string;
   experience: string;
   instagram: string;
   tiktok: string;
@@ -23,7 +22,6 @@ export const emptyDraft: PersonDraft = {
   last_name: '',
   email: '',
   phone: '',
-  zipcode: '',
   experience: '',
   instagram: '',
   tiktok: '',
@@ -34,7 +32,6 @@ export const PERSON_FIELDS = [
   'last_name',
   'email',
   'phone',
-  'zipcode',
   'experience',
   'instagram',
   'tiktok',
@@ -52,7 +49,6 @@ export function draftFromPerson(person: Person): PersonDraft {
     last_name: person.last_name,
     email: person.email,
     phone: formatPhoneDisplay(person.phone ?? ''),
-    zipcode: person.zipcode ?? '',
     experience: person.experience === null ? '' : String(person.experience),
     instagram: person.instagram ?? '',
     tiktok: person.tiktok ?? '',
@@ -67,7 +63,6 @@ export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
     last_name: racer.last_name,
     email: racer.email,
     phone: formatPhoneDisplay(racer.phone ?? ''),
-    zipcode: racer.zipcode ?? '',
     experience:
       racer.experience === null
         ? ''
@@ -98,7 +93,6 @@ export function payloadFromDraft(draft: PersonDraft): PersonPayload {
     last_name: draft.last_name.trim(),
     email: draft.email.trim().toLowerCase(),
     phone: toApiPhone(draft.phone),
-    zipcode: draft.zipcode.trim(),
     experience: draft.experience === '' ? null : Number(draft.experience),
     instagram: draft.instagram.trim(),
     tiktok: draft.tiktok.trim(),

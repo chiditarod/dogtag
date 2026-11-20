@@ -74,14 +74,6 @@ export function FilledSlot({
               {person.phone && (
                 <span className="whitespace-nowrap">{formatPhoneDisplay(person.phone)}</span>
               )}
-              {person.zipcode && (
-                <span className="whitespace-nowrap">
-                  <span className="mr-1 text-xs uppercase tracking-wide text-navy/60">
-                    {t('roster.zipLabel')}
-                  </span>
-                  {person.zipcode}
-                </span>
-              )}
               {person.instagram && <span className="whitespace-nowrap">{person.instagram}</span>}
               {person.tiktok && <span className="whitespace-nowrap">{person.tiktok}</span>}
             </div>

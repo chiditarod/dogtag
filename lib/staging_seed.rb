@@ -152,7 +152,7 @@ class StagingSeed
     first = RACER_NAMES[(@people_count - 1) % RACER_NAMES.size]
     team.people.create!(
       first_name: first, last_name: "Pusher", email: seed_email("racer-#{@people_count}"),
-      phone: format("773-555-%04d", @people_count), zipcode: format("606%02d", @people_count % 100),
+      phone: format("773-555-%04d", @people_count),
       experience: @people_count % 5
     )
   end

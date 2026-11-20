@@ -437,7 +437,6 @@ namespace :test_seeds do
         last_name: "Racer",
         email: "past-racer#{index + 1}-#{unique_id}@example.com",
         phone: "312-555-010#{index}",
-        zipcode: "6060#{index + 1}",
         experience: 2
       )
     end
@@ -463,7 +462,7 @@ namespace :test_seeds do
       race_name: race.name,
       team_id: team.id,
       team_name: team.name,
-      past_racers: racers.map { |r| { first_name: r.first_name, last_name: r.last_name, email: r.email, phone: r.phone, zipcode: r.zipcode } }
+      past_racers: racers.map { |r| { first_name: r.first_name, last_name: r.last_name, email: r.email, phone: r.phone } }
     )
     puts "✅ Seeded captain #{captain.email} with #{racers.size} past racers"
   end

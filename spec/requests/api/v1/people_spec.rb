@@ -6,7 +6,7 @@ describe "API v1 people", type: :request do
   let!(:team) { FactoryBot.create(:team, user: user, race: race) }
   let(:person_params) do
     { first_name: "Ada", last_name: "Lovelace", email: "ada@example.com", phone: "(312) 555-0144",
-      zipcode: "60614", experience: 1, instagram: "@ada" }
+      experience: 1, instagram: "@ada" }
   end
 
   before { api_login(user) }
@@ -19,8 +19,15 @@ describe "API v1 people", type: :request do
 
       expect(response).to have_http_status(:created)
       expect(json["person"]).to include("first_name" => "Ada", "phone" => "312-555-0144", "instagram" => "@ada")
-      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone zipcode experience instagram tiktok])
+      expect(json["person"].keys).to match_array(%w[id first_name last_name email phone experience instagram tiktok])
       expect(json["checklist"]["racers"]).to include("filled" => 1, "total" => 2)
+    end
+
+    it "ignores a stray zipcode param" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(zipcode: "60614") }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(json["person"]).not_to have_key("zipcode")
     end
 
     it "normalizes the instagram handle" do
@@ -148,10 +155,18 @@ describe "API v1 people", type: :request do
       expect(person.reload.first_name).to eq("Grace")
     end
 
+    it "ignores a stray zipcode param" do
+      patch "/api/v1/teams/#{team.id}/people/#{person.id}", params: { person: { first_name: "Grace", zipcode: "60614" } }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json["person"]["first_name"]).to eq("Grace")
+      expect(json["person"]).not_to have_key("zipcode")
+    end
+
     it "returns 422 when invalid" do
-      patch "/api/v1/teams/#{team.id}/people/#{person.id}", params: { person: { zipcode: "x" } }, as: :json
+      patch "/api/v1/teams/#{team.id}/people/#{person.id}", params: { person: { email: "x" } }, as: :json
       expect(response).to have_http_status(:unprocessable_entity)
-      expect(json["errors"]["zipcode"]).to be_present
+      expect(json["errors"]["email"]).to be_present
     end
 
     it "returns 403 on another user's team" do

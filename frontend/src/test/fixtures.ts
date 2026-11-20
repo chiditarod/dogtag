@@ -82,7 +82,6 @@ export function buildPerson(overrides: Partial<Person> = {}): Person {
     last_name: 'L',
     email: 'ada@example.com',
     phone: '312-555-0100',
-    zipcode: '60601',
     experience: 1,
     instagram: null,
     tiktok: null,

@@ -36,7 +36,6 @@ export interface Person {
   last_name: string;
   email: string;
   phone: string | null;
-  zipcode: string | null;
   experience: number | null;
   instagram: string | null;
   tiktok: string | null;

@@ -27,7 +27,7 @@ describe "API v1 past racers", type: :request do
         expect(json["past_racers"].size).to eq(1)
         expect(json["past_racers"].first).to eq(
           "first_name" => racer.first_name, "last_name" => racer.last_name, "email" => racer.email,
-          "phone" => racer.phone, "zipcode" => racer.zipcode, "experience" => racer.experience,
+          "phone" => racer.phone, "experience" => racer.experience,
           "instagram" => "@racer", "tiktok" => "@racer.tt",
           "last_team_name" => "Cart Wheelers",
           "last_race_name" => "CHIditarod 2024", "last_raced_year" => 2024

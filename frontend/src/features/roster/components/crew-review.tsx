@@ -7,7 +7,6 @@ import {
 } from 'react';
 import { EmailInput } from '@/components/inputs/email-input';
 import { PhoneInput } from '@/components/inputs/phone-input';
-import { ZipInput } from '@/components/inputs/zip-input';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
@@ -244,9 +243,9 @@ interface BeforeChange {
 const lineFields = (key: LineKey): Array<keyof PersonDraft> =>
   key === 'name' ? ['first_name', 'last_name'] : [key];
 
-/** "Change name", but "Change ZIP code", "Change Instagram" and "Change TikTok". */
+/** "Change name", but "Change Instagram" and "Change TikTok". */
 const changeTarget = (key: LineKey, label: string) =>
-  key === 'zipcode' || key === 'instagram' || key === 'tiktok' ? label : label.toLowerCase();
+  key === 'instagram' || key === 'tiktok' ? label : label.toLowerCase();
 
 interface ReviewLineProps {
   lineKey: LineKey;
@@ -444,16 +443,6 @@ function LineEditor({ lineKey, draft, race, error, onDraft }: LineEditorProps) {
             autoComplete="off"
             value={draft.phone}
             onChange={(value) => onDraft('phone', value)}
-          />
-        </Field>
-      );
-    case 'zipcode':
-      return (
-        <Field label={t('roster.zip')} name="zipcode" error={errors}>
-          <ZipInput
-            autoComplete="off"
-            value={draft.zipcode}
-            onChange={(value) => onDraft('zipcode', value)}
           />
         </Field>
       );

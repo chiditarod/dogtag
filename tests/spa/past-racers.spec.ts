@@ -9,7 +9,7 @@ interface Credentials {
   captain_password: string;
   team_id: number;
   team_name: string;
-  past_racers: { first_name: string; last_name: string; email: string; phone: string; zipcode: string }[];
+  past_racers: { first_name: string; last_name: string; email: string; phone: string }[];
 }
 
 let seeded: Seed<Credentials>;
@@ -57,12 +57,11 @@ test.describe('SPA roster: past racers', () => {
       await expect(dialog.getByRole('button', { name: 'Add Ada to the team' })).toBeDisabled();
     });
 
-    await test.step('Confirm all seven details, then add her', async () => {
+    await test.step('Confirm all six details, then add her', async () => {
       const lines = [
         `Name: ${ada.first_name} ${ada.last_name}`,
         `Email: ${ada.email}`,
         'Phone: (312) 555-0100',
-        `ZIP code: ${ada.zipcode}`,
         /^Years racing: ./,
         'Instagram: None',
         'TikTok: None',

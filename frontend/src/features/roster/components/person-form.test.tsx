@@ -15,7 +15,7 @@ function setup(props: Partial<Parameters<typeof PersonForm>[0]> = {}) {
 }
 
 describe('PersonForm', () => {
-  it('has fields in order: first, last, email, phone, zip, years, instagram, tiktok', () => {
+  it('has fields in order: first, last, email, phone, years, instagram, tiktok', () => {
     setup();
     const form = document.querySelector('form')!;
     const order = Array.from(form.elements)
@@ -26,7 +26,6 @@ describe('PersonForm', () => {
       'last_name',
       'email',
       'phone',
-      'zipcode',
       'experience',
       'instagram',
       'tiktok',
@@ -51,7 +50,6 @@ describe('PersonForm', () => {
     await user.type(screen.getByLabelText('Last name'), 'Lamb');
     await user.type(screen.getByLabelText('Email'), 'Dee@Example.com');
     await user.type(screen.getByLabelText('Phone'), '3125550144');
-    await user.type(screen.getByLabelText('ZIP code'), '60601');
     await user.selectOptions(screen.getByLabelText('Years racing'), '2');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(onSubmit).toHaveBeenCalledWith({
@@ -59,7 +57,6 @@ describe('PersonForm', () => {
       last_name: 'Lamb',
       email: 'dee@example.com',
       phone: '312-555-0144',
-      zipcode: '60601',
       experience: 2,
       instagram: '',
       tiktok: '',
@@ -72,7 +69,6 @@ describe('PersonForm', () => {
     await user.type(screen.getByLabelText('Last name'), 'Okafor');
     await user.type(screen.getByLabelText('Email'), 'sam@example.com');
     await user.type(screen.getByLabelText('Phone'), '3125550144');
-    await user.type(screen.getByLabelText('ZIP code'), '60601');
     await user.selectOptions(screen.getByLabelText('Years racing'), '1');
     await user.type(screen.getByLabelText('Instagram (optional)'), '@sam.okafor');
     await user.type(screen.getByLabelText('TikTok (optional)'), '@sam_o');
@@ -84,14 +80,10 @@ describe('PersonForm', () => {
     expect(submitted).not.toHaveProperty('twitter');
   });
 
-  it('auto-advances after the phone completes but not after the ZIP', async () => {
+  it('auto-advances to years racing after the phone completes', async () => {
     const { user } = setup();
     await user.type(screen.getByLabelText('Phone'), '3125550144');
-    expect(screen.getByLabelText('ZIP code')).toHaveFocus();
-    await user.type(screen.getByLabelText('ZIP code'), '60601');
-    expect(screen.getByLabelText('ZIP code')).toHaveFocus();
-    await user.type(screen.getByLabelText('ZIP code'), '-1234');
-    expect(screen.getByLabelText('ZIP code')).toHaveValue('60601-1234');
+    expect(screen.getByLabelText('Years racing')).toHaveFocus();
   });
 
   it('requires a years-racing choice before submitting', async () => {

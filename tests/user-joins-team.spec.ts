@@ -55,8 +55,7 @@ test.describe('User Registration and Team Finalization', () => {
       firstName: 'Fifth',
       lastName: 'Joiner',
       email: `fifth-${uniqueId}@example.com`,
-      phone: '555-999-8888',
-      zipcode: '60601'
+      phone: '555-999-8888'
     };
 
     // Step 1: Navigate to login page
@@ -126,7 +125,6 @@ test.describe('User Registration and Team Finalization', () => {
       await visibleInputs.nth(1).fill(fifthPerson.lastName); // Last Name
       await visibleInputs.nth(2).fill(fifthPerson.email); // Email
       await visibleInputs.nth(3).fill(fifthPerson.phone); // Mobile Phone
-      await visibleInputs.nth(4).fill(fifthPerson.zipcode); // Zip Code
 
       // Select experience level (years participated)
       const experienceSelect = page.locator('select').first();

@@ -44,7 +44,7 @@ class Api::V1::PeopleController < Api::V1::BaseController
   private
 
   def person_attributes
-    [:first_name, :last_name, :email, :phone, :zipcode, :experience, :instagram, :tiktok]
+    [:first_name, :last_name, :email, :phone, :experience, :instagram, :tiktok]
   end
 
   # Only the team's owner (or staff allowed to see it) may reach its people.

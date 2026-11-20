@@ -140,6 +140,15 @@ describe PeopleController do
         end
       end
 
+      context "with a stray zipcode param" do
+        it "ignores it and still updates" do
+          patch :update, params: { :id => person.id, :team_id => team.id, :person => { :last_name => "foo", :zipcode => "60614" } }
+
+          expect(person.reload.last_name).to eq("foo")
+          expect(response).to redirect_to(team_url :id => team.id)
+        end
+      end
+
       context "if update fails" do
         before do
           # Rails 6.1+: update_attributes was removed, use update instead
