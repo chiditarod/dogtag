@@ -10,10 +10,18 @@ describe "PersonAuditor" do
     let(:team) { FactoryBot.create :team, :with_people }
     let(:person) { FactoryBot.build :person, team_id: team.id }
 
+    before { team.update_column(:captain_id, team.people.first.id) }
+
     it "the team becomes finalized" do
       expect(team.finalized?).to be false
       person.save
       expect(team.reload.finalized?).to be true
+    end
+
+    it "stays unfinalized without a captain" do
+      team.update_column(:captain_id, nil)
+      person.save
+      expect(team.reload.finalized?).to be false
     end
   end
 

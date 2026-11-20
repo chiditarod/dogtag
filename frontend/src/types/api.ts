@@ -59,7 +59,8 @@ export interface FeeItem {
 }
 
 export interface Checklist {
-  racers: { filled: number; total: number; done: boolean };
+  /** `done` means the roster is full and a captain is chosen. */
+  racers: { filled: number; total: number; captain: boolean; done: boolean };
   questions: { required: boolean; done: boolean };
   fee: {
     done: boolean;
@@ -88,6 +89,8 @@ export interface Team {
   experience: number | null;
   /** Not finalized and nothing paid, so it can still be deleted. */
   deletable: boolean;
+  /** The racer (a person on this team) who is the captain; null until chosen. */
+  captain_id: number | null;
   race: Race;
   people: Person[];
   checklist: Checklist;

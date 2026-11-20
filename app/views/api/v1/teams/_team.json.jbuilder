@@ -1,4 +1,5 @@
 json.extract! team, :id, :name, :description, :experience
+json.captain_id team.captain_id
 json.deletable team.deletable?
 json.race do
   json.partial! "api/v1/races/race", race: team.race

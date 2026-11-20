@@ -14,6 +14,7 @@
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
+#   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -689,6 +690,41 @@ namespace :test_seeds do
       closed_team_name: closed_team.name
     )
     puts "✅ Seeded four races for #{short} and captain #{captain.email}"
+  end
+
+  desc "Captain's unfinalized team with two racers (neither is the account holder) and no team captain"
+  task team_captain: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding team captain test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    # Three slots with two racers, so the team stays unfinalized while the captain is chosen.
+    race = FactoryBot.create(:race, name: "Race Captain #{unique_id[0..7]}", people_per_team: 3, max_teams: 100)
+    owner = FactoryBot.create(:user,
+      first_name: "Owner",
+      last_name: "Account",
+      email: "captain-owner-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    team = FactoryBot.create(:team, name: "Test Team Captain #{unique_id[0..7]}", race: race, user: owner)
+    racers = [["Ada", "Racer"], ["Bo", "Pilot"]].map.with_index do |(first, last), index|
+      FactoryBot.create(:person, team: team, first_name: first, last_name: last,
+                                 email: "captain-racer#{index + 1}-#{unique_id}@example.com")
+    end
+
+    write_test_credentials(unique_id,
+      captain_email: owner.email,
+      captain_password: "password123",
+      race_name: race.name,
+      team_id: team.id,
+      team_name: team.name,
+      racers: racers.map { |r| { id: r.id, name: "#{r.first_name} #{r.last_name}" } }
+    )
+    puts "✅ Seeded #{owner.email} with a team of #{racers.size} racers and no captain in #{race.name}"
   end
 
   desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"

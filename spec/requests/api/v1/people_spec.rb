@@ -123,7 +123,7 @@ describe "API v1 people", type: :request do
     end
 
     it "finalizes a complete team when the last slot is filled" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
       Workers::TeamFinalizer.jobs.clear
 
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
@@ -135,7 +135,7 @@ describe "API v1 people", type: :request do
     end
 
     it "asks the SPA to show the confirmation when the last racer finalizes the team" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
 
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
 
@@ -214,7 +214,7 @@ describe "API v1 people", type: :request do
     end
 
     it "returns 422 when the team is complete" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
       team.reload.finalize
       expect(team.reload.finalized).to be(true)
 

@@ -38,6 +38,10 @@ en:
           attributes:
             confirmation_text:
               too_long_text: is too long (maximum is %{count} characters); shorten it to keep the confirmation email readable
+        team:
+          attributes:
+            captain:
+              not_on_team: must be one of the team's racers
         person:
           attributes:
             email:
@@ -189,7 +193,15 @@ en:
       registration_closed: Registration is closed for this race.
       invalid_buddies: Pick only other teams in this race.
       buddies_need_collaborating: Answer Yes to the same-route question before picking teams.
+      person_not_on_team: Pick one of this team's racers.
 
+  captains:
+    update:
+      success: "%{name} is now the team captain."
+      not_on_team: That racer is not on this team.
+    table:
+      captain: Team captain
+      make_captain: Make captain
   people:
     index:
       title: People
@@ -274,6 +286,9 @@ en:
       status: Team Status
       race: "Race:"
       registered_for: Registered for
+      captain: Team captain
+      no_captain: No captain chosen yet
+      account_holder: Account holder
       registration_closed: "Registration closed. No further updates are possible."
       can_change_until: "Finish all registration steps by %{date}"
       final_edits_until: "Registration closed. Racer details are editable until %{date}"
@@ -378,6 +393,7 @@ en:
       subject_closing_week: "Registration closes %{date}"
       subject_closing_day: Registration closes within 24 hours
       racers: "racers (%{count} of %{total})"
+      captain: team captain
       questions: team questions
       fee: registration fee
       heading: "Your team %{team} is not registered yet"

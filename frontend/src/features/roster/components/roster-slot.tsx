@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { formatPhoneDisplay } from '@/components/inputs/format';
 import { Button } from '@/components/ui/button';
+import { ChicagoStar } from '@/components/ui/chicago-star';
 import { fullName, initials } from '@/features/roster/utils';
 import { t } from '@/locales/en';
 import type { Person } from '@/types/api';
@@ -21,6 +22,10 @@ interface FilledSlotProps {
   /** "12 years racing"; absent when the racer has no years yet. */
   experienceLabel: string | undefined;
   captain: boolean;
+  /** Shown on every other racer where Edit is shown; absent hides the button. */
+  onMakeCaptain?: () => void;
+  /** A captain change is in flight: every Make captain button waits. */
+  settingCaptain?: boolean;
   /** Edit is allowed through the final-edits window. */
   canEdit: boolean;
   canRemove: boolean;
@@ -37,6 +42,8 @@ export function FilledSlot({
   person,
   experienceLabel,
   captain,
+  onMakeCaptain,
+  settingCaptain = false,
   canEdit,
   canRemove,
   confirmingRemove,
@@ -55,7 +62,10 @@ export function FilledSlot({
   const name = fullName(person);
 
   return (
-    <div className="space-y-3">
+    <div
+      className={`space-y-3 ${captain ? '-mx-2 rounded-md bg-flag/30 px-2 py-2' : ''}`}
+      data-captain={captain ? 'true' : undefined}
+    >
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <Avatar person={person} />
@@ -63,9 +73,14 @@ export function FilledSlot({
             <div className="flex flex-wrap items-center gap-2">
               <p className="min-w-0 font-semibold [overflow-wrap:anywhere]">{name}</p>
               {captain && (
-                <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
-                  {t('roster.captain')}
-                </span>
+                <>
+                  <span data-testid="captain-star" className="flex shrink-0">
+                    <ChicagoStar filled className="h-5 w-5" />
+                  </span>
+                  <span className="rounded-full bg-navy px-2 py-0.5 text-xs font-semibold text-white">
+                    {t('roster.captain')}
+                  </span>
+                </>
               )}
             </div>
             <p className="truncate text-sm text-navy/80" title={person.email}>
@@ -92,6 +107,18 @@ export function FilledSlot({
                 onClick={onEdit}
               >
                 {t('roster.edit')}
+              </Button>
+            )}
+            {onMakeCaptain && !captain && (
+              <Button
+                variant="ghost"
+                className="sm:min-h-9"
+                aria-label={t('roster.makeCaptainLabel', { name })}
+                data-focus-key={`captain-${person.id}`}
+                disabled={settingCaptain}
+                onClick={onMakeCaptain}
+              >
+                {t('roster.makeCaptain')}
               </Button>
             )}
             {canRemove && (

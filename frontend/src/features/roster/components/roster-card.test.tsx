@@ -36,16 +36,18 @@ interface Setup {
   past?: Array<typeof dee>;
   race?: Partial<Race>;
   checklist?: Partial<Checklist>;
+  captainId?: number | null;
 }
 
 let requests: Array<{ method: string; url: string; body: unknown }>;
 
-function serve({ people = [], past = [], race = {}, checklist = {} }: Setup = {}) {
+function serve({ people = [], past = [], race = {}, checklist = {}, captainId = null }: Setup = {}) {
   const team: Team = buildTeam({
     people,
+    captain_id: captainId,
     race: buildRace(race),
     checklist: buildChecklist({
-      racers: { filled: people.length, total: 5, done: false },
+      racers: { filled: people.length, total: 5, captain: false, done: false },
       ...checklist,
     }),
   });
@@ -114,6 +116,7 @@ describe('RosterCard slots', () => {
         buildPerson({ instagram: '@ada' }),
         buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com', experience: 2 }),
       ],
+      captainId: 1,
     });
     renderApp('/teams/9');
     await openRoster();
@@ -148,24 +151,165 @@ describe('RosterCard slots', () => {
     expect(within(second).getByText('bo@example.com')).toBeInTheDocument();
     expect(within(second).queryByText(/^@/)).toBeNull();
   });
-
-  it('marks the first person matching the signed-in email (case-insensitive) as captain', async () => {
-    serve({
-      people: [
-        buildPerson({ id: 2, first_name: 'Bo', email: 'bo@example.com' }),
-        buildPerson({ id: 3, first_name: 'Ada', email: 'Ada@Example.com' }),
-      ],
-    });
-    renderApp('/teams/9');
-    await openRoster();
-    expect(within(slots()[0]).queryByText('Captain')).toBeNull();
-    expect(within(slots()[1]).getByText('Captain')).toBeInTheDocument();
-  });
 });
 
 const eight = [dee, racer(2), racer(3), racer(4), racer(5), racer(6), racer(7), racer(8)];
 
 const bo = () => buildPerson({ id: 2, first_name: 'Bo', last_name: 'Z', email: 'bo@example.com' });
+
+describe('team captain', () => {
+  const ada = () => buildPerson({ id: 1 });
+  const captainRow = () => slots()[0];
+
+  it('marks the captain from team.captain_id with a star, the badge and a highlight, not from the viewer email', async () => {
+    serve({ people: [ada(), bo()], captainId: 2 });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(within(slots()[0]).queryByTestId('captain-star')).toBeNull();
+    expect(within(slots()[0]).queryByText('Captain')).toBeNull();
+    const row = slots()[1];
+    expect(within(row).getByTestId('captain-star')).toBeInTheDocument();
+    expect(within(row).getByText('Captain')).toBeInTheDocument();
+    expect(row.querySelector('[data-captain="true"]')).toHaveClass('bg-flag/30');
+    expect(screen.getAllByTestId('captain-star')).toHaveLength(1);
+  });
+
+  it('gives every other row a Make captain button, and the captain none', async () => {
+    serve({ people: [ada(), bo()], captainId: 1 });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(within(slots()[0]).queryByRole('button', { name: /^Make / })).toBeNull();
+    expect(within(slots()[1]).getByRole('button', { name: 'Make Bo Z captain' })).toHaveTextContent(
+      'Make captain',
+    );
+  });
+
+  it('moves the star at once, PUTs the person id, and keeps the server team', async () => {
+    const team = serve({ people: [ada(), bo()], captainId: 1 });
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.put('/api/v1/teams/9/captain', async ({ request }) => {
+        await record(request);
+        await gate;
+        return HttpResponse.json({ team: { ...team, captain_id: 2 } });
+      }),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: 'Make Bo Z captain' }));
+    // Optimistic: the star is already on Bo's row while the request is held.
+    await waitFor(() => expect(within(slots()[1]).getByTestId('captain-star')).toBeInTheDocument());
+    expect(within(captainRow()).queryByTestId('captain-star')).toBeNull();
+    // In flight: the remaining Make captain buttons are disabled.
+    expect(screen.getByRole('button', { name: 'Make Ada L captain' })).toBeDisabled();
+    release();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Make Ada L captain' })).toBeEnabled());
+    expect(requests).toEqual([{ method: 'PUT', url: '/api/v1/teams/9/captain', body: { person_id: 2 } }]);
+    expect(within(slots()[1]).getByTestId('captain-star')).toBeInTheDocument();
+  });
+
+  it('rolls the star back and shows the error when the request fails', async () => {
+    serve({ people: [ada(), bo()], captainId: 1 });
+    server.use(
+      http.put('/api/v1/teams/9/captain', () =>
+        HttpResponse.json(
+          { error: 'Invalid', errors: { person_id: ['is not on this team'] } },
+          { status: 422 },
+        ),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: 'Make Bo Z captain' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('is not on this team');
+    expect(within(captainRow()).getByTestId('captain-star')).toBeInTheDocument();
+    expect(within(slots()[1]).queryByTestId('captain-star')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Make Bo Z captain' })).toBeEnabled();
+  });
+
+  it('shows a 403 (registration closed) in the page banner and rolls back', async () => {
+    serve({ people: [ada(), bo()], captainId: 1, race: { open_for_registration: false } });
+    server.use(
+      http.put('/api/v1/teams/9/captain', () =>
+        HttpResponse.json({ error: 'Registration is closed.', errors: {} }, { status: 403 }),
+      ),
+    );
+    const u = userEvent.setup();
+    renderApp('/teams/9');
+    await openRoster();
+    await u.click(screen.getByRole('button', { name: 'Make Bo Z captain' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Registration is closed.');
+  });
+
+  it('asks the racers to choose a captain while the roster has people and no captain', async () => {
+    serve({ people: [ada()], captainId: null });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.getByText('Choose one racer as your team captain.')).toBeInTheDocument();
+    expect(screen.queryByTestId('captain-star')).toBeNull();
+  });
+
+  it('has no hint for an empty roster or once a captain is chosen', async () => {
+    serve({ people: [] });
+    const { queryClient } = renderApp('/teams/9');
+    await openRoster();
+    expect(screen.queryByText('Choose one racer as your team captain.')).toBeNull();
+
+    serve({ people: [ada()], captainId: 1 });
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    await screen.findByText('Ada L');
+    expect(screen.queryByText('Choose one racer as your team captain.')).toBeNull();
+  });
+
+  it('keeps naming the captain, with a star, in the collapsed finalized card', async () => {
+    const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
+      buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
+    );
+    serve({
+      people: five,
+      captainId: 3,
+      checklist: { finalized: true, racers: { filled: 5, total: 5, captain: true, done: true } },
+    });
+    renderApp('/teams/9');
+    const roster = await openRoster();
+    const summary = within(roster).getByTestId('captain-summary');
+    expect(summary).toHaveTextContent('Captain: Cy Z');
+    expect(summary.querySelector('svg')).not.toBeNull();
+    expect(within(roster).getByRole('button', { name: 'Show racers' })).toBeInTheDocument();
+  });
+
+  it('collapses a finalized full team that never had a captain, with no summary line', async () => {
+    const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
+      buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
+    );
+    serve({
+      people: five,
+      checklist: { finalized: true, racers: { filled: 5, total: 5, captain: false, done: false } },
+    });
+    renderApp('/teams/9');
+    const roster = await openRoster();
+    expect(within(roster).getByRole('button', { name: 'Show racers' })).toBeInTheDocument();
+    expect(within(roster).queryByTestId('captain-summary')).toBeNull();
+  });
+
+  it('offers Add yourself when the captain is someone else and you are not on the roster', async () => {
+    serve({ people: [bo()], captainId: 2 });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(await screen.findByRole('button', { name: 'Add yourself' })).toBeInTheDocument();
+  });
+
+  it('hides Add yourself once your email is on the roster, even if you are not the captain', async () => {
+    serve({ people: [ada(), bo()], captainId: 2 });
+    renderApp('/teams/9');
+    await openRoster();
+    expect(screen.getByRole('button', { name: '+ Add someone new' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
+  });
+});
 
 describe('the actions under the list', () => {
   it('offers one picker button, one add button and the open-spots count', async () => {
@@ -227,7 +371,7 @@ describe('the crew picker from the roster', () => {
         return HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 3, total: 5, done: false } }),
+            checklist: buildChecklist({ racers: { filled: 3, total: 5, captain: false, done: false } }),
           },
           { status: 201 },
         );
@@ -257,7 +401,7 @@ describe('the crew picker from the roster', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 2, total: 2, done: true } }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 2, captain: true, done: true } }),
           },
           { status: 201 },
         ),
@@ -286,7 +430,7 @@ describe('the crew picker from the roster', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, captain: false, done: false } }),
           },
           { status: 201 },
         ),
@@ -316,7 +460,7 @@ describe('the crew picker from the roster', () => {
         return HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee.new@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 3, total: 5, done: false } }),
+            checklist: buildChecklist({ racers: { filled: 3, total: 5, captain: false, done: false } }),
           },
           { status: 201 },
         );
@@ -403,7 +547,7 @@ describe('Add yourself', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, captain: false, done: false } }),
           },
           { status: 201 },
         ),
@@ -439,7 +583,7 @@ describe('collapsed when full on load', () => {
   const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
     buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
   );
-  const full = { racers: { filled: 5, total: 5, done: true } };
+  const full = { racers: { filled: 5, total: 5, captain: true, done: true } };
 
   it('shows the first names and a Show racers button, then the rows', async () => {
     serve({ people: five, checklist: full });
@@ -476,7 +620,7 @@ describe('collapsed when full on load', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 9, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 5, total: 5, done: true } }),
+            checklist: buildChecklist({ racers: { filled: 5, total: 5, captain: true, done: true } }),
           },
           { status: 201 },
         ),
@@ -503,7 +647,7 @@ describe('collapsing when the team finishes', () => {
   const five = ['Ada', 'Bo', 'Cy', 'Di', 'Ed'].map((name, index) =>
     buildPerson({ id: index + 1, first_name: name, last_name: 'Z', email: `${name.toLowerCase()}@example.com` }),
   );
-  const full = { racers: { filled: 5, total: 5, done: true } };
+  const full = { racers: { filled: 5, total: 5, captain: true, done: true } };
 
   it('collapses when the team becomes finalized during the visit', async () => {
     serve({ people: five, checklist: full });
@@ -664,7 +808,7 @@ describe('adding someone new', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 2, total: 5, done: false } }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 5, captain: false, done: false } }),
           },
           { status: 201 },
         ),
@@ -686,7 +830,7 @@ describe('adding someone new', () => {
         HttpResponse.json(
           {
             person: buildPerson({ id: 7, first_name: 'Dee', last_name: 'Lamb', email: 'dee@example.com' }),
-            checklist: buildChecklist({ racers: { filled: 2, total: 2, done: true } }),
+            checklist: buildChecklist({ racers: { filled: 2, total: 2, captain: true, done: true } }),
           },
           { status: 201 },
         ),
@@ -785,7 +929,7 @@ describe('editing and removing', () => {
     server.use(
       http.delete('/api/v1/teams/9/people/2', async ({ request }) => {
         await record(request);
-        return HttpResponse.json({ checklist: buildChecklist({ racers: { filled: 1, total: 5, done: false } }) });
+        return HttpResponse.json({ checklist: buildChecklist({ racers: { filled: 1, total: 5, captain: false, done: false } }) });
       }),
     );
     const u = userEvent.setup();
@@ -817,7 +961,7 @@ describe('editing and removing', () => {
         return HttpResponse.json({ past_racers: [dee] });
       }),
       http.delete('/api/v1/teams/9/people/2', () =>
-        HttpResponse.json({ checklist: buildChecklist({ racers: { filled: 1, total: 5, done: false } }) }),
+        HttpResponse.json({ checklist: buildChecklist({ racers: { filled: 1, total: 5, captain: false, done: false } }) }),
       ),
     );
     const u = userEvent.setup();

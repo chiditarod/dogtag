@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ChicagoStar } from '@/components/ui/chicago-star';
 import { useMe } from '@/features/auth/api/use-me';
 import {
   usePastRacers,
   type PastRacer,
 } from '@/features/roster/api/use-past-racers';
+import { useSetCaptain } from '@/features/roster/api/use-set-captain';
 import {
   useAddPerson,
   useRemovePerson,
@@ -30,7 +32,7 @@ import {
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import type { Team } from '@/types/api';
+import type { Person, Team } from '@/types/api';
 
 interface ActiveForm {
   /** Present when editing an existing person. */
@@ -64,7 +66,7 @@ export function RosterCard({ team }: { team: Team }) {
   const [active, setActive] = useState<ActiveForm | null>(null);
   const [picker, setPicker] = useState<{ reviewOnly?: PastRacer } | null>(null);
   // A roster that is already full when the page loads starts as a summary.
-  const [collapsed, setCollapsed] = useState(() => checklist.racers.done);
+  const [collapsed, setCollapsed] = useState(() => checklist.racers.done || (checklist.finalized && !hasEmptySlot));
   const [wasFinalized, setWasFinalized] = useState(checklist.finalized);
   const [removing, setRemoving] = useState<number | null>(null);
   const [status, setStatus] = useState('');
@@ -77,6 +79,7 @@ export function RosterCard({ team }: { team: Team }) {
   const add = useAddPerson(team.id);
   const update = useUpdatePerson(team.id, active?.personId);
   const remove = useRemovePerson(team.id);
+  const setCaptain = useSetCaptain(team.id);
   const save = active?.personId === undefined ? add : update;
 
   // Past racers added through the picker, by the email they were listed under,
@@ -109,19 +112,19 @@ export function RosterCard({ team }: { team: Team }) {
       target.focus();
       restoreFocus.current = null;
     }
-  }, [active, removing, picker, collapsed, people]);
+  }, [active, removing, picker, collapsed, people, team.captain_id]);
 
   // The last spot was filled: the picker has nothing left to offer.
   useEffect(() => {
     if (picker && !hasEmptySlot) setPicker(null);
   }, [picker, hasEmptySlot]);
 
-  const captainId = people.find(
-    (person) => person.email.toLowerCase() === me?.email.toLowerCase(),
-  )?.id;
+  const captainId = team.captain_id;
+  const captain = people.find((person) => person.id === captainId);
   const addingNew = active !== null && active.personId === undefined;
-  const canAddMe =
-    Boolean(me) && captainId === undefined && !emailsOnTeam.has(me?.email.toLowerCase() ?? '');
+  // The account holder is not always a racer: offer to add them until their
+  // email is on the roster, whoever the captain is.
+  const canAddMe = Boolean(me) && !emailsOnTeam.has(me?.email.toLowerCase() ?? '');
 
   function openForm(next: ActiveForm) {
     add.reset();
@@ -165,6 +168,28 @@ export function RosterCard({ team }: { team: Team }) {
       },
       onError: (error) => reportError(error),
     });
+  }
+
+  function makeCaptain(person: Person) {
+    restoreFocus.current = `edit-${person.id}`;
+    setCaptain.mutate(person.id, {
+      onSuccess: () => {
+        clearError();
+        setStatus(t('roster.captainIs', { name: fullName(person) }));
+      },
+      onError: (error) => reportError(error),
+    });
+  }
+
+  /** Inline text for a failed captain change; a 403 shows in the page banner instead. */
+  function captainMessage() {
+    const { error } = setCaptain;
+    if (!error) return null;
+    if (error instanceof ApiError) {
+      if (error.status === 403) return null;
+      return error.errors?.person_id?.[0] || error.error || t('common.genericError');
+    }
+    return t('common.genericError');
   }
 
   function confirmRemove(personId: number, name: string) {
@@ -226,6 +251,8 @@ export function RosterCard({ team }: { team: Team }) {
               : yearsCount(person.experience)
           }
           captain={person.id === captainId}
+          onMakeCaptain={() => makeCaptain(person)}
+          settingCaptain={setCaptain.isPending}
           canEdit
           canRemove={canRemove}
           confirmingRemove={removing === person.id}
@@ -265,6 +292,12 @@ export function RosterCard({ team }: { team: Team }) {
           {status}
         </p>
         <p>{people.map((person) => person.first_name).join(', ')}</p>
+        {captain && (
+          <p className="flex items-center gap-1.5 text-sm font-semibold" data-testid="captain-summary">
+            <ChicagoStar filled className="h-4 w-4 shrink-0" />
+            {t('roster.captainIs', { name: fullName(captain) })}
+          </p>
+        )}
         <Button
           variant="ghost"
           className="-ml-4"
@@ -290,6 +323,16 @@ export function RosterCard({ team }: { team: Team }) {
       <p role="status" className="sr-only">
         {status}
       </p>
+      {people.length > 0 && captainId === null && (
+        <p className="text-sm font-semibold" data-testid="choose-captain">
+          {t('roster.chooseCaptain')}
+        </p>
+      )}
+      {captainMessage() && (
+        <p role="alert" className="text-sm text-starText">
+          {captainMessage()}
+        </p>
+      )}
       <ol
         aria-label={t('roster.slots')}
         tabIndex={-1}

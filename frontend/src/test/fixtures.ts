@@ -31,7 +31,7 @@ export function buildRace(overrides: Partial<Race> = {}): Race {
 
 export function buildChecklist(overrides: Partial<Checklist> = {}): Checklist {
   return {
-    racers: { filled: 1, total: 5, done: false },
+    racers: { filled: 1, total: 5, captain: false, done: false },
     questions: { required: false, done: true },
     fee: {
       done: false,
@@ -68,6 +68,7 @@ export function buildTeam(overrides: Partial<Team> = {}): Team {
     description: 'We push carts',
     experience: 1,
     deletable: true,
+    captain_id: null,
     race: buildRace(),
     people: [],
     checklist: buildChecklist(),
