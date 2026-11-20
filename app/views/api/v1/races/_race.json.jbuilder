@@ -2,6 +2,7 @@ json.extract! race, :id, :name, :race_datetime, :registration_open, :registratio
               :people_per_team, :experience_labels, :time_zone
 json.open_for_registration race.open_for_registration?
 json.full race.full?
+json.registration_status race.registration_status
 jsonform =
   begin
     JSON.parse(race.jsonform) if race.jsonform.present?

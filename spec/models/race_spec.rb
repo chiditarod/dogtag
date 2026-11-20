@@ -533,4 +533,71 @@ describe Race do
       expect(FactoryBot.build(:race, experience_labels: ["a"]).experience_label(4)).to eq("4 years")
     end
   end
+
+  describe "#registration_status" do
+    it "returns :open for a race that is open and not full" do
+      expect(FactoryBot.build(:race).registration_status).to eq(:open)
+    end
+
+    it "returns :waitlist for an open race at capacity" do
+      race = FactoryBot.build(:race)
+      race.finalized_teams_count = race.max_teams
+
+      expect(race.registration_status).to eq(:waitlist)
+    end
+
+    it "returns :not_yet_open when registration opens in the future" do
+      expect(FactoryBot.build(:race, :registration_opens_tomorrow).registration_status).to eq(:not_yet_open)
+    end
+
+    it "returns :closed when registration is over" do
+      expect(FactoryBot.build(:race, :registration_closed).registration_status).to eq(:closed)
+    end
+
+    it "returns :closed, not :waitlist, for a full race whose registration is over" do
+      race = FactoryBot.build(:race, :registration_closed)
+      race.finalized_teams_count = race.max_teams
+
+      expect(race.registration_status).to eq(:closed)
+    end
+
+    it "still returns :open at the exact moment registration closes" do
+      Timecop.freeze do
+        race = FactoryBot.build(:race, registration_close: Time.zone.now)
+
+        expect(race.registration_status).to eq(:open)
+      end
+    end
+  end
+
+  describe "#registration_sort_key" do
+    let(:open_race) { FactoryBot.build(:race, id: 1) }
+    let(:waitlist_race) do
+      FactoryBot.build(:race, id: 2).tap { |race| race.finalized_teams_count = race.max_teams }
+    end
+    let(:closed_race) { FactoryBot.build(:race, :registration_closed, id: 3) }
+    let(:not_yet_open_race) { FactoryBot.build(:race, :registration_opens_tomorrow, id: 4) }
+
+    it "ranks open before waitlist before closed before not_yet_open" do
+      races = [not_yet_open_race, closed_race, waitlist_race, open_race]
+
+      expect(races.sort_by(&:registration_sort_key)).to eq([open_race, waitlist_race, closed_race, not_yet_open_race])
+    end
+
+    it "uses race_datetime within a group" do
+      sooner = FactoryBot.build(:race, id: 5, race_datetime: 4.weeks.from_now)
+      later = FactoryBot.build(:race, id: 6, race_datetime: 8.weeks.from_now)
+
+      expect(sooner.registration_sort_key[1]).to eq(sooner.race_datetime)
+      expect([later, sooner].sort_by(&:registration_sort_key)).to eq([sooner, later])
+    end
+
+    it "uses registration_open for a not_yet_open race" do
+      expect(not_yet_open_race.registration_sort_key[1]).to eq(not_yet_open_race.registration_open)
+    end
+
+    it "ends with the id" do
+      expect(open_race.registration_sort_key.last).to eq(1)
+    end
+  end
 end

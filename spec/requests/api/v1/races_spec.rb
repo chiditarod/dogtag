@@ -16,6 +16,47 @@ describe "API v1 races", type: :request do
       expect(response).to have_http_status(:ok)
       expect(json["races"].map { |r| r["id"] }).to eq([race.id, later.id])
     end
+
+    describe "ordering by registration status" do
+      # Race dates run opposite to the expected order, so date order alone cannot pass.
+      let!(:waitlist) { FactoryBot.create(:full_race, race_datetime: 3.5.weeks.from_now) }
+      let!(:closed) do
+        FactoryBot.create(:race, registration_open: 3.weeks.ago, registration_close: 1.week.ago,
+                                 final_edits_close: 1.week.from_now, race_datetime: 2.weeks.from_now)
+      end
+      let!(:not_yet_open) do
+        FactoryBot.create(:race, registration_open: 2.days.from_now, registration_close: 1.week.from_now,
+                                 final_edits_close: 10.days.from_now, race_datetime: 11.days.from_now)
+      end
+
+      it "lists open races, then waitlist, then registration-over, then not-yet-open races" do
+        get "/api/v1/races"
+
+        expect(json["races"].map { |r| r["id"] }).to eq([race.id, waitlist.id, closed.id, not_yet_open.id])
+        expect(json["races"].map { |r| r["registration_status"] }).to eq(%w[open waitlist closed not_yet_open])
+      end
+
+      it "orders not-yet-open races by when registration opens, not by race date" do
+        opens_first_races_later = FactoryBot.create(:race, registration_open: 1.day.from_now,
+                                                           registration_close: 2.weeks.from_now,
+                                                           final_edits_close: 3.weeks.from_now,
+                                                           race_datetime: 10.weeks.from_now)
+
+        get "/api/v1/races"
+
+        ids = json["races"].map { |r| r["id"] }
+        expect(ids.last(2)).to eq([opens_first_races_later.id, not_yet_open.id])
+      end
+
+      it "breaks ties on race datetime by id" do
+        tied = FactoryBot.create(:race, race_datetime: race.race_datetime)
+
+        get "/api/v1/races"
+
+        ids = json["races"].map { |r| r["id"] }
+        expect(ids.first(2)).to eq([race.id, tied.id])
+      end
+    end
   end
 
   it "lists a current race that has both plain and payment requirements" do
@@ -39,6 +80,7 @@ describe "API v1 races", type: :request do
         "name" => race.name,
         "open_for_registration" => true,
         "full" => false,
+        "registration_status" => "open",
         "people_per_team" => race.people_per_team,
         "experience_labels" => ["Rookie", "Veteran"],
         "stripe_publishable_key" => Rails.configuration.stripe[:publishable_key],

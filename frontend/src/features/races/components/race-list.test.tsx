@@ -53,14 +53,28 @@ describe('RaceList', () => {
 
   it('shows a closed race with the closed badge and no start button', async () => {
     vi.useFakeTimers({ toFake: ['Date'], now: new Date('2027-03-01T12:00:00Z') });
-    mockRaces(buildRace({ open_for_registration: false }));
+    mockRaces(buildRace({ open_for_registration: false, registration_status: 'closed' }));
     renderApp('/');
     expect(await screen.findByText(t('races.closed'))).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: t('races.start') })).toBeNull();
   });
 
+  it('does not show an Opens date for a closed race whose registration is over', async () => {
+    mockRaces(
+      buildRace({
+        open_for_registration: false,
+        registration_status: 'closed',
+        // Even with an opening date in the future, the server status decides.
+        registration_open: '2099-01-01T06:00:00.000Z',
+      }),
+    );
+    renderApp('/');
+    expect(await screen.findByText(t('races.closed'))).toBeInTheDocument();
+    expect(screen.queryByText(/^Opens/)).toBeNull();
+  });
+
   it('shows the waitlist badge and a start button for a full open race', async () => {
-    mockRaces(buildRace({ full: true }));
+    mockRaces(buildRace({ full: true, registration_status: 'waitlist' }));
     renderApp('/');
     expect(await screen.findByText(t('races.waitlist'))).toBeInTheDocument();
     expect(screen.getByRole('link', { name: t('races.start') })).toBeInTheDocument();
@@ -68,11 +82,35 @@ describe('RaceList', () => {
   });
 
   it('shows when registration opens for a race that has not opened yet', async () => {
-    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-11-11T12:00:00Z') });
-    mockRaces(buildRace({ open_for_registration: false }));
+    mockRaces(
+      buildRace({ open_for_registration: false, registration_status: 'not_yet_open' }),
+    );
     renderApp('/');
     expect(await screen.findByText('Opens Tue, Dec 1, 2026')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: t('races.start') })).toBeNull();
+  });
+
+  it('decides "not yet open" from the server status, not the browser clock', async () => {
+    // The browser clock says registration opened long ago; the server says it has not.
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2030-01-01T12:00:00Z') });
+    mockRaces(
+      buildRace({ open_for_registration: false, registration_status: 'not_yet_open' }),
+    );
+    renderApp('/');
+    expect(await screen.findByText('Opens Tue, Dec 1, 2026')).toBeInTheDocument();
+  });
+
+  it('renders races in the order the server sends them', async () => {
+    mockRaces(
+      buildRace({ id: 3, name: 'Third by date' }),
+      buildRace({ id: 1, name: 'First by date' }),
+      buildRace({ id: 2, name: 'Second by date' }),
+    );
+    renderApp('/');
+    await screen.findByText('Third by date');
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
+    ).toEqual(['Third by date', 'First by date', 'Second by date']);
   });
 
   it('shows an error with a retry button', async () => {
