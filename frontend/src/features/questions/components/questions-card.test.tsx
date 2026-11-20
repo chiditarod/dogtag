@@ -215,6 +215,77 @@ describe('QuestionsCard', () => {
     });
   });
 
+  describe('showWhen', () => {
+    const done = { questions: { required: true, done: true } };
+
+    /** The fixture plus an optional fire-details textarea shown only when flame-effects is Yes. */
+    function withFireDetails(maxLength?: number) {
+      const clone = structuredClone(fixture) as unknown as {
+        schema: { properties: Record<string, unknown> };
+        form: unknown[];
+      };
+      clone.schema.properties['fire-details'] = {
+        type: 'string',
+        title: 'Details about your fire effects',
+        ...(maxLength ? { maxLength } : {}),
+      };
+      const addAfterFlame = (items: unknown[]): unknown[] =>
+        items.flatMap((item) => {
+          if (item === 'flame-effects') {
+            return [item, { key: 'fire-details', type: 'textarea', showWhen: { 'flame-effects': 'Yes' } }];
+          }
+          const object = item as { items?: unknown[] };
+          return [object.items ? { ...object, items: addAfterFlame(object.items) } : item];
+        });
+      clone.form = addAfterFlame(clone.form);
+      return clone;
+    }
+
+    async function openEditor(answers: Record<string, string>, jsonform: unknown = withFireDetails()) {
+      serve({ answers, checklist: done, jsonform });
+      renderApp('/teams/9');
+      const c = await card();
+      await userEvent.click(await c.findByRole('button', { name: 'Edit answers' }));
+      return c;
+    }
+
+    it('omits a hidden field\'s saved answer from the PUT payload', async () => {
+      const c = await openEditor({ ...valid, 'fire-details': 'old text' });
+      expect(c.queryByRole('textbox', { name: /Details about your fire effects/ })).not.toBeInTheDocument();
+      await userEvent.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
+    });
+
+    it('sends the field once it is shown', async () => {
+      const c = await openEditor(valid);
+      await userEvent.click(within(c.getByRole('radiogroup', { name: /Fire Effects/ })).getByRole('radio', { name: 'Yes' }));
+      await userEvent.type(c.getByRole('textbox', { name: /Details about your fire effects/ }), 'propane poi');
+      await userEvent.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({
+        answers: { ...valid, 'flame-effects': 'Yes', 'fire-details': 'propane poi' },
+        buddy_team_ids: [],
+        other_buddies: '',
+      });
+    });
+
+    it('counts only visible fields in the answered summary', async () => {
+      serve({ answers: { ...valid, 'fire-details': 'old text' }, checklist: done, jsonform: withFireDetails() });
+      renderApp('/teams/9');
+      const c = await card();
+      // 22 schema keys without fire-details; its stale saved answer is not counted either.
+      expect(await c.findByText('18 of 22 questions answered')).toBeInTheDocument();
+    });
+
+    it('does not block Save on a hidden optional field with an invalid saved value', async () => {
+      const c = await openEditor({ ...valid, 'fire-details': 'way too long' }, withFireDetails(5));
+      await userEvent.click(c.getByRole('button', { name: 'Save' }));
+      await waitFor(() => expect(puts).toHaveLength(1));
+      expect(puts[0]).toEqual({ answers: valid, buddy_team_ids: [], other_buddies: '' });
+    });
+  });
+
   it('maps 422 messages to their question keys and shows the rest as form-level errors', async () => {
     serve({ answers: valid, checklist: { questions: { required: true, done: true } }, collaborating: false });
     putResponse = () =>
