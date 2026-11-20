@@ -85,6 +85,63 @@ describe Race do
       expect(FactoryBot.build(:race, time_zone: "Etc/GMT+6")).not_to be_valid
       expect(FactoryBot.build(:race, time_zone: "US/Central")).not_to be_valid
     end
+
+    describe "jsonform showWhen" do
+      def race_with_form(form, fire_details: {})
+        schema = {
+          "type" => "object",
+          "properties" => {
+            "flame-effects" => { "type" => "string", "enum" => %w[No Yes], "required" => true },
+            "fire-details" => { "type" => "string" }.merge(fire_details)
+          }
+        }
+        FactoryBot.build(:race_with_jsonform, json_data: JSON.generate("schema" => schema, "form" => form))
+      end
+
+      let(:show_when) { { "flame-effects" => "Yes" } }
+
+      it "is valid for an optional field with showWhen" do
+        race = race_with_form(["flame-effects", { "key" => "fire-details", "type" => "textarea", "showWhen" => show_when }])
+        expect(race).to be_valid
+      end
+
+      it "is valid for a form without showWhen" do
+        expect(race_with_form(["flame-effects", "fire-details"], fire_details: { "required" => true })).to be_valid
+        expect(FactoryBot.build(:race_with_jsonform)).to be_valid
+      end
+
+      it "is not valid when a required field has showWhen" do
+        race = race_with_form(
+          ["flame-effects", { "key" => "fire-details", "showWhen" => show_when }],
+          fire_details: { "required" => true }
+        )
+        expect(race).not_to be_valid
+        expect(race.errors[:jsonform].join).to include("fire-details")
+      end
+
+      it "is not valid when a required field inside a fieldset has showWhen" do
+        race = race_with_form(
+          [{ "type" => "fieldset", "items" => ["flame-effects", { "key" => "fire-details", "showWhen" => show_when }] }],
+          fire_details: { "required" => true }
+        )
+        expect(race).not_to be_valid
+        expect(race.errors[:jsonform].join).to include("fire-details")
+      end
+
+      it "is not valid when a required field has a malformed showWhen" do
+        race = race_with_form(
+          ["flame-effects", { "key" => "fire-details", "showWhen" => "Yes" }],
+          fire_details: { "required" => true }
+        )
+        expect(race).not_to be_valid
+      end
+
+      it "does not raise on a jsonform whose shape is not a schema and form" do
+        ["[]", "{}", '{"schema": [], "form": "x"}', '{"schema": {"properties": {}}, "form": [1, null]}'].each do |json|
+          expect { FactoryBot.build(:race_with_jsonform, json_data: json).valid? }.not_to raise_error
+        end
+      end
+    end
   end
 
   describe "confirmation text" do

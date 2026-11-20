@@ -25,9 +25,31 @@ class RaceValidator < ActiveModel::Validator
   def validate_jsonform(record)
     return unless record.jsonform.present?
     begin
-      JSON.parse(record.jsonform)
+      validate_show_when(record, JSON.parse(record.jsonform))
     rescue JSON::ParserError => ex
       record.errors.add(:jsonform, ex.message)
+    end
+  end
+
+  # TeamValidator checks saved answers against the whole schema whatever the
+  # SPA shows, so a field that can be hidden must not be required.
+  def validate_show_when(record, jsonform)
+    return unless jsonform.is_a?(Hash) && jsonform["schema"].is_a?(Hash)
+    properties = jsonform["schema"]["properties"]
+    return unless properties.is_a?(Hash) && jsonform["form"].is_a?(Array)
+
+    each_form_item(jsonform["form"]) do |item|
+      key = item["key"]
+      next unless item.key?("showWhen") && properties[key].is_a?(Hash) && properties[key]["required"] == true
+      record.errors.add(:jsonform, "field \"#{key}\" is required, so it cannot have showWhen")
+    end
+  end
+
+  def each_form_item(items, &block)
+    items.each do |item|
+      next unless item.is_a?(Hash)
+      yield item
+      each_form_item(item["items"], &block) if item["items"].is_a?(Array)
     end
   end
 
