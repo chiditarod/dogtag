@@ -22,6 +22,7 @@ import type {
 } from '@/features/questions/types';
 import {
   defaultAnswers,
+  hiddenKeys,
   mapServerErrors,
   validateAnswers,
 } from '@/features/questions/validate';
@@ -32,10 +33,11 @@ import type { Team } from '@/types/api';
 
 const isAnswered = (value: string | undefined) => !!value?.trim();
 
-/** Only schema keys, trimmed, with empty values omitted. */
-function buildPayload(schema: JsonformSchema, draft: Answers): Answers {
+/** Only visible schema keys, trimmed, with empty values omitted. */
+function buildPayload(schema: JsonformSchema, draft: Answers, hidden: ReadonlySet<string>): Answers {
   const payload: Answers = {};
   for (const key of Object.keys(schema.properties)) {
+    if (hidden.has(key)) continue;
     const value = draft[key]?.trim();
     if (value) payload[key] = value;
   }
@@ -104,9 +106,10 @@ export function QuestionsCard({ team }: { team: Team }) {
   const { schema } = jsonform;
   const data = query.data;
   const saved = data.answers;
-  const keys = Object.keys(schema.properties);
-  const answered = keys.filter((key) => isAnswered(saved[key])).length;
   const value = draft ?? defaultAnswers(schema, saved);
+  const hidden = hiddenKeys(jsonform, value);
+  const keys = Object.keys(schema.properties).filter((key) => !hidden.has(key));
+  const answered = keys.filter((key) => isAnswered(saved[key])).length;
   const buddies = buddyDraft ?? savedSelection(data);
   const collaborating =
     collaboratingDraft === undefined ? data.collaborating : collaboratingDraft;
@@ -164,7 +167,7 @@ export function QuestionsCard({ team }: { team: Team }) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const payload = buildPayload(schema, value);
+    const payload = buildPayload(schema, value, hidden);
     const invalid = validateAnswers(schema, payload);
     const unanswered = collaborating === null;
     setCollaboratingErrors(unanswered ? [t('questions.collaborating.required')] : []);

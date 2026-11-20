@@ -3,11 +3,12 @@ import fixture from '@/features/questions/__fixtures__/chiditarod_21.json';
 import {
   defaultAnswers,
   draft04ToDraft07,
+  hiddenKeys,
   isAgreeField,
   mapServerErrors,
   validateAnswers,
 } from '@/features/questions/validate';
-import type { JsonformSchema } from '@/features/questions/types';
+import type { Jsonform, JsonformItem, JsonformSchema } from '@/features/questions/types';
 
 const schema = fixture.schema as unknown as JsonformSchema;
 
@@ -158,5 +159,73 @@ describe('mapServerErrors', () => {
     expect(byKey['racer-type'][0]).not.toMatch(/in schema/);
     expect(byKey['explain-theme']).toHaveLength(1);
     expect(form).toEqual([expect.stringMatching(/nonexistent/), 'Something else broke']);
+  });
+});
+
+describe('hiddenKeys', () => {
+  const properties = { a: { type: 'string' }, b: { type: 'string' }, c: { type: 'string' } };
+  const jsonformWith = (form: JsonformItem[]): Jsonform => ({
+    schema: { type: 'object', properties },
+    form,
+  });
+  const showC = (showWhen: unknown) => jsonformWith(['a', 'b', { key: 'c', showWhen }]);
+
+  it('hides a field until the controlling answer matches', () => {
+    const jsonform = showC({ a: 'Yes' });
+    expect(hiddenKeys(jsonform, { a: 'No' })).toEqual(new Set(['c']));
+    expect(hiddenKeys(jsonform, { a: 'Yes' })).toEqual(new Set());
+    expect(hiddenKeys(jsonform, {})).toEqual(new Set(['c']));
+  });
+
+  it('compares the trimmed answer, as it will be saved', () => {
+    const jsonform = showC({ a: 'Yes' });
+    expect(hiddenKeys(jsonform, { a: ' Yes ' })).toEqual(new Set());
+    expect(hiddenKeys(jsonform, { a: 'yes' })).toEqual(new Set(['c']));
+  });
+
+  it('finds showWhen on items nested in fieldsets', () => {
+    const jsonform = jsonformWith([
+      'a',
+      { type: 'fieldset', items: ['b', { key: 'c', showWhen: { a: 'Yes' } }] },
+    ]);
+    expect(hiddenKeys(jsonform, { a: 'No' })).toEqual(new Set(['c']));
+    expect(hiddenKeys(jsonform, { a: 'Yes' })).toEqual(new Set());
+  });
+
+  it('a hidden controller hides its dependents', () => {
+    const jsonform = jsonformWith([
+      'a',
+      { key: 'b', showWhen: { a: 'Yes' } },
+      { key: 'c', showWhen: { b: 'x' } },
+    ]);
+    expect(hiddenKeys(jsonform, { a: 'No', b: 'x' })).toEqual(new Set(['b', 'c']));
+    expect(hiddenKeys(jsonform, { a: 'Yes', b: 'x' })).toEqual(new Set());
+  });
+
+  it('cycles and self references leave every field visible', () => {
+    const cycle = jsonformWith([
+      { key: 'a', showWhen: { b: 'x' } },
+      { key: 'b', showWhen: { a: 'y' } },
+      'c',
+    ]);
+    expect(hiddenKeys(cycle, {})).toEqual(new Set());
+    const self = jsonformWith([{ key: 'a', showWhen: { a: 'x' } }, 'b', 'c']);
+    expect(hiddenKeys(self, {})).toEqual(new Set());
+  });
+
+  it.each([
+    ['an array', []],
+    ['null', null],
+    ['a string', 'Yes'],
+    ['two pairs', { a: 'Yes', b: 'No' }],
+    ['a non-string value', { a: 1 }],
+    ['an unknown controlling key', { missing: 'Yes' }],
+  ])('ignores a malformed showWhen (%s)', (_label, showWhen) => {
+    expect(hiddenKeys(showC(showWhen), { a: 'No' }).has('c')).toBe(false);
+  });
+
+  it('has no conditions when the form list is empty', () => {
+    expect(hiddenKeys({ schema: { type: 'object', properties } }, {})).toEqual(new Set());
+    expect(hiddenKeys(jsonformWith([]), {})).toEqual(new Set());
   });
 });

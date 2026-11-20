@@ -182,3 +182,45 @@ describe('JsonformRenderer subset behaviour', () => {
     expect(screen.getByRole('combobox', { name: 'Pick A' })).toBeInTheDocument();
   });
 });
+
+describe('JsonformRenderer showWhen', () => {
+  const conditional = (showWhen: unknown): Jsonform => ({
+    schema: {
+      type: 'object',
+      properties: {
+        'flame-effects': { type: 'string', title: 'Flame effects?', enum: ['No', 'Yes'], required: true },
+        'fire-details': { type: 'string', title: 'Details about your fire effects' },
+      },
+    },
+    form: ['flame-effects', { key: 'fire-details', type: 'textarea', showWhen }],
+  });
+  const details = () => screen.queryByRole('textbox', { name: /Details about your fire effects/ });
+
+  it('shows the field only while the controlling answer matches', async () => {
+    render(<Harness form={conditional({ 'flame-effects': 'Yes' })} initial={{ 'flame-effects': 'No' }} />);
+    expect(details()).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    expect(details()).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(details()).not.toBeInTheDocument();
+  });
+
+  it('leaves the field visible for a malformed showWhen', () => {
+    const { unmount } = render(
+      <Harness form={conditional({ 'flame-effects': 'Yes', extra: 'x' })} initial={{ 'flame-effects': 'No' }} />,
+    );
+    expect(details()).toBeInTheDocument();
+    unmount();
+    render(<Harness form={conditional({ missing: 'Yes' })} initial={{ 'flame-effects': 'No' }} />);
+    expect(details()).toBeInTheDocument();
+  });
+
+  it('re-showing a field keeps what was typed', async () => {
+    render(<Harness form={conditional({ 'flame-effects': 'Yes' })} initial={{ 'flame-effects': 'Yes' }} />);
+    await userEvent.type(details()!, 'propane poi');
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+    expect(details()).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('radio', { name: 'Yes' }));
+    expect(details()).toHaveValue('propane poi');
+  });
+});

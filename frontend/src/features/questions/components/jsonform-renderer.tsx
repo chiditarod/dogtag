@@ -6,6 +6,7 @@ import type {
   Jsonform,
   JsonformItem,
 } from '@/features/questions/types';
+import { hiddenKeys } from '@/features/questions/validate';
 
 interface JsonformRendererProps {
   jsonform: Jsonform;
@@ -35,13 +36,14 @@ export function JsonformRenderer({ jsonform, value, onChange, errors }: Jsonform
   const items: JsonformItem[] = jsonform.form?.length
     ? jsonform.form
     : Object.keys(schema.properties);
+  const hidden = hiddenKeys(jsonform, value);
 
   function renderItem(item: JsonformItem, index: number) {
     const object = typeof item === 'string' ? undefined : item;
     const key = typeof item === 'string' ? item : item.key;
     if (key !== undefined) {
       const property = schema.properties[key];
-      if (!property) return null;
+      if (!property || hidden.has(key)) return null;
       return (
         <JsonformField
           key={key}
