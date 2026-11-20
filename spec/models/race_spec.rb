@@ -87,7 +87,7 @@ describe Race do
     end
 
     describe "jsonform showWhen" do
-      def race_with_form(form, fire_details: {})
+      def race_with_form(form, fire_details: {}, required: nil)
         schema = {
           "type" => "object",
           "properties" => {
@@ -95,6 +95,7 @@ describe Race do
             "fire-details" => { "type" => "string" }.merge(fire_details)
           }
         }
+        schema["required"] = required if required
         FactoryBot.build(:race_with_jsonform, json_data: JSON.generate("schema" => schema, "form" => form))
       end
 
@@ -134,6 +135,12 @@ describe Race do
           fire_details: { "required" => true }
         )
         expect(race).not_to be_valid
+      end
+
+      it "is not valid when a field listed in the schema's required array has showWhen" do
+        race = race_with_form(["flame-effects", { "key" => "fire-details", "showWhen" => show_when }], required: ["fire-details"])
+        expect(race).not_to be_valid
+        expect(race.errors[:jsonform].join).to include("fire-details")
       end
 
       it "does not raise on a jsonform whose shape is not a schema and form" do

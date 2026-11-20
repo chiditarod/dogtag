@@ -178,7 +178,7 @@ export function hiddenKeys(jsonform: Jsonform, answers: Answers): Set<string> {
   return hidden;
 }
 
-const SCHEMA_SUFFIX =/ in schema \S+.*$/;
+const SCHEMA_SUFFIX = / in schema \S+.*$/;
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
