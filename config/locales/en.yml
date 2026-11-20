@@ -188,6 +188,7 @@ en:
     errors:
       registration_closed: Registration is closed for this race.
       invalid_buddies: Pick only other teams in this race.
+      buddies_need_collaborating: Answer Yes to the same-route question before picking teams.
 
   people:
     index:

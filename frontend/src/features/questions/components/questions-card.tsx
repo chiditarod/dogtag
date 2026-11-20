@@ -12,6 +12,7 @@ import {
   BuddyFieldset,
   BuddyPicker,
 } from '@/features/questions/components/buddy-picker';
+import { CollaboratingQuestion } from '@/features/questions/components/collaborating-question';
 import { JsonformRenderer } from '@/features/questions/components/jsonform-renderer';
 import type {
   AnswerErrors,
@@ -64,6 +65,11 @@ export function QuestionsCard({ team }: { team: Team }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<Answers | null>(null);
   const [buddyDraft, setBuddyDraft] = useState<BuddySelection | null>(null);
+  // undefined: not touched yet, so the saved answer shows.
+  const [collaboratingDraft, setCollaboratingDraft] = useState<boolean | null | undefined>(
+    undefined,
+  );
+  const [collaboratingErrors, setCollaboratingErrors] = useState<string[]>([]);
   const [buddyErrors, setBuddyErrors] = useState<string[]>([]);
   const [errors, setErrors] = useState<AnswerErrors>({});
   const [formErrors, setFormErrors] = useState<string[]>([]);
@@ -102,12 +108,16 @@ export function QuestionsCard({ team }: { team: Team }) {
   const answered = keys.filter((key) => isAnswered(saved[key])).length;
   const value = draft ?? defaultAnswers(schema, saved);
   const buddies = buddyDraft ?? savedSelection(data);
+  const collaborating =
+    collaboratingDraft === undefined ? data.collaborating : collaboratingDraft;
 
   function collapse() {
     setEditing(false);
     setDraft(null);
     setBuddyDraft(null);
     setBuddyErrors([]);
+    setCollaboratingDraft(undefined);
+    setCollaboratingErrors([]);
     setErrors({});
     setFormErrors([]);
     focusEditButton.current = true;
@@ -117,6 +127,8 @@ export function QuestionsCard({ team }: { team: Team }) {
     setDraft(defaultAnswers(schema, saved));
     setBuddyDraft(savedSelection(data));
     setBuddyErrors([]);
+    setCollaboratingDraft(data.collaborating);
+    setCollaboratingErrors([]);
     setStatus('');
     setEditing(true);
     requestAnimationFrame(() => {
@@ -131,6 +143,12 @@ export function QuestionsCard({ team }: { team: Team }) {
       delete remaining[key];
       setErrors(remaining);
     }
+  }
+
+  function handleCollaboratingChange(next: boolean) {
+    setCollaboratingDraft(next);
+    setCollaboratingErrors([]);
+    setBuddyErrors([]);
   }
 
   function handleBuddyChange(next: BuddySelection) {
@@ -148,7 +166,9 @@ export function QuestionsCard({ team }: { team: Team }) {
     event.preventDefault();
     const payload = buildPayload(schema, value);
     const invalid = validateAnswers(schema, payload);
-    if (Object.keys(invalid).length) {
+    const unanswered = collaborating === null;
+    setCollaboratingErrors(unanswered ? [t('questions.collaborating.required')] : []);
+    if (unanswered || Object.keys(invalid).length) {
       showErrors(invalid, [t('questions.fixErrors')]);
       return;
     }
@@ -158,11 +178,18 @@ export function QuestionsCard({ team }: { team: Team }) {
 
     // A saved pick whose team is gone from the loaded options has no checkbox to
     // clear, so drop it; without loaded options, send the saved ids unchanged.
+    // Picks go only with a Yes; the draft keeps them while the answer is No, but
+    // saving No discards them.
     const known = buddyOptions.data && new Set(buddyOptions.data.map((option) => option.id));
     const input = {
       answers: payload,
-      buddy_team_ids: known ? buddies.teamIds.filter((id) => known.has(id)) : buddies.teamIds,
-      other_buddies: buddies.otherSelected ? buddies.otherText.trim() : '',
+      collaborating,
+      buddy_team_ids: !collaborating
+        ? []
+        : known
+          ? buddies.teamIds.filter((id) => known.has(id))
+          : buddies.teamIds,
+      other_buddies: collaborating && buddies.otherSelected ? buddies.otherText.trim() : '',
     };
     save.mutate(input, {
       onSuccess: () => {
@@ -179,8 +206,15 @@ export function QuestionsCard({ team }: { team: Team }) {
           return;
         }
         if (error instanceof ApiError && error.error === 'invalid_buddies') {
-          const messages = Object.values(error.errors).flat();
-          setBuddyErrors(messages.length ? messages : [t('common.genericError')]);
+          const { collaborating: onQuestion = [], ...rest } = error.errors;
+          const messages = Object.values(rest).flat();
+          if (onQuestion.length) {
+            setCollaboratingErrors(onQuestion);
+            setFocusTick((tick) => tick + 1);
+          }
+          if (messages.length || !onQuestion.length) {
+            setBuddyErrors(messages.length ? messages : [t('common.genericError')]);
+          }
           // Retry from fresh data in case the saved picks or the options went stale.
           void queryClient.invalidateQueries({ queryKey: questionsQueryKey(team.id) });
           void queryClient.invalidateQueries({ queryKey: buddyOptionsQueryKey(team.id) });
@@ -198,7 +232,13 @@ export function QuestionsCard({ team }: { team: Team }) {
       </div>
       {showForm ? (
         <form ref={formRef} noValidate onSubmit={handleSubmit} className="space-y-6">
-          {buddyOptions.isError && !buddyOptions.data ? (
+          <CollaboratingQuestion
+            value={collaborating}
+            onChange={handleCollaboratingChange}
+            disabled={save.isPending}
+            errors={collaboratingErrors}
+          />
+          {!collaborating ? null : buddyOptions.isError && !buddyOptions.data ? (
             <BuddyFieldset>
               <QueryError onRetry={() => void buddyOptions.refetch()} />
             </BuddyFieldset>

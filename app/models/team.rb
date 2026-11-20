@@ -282,10 +282,12 @@ class Team < ApplicationRecord
           }
         end
 
-        # Appended last so the positions of every older column stay put for
-        # anyone reading the export by column.
+        # Newer columns go after the racers so the older columns keep their
+        # positions. `collaborating` sits just before `racing_with`, which
+        # moved `racing_with` one column to the right (#332).
         row << { true => "yes", false => "no" }.fetch(team.new_team, "")
 
+        row << { true => "Yes", false => "No" }.fetch(team.collaborating, "")
         row << racing_with_cell(team)
 
         memo << row
@@ -314,6 +316,7 @@ class Team < ApplicationRecord
       end
 
       header << 'new_team'
+      header << 'collaborating'
       header << 'racing_with'
     end
   end

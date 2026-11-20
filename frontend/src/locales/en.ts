@@ -228,8 +228,18 @@ export const en = {
   'questions.saved': 'Answers saved',
   'questions.closed': 'Registration is closed, so answers can no longer be changed.',
   'questions.fixErrors': 'Please fix the highlighted answers.',
-  'questions.buddies.legend': 'Teams you want to race with',
-  'questions.buddies.hint': 'Pick any teams already in this race. Names only; teams are told nothing.',
+  'questions.collaborating.label':
+    'Does your team want to be on the same route as another person or team?',
+  'questions.collaborating.yes': 'Yes',
+  'questions.collaborating.no': 'No',
+  'questions.collaborating.tip': 'About racing on the same route',
+  'questions.collaborating.tipBody':
+    'Choose Yes if you are an ensemble of more than one cart, or want to race on the same route as friends, rivals or frivals.',
+  'questions.collaborating.required': 'Choose Yes or No',
+  'questions.buddies.legend': 'Teams you want to race alongside',
+  'questions.buddies.tip': 'About picking teams',
+  'questions.buddies.tipBody':
+    "You can request other teams you would like to share a race route with. Teams that have finished registering are marked 'Fully registered'; teams still signing up are marked 'Still registering'. Names only; teams are told nothing.",
   'questions.buddies.search': 'Search teams',
   'questions.buddies.registered': 'Fully registered',
   'questions.buddies.inProgress': 'Still registering',

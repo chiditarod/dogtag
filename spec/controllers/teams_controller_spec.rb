@@ -397,6 +397,19 @@ describe TeamsController do
             expect(Nokogiri::HTML(response.body).text).not_to include("Racing with")
           end
 
+          it "shows staff the same-route answer, and nothing while it is unanswered" do
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).not_to include("Collaborating")
+
+            team.update!(collaborating: false)
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).to match(/Collaborating:\s+No/)
+
+            team.update!(collaborating: true)
+            get :show, params: { id: team.id }
+            expect(Nokogiri::HTML(response.body).text).to match(/Collaborating:\s+Yes/)
+          end
+
           it "hides the override from the captain" do
             login_user! normal_user
             get :edit, params: { id: team.id }

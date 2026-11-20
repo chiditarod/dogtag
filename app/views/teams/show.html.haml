@@ -41,6 +41,11 @@
           %strong New team:
           = new_team_label(@team)
 
+      - if current_user.is_any_of?(:admin, :operator) && !@team.collaborating.nil?
+        %p
+          %strong Collaborating:
+          = @team.collaborating ? "Yes" : "No"
+
       - if current_user.is_any_of?(:admin, :operator) && @team.racing_with_names.any?
         %p
           %strong Racing with:
