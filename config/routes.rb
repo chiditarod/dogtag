@@ -12,6 +12,7 @@ Rails.application.routes.draw do
 
   resources :teams, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
     resources :people, :only => [:new, :create, :edit, :update, :destroy]
+    resource :captain, :only => [:update]
     resource :questions, :only => [:show, :create]
   end
 
@@ -113,6 +114,7 @@ Rails.application.routes.draw do
       resources :races, only: [:index, :show]
       resources :teams, only: [:index, :show, :create, :update, :destroy] do
         resources :people, only: [:create, :update, :destroy]
+        resource :captain, only: [:update]
         resources :past_racers, only: [:index]
         resource :questions, only: [:show, :update]
         resource :buddy_options, only: [:show]

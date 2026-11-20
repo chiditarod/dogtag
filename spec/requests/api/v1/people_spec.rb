@@ -23,6 +23,17 @@ describe "API v1 people", type: :request do
       expect(json["checklist"]["racers"]).to include("filled" => 1, "total" => 2)
     end
 
+    it "returns the team's captain_id, which is the account holder once they add themselves" do
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
+      expect(json["captain_id"]).to be_nil
+
+      post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(email: user.email) }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(json["captain_id"]).to eq(json["person"]["id"])
+      expect(json["checklist"]["racers"]).to include("captain" => true)
+    end
+
     it "ignores a stray zipcode param" do
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params.merge(zipcode: "60614") }, as: :json
 
@@ -123,7 +134,7 @@ describe "API v1 people", type: :request do
     end
 
     it "finalizes a complete team when the last slot is filled" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
       Workers::TeamFinalizer.jobs.clear
 
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
@@ -135,7 +146,7 @@ describe "API v1 people", type: :request do
     end
 
     it "asks the SPA to show the confirmation when the last racer finalizes the team" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
 
       post "/api/v1/teams/#{team.id}/people", params: { person: person_params }, as: :json
 
@@ -213,8 +224,18 @@ describe "API v1 people", type: :request do
       expect(json["checklist"]["racers"]).to include("filled" => 0)
     end
 
+    it "returns a null captain_id after removing the captain" do
+      team.update_column(:captain_id, person.id)
+
+      delete "/api/v1/teams/#{team.id}/people/#{person.id}", as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(json["captain_id"]).to be_nil
+      expect(team.reload.captain_id).to be_nil
+    end
+
     it "returns 422 when the team is complete" do
-      FactoryBot.create(:person, team: team)
+      team.update_column(:captain_id, FactoryBot.create(:person, team: team).id)
       team.reload.finalize
       expect(team.reload.finalized).to be(true)
 

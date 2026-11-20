@@ -42,6 +42,7 @@ class Person < ApplicationRecord
 
   belongs_to :team
 
+  after_create :become_captain_if_account_holder
   after_save :refresh_team_new_flag, if: -> { saved_change_to_experience? || saved_change_to_team_id? }
   after_destroy :refresh_team_new_flag
 
@@ -57,6 +58,16 @@ class Person < ApplicationRecord
   end
 
   private
+
+  # The only racer chosen automatically: the account holder who created the team, when the team
+  # has no captain yet. Conditional in SQL so a captain chosen in the meantime is never replaced.
+  # Runs in after_create, so PersonAuditor (after commit) already sees the captain.
+  def become_captain_if_account_holder
+    return unless team&.user && email == team.user.email.to_s.downcase
+
+    # Mirror the row only when it changed, so the in-memory team never holds a captain the database lacks.
+    team.captain_id = id if Team.where(id: team_id, captain_id: nil).update_all(captain_id: id) == 1
+  end
 
   def refresh_team_new_flag
     Team.find_by(id: team_id_before_last_save)&.refresh_new_team if saved_change_to_team_id? && team_id_before_last_save

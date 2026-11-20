@@ -151,11 +151,19 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
       await form.getByLabel('Last name').fill('Pusher');
       await form.getByLabel('Email', { exact: true }).fill(`racer${i}-${id}@example.com`);
       await form.getByLabel('Phone').pressSequentially('3125550144');
-      await form.getByLabel('Years racing', { exact: true }).selectOption({ index: 2 });
+      await form.getByLabel('Years racing', { exact: true }).fill('2');
       await form.getByRole('button', { name: 'Save' }).click();
       await expect(racers.getByText(`Racer${i} Pusher`, { exact: true })).toBeVisible();
     }
     await expect(racers.getByText('5 of 5')).toBeVisible();
+  });
+
+  // The account holder is not one of the racers, so nobody is captain until one is chosen,
+  // and the team cannot finalize without one.
+  await test.step('Make the first racer captain', async () => {
+    const racers = page.getByRole('group', { name: 'Racers' });
+    await racers.getByRole('button', { name: 'Make Racer1 Pusher captain' }).click();
+    await expect(racers.locator('[data-captain="true"]').getByText('Racer1 Pusher', { exact: true })).toBeVisible();
   });
 
   await test.step('Answer every team question', async () => {

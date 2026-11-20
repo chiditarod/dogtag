@@ -15,6 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Team < ApplicationRecord
   OTHER_BUDDIES_MAX_LENGTH = 1000
+  CAPTAIN_KEYS = %w(first_name last_name email phone).freeze
 
   validates :name, :description, presence: true
   validates :name, length: { :maximum => 1000, :message => "of your team is a bit long, eh? Keep it to 1000 characters or less." }
@@ -29,6 +30,10 @@ class Team < ApplicationRecord
   belongs_to :user
   belongs_to :race
   validates :user, :race, presence: true
+
+  # The racer organizers contact directly. Not the same as `user`, the account that created the team.
+  belongs_to :captain, class_name: "Person", optional: true
+  validate :captain_must_be_on_team, if: :will_save_change_to_captain_id?
 
   # A team has a certain number of people, per the settings for the race.
   has_many :people, dependent: :destroy
@@ -67,7 +72,7 @@ class Team < ApplicationRecord
   # return nil if the team is not a candidate for finalization
   def finalize
     return nil if finalized
-    return nil unless meets_finalization_requirements?
+    return nil unless ready_to_finalize?
 
     self.notified_at = Time.zone.now
     self.assigned_team_number = self.assigned_team_number || next_available_team_num
@@ -175,6 +180,13 @@ class Team < ApplicationRecord
     completed_questions? && is_full? && completed_all_requirements?
   end
 
+  # Finalization also needs a captain. It is kept out of meets_finalization_requirements? on
+  # purpose: unfinalize checks that, so adding it would un-finalize every finalized team that
+  # has no captain on its next edit.
+  def ready_to_finalize?
+    meets_finalization_requirements? && captain_id.present?
+  end
+
   # todo spec
   def has_saved_answers?
     jsonform.present?
@@ -210,6 +222,10 @@ class Team < ApplicationRecord
   end
 
   private
+
+  def captain_must_be_on_team
+    errors.add(:captain, :not_on_team) if captain_id.present? && captain&.team_id != id
+  end
 
   def normalize_other_buddies
     self.other_buddies = other_buddies.to_s.strip.presence
@@ -249,7 +265,7 @@ class Team < ApplicationRecord
 
     def make_body(race, options, person_keys, user_keys)
       teams = options[:finalized] ? race.finalized_teams : race.teams
-      teams = teams.preload(:buddy_teams)
+      teams = teams.preload(:buddy_teams, :captain)
       teams.inject([]) do |memo, team|
         row = []
         row << team.finalized.to_s
@@ -273,6 +289,10 @@ class Team < ApplicationRecord
 
         # user info
         row.concat user_keys.map{ |k| team.user[k] }
+
+        # captain (the racer organizers contact); inferred means we guessed during the backfill
+        row.concat CAPTAIN_KEYS.map { |k| team.captain ? spreadsheet_safe(team.captain[k].to_s) : "" }
+        row << (team.captain_inferred ? "yes" : "")
 
         # racers
         race.people_per_team.times do |i|
@@ -309,6 +329,10 @@ class Team < ApplicationRecord
 
       # user info
       header.concat user_keys.map{ |k| "user_#{k}" }
+
+      # captain
+      header.concat CAPTAIN_KEYS.map { |k| "captain_#{k}" }
+      header << 'captain_inferred'
 
       # racers
       race.people_per_team.times do |i|

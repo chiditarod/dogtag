@@ -31,7 +31,7 @@ interface LeftItem {
 }
 
 /** Unfinished steps, in page order, for the "What's left" list. */
-function leftItems({ checklist }: Team): LeftItem[] {
+function leftItems({ checklist, captain_id }: Team): LeftItem[] {
   if (checklist.finalized) return [];
   const items: LeftItem[] = [];
   const openSpots = checklist.racers.total - checklist.racers.filled;
@@ -42,6 +42,9 @@ function leftItems({ checklist }: Team): LeftItem[] {
         count: openSpots,
       }),
     });
+  }
+  if (checklist.racers.filled > 0 && captain_id === null) {
+    items.push({ anchor: 'step-racers', label: t('team.leftCaptain') });
   }
   if (checklist.questions.required && !checklist.questions.done) {
     items.push({ anchor: 'step-questions', label: t('team.leftQuestions') });
@@ -108,7 +111,7 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
         <div className="hidden border-t border-flag pt-3 lg:block">
           <ul aria-label={t('team.whatsLeft')}>
             {items.map(({ anchor, label }) => (
-              <li key={anchor}>
+              <li key={label}>
                 <a
                   href={`#${anchor}`}
                   className="inline-flex min-h-11 items-center text-sm font-semibold text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-link"

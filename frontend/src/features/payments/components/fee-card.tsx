@@ -84,7 +84,8 @@ export function FeeCard({ team }: { team: Team }) {
 
   // Racers still see the price, the next tier and what is paid; only the Pay
   // buttons wait for a full roster.
-  const rosterDone = checklist.racers.done;
+  // Payment waits for a full roster only; choosing a captain is not required to pay.
+  const rosterDone = checklist.racers.filled >= checklist.racers.total;
   const waitingOnRoster = !rosterDone && fee.items.some((item) => !item.done && item.amount_due_cents !== null);
 
   const isMock = (item: FeeItem) =>

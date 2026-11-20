@@ -193,8 +193,16 @@ describe UserMailer do
       expect(body).to include(RegistrationUi.team_url(team))
     end
 
+    it "asks for a team captain once there are racers but no captain" do
+      expect(UserMailer.registration_reminder(team, "closing_day", details).body.encoded).to include("team captain")
+
+      team.update!(captain: team.people.first)
+      expect(UserMailer.registration_reminder(team.reload, "closing_day", details).body.encoded).not_to include("team captain")
+    end
+
     it "omits items that are done" do
       FactoryBot.create_list(:person, 2, team: team)
+      team.update!(captain: team.people.first)
       team.update!(jsonform: "{}")
       FactoryBot.create(:completed_requirement, team: team, requirement: payment)
       body = UserMailer.registration_reminder(team.reload, "closing_week", details).body.encoded

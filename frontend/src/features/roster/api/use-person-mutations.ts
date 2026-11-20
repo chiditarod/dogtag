@@ -18,14 +18,21 @@ export interface PersonPayload {
 interface PersonResponse {
   person: Person;
   checklist: Checklist;
+  captain_id: number | null;
 }
 
-/** Replaces the cached team's roster and checklist from a mutation response. */
+interface RosterChange {
+  checklist: Checklist;
+  /** Adding the account holder can make them captain; removing the captain clears it. */
+  captain_id: number | null;
+}
+
+/** Replaces the cached team's roster, captain and checklist from a mutation response. */
 function usePeopleCache(teamId: number) {
   const queryClient = useQueryClient();
-  return (checklist: Checklist, update: (people: Person[]) => Person[]) => {
+  return ({ checklist, captain_id }: RosterChange, update: (people: Person[]) => Person[]) => {
     queryClient.setQueryData<Team>(teamQueryKey(teamId), (team) =>
-      team ? { ...team, people: update(team.people) } : team,
+      team ? { ...team, captain_id, people: update(team.people) } : team,
     );
     setTeamChecklist(queryClient, teamId, checklist);
     void queryClient.invalidateQueries({ queryKey: teamsQueryKey });
@@ -40,8 +47,8 @@ export function useAddPerson(teamId: number) {
         method: 'POST',
         json: { person },
       }),
-    onSuccess: ({ person, checklist }) =>
-      applyToCache(checklist, (people) => [...people, person]),
+    onSuccess: (response) =>
+      applyToCache(response, (people) => [...people, response.person]),
   });
 }
 
@@ -53,9 +60,9 @@ export function useUpdatePerson(teamId: number, personId: number | undefined) {
         method: 'PATCH',
         json: { person },
       }),
-    onSuccess: ({ person, checklist }) =>
-      applyToCache(checklist, (people) =>
-        people.map((existing) => (existing.id === person.id ? person : existing)),
+    onSuccess: (response) =>
+      applyToCache(response, (people) =>
+        people.map((existing) => (existing.id === response.person.id ? response.person : existing)),
       ),
   });
 }
@@ -65,12 +72,12 @@ export function useRemovePerson(teamId: number) {
   const applyToCache = usePeopleCache(teamId);
   return useMutation({
     mutationFn: (personId: number) =>
-      apiFetch<{ checklist: Checklist }>(
+      apiFetch<RosterChange>(
         `/teams/${teamId}/people/${personId}`,
         { method: 'DELETE' },
       ),
-    onSuccess: ({ checklist }, personId) => {
-      applyToCache(checklist, (people) =>
+    onSuccess: (response, personId) => {
+      applyToCache(response, (people) =>
         people.filter((person) => person.id !== personId),
       );
       // The removed person can be picked again.

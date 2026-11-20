@@ -483,6 +483,62 @@ describe TeamsController do
           expect(response).to be_successful
         end
 
+        context "with racers and a captain" do
+          render_views
+
+          let(:team) { FactoryBot.create :team, :with_people, people_count: 2 }
+          let(:the_user) { team.user }
+          let(:captain) { team.people.first }
+          let(:other) { team.people.last }
+
+          before { team.update!(captain: captain) }
+
+          it "stars the captain and offers Make captain only on the other racers" do
+            get :show, params: { :id => team.id }
+            page = Nokogiri::HTML(response.body)
+            rows = page.css("#people table tr").select { |tr| tr.at_css("> td") }
+
+            captain_row = rows.find { |tr| tr.text.include?(captain.email) }
+            other_row = rows.find { |tr| tr.text.include?(other.email) }
+            expect(captain_row.css("i.fa-star")).to be_present
+            expect(captain_row.css("form.make-captain")).to be_empty
+            expect(other_row.css("i.fa-star")).to be_empty
+            expect(other_row.at_css("form.make-captain")["action"]).to end_with(team_captain_path(team))
+            expect(other_row.at_css("form.make-captain [type=submit]")["aria-label"])
+              .to eq("Make #{other.first_name} #{other.last_name} captain")
+            expect(captain_row.at_css(".sr-only").text).to eq(I18n.t("people.table.captain"))
+            expect(page.at_css("#choose-captain")).to be_nil
+          end
+
+          it "asks the owner to choose a captain when there is none" do
+            team.update_column(:captain_id, nil)
+            get :show, params: { :id => team.id }
+            expect(Nokogiri::HTML(response.body).at_css("#choose-captain").text).to eq(I18n.t("teams.show.choose_captain"))
+          end
+
+          it "offers no Make captain in the final edit window, while Edit stays" do
+            team.race.update_columns(registration_close: 1.day.ago, final_edits_close: 1.day.from_now)
+            get :show, params: { :id => team.id }
+            page = Nokogiri::HTML(response.body)
+            expect(page.css("form.make-captain")).to be_empty
+            expect(page.css("#people table i.fa-edit")).to be_present
+          end
+
+          context "when staff views the team" do
+            let(:the_user) { FactoryBot.create :operator_user }
+
+            it "shows the captain apart from the account holder" do
+              get :show, params: { :id => team.id }
+              expect(response.body).to include(captain.email)
+              expect(response.body).to include(I18n.t("teams.show.account_holder"))
+
+              team.update_column(:captain_id, nil)
+              get :show, params: { :id => team.id }
+              expect(response.body).to include(I18n.t("teams.show.no_captain"))
+            end
+          end
+        end
+
         context "with a payment due and racers still missing" do
           render_views
 
