@@ -20,7 +20,6 @@ FactoryBot.define do
     sequence(:email) { |n| "person#{n}@example.com" }
     sequence(:phone) { |n| "555-#{100 + n}-#{1000 + n}" }
     experience { 3 }
-    zipcode { '12345' }
     association :team, strategy: :build
   end
 end

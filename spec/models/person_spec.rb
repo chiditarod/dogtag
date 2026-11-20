@@ -189,12 +189,6 @@ describe 'validation' do
     end
   end
 
-  it 'fails with poorly formed zipcode' do
-    person = FactoryBot.build(:person)
-    person.zipcode = "a"
-    expect(person).to be_invalid
-  end
-
   it 'fails with poorly formed phone number' do
     person = FactoryBot.build(:person)
     person.phone = "abc123"

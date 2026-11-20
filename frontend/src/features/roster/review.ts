@@ -8,7 +8,6 @@ export type LineKey =
   | 'name'
   | 'email'
   | 'phone'
-  | 'zipcode'
   | 'experience'
   | 'instagram'
   | 'tiktok';
@@ -17,7 +16,6 @@ export const LINE_KEYS: readonly LineKey[] = [
   'name',
   'email',
   'phone',
-  'zipcode',
   'experience',
   'instagram',
   'tiktok',
@@ -39,8 +37,6 @@ export function lineLabel(key: LineKey): string {
       return t('roster.email');
     case 'phone':
       return t('roster.phone');
-    case 'zipcode':
-      return t('roster.zip');
     case 'experience':
       return t('roster.years');
     case 'instagram':

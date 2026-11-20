@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from 'vitest';
 import { EmailInput } from '@/components/inputs/email-input';
 import { PhoneInput } from '@/components/inputs/phone-input';
 import { useAutoAdvance } from '@/components/inputs/use-auto-advance';
-import { ZipInput } from '@/components/inputs/zip-input';
 import { Field } from '@/components/ui/field';
 
 function PhoneThenNext({ onComplete }: { onComplete?: () => void }) {
@@ -203,26 +202,5 @@ describe('EmailInput', () => {
       </Field>,
     );
     expect(screen.getByLabelText('Email')).toHaveAttribute('aria-invalid', 'true');
-  });
-});
-
-describe('ZipInput', () => {
-  function ControlledZip({ onComplete }: { onComplete: () => void }) {
-    const [zip, setZip] = useState('');
-    return <ZipInput aria-label="Zip" name="zip" value={zip} onChange={setZip} onComplete={onComplete} />;
-  }
-
-  it('accepts digits and one hyphen, up to ddddd-dddd', async () => {
-    const onComplete = vi.fn();
-    render(<ControlledZip onComplete={onComplete} />);
-    const zip = screen.getByLabelText('Zip');
-    await userEvent.type(zip, '6a0601');
-    expect(zip).toHaveValue('60601');
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    await userEvent.type(zip, '-00019');
-    expect(zip).toHaveValue('60601-0001');
-    expect(onComplete).toHaveBeenCalledTimes(1);
-    expect(zip).toHaveAttribute('inputmode', 'numeric');
-    expect(zip).toHaveAttribute('autocomplete', 'postal-code');
   });
 });

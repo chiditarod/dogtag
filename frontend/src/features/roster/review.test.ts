@@ -17,7 +17,6 @@ const draft: PersonDraft = {
   last_name: 'Lovelace',
   email: 'ada@example.com',
   phone: '(312) 555-0111',
-  zipcode: '60614',
   experience: '1',
   instagram: '@ada',
   tiktok: '@ada',
@@ -28,7 +27,6 @@ const racer: PastRacer = {
   last_name: 'Lovelace',
   email: 'ada@example.com',
   phone: '312-555-0111',
-  zipcode: '60614',
   experience: 0,
   instagram: null,
   tiktok: null,
@@ -40,7 +38,7 @@ const racer: PastRacer = {
 describe('initialLines', () => {
   it('starts every line of a complete draft unconfirmed and closed', () => {
     const lines = initialLines(draft);
-    expect(Object.values(lines)).toHaveLength(7);
+    expect(Object.values(lines)).toHaveLength(6);
     for (const line of Object.values(lines)) {
       expect(line).toEqual({ confirmed: false, editing: false, error: null });
     }

@@ -24,15 +24,3 @@ export function toApiPhone(display: string): string {
 /** Mirrors the Rails regex in `app/models/person.rb`. */
 const EMAIL_PATTERN = /^([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})$/i;
 export const isLikelyEmail = (s: string) => EMAIL_PATTERN.test(s);
-
-/** Digits and at most one hyphen, shaped as `ddddd` or `ddddd-dddd`. */
-export function formatZipDisplay(raw: string): string {
-  const digits = digitsOf(raw).slice(0, 9);
-  if (digits.length > 5) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
-  if (digits.length === 5 && raw.includes('-') && raw.lastIndexOf('-') > 4) {
-    return `${digits}-`;
-  }
-  return digits;
-}
-
-export const zipDigitCount = (display: string) => digitsOf(display).length;

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatPhoneDisplay,
-  formatZipDisplay,
   isLikelyEmail,
   toApiPhone,
 } from '@/components/inputs/format';
@@ -43,17 +42,5 @@ describe('isLikelyEmail', () => {
     expect(isLikelyEmail('ada @example.com')).toBe(false);
     expect(isLikelyEmail('@example.com')).toBe(false);
     expect(isLikelyEmail('ada@example.c')).toBe(false);
-  });
-});
-
-describe('formatZipDisplay', () => {
-  it('allows ddddd and ddddd-dddd', () => {
-    expect(formatZipDisplay('60601')).toBe('60601');
-    expect(formatZipDisplay('606010001')).toBe('60601-0001');
-    expect(formatZipDisplay('60601-0001')).toBe('60601-0001');
-    expect(formatZipDisplay('60601-')).toBe('60601-');
-    expect(formatZipDisplay('6060-1')).toBe('60601');
-    expect(formatZipDisplay('60601-00012345')).toBe('60601-0001');
-    expect(formatZipDisplay('ab606')).toBe('606');
   });
 });

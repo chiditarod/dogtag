@@ -155,8 +155,6 @@ export const en = {
   'roster.lastName': 'Last name',
   'roster.email': 'Email',
   'roster.phone': 'Phone',
-  'roster.zip': 'ZIP code',
-  'roster.zipLabel': 'ZIP',
   'roster.years': 'Years racing',
   'roster.yearsTip': 'About years racing',
   'roster.yearsTipBody':
@@ -209,7 +207,7 @@ export const en = {
   'roster.backToList': 'Back to list',
   'roster.leftToConfirm_one': '1 detail left to confirm. Tick each line once you have checked it.',
   'roster.leftToConfirm_other': '{count} details left to confirm. Tick each line once you have checked it.',
-  'roster.allConfirmed': 'All seven details confirmed.',
+  'roster.allConfirmed': 'All six details confirmed.',
   'questions.optional': 'Optional',
   'questions.choose': 'Choose one',
   'questions.agree': 'You must agree to continue',

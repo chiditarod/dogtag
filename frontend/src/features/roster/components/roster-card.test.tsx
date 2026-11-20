@@ -13,7 +13,6 @@ const dee = {
   last_name: 'Lamb',
   email: 'dee@example.com',
   phone: '312-555-0144',
-  zipcode: '60614',
   experience: 1,
   instagram: '@dee',
   last_team_name: 'Cart Pushers',
@@ -124,7 +123,6 @@ describe('RosterCard slots', () => {
     expect(within(first).getByText('Captain')).toBeInTheDocument();
     expect(within(first).getByText(/ada@example\.com/)).toBeInTheDocument();
     expect(within(first).getByText(/\(312\) 555-0100/)).toBeInTheDocument();
-    expect(within(first).getByText(/60601/)).toBeInTheDocument();
     expect(within(first).getByText(/@ada/)).toBeInTheDocument();
     expect(within(first).getByText('Raced once before')).toBeInTheDocument();
     expect(within(second).queryByText('Captain')).toBeNull();
@@ -145,8 +143,7 @@ describe('RosterCard slots', () => {
     expect(email).toHaveAttribute('title', 'ada@example.com');
     expect(email).toHaveClass('truncate');
     expect(within(first).getByText('(312) 555-0100')).toHaveClass('whitespace-nowrap');
-    expect(within(first).getByText('60601')).toHaveClass('whitespace-nowrap');
-    expect(within(first).getByText('ZIP')).toBeInTheDocument();
+    expect(within(first).queryByText('ZIP')).toBeNull();
     expect(within(first).getByText('@ada')).toHaveClass('whitespace-nowrap');
     expect(within(second).getByText('bo@example.com')).toBeInTheDocument();
     expect(within(second).queryByText(/^@/)).toBeNull();
@@ -217,7 +214,7 @@ describe('the actions under the list', () => {
 
 describe('the crew picker from the roster', () => {
   const fillAll = async (u: ReturnType<typeof userEvent.setup>) => {
-    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram', 'TikTok']) {
+    for (const label of ['Name', 'Email', 'Phone', 'Years racing', 'Instagram', 'TikTok']) {
       await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
     }
   };
@@ -378,7 +375,6 @@ describe('Add yourself', () => {
     expect(screen.getByLabelText('Last name')).toHaveValue('Ng');
     expect(screen.getByLabelText('Email')).toHaveValue('mo@example.com');
     expect(screen.getByLabelText('Phone')).toHaveValue('(312) 555-0199');
-    expect(screen.getByLabelText('ZIP code')).toHaveValue('');
     expect(screen.queryByRole('button', { name: 'Add yourself' })).toBeNull();
     expect(screen.queryByRole('button', { name: '+ Add someone new' })).toBeNull();
   });
@@ -419,7 +415,7 @@ describe('Add yourself', () => {
     await openRosterWithPicker(8);
     await u.click(await screen.findByRole('button', { name: 'Add yourself' }));
     await screen.findByRole('heading', { name: 'Review Dee Lamb' });
-    for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram', 'TikTok']) {
+    for (const label of ['Name', 'Email', 'Phone', 'Years racing', 'Instagram', 'TikTok']) {
       await u.click(screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) }));
     }
     await u.click(screen.getByRole('button', { name: 'Add Dee to the team' }));
@@ -494,7 +490,6 @@ describe('collapsed when full on load', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
-    await u.type(screen.getByLabelText('ZIP code'), '60614');
     await u.selectOptions(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
     await screen.findByText('Dee Lamb');
@@ -572,8 +567,7 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'Dee@Example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
-    expect(screen.getByLabelText('ZIP code')).toHaveFocus();
-    await u.type(screen.getByLabelText('ZIP code'), '60614');
+    expect(screen.getByLabelText('Years racing')).toHaveFocus();
     await u.selectOptions(screen.getByLabelText('Years racing'), '0');
     await u.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(requests).toHaveLength(1));
@@ -583,7 +577,6 @@ describe('adding someone new', () => {
         last_name: 'Lamb',
         email: 'dee@example.com',
         phone: '312-555-0144',
-        zipcode: '60614',
         experience: 0,
         instagram: '',
         tiktok: '',
@@ -597,7 +590,6 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '312555');
-    await u.type(screen.getByLabelText('ZIP code'), '60614');
     await u.selectOptions(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
   }
@@ -661,7 +653,6 @@ describe('adding someone new', () => {
     await u.type(screen.getByLabelText('Last name'), 'Lamb');
     await u.type(screen.getByLabelText('Email'), 'dee@example.com');
     await u.type(screen.getByLabelText('Phone'), '3125550144');
-    await u.type(screen.getByLabelText('ZIP code'), '60614');
     await u.selectOptions(screen.getByLabelText('Years racing'), '1');
     await u.click(screen.getByRole('button', { name: 'Save' }));
   }

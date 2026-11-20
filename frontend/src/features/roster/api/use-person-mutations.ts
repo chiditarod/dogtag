@@ -10,7 +10,6 @@ export interface PersonPayload {
   last_name: string;
   email: string;
   phone: string;
-  zipcode: string;
   experience: number | null;
   instagram: string;
   tiktok: string;

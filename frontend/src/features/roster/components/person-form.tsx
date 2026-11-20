@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { EmailInput } from '@/components/inputs/email-input';
 import { PhoneInput } from '@/components/inputs/phone-input';
 import { useAutoAdvance } from '@/components/inputs/use-auto-advance';
-import { ZipInput } from '@/components/inputs/zip-input';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -112,25 +111,15 @@ export function PersonForm({
           onChange={set('email')}
         />
       </Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t('roster.phone')} name="phone" error={fieldErrors.phone}>
-          <PhoneInput
-            ref={phoneRef}
-            autoComplete="off"
-            value={draft.phone}
-            onChange={set('phone')}
-            onComplete={() => advance(phoneRef.current)}
-          />
-        </Field>
-        {/* No auto-advance from ZIP: ZIP+4 users would be cut off. */}
-        <Field label={t('roster.zip')} name="zipcode" error={fieldErrors.zipcode}>
-          <ZipInput
-            autoComplete="off"
-            value={draft.zipcode}
-            onChange={set('zipcode')}
-          />
-        </Field>
-      </div>
+      <Field label={t('roster.phone')} name="phone" error={fieldErrors.phone}>
+        <PhoneInput
+          ref={phoneRef}
+          autoComplete="off"
+          value={draft.phone}
+          onChange={set('phone')}
+          onComplete={() => advance(phoneRef.current)}
+        />
+      </Field>
       <Field
         label={t('roster.years')}
         name="experience"

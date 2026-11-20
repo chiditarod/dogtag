@@ -15,7 +15,6 @@ const base: PastRacer = {
   last_name: '',
   email: '',
   phone: null,
-  zipcode: null,
   experience: 0,
   instagram: null,
   tiktok: null,
@@ -30,7 +29,6 @@ const ada: PastRacer = {
   last_name: 'Lovelace',
   email: 'ada@example.com',
   phone: '312-555-0111',
-  zipcode: '60614',
   experience: 0,
 };
 const grace: PastRacer = {
@@ -39,7 +37,6 @@ const grace: PastRacer = {
   last_name: 'Hopper',
   email: 'grace@example.com',
   phone: '312-555-0112',
-  zipcode: '60647',
   experience: 1,
 };
 const edsger: PastRacer = {
@@ -48,7 +45,6 @@ const edsger: PastRacer = {
   last_name: 'Dijkstra',
   email: 'edsger@example.com',
   phone: null,
-  zipcode: '60622',
   experience: 0,
 };
 
@@ -58,7 +54,6 @@ const racer = (n: number): PastRacer => ({
   last_name: `Num${n}`,
   email: `racer${n}@example.com`,
   phone: '312-555-0100',
-  zipcode: '60601',
 });
 
 let posts: unknown[];
@@ -118,7 +113,7 @@ const row = (name: string) => screen.getByRole('checkbox', { name: new RegExp(`^
 const line = (label: string) => screen.getByRole('checkbox', { name: new RegExp(`^${label}: `) });
 
 async function confirmAll(user: ReturnType<typeof userEvent.setup>) {
-  for (const label of ['Name', 'Email', 'Phone', 'ZIP code', 'Years racing', 'Instagram', 'TikTok']) {
+  for (const label of ['Name', 'Email', 'Phone', 'Years racing', 'Instagram', 'TikTok']) {
     await user.click(line(label));
   }
 }
@@ -238,7 +233,7 @@ describe('pick step', () => {
 });
 
 describe('review step', () => {
-  it('gates adding on confirming all seven lines', async () => {
+  it('gates adding on confirming all six lines', async () => {
     const { user } = setup();
     await reviewOne(user);
     expect(screen.getByRole('heading', { name: 'Review Ada Lovelace' })).toBeInTheDocument();
@@ -249,12 +244,12 @@ describe('review step', () => {
     const add = screen.getByRole('button', { name: 'Add Ada to the team' });
     expect(add).toBeDisabled();
     expect(
-      screen.getByText('7 details left to confirm. Tick each line once you have checked it.'),
+      screen.getByText('6 details left to confirm. Tick each line once you have checked it.'),
     ).toBeInTheDocument();
 
     await confirmAll(user);
     expect(add).toBeEnabled();
-    expect(screen.getByText('All seven details confirmed.')).toBeInTheDocument();
+    expect(screen.getByText('All six details confirmed.')).toBeInTheDocument();
     expect(line('Name')).toBeChecked();
   });
 
@@ -310,10 +305,9 @@ describe('review step', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('names ZIP code and Instagram as written on their Change buttons', async () => {
+  it('names Instagram and TikTok as written on their Change buttons', async () => {
     const { user } = setup();
     await reviewOne(user);
-    expect(screen.getByRole('button', { name: 'Change ZIP code' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change Instagram' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change TikTok' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Change years racing' })).toBeInTheDocument();
@@ -460,7 +454,6 @@ describe('saving', () => {
           last_name: 'Lovelace',
           email: 'ada@example.com',
           phone: '312-555-0111',
-          zipcode: '60614',
           experience: 1,
           instagram: '',
           tiktok: '',

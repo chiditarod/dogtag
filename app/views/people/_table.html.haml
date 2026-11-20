@@ -5,7 +5,6 @@
       %th= t('name')
       %th= t('email')
       %th= t('cell_phone')
-      %th= t('zipcode')
       %th= t('instagram')
       %th= t('tiktok')
   - people.each do |person|
@@ -21,6 +20,5 @@
         = person.last_name
       %td= person.email
       %td= person.phone
-      %td= person.zipcode
       %td= person.instagram
       %td= person.tiktok
