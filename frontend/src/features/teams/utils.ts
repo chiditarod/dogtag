@@ -34,7 +34,9 @@ export function feePill(fee: Checklist['fee'], timeZone: string): string {
 /** What each step card shows, from the checklist alone: racers, questions (done when not required), fee (not done while it opens later). */
 export function cardSteps(checklist: Checklist): [boolean, boolean, boolean] {
   return [
-    checklist.racers.done,
+    // Racers is done with a full roster and a captain; a finalized team that
+    // never had its captain chosen still counts.
+    checklist.racers.done || checklist.finalized,
     !checklist.questions.required || checklist.questions.done,
     checklist.fee.done && !isFeeOpensLater(checklist.fee),
   ];

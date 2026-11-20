@@ -151,6 +151,14 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
     await expect(racers.getByText('5 of 5')).toBeVisible();
   });
 
+  // The account holder is not one of the racers, so nobody is captain until one is chosen,
+  // and the team cannot finalize without one.
+  await test.step('Make the first racer captain', async () => {
+    const racers = page.getByRole('group', { name: 'Racers' });
+    await racers.getByRole('button', { name: 'Make Racer1 Pusher captain' }).click();
+    await expect(racers.locator('[data-captain="true"]').getByText('Racer1 Pusher', { exact: true })).toBeVisible();
+  });
+
   await test.step('Answer every team question', async () => {
     const questions = page.getByRole('group', { name: 'Team questions' });
     // The SPA's own same-route question comes first and is required; No keeps the team picker hidden.

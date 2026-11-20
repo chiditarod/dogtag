@@ -132,6 +132,9 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
     t.datetime "confirmation_seen_at"
     t.text "other_buddies"
     t.boolean "collaborating"
+    t.bigint "captain_id"
+    t.boolean "captain_inferred"
+    t.index ["captain_id"], name: "index_teams_on_captain_id"
     t.index ["race_id"], name: "index_teams_on_race_id"
     t.index ["user_id"], name: "index_teams_on_user_id"
   end
@@ -171,4 +174,5 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
 
   add_foreign_key "team_buddies", "teams", column: "buddy_team_id", on_delete: :cascade
   add_foreign_key "team_buddies", "teams", on_delete: :cascade
+  add_foreign_key "teams", "people", column: "captain_id", on_delete: :nullify
 end

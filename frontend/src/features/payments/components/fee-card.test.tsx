@@ -67,13 +67,13 @@ function serve({
   const team = buildTeam({
     race: buildRace({ payment_requirements: [requirement], ...race }),
     checklist: buildChecklist({
-      racers: { filled: 5, total: 5, done: true },
+      racers: { filled: 5, total: 5, captain: true, done: true },
       fee: feeOf([item()]),
       ...checklist,
     }),
   });
   const paid = buildChecklist({
-    racers: { filled: 5, total: 5, done: true },
+    racers: { filled: 5, total: 5, captain: true, done: true },
     fee: feeOf([item({ done: true, amount_due_cents: null, paid_cents: 30000 })]),
     finalized: true,
     team_number: 12,
@@ -371,7 +371,7 @@ describe('FeeCard', () => {
   it('hides Pay while racers are missing but still shows the price and next tier', async () => {
     serve({
       checklist: {
-        racers: { filled: 3, total: 5, done: false },
+        racers: { filled: 3, total: 5, captain: false, done: false },
         fee: feeOf([item({ next_tier: { price_cents: 35050, begins_at: '2027-02-01T06:00:00.000Z' } })]),
       },
     });
@@ -383,10 +383,18 @@ describe('FeeCard', () => {
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it('offers Pay to a full roster that has not chosen a captain yet', async () => {
+    serve({ checklist: { racers: { filled: 5, total: 5, captain: false, done: false } } });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByRole('button', { name: /^Pay/ })).toBeInTheDocument();
+    expect(fee.queryByText(t('fee.rosterFirst'))).not.toBeInTheDocument();
+  });
+
   it('keeps an already-paid row visible when the roster later drops below full', async () => {
     serve({
       checklist: {
-        racers: { filled: 4, total: 5, done: false },
+        racers: { filled: 4, total: 5, captain: false, done: false },
         fee: feeOf([
           item({ requirement_id: 3, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800 }),
           item({ requirement_id: 4, name: 'Registration fee' }),
@@ -480,7 +488,7 @@ describe('FeeCard', () => {
         checklist: { fee: feeOf([depositItem(), registrationItem()]) },
         paymentResponse: () =>
           HttpResponse.json(
-            { checklist: buildChecklist({ racers: { filled: 5, total: 5, done: true }, fee: depositPaid }) },
+            { checklist: buildChecklist({ racers: { filled: 5, total: 5, captain: true, done: true }, fee: depositPaid }) },
             { status: 201 },
           ),
         ...options,

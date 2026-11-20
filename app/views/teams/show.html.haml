@@ -137,8 +137,17 @@
 
     - if current_user.is_any_of?(:admin, :operator)
       %h3
-        %i.fa.fa-user
+        %i.fa.fa-star
         = t('.captain')
+      - if @team.captain
+        = "#{@team.captain.first_name} #{@team.captain.last_name}"
+        %br
+        = mail_to(@team.captain.email)
+      - else
+        %em.text-muted= t('.no_captain')
+      %h3
+        %i.fa.fa-user
+        = t('.account_holder')
       = link_to user_url(@team.user.id) do
         = @team.user.first_name
         = @team.user.last_name
@@ -167,7 +176,9 @@
       %br
       .lead= t ('.no_people_added')
     - else
-      = render 'people/table', :people => @team.people, :race => @team.race
+      - if @team.captain_id.nil?
+        .alert.alert-warning#choose-captain= t('.choose_captain')
+      = render 'people/table', :people => @team.people, :race => @team.race, :captain_id => @team.captain_id
 
     %br
     = t('.people_instructions')

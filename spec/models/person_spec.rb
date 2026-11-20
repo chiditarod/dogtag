@@ -17,6 +17,52 @@ require 'spec_helper'
 
 describe Person do
 
+  describe "auto captain" do
+    let(:team) { FactoryBot.create :team }
+
+    it "makes the account holder the captain when they are added to a team without one" do
+      person = FactoryBot.create(:person, team: team, email: team.user.email)
+      expect(team.reload.captain_id).to eq(person.id)
+    end
+
+    it "matches the account email regardless of case" do
+      team.user.update_column(:email, "Owner@Example.com")
+      person = FactoryBot.create(:person, team: team, email: "OWNER@example.com")
+      expect(team.reload.captain_id).to eq(person.id)
+    end
+
+    it "does not choose anyone else" do
+      FactoryBot.create(:person, team: team)
+      expect(team.reload.captain_id).to be_nil
+    end
+
+    it "does not replace a captain who is already chosen" do
+      other = FactoryBot.create(:person, team: team)
+      team.update!(captain: other)
+      FactoryBot.create(:person, team: team, email: team.user.email)
+      expect(team.reload.captain_id).to eq(other.id)
+    end
+
+    it "leaves a stale in-memory team alone when a captain was chosen in the meantime" do
+      other = FactoryBot.create(:person, team: team)
+      team.captain_id # loaded with no captain
+      Team.where(id: team.id).update_all(captain_id: other.id)
+
+      FactoryBot.create(:person, team: team, email: team.user.email)
+
+      expect(team.captain_id).to be_nil
+      expect(team.reload.captain_id).to eq(other.id)
+    end
+
+    it "finalizes a complete team through PersonAuditor once the account holder is the last racer" do
+      FactoryBot.create(:person, team: team)
+      last = FactoryBot.build(:person, team: team, email: team.user.email)
+      last.subscribe(PersonAuditor.new)
+      last.save!
+      expect(team.reload.finalized).to be true
+    end
+  end
+
   context "when the time is after the final edits window" do
     let(:race) { FactoryBot.create :race, :after_final_edits_window }
     let(:team) { FactoryBot.create :team, :with_people, people_count: 1, race: race }

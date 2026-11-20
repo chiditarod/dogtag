@@ -147,7 +147,7 @@ describe('TeamChecklist header', () => {
 
   it('counts the team star plus completed steps in the progress bar (questions skipped count as done)', async () => {
     serveTeam({
-      racers: { filled: 5, total: 5, done: true },
+      racers: { filled: 5, total: 5, captain: true, done: true },
       questions: { required: false, done: true },
       fee: buildChecklist().fee,
     });
@@ -171,7 +171,7 @@ describe('card stars', () => {
 
   it('are outlined while to do and solid when done', async () => {
     serveTeam({
-      racers: { filled: 5, total: 5, done: true },
+      racers: { filled: 5, total: 5, captain: true, done: true },
       questions: { required: true, done: false },
     });
     renderApp('/teams/9');
@@ -200,7 +200,7 @@ describe('card stars', () => {
 
 describe('TeamChecklist cards', () => {
   it('renders racers, fee and locked final card; hides questions when not required', async () => {
-    serveTeam({ racers: { filled: 2, total: 5, done: false } });
+    serveTeam({ racers: { filled: 2, total: 5, captain: false, done: false } });
     renderApp('/teams/9');
     await screen.findByRole('heading', { level: 1 });
     const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
@@ -283,7 +283,7 @@ describe('TeamChecklist cards', () => {
 
 describe('card pills', () => {
   it('give screen readers a to do / done suffix; the locked final step has no pill', async () => {
-    serveTeam({ racers: { filled: 2, total: 5, done: false } });
+    serveTeam({ racers: { filled: 2, total: 5, captain: false, done: false } });
     renderApp('/teams/9');
     const racers = (await screen.findByRole('heading', { level: 2, name: 'Racers' })).closest(
       '[role="group"]',
@@ -299,7 +299,7 @@ describe('card pills', () => {
 
 describe("What's left", () => {
   it('links to each unfinished step', async () => {
-    serveTeam({ racers: { filled: 2, total: 5, done: false } });
+    serveTeam({ racers: { filled: 2, total: 5, captain: false, done: false } });
     renderApp('/teams/9');
     const list = await screen.findByRole('list', { name: "What's left" });
     const racers = within(list).getByRole('link', { name: 'Add 3 racers' });
@@ -314,7 +314,7 @@ describe("What's left", () => {
 
   it('uses the singular for one open spot and lists unanswered questions', async () => {
     serveTeam({
-      racers: { filled: 4, total: 5, done: false },
+      racers: { filled: 4, total: 5, captain: false, done: false },
       questions: { required: true, done: false },
     });
     renderApp('/teams/9');
@@ -327,7 +327,7 @@ describe("What's left", () => {
   it('leaves out the fee while it opens later', async () => {
     const opens = { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' };
     serveTeam({
-      racers: { filled: 2, total: 5, done: false },
+      racers: { filled: 2, total: 5, captain: false, done: false },
       fee: {
         done: true,
         amount_due_cents: null,
@@ -341,6 +341,26 @@ describe("What's left", () => {
     const list = await screen.findByRole('list', { name: "What's left" });
     expect(within(list).getByRole('link', { name: 'Add 3 racers' })).toBeInTheDocument();
     expect(within(list).queryByRole('link', { name: 'Pay the registration fee' })).toBeNull();
+  });
+
+  it('links to the captain choice while racers are on the roster and none is the captain', async () => {
+    serveTeam({ racers: { filled: 2, total: 5, captain: false, done: false } });
+    renderApp('/teams/9');
+    const list = await screen.findByRole('list', { name: "What's left" });
+    const link = within(list).getByRole('link', { name: 'Choose a team captain' });
+    expect(link.getAttribute('href')).toMatch(/#step-racers$/);
+  });
+
+  it('leaves out the captain item once one is chosen or while the roster is empty', async () => {
+    serveTeam({ racers: { filled: 2, total: 5, captain: true, done: false } }, { captain_id: 1 });
+    const { queryClient } = renderApp('/teams/9');
+    const list = await screen.findByRole('list', { name: "What's left" });
+    expect(within(list).queryByRole('link', { name: 'Choose a team captain' })).toBeNull();
+
+    serveTeam({ racers: { filled: 0, total: 5, captain: false, done: false } });
+    await act(() => queryClient.invalidateQueries({ queryKey: ['team', '9'] }));
+    await within(await screen.findByRole('list', { name: "What's left" })).findByRole('link', { name: 'Add 5 racers' });
+    expect(screen.queryByRole('link', { name: 'Choose a team captain' })).toBeNull();
   });
 
   it('is absent once the team is finalized', async () => {
@@ -737,7 +757,7 @@ describe('guided tour', () => {
   it('leaves the group names and pills as they were', async () => {
     tourOn();
     serveTeam({
-      racers: { filled: 2, total: 5, done: false },
+      racers: { filled: 2, total: 5, captain: false, done: false },
       questions: { required: true, done: false },
     });
     renderApp('/teams/9');

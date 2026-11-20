@@ -27,6 +27,10 @@ describe "TeamAuditor" do
 
         expect(team.finalized?).to be false
         team.save
+        expect(team.finalized?).to be false
+
+        team.update_column(:captain_id, team.people.first.id)
+        team.reload.finalize
         expect(team.finalized?).to be true
       end
     end

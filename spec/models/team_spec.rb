@@ -221,6 +221,72 @@ describe Team do
     end
   end
 
+  describe "captain" do
+    let(:team) { FactoryBot.create :team, :with_enough_people }
+    let(:racer) { team.people.last }
+
+    it "is not valid when the captain races on another team" do
+      stranger = FactoryBot.create(:person, team: FactoryBot.create(:team))
+      team.captain = stranger
+      expect(team).not_to be_valid
+      expect(team.errors[:captain]).to be_present
+    end
+
+    it "accepts one of its own racers" do
+      team.captain = racer
+      expect(team).to be_valid
+    end
+
+    it "is cleared when the captain is deleted" do
+      team.update!(captain: racer)
+      racer.destroy
+      expect(team.reload.captain_id).to be_nil
+    end
+
+    describe "#ready_to_finalize?" do
+      it "needs a captain on top of the finalization requirements" do
+        team.update_column(:captain_id, nil)
+        expect(team.meets_finalization_requirements?).to be true
+        expect(team.ready_to_finalize?).to be false
+
+        team.update_column(:captain_id, racer.id)
+        expect(team.ready_to_finalize?).to be true
+      end
+
+      it "is false without the finalization requirements even with a captain" do
+        incomplete = FactoryBot.create :team, :with_people, people_count: 1
+        incomplete.update_column(:captain_id, incomplete.people.first.id)
+        expect(incomplete.ready_to_finalize?).to be false
+      end
+    end
+
+    it "does not finalize without a captain" do
+      team.update_column(:captain_id, nil)
+      expect(team.finalize).to be_nil
+      expect(team.reload.finalized).to be_nil
+    end
+
+    context "a finalized team without a captain (finalized before captains existed)" do
+      let(:legacy) { FactoryBot.create :finalized_team }
+
+      before { legacy.update_column(:captain_id, nil) }
+
+      it "stays finalized when the team is updated" do
+        legacy.subscribe(TeamAuditor.new)
+        legacy.update!(description: "still here")
+        expect(legacy.reload.finalized).to be true
+      end
+
+      it "stays finalized when a racer is added or removed" do
+        legacy.race.update_column(:people_per_team, legacy.race.people_per_team + 1)
+        person = FactoryBot.build(:person, team: legacy)
+        person.subscribe(PersonAuditor.new)
+        person.save!
+        expect(legacy.reload.finalized).to be true
+      end
+    end
+  end
+
   describe '.unfinalized' do
     it 'returns true when team is unfinalized 'do
       team = FactoryBot.create :team
@@ -488,6 +554,9 @@ describe Team do
       # User columns
       expect(header).to include('user_first_name', 'user_last_name', 'user_email', 'user_phone', 'user_stripe_customer_id')
 
+      # Captain columns, right after the user columns
+      expect(header.each_cons(6).to_a).to include(%w(captain_first_name captain_last_name captain_email captain_phone captain_inferred).unshift('user_stripe_customer_id'))
+
       # People columns (dawg_0_*, dawg_1_*, etc. based on people_per_team)
       race.people_per_team.times do |i|
         expect(header).to include("dawg_#{i}_first_name", "dawg_#{i}_last_name", "dawg_#{i}_email", "dawg_#{i}_phone", "dawg_#{i}_instagram", "dawg_#{i}_experience", "dawg_#{i}_tiktok")
@@ -575,6 +644,43 @@ describe Team do
       header, *rows = Team.export(race.id)
       answers = rows.to_h { |row| [row[header.index("name")], row[header.index("collaborating")]] }
       expect(answers).to eq(team.name => "", yes_team.name => "Yes", no_team.name => "No")
+    end
+
+    context "captain columns" do
+      def captain_cells(team_row, header)
+        %w[first_name last_name email phone].map { |k| team_row[header.index("captain_#{k}")] } + [team_row[header.index("captain_inferred")]]
+      end
+
+      it "writes the captain's details and leaves the flag blank for a chosen captain" do
+        captain = team.people.first
+        team.update!(captain: captain)
+
+        header, row = Team.export(race.id)
+
+        expect(captain_cells(row, header)).to eq([captain.first_name, captain.last_name, captain.email, captain.phone, ""])
+      end
+
+      it "writes yes in captain_inferred for a guessed captain" do
+        team.update!(captain: team.people.first, captain_inferred: true)
+        header, row = Team.export(race.id)
+        expect(row[header.index("captain_inferred")]).to eq("yes")
+      end
+
+      it "leaves the captain columns blank without a captain" do
+        team.update_column(:captain_id, nil)
+        header, row = Team.export(race.id)
+        expect(captain_cells(row, header)).to eq(["", "", "", "", ""])
+      end
+
+      it "keeps spreadsheets from evaluating a captain name that starts with a formula character" do
+        captain = team.people.first
+        captain.update_column(:first_name, "=HYPERLINK(1)")
+        team.update!(captain: captain)
+
+        header, row = Team.export(race.id)
+
+        expect(row[header.index("captain_first_name")]).to eq("'=HYPERLINK(1)")
+      end
     end
 
     context "with racing_with picks" do

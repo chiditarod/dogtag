@@ -11,7 +11,7 @@ describe TeamChecklist do
 
     it "has three items remaining" do
       expect(checklist[:remaining]).to eq(3)
-      expect(checklist[:racers]).to eq(filled: 0, total: race.people_per_team, done: false)
+      expect(checklist[:racers]).to eq(filled: 0, total: race.people_per_team, captain: false, done: false)
       expect(checklist[:questions]).to eq(required: true, done: false)
       expect(checklist[:finalized]).to eq(false)
       expect(checklist[:team_number]).to be_nil
@@ -23,8 +23,14 @@ describe TeamChecklist do
   context "with a full roster" do
     before { FactoryBot.create_list(:person, race.people_per_team, team: team) }
 
-    it "marks racers done" do
-      expect(checklist[:racers]).to eq(filled: race.people_per_team, total: race.people_per_team, done: true)
+    it "needs a captain before racers are done" do
+      expect(checklist[:racers]).to eq(filled: race.people_per_team, total: race.people_per_team, captain: false, done: false)
+      expect(checklist[:remaining]).to eq(2)
+    end
+
+    it "marks racers done once a captain is chosen" do
+      team.update!(captain: team.people.first)
+      expect(checklist[:racers]).to eq(filled: race.people_per_team, total: race.people_per_team, captain: true, done: true)
     end
   end
 
@@ -162,6 +168,18 @@ describe TeamChecklist do
       expect(checklist[:finalized]).to eq(true)
       expect(checklist[:team_number]).to be_present
       expect(checklist[:team_number]).to eq(team.assigned_team_number)
+    end
+  end
+
+  context "with a finalized team that never got a captain" do
+    let(:team) { FactoryBot.create(:finalized_team, race: FactoryBot.create(:race)) }
+
+    before { team.update_column(:captain_id, nil) }
+
+    it "has nothing remaining" do
+      expect(checklist[:finalized]).to eq(true)
+      expect(checklist[:racers]).to include(captain: false)
+      expect(checklist[:remaining]).to eq(0)
     end
   end
 

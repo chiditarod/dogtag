@@ -26,7 +26,9 @@ FactoryBot.define do
 
     factory :finalized_team do
       after(:create) do |team|
-        create_list(:person, team.race.people_per_team, team: team)
+        people = create_list(:person, team.race.people_per_team, team: team)
+        # Finalization needs a captain; the first racer stands in.
+        team.update_column(:captain_id, people.first.id)
         team.finalize
       end
     end
@@ -55,9 +57,11 @@ FactoryBot.define do
       end
     end
 
+    # A full roster with the first racer as captain, so the team can finalize.
     trait :with_enough_people do
       after(:create) do |team|
-        create_list(:person, team.race.people_per_team, team: team)
+        people = create_list(:person, team.race.people_per_team, team: team)
+        team.update_column(:captain_id, people.first.id)
       end
     end
   end

@@ -56,6 +56,7 @@ All email is sent through MXRoute over SMTP (the `SMTP_*` settings above). Every
 Each race has a `jsonform` field. This field can contain a [jsonform](https://github.com/jsonform/jsonform) schema that is consumed and rendered as questions to the end-user during their team signup. Their responses are then saved into their team record and are included when exporting a CSV.
 
 - Answer keys are taken from the race's schema, so new questions need no code changes.
+- Every team needs a captain who is one of its racers (organizers contact them directly). Racers get a star and a "Make captain" button in the SPA and the legacy team page; a team does not finalize until a captain is chosen, and the CSV export has `captain_*` columns after the `user_*` columns (`captain_inferred` is `yes` where the migration guessed one).
 - Racers also pick the teams they want to race with (and an optional free-text "other") in the SPA's Questions card. The CSV export has a final `racing_with` column and the team page shows "Racing with" to admins and operators. These are not part of the jsonform schema.
 - A `form` item can be shown only when another answer matches: `{ "key": "fire-details", "type": "textarea", "showWhen": { "flame-effects": "Yes" } }`. Only optional fields may use `showWhen` (the race form rejects a required one). The racer SPA hides the field and drops its answer on save; the legacy flow always shows it.
 - For example jsonform data, see [github](https://github.com/chiditarod/dogtag/tree/master/examples/jsonform)

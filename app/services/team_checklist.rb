@@ -44,7 +44,8 @@ class TeamChecklist
   def racers_item
     filled = team.people.size
     total = race.people_per_team
-    { filled: filled, total: total, done: filled >= total }
+    captain = team.captain_id.present?
+    { filled: filled, total: total, captain: captain, done: filled >= total && captain }
   end
 
   def questions_item
@@ -104,6 +105,9 @@ class TeamChecklist
   end
 
   def remaining(racers, questions, fee)
+    # A finalized team is complete, even a legacy one that never got a captain.
+    return 0 if team.finalized
+
     [racers[:done], !questions[:required] || questions[:done], fee[:done]].count(false)
   end
 end

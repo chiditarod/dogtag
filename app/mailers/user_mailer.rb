@@ -99,6 +99,7 @@ class UserMailer < ActionMailer::Base
     race = team.race
     items = []
     items << t("user_mailer.registration_reminder.racers", count: team.people.size, total: race.people_per_team) if team.people.size < race.people_per_team
+    items << t("user_mailer.registration_reminder.captain") if team.people.any? && team.captain_id.blank?
     items << t("user_mailer.registration_reminder.questions") unless team.completed_questions?
     items << t("user_mailer.registration_reminder.fee") unless team.completed_all_requirements?
     items
