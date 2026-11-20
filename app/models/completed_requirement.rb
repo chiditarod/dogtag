@@ -32,8 +32,9 @@ class CompletedRequirement < ApplicationRecord
 
   def metadata
     m = read_attribute :metadata
-    return m if m.is_a?(Hash)
-    return JSON.load(m)
+    # Older rows were JSON-encoded two or more extra times, so unwrap until it is no longer a String.
+    m = JSON.load(m) while m.is_a?(String)
+    m
   end
 
   # flag the completed requirement for a stripe charge as refunded, so views need not ask Stripe.
