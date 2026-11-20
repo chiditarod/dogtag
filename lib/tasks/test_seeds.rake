@@ -9,6 +9,7 @@
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
+#   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:buddy_picker              (captain's team plus two other teams in a race with questions)
 #   rails test_seeds:cleanup                   (clean up all test data)
@@ -466,6 +467,64 @@ namespace :test_seeds do
     puts "✅ Seeded captain #{captain.email} with #{racers.size} past racers"
   end
 
+  desc "Captain with one racer already on the roster and one past racer who last raced at 7 years"
+  task racer_details: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding racer details test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    captain = FactoryBot.create(:user,
+      first_name: "Captain",
+      last_name: "Details",
+      email: "details-captain-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    past_race = FactoryBot.create(:race, name: "Race Details Past #{unique_id[0..7]}", people_per_team: 4, max_teams: 100)
+    past_team = FactoryBot.create(:team, name: "Test Team Details Past #{unique_id[0..7]}", race: past_race, user: captain)
+    veteran = FactoryBot.create(:person,
+      team: past_team,
+      first_name: "Ada",
+      last_name: "Veteran",
+      email: "details-veteran-#{unique_id}@example.com",
+      phone: "312-555-0100",
+      experience: 7
+    )
+    # Racers can only be added while a race is open, so move it into 2025 afterwards.
+    past_race.update_columns(
+      registration_open: Time.zone.local(2025, 1, 1),
+      registration_close: Time.zone.local(2025, 2, 1),
+      final_edits_close: Time.zone.local(2025, 2, 15),
+      race_datetime: Time.zone.local(2025, 3, 1)
+    )
+
+    race = FactoryBot.create(:race, name: "Race Details #{unique_id[0..7]}", people_per_team: 4, max_teams: 100)
+    team = FactoryBot.create(:team, name: "Test Team Details #{unique_id[0..7]}", race: race, user: captain)
+    existing = FactoryBot.create(:person,
+      team: team,
+      first_name: "Bo",
+      last_name: "Roster",
+      email: "details-roster-#{unique_id}@example.com",
+      phone: "312-555-0101",
+      experience: 1
+    )
+
+    write_test_credentials(unique_id,
+      captain_email: captain.email,
+      captain_password: "password123",
+      team_id: team.id,
+      team_name: team.name,
+      roster_email: existing.email,
+      new_email: "details-new-#{unique_id}@example.com",
+      veteran_email: veteran.email
+    )
+    puts "✅ Seeded captain #{captain.email}"
+  end
+
   desc "Captain's team with answered questions, plus a finalized and an unfinalized team in the same open race"
   task buddy_picker: [:guard, :environment] do
     require "factory_bot_rails"
@@ -568,6 +627,8 @@ namespace :test_seeds do
     SentEmail.where("recipient LIKE ?", "%@example.com").delete_all
     User.where("email LIKE ? AND email NOT IN (?)", "%@example.com", keep).destroy_all
     Team.where("name LIKE ?", "Test Team%").destroy_all
+    # Every seed names its races "Race ...", its teams "Test Team ..." and its users @example.com, so
+    # this sweep covers them all (racer_details included).
     # Seeded teams with their own names (e.g. buddy_picker); team_buddies rows go by FK cascade.
     Team.where(race_id: Race.where("name LIKE ?", "Race %").select(:id)).destroy_all
     Race.where("name LIKE ?", "Race %").destroy_all

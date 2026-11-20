@@ -4,9 +4,9 @@ import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
 import { ApiError, type FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import type { Person, Race } from '@/types/api';
+import type { Person } from '@/types/api';
 
-/** Form state: every value is a string; `experience` is a label index or "". */
+/** Form state: every value is a string; `experience` is the typed number of years or "". */
 export interface PersonDraft {
   first_name: string;
   last_name: string;
@@ -55,9 +55,36 @@ export function draftFromPerson(person: Person): PersonDraft {
   };
 }
 
+export const MAX_YEARS = 99;
+
+/** "1 year racing", "12 years racing". */
+export const yearsCount = (count: number) =>
+  t(count === 1 ? 'roster.yearsCount_one' : 'roster.yearsCount_other', { count });
+
+/** Years racing must be typed as digits; the server enforces the 0-99 range. */
+export const yearsProblem = (value: string): string | null =>
+  /^\d+$/.test(value.trim()) ? null : t('roster.yearsRequired');
+
+/** Same shape rule as `Person`'s email format validation. */
+const EMAIL_SHAPE = /^[^@\s]+@([-a-z0-9]+\.)+[a-z]{2,}$/i;
+
+/**
+ * What is wrong with an email the racer just tabbed out of, or null. Blank is
+ * left to the required check; `otherEmails` are the rest of the roster, never
+ * the person being edited.
+ */
+export function emailProblem(email: string, otherEmails: readonly string[]): string | null {
+  const value = email.trim().toLowerCase();
+  if (!value) return null;
+  if (!EMAIL_SHAPE.test(value)) return t('roster.emailInvalid');
+  if (otherEmails.some((other) => other.trim().toLowerCase() === value)) {
+    return t('roster.emailOnTeam');
+  }
+  return null;
+}
+
 /** A returning racer has raced one more time than their last entry. */
-export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
-  const lastIndex = Math.max(race.experience_labels.length - 1, 0);
+export function draftFromPastRacer(racer: PastRacer): PersonDraft {
   return {
     first_name: racer.first_name,
     last_name: racer.last_name,
@@ -66,7 +93,7 @@ export function draftFromPastRacer(racer: PastRacer, race: Race): PersonDraft {
     experience:
       racer.experience === null
         ? ''
-        : String(Math.min(racer.experience + 1, lastIndex)),
+        : String(Math.min(racer.experience + 1, MAX_YEARS)),
     instagram: racer.instagram ?? '',
     tiktok: racer.tiktok ?? '',
   };

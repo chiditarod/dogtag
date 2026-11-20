@@ -5,22 +5,22 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
-import { EmailInput } from '@/components/inputs/email-input';
 import { PhoneInput } from '@/components/inputs/phone-input';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/field';
 import type { PastRacer } from '@/features/roster/api/use-past-racers';
 import type { PersonPayload } from '@/features/roster/api/use-person-mutations';
+import { RosterEmailField } from '@/features/roster/components/roster-email-field';
 import { TickIcon } from '@/features/roster/components/tick-icon';
+import { YearsInput } from '@/features/roster/components/years-input';
 import {
   LINE_KEYS,
   applyFieldErrors,
   experienceNote,
   initialLines,
-  isLineBlank,
   lineLabel,
+  lineProblem,
   lineValue,
-  missingMessage,
   unconfirmedCount,
   type LineKey,
   type LineState,
@@ -32,10 +32,6 @@ import {
 } from '@/features/roster/utils';
 import type { FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import type { Race } from '@/types/api';
-
-const selectClass =
-  'block min-h-11 w-full rounded-md border border-flag bg-white px-3 py-2 font-sans text-base text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-link aria-[invalid=true]:border-star';
 
 /** Reopens the lines the server rejected. */
 export type ReportFieldErrors = (fieldErrors: FieldErrors) => void;
@@ -43,7 +39,8 @@ export type ReportFieldErrors = (fieldErrors: FieldErrors) => void;
 interface CrewReviewProps {
   titleId: string;
   racer: PastRacer;
-  race: Race;
+  /** Emails of the racers already on the team. */
+  rosterEmails: readonly string[];
   /** 1-based position in the queue. */
   index: number;
   total: number;
@@ -61,7 +58,7 @@ interface CrewReviewProps {
 export function CrewReview({
   titleId,
   racer,
-  race,
+  rosterEmails,
   index,
   total,
   pending,
@@ -71,7 +68,7 @@ export function CrewReview({
   onBack,
   onClose,
 }: CrewReviewProps) {
-  const [draft, setDraft] = useState(() => draftFromPastRacer(racer, race));
+  const [draft, setDraft] = useState(() => draftFromPastRacer(racer));
   const [lines, setLines] = useState(() => initialLines(draft));
   const titleRef = useRef<HTMLHeadingElement>(null);
   const alertRef = useRef<HTMLDivElement>(null);
@@ -95,8 +92,9 @@ export function CrewReview({
     setLines((current) => ({ ...current, [key]: { ...current[key], ...state } }));
 
   function finishLine(key: LineKey) {
-    if (isLineBlank(key, draft)) {
-      setLine(key, { confirmed: false, error: missingMessage(key) });
+    const problem = lineProblem(key, draft);
+    if (problem) {
+      setLine(key, { confirmed: false, error: problem });
     } else {
       delete beforeChange.current[key];
       setLine(key, { confirmed: true, editing: false, error: null });
@@ -174,8 +172,8 @@ export function CrewReview({
               lineKey={key}
               state={lines[key]}
               draft={draft}
-              race={race}
-              note={key === 'experience' ? experienceNote(racer, draft, race) : null}
+              rosterEmails={rosterEmails}
+              note={key === 'experience' ? experienceNote(racer, draft) : null}
               onDraft={(field, value) =>
                 setDraft((current) => ({ ...current, [field]: value }))
               }
@@ -251,7 +249,7 @@ interface ReviewLineProps {
   lineKey: LineKey;
   state: LineState;
   draft: PersonDraft;
-  race: Race;
+  rosterEmails: readonly string[];
   note: string | null;
   onDraft: (field: keyof PersonDraft, value: string) => void;
   onToggle: () => void;
@@ -266,7 +264,7 @@ function ReviewLine({
   lineKey,
   state,
   draft,
-  race,
+  rosterEmails,
   note,
   onDraft,
   onToggle,
@@ -318,7 +316,7 @@ function ReviewLine({
         <LineEditor
           lineKey={lineKey}
           draft={draft}
-          race={race}
+          rosterEmails={rosterEmails}
           error={state.error}
           onDraft={onDraft}
         />
@@ -329,7 +327,7 @@ function ReviewLine({
     );
   }
 
-  const value = lineValue(lineKey, draft, race);
+  const value = lineValue(lineKey, draft);
   return (
     <div
       className={`flex items-center gap-1 rounded-lg border pr-1.5 ${
@@ -379,13 +377,13 @@ function ReviewLine({
 interface LineEditorProps {
   lineKey: LineKey;
   draft: PersonDraft;
-  race: Race;
+  rosterEmails: readonly string[];
   error: string | null;
   onDraft: (field: keyof PersonDraft, value: string) => void;
 }
 
 /** The input for one line, reusing the racer form's inputs. */
-function LineEditor({ lineKey, draft, race, error, onDraft }: LineEditorProps) {
+function LineEditor({ lineKey, draft, rosterEmails, error, onDraft }: LineEditorProps) {
   const errors = error ? [error] : undefined;
   const nameErrorId = useId();
 
@@ -428,13 +426,12 @@ function LineEditor({ lineKey, draft, race, error, onDraft }: LineEditorProps) {
       );
     case 'email':
       return (
-        <Field label={t('roster.email')} name="email" error={errors}>
-          <EmailInput
-            autoComplete="off"
-            value={draft.email}
-            onChange={(value) => onDraft('email', value)}
-          />
-        </Field>
+        <RosterEmailField
+          value={draft.email}
+          onChange={(value) => onDraft('email', value)}
+          otherEmails={rosterEmails}
+          error={errors}
+        />
       );
     case 'phone':
       return (
@@ -450,19 +447,11 @@ function LineEditor({ lineKey, draft, race, error, onDraft }: LineEditorProps) {
       return (
         <Field label={t('roster.years')} name="experience" error={errors}>
           {(control) => (
-            <select
+            <YearsInput
               {...control}
               value={draft.experience}
-              onChange={(event) => onDraft('experience', event.target.value)}
-              className={selectClass}
-            >
-              <option value="">{t('roster.yearsPlaceholder')}</option>
-              {race.experience_labels.map((label, index) => (
-                <option key={index} value={index}>
-                  {label}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onDraft('experience', value)}
+            />
           )}
         </Field>
       );

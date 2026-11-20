@@ -25,7 +25,7 @@
     .col-xs-4.control-label
       = label_tag :experience, t('.experience')
     .col-xs-5
-      = f.select :experience, @team.race.experience_labels.map.with_index { |n,i| [n, i] }, {:prompt => 'Please Select'}, :class => 'form-control'
+      = f.number_field :experience, :min => 0, :max => 99, :class => 'form-control'
   .form-group
     .col-xs-4.control-label
       = label_tag :instagram, t('.instagram')

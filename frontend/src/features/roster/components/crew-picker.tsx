@@ -133,7 +133,7 @@ export function CrewPicker({
           key={current.email}
           titleId={titleId}
           racer={current}
-          race={team.race}
+          rosterEmails={team.people.map((person) => person.email)}
           index={position + 1}
           total={queue.length}
           pending={add.isPending}

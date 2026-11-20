@@ -24,6 +24,7 @@ import {
   emptyDraft,
   fullName,
   splitPersonErrors,
+  yearsCount,
   type PersonDraft,
 } from '@/features/roster/utils';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
@@ -193,7 +194,9 @@ export function RosterCard({ team }: { team: Team }) {
 
   const formFor = (title: string, initial: PersonDraft) => (
     <PersonForm
-      race={race}
+      otherEmails={people
+        .filter((person) => person.id !== active?.personId)
+        .map((person) => person.email)}
       title={title}
       initial={initial}
       pending={save.isPending}
@@ -220,7 +223,7 @@ export function RosterCard({ team }: { team: Team }) {
           experienceLabel={
             person.experience === null
               ? undefined
-              : race.experience_labels[person.experience]
+              : yearsCount(person.experience)
           }
           captain={person.id === captainId}
           canEdit

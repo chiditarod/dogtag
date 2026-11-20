@@ -35,7 +35,7 @@ class Person < ApplicationRecord
     with: /\A@[a-z0-9._]{2,24}(?<!\.)\z/, message: :invalid_handle
   }
   validates :phone, format: { :with => /\A\d{3}-\d{3}-\d{4}\z/, :message => "should be in the form 555-867-5309" }
-  validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
+  validates :experience, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0, :less_than_or_equal_to => 99 }
   validates_with PersonValidator
 
   include Wisper.model

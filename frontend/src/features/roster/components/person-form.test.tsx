@@ -2,14 +2,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { PersonForm } from '@/features/roster/components/person-form';
-import { buildRace } from '@/test/fixtures';
 
 function setup(props: Partial<Parameters<typeof PersonForm>[0]> = {}) {
   const onSubmit = vi.fn();
   const onCancel = vi.fn();
   const user = userEvent.setup();
   render(
-    <PersonForm race={buildRace()} onSubmit={onSubmit} onCancel={onCancel} {...props} />,
+    <PersonForm otherEmails={[]} onSubmit={onSubmit} onCancel={onCancel} {...props} />,
   );
   return { user, onSubmit, onCancel };
 }
@@ -33,11 +32,12 @@ describe('PersonForm', () => {
     expect(screen.getAllByPlaceholderText('@handle')).toHaveLength(2);
   });
 
-  it('offers the race experience labels and explains years racing', async () => {
+  it('takes years racing as a typed number and explains it', async () => {
     const { user } = setup();
-    const select = screen.getByLabelText('Years racing');
-    expect(select).toHaveDisplayValue('Select one');
-    expect(screen.getByRole('option', { name: 'Raced once before' })).toBeInTheDocument();
+    const years = screen.getByLabelText('Years racing');
+    expect(years).toHaveValue('');
+    expect(years).toHaveAttribute('inputmode', 'numeric');
+    expect(years).not.toHaveAttribute('type', 'number');
     await user.click(screen.getByRole('button', { name: 'About years racing' }));
     expect(
       await screen.findByText("Count CHIditarods you've raced, not counting this one."),
@@ -50,14 +50,14 @@ describe('PersonForm', () => {
     await user.type(screen.getByLabelText('Last name'), 'Lamb');
     await user.type(screen.getByLabelText('Email'), 'Dee@Example.com');
     await user.type(screen.getByLabelText('Phone'), '3125550144');
-    await user.selectOptions(screen.getByLabelText('Years racing'), '2');
+    await user.type(screen.getByLabelText('Years racing'), '12');
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(onSubmit).toHaveBeenCalledWith({
       first_name: 'Dee',
       last_name: 'Lamb',
       email: 'dee@example.com',
       phone: '312-555-0144',
-      experience: 2,
+      experience: 12,
       instagram: '',
       tiktok: '',
     });
@@ -69,7 +69,7 @@ describe('PersonForm', () => {
     await user.type(screen.getByLabelText('Last name'), 'Okafor');
     await user.type(screen.getByLabelText('Email'), 'sam@example.com');
     await user.type(screen.getByLabelText('Phone'), '3125550144');
-    await user.selectOptions(screen.getByLabelText('Years racing'), '1');
+    await user.type(screen.getByLabelText('Years racing'), '1');
     await user.type(screen.getByLabelText('Instagram (optional)'), '@sam.okafor');
     await user.type(screen.getByLabelText('TikTok (optional)'), '@sam_o');
     await user.click(screen.getByRole('button', { name: 'Save' }));
@@ -86,12 +86,65 @@ describe('PersonForm', () => {
     expect(screen.getByLabelText('Years racing')).toHaveFocus();
   });
 
-  it('requires a years-racing choice before submitting', async () => {
+  it('requires years racing as digits before submitting', async () => {
     const { user, onSubmit } = setup();
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByText('Choose how many years they have raced')).toBeInTheDocument();
+    expect(screen.getByText('Enter how many years they have raced')).toBeInTheDocument();
     expect(screen.getByLabelText('Years racing')).toHaveFocus();
+
+    await user.type(screen.getByLabelText('Years racing'), 'abc');
+    expect(screen.queryByText('Enter how many years they have raced')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('Enter how many years they have raced')).toBeInTheDocument();
+  });
+
+  it('sends 100 to the server, whose message is shown under the field', () => {
+    setup({ fieldErrors: { experience: ['must be less than or equal to 99'] } });
+    expect(screen.getByLabelText('Years racing')).toHaveAccessibleDescription(
+      expect.stringContaining('must be less than or equal to 99'),
+    );
+  });
+
+  describe('email check on blur', () => {
+    const emailField = () => screen.getByLabelText('Email');
+
+    it('flags a malformed address as soon as the field loses focus', async () => {
+      const { user } = setup();
+      await user.type(emailField(), 'dee@example');
+      expect(screen.queryByText('Enter a valid email address')).toBeNull();
+      await user.tab();
+      expect(screen.getByText('Enter a valid email address')).toBeInTheDocument();
+      expect(emailField()).toBeInvalid();
+      expect(emailField()).toHaveAccessibleDescription('Enter a valid email address');
+    });
+
+    it('flags an address already on the roster, ignoring case and spaces', async () => {
+      const { user } = setup({ otherEmails: ['ada@example.com'] });
+      await user.type(emailField(), ' Ada@Example.com ');
+      await user.tab();
+      expect(screen.getByText('Is already on this team')).toBeInTheDocument();
+    });
+
+    it('clears on the next change and never blocks typing or saving', async () => {
+      const { user } = setup({ otherEmails: ['ada@example.com'] });
+      await user.type(emailField(), 'ada@example.com');
+      await user.tab();
+      expect(screen.getByText('Is already on this team')).toBeInTheDocument();
+      await user.type(emailField(), 'x');
+      expect(screen.queryByText('Is already on this team')).toBeNull();
+    });
+
+    it('says nothing for a blank field or a fresh address', async () => {
+      const { user } = setup({ otherEmails: ['ada@example.com'] });
+      await user.click(emailField());
+      await user.tab();
+      expect(emailField()).not.toBeInvalid();
+      await user.type(emailField(), 'bo@example.com');
+      await user.tab();
+      expect(emailField()).not.toBeInvalid();
+    });
   });
 
   it('Cancel closes without saving', async () => {
