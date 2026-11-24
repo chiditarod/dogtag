@@ -271,7 +271,7 @@ describe UserMailer do
   describe "#payment_refunded_email" do
     let(:team) { FactoryBot.create(:team) }
     let(:details) do
-      { completed_requirement_id: 77, requirement_name: "Cart Deposit", amount_cents: 5000, race_name: team.race.name }
+      { completed_requirement_id: 77, charge_id: "ch_77", requirement_name: "Cart Deposit", amount_cents: 5000, race_name: team.race.name }
     end
 
     it "goes to the team owner with race, team, payment type and amount" do
@@ -283,10 +283,10 @@ describe UserMailer do
       expect(body).to include(team.race.name, team.name, "Cart Deposit", "$50.00", "5-10 business days", "dogtag@chiditarod.org")
     end
 
-    it "tracks kind refund with dedupe_key refund-cr-<id>" do
+    it "tracks kind refund with dedupe_key refund-<charge id>" do
       UserMailer.payment_refunded_email(team.user, team, details).deliver_now
 
-      expect(SentEmail.last).to have_attributes(kind: "refund", team_id: team.id, user_id: team.user.id, dedupe_key: "refund-cr-77")
+      expect(SentEmail.last).to have_attributes(kind: "refund", team_id: team.id, user_id: team.user.id, dedupe_key: "refund-ch_77")
     end
 
     it "suppresses a second delivery with the same dedupe key" do

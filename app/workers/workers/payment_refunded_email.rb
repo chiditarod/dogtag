@@ -1,7 +1,7 @@
 module Workers
   # Emails the team's account holder that a payment was refunded. The job carries plain values, not the
   # completed requirement, so it still sends if an admin deletes that row after refunding. The mailer's
-  # dedupe key (refund-cr-<id>) means a Sidekiq retry or a second enqueue never sends twice.
+  # dedupe key (refund-<charge id>) means a Sidekiq retry or a second enqueue never sends twice.
   class PaymentRefundedEmail
     include Sidekiq::Worker
     include Workers::Common
@@ -17,6 +17,7 @@ module Workers
 
       details = {
         completed_requirement_id: job["completed_requirement_id"],
+        charge_id: job["charge_id"],
         requirement_name: job["requirement_name"],
         amount_cents: job["amount_cents"],
         race_name: job["race_name"]

@@ -4,7 +4,7 @@ describe Workers::PaymentRefundedEmail do
   let(:team) { FactoryBot.create(:team) }
   let(:job) do
     {
-      "user_id" => team.user.id, "team_id" => team.id, "completed_requirement_id" => 9,
+      "user_id" => team.user.id, "team_id" => team.id, "completed_requirement_id" => 9, "charge_id" => "ch_9",
       "requirement_name" => "Cart Deposit", "amount_cents" => 5000, "race_name" => team.race.name
     }
   end
@@ -21,7 +21,7 @@ describe Workers::PaymentRefundedEmail do
     2.times { described_class.new.perform(job) }
 
     expect(ActionMailer::Base.deliveries.count).to eq(1)
-    expect(SentEmail.where(kind: "refund", dedupe_key: "refund-cr-9").count).to eq(1)
+    expect(SentEmail.where(kind: "refund", dedupe_key: "refund-ch_9").count).to eq(1)
   end
 
   it "skips without raising, so Sidekiq does not retry, when the owner's account is gone" do
