@@ -11,7 +11,12 @@ json.payments @search.payments do |cr|
   json.paid_at cr.created_at
   json.status cr.payment_status
   json.refunded_at cr.refunded_at
-  json.refunded_by cr.refunded_by && { name: [cr.refunded_by.first_name, cr.refunded_by.last_name].compact_blank.join(" ") }
+  # A refund found already made at Stripe has no refunder here; say where it was done.
+  json.refunded_by(if cr.refunded_by
+                     { name: [cr.refunded_by.first_name, cr.refunded_by.last_name].compact_blank.join(" ") }
+                   elsif cr.refunded_at && cr.stripe_refund_id.present?
+                     { name: "Done at Stripe" }
+                   end)
 end
 json.meta @search.meta
 json.filters @search.filters

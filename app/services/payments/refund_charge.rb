@@ -6,7 +6,7 @@
 #   payment never run at once;
 # - a check of the charge at Stripe before refunding, so a charge already refunded (in the Stripe
 #   dashboard, or by an earlier attempt that died before saving) is recorded instead of refunded again;
-# - a Stripe idempotency key per payment, so a repeat after a crash returns the same refund.
+# - a Stripe idempotency key per charge (`refund-<charge id>`, unique across databases sharing a Stripe account), so a repeat after a crash returns the same refund.
 #
 # Messages are for staff and are not translated; the racer's email is.
 module Payments
@@ -55,7 +55,7 @@ module Payments
       return failure(:amount_mismatch, amount_message(charge)) unless charge.amount == cr.amount_cents
 
       @refund_attempted = true
-      @refund = Stripe::Refund.create({ charge: cr.charge_id }, { idempotency_key: "refund-cr-#{cr.id}" })
+      @refund = Stripe::Refund.create({ charge: cr.charge_id }, { idempotency_key: "refund-#{cr.charge_id}" })
       record(:refunded, "The refund has processed successfully.", @refund.id)
     end
 
