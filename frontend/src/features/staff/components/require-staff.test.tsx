@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { t } from '@/locales/en';
@@ -15,6 +15,9 @@ describe('staff routes', () => {
     renderApp('/staff/payments');
     expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: t('staff.nav') })).not.toBeInTheDocument();
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText(user.first_name)).toBeInTheDocument();
+    expect(within(header).queryByRole('link', { name: t('layout.staff') })).not.toBeInTheDocument();
   });
 
   it('refunder sees the staff nav and Payments heading', async () => {
