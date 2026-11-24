@@ -38,6 +38,21 @@ describe('staff routes', () => {
     expect(router.state.location.search).toContain(encodeURIComponent('/staff/payments'));
   });
 
+  it('staff see Page not found inside the staff shell for an unknown staff path', async () => {
+    asUser(['operator']);
+    renderApp('/staff/nope');
+    expect(await screen.findByRole('heading', { name: t('notFound.heading') })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: t('staff.nav') })).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveClass('max-w-6xl');
+  });
+
+  it('racer sees not allowed at an unknown staff path', async () => {
+    asUser([]);
+    renderApp('/staff/nope');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('notFound.heading') })).not.toBeInTheDocument();
+  });
+
   it('/staff redirects to /staff/payments', async () => {
     asUser(['admin']);
     const { router } = renderApp('/staff');
