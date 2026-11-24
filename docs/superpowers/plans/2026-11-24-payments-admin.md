@@ -162,12 +162,12 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 **Interfaces:**
 - Routes: `namespace :staff do resources :payments, only: :index; resources :refund_batches, only: [:create, :show] do post :retry, on: :member, action: :retry_failed end end` (`retry` is a Ruby keyword, so the action is `retry_failed`; the path stays `/retry`).
 - `Api::V1::Staff::BaseController < Api::V1::BaseController`: `before_action :require_api_user!` then `authorize! :refund, :charges`.
-- `Payments::PaymentSearch.new(race_id:, payment_type:, status:, q:, page:)` with `#payments` (relation, 25 per page, order `completed_requirements.created_at DESC, completed_requirements.id DESC`, `includes(:user, :refunded_by, requirement: :race, team: :user)`, selects `payment_status_sql AS payment_status`), `#meta`, `#filters`. `race_id` absent → newest race (by `race_datetime`); `payment_type` is a requirement id within that race; `status` one of the four or `all` (absent = `all`); `q` ILIKE on team name, payer email, owner email, or `EXISTS` a racer (`people.email`) on the team, with `sanitize_sql_like`; inner joins drop orphan rows.
-- `GET /api/v1/staff/payments` → `{ payments: [{ id, race: { id, name }, team: { id, name }, owner: { name, email }, paid_by: { name, email }, payment_type, amount_cents, paid_at, status, refunded_at, refunded_by: { name } | null }], meta: { page, per_page, total_count, total_pages, refund_batch_limit, summary: { count, refunded_count, total_cents, refunded_cents } }, filters: { race_id, races: [{ id, name }], payment_types: [{ id, name }] } }`. Summary uses the same filters except `status`.
+- `Payments::PaymentSearch.new(race_id:, payment_type:, status:, q:, page:)` with `#payments` (relation, 25 per page, order `completed_requirements.created_at DESC, completed_requirements.id DESC`, `includes(:user, :refunded_by, requirement: :race, team: :user)`, selects `payment_status_sql AS payment_status`), `#meta`, `#filters`. `race_id` absent → the newest open race (by `race_datetime`; the newest race if none is open), `race_id=all` → every race; `payment_type` is a requirement id within that race; `status` one of the four or `all` (absent = `all`); `q` ILIKE on team name, payer email, owner email, or `EXISTS` a racer (`people.email`) on the team, with `sanitize_sql_like`; inner joins drop orphan rows.
+- `GET /api/v1/staff/payments` → `{ payments: [{ id, race: { id, name }, team: { id, name }, owner: { name, email }, paid_by: { name, email }, payment_type, amount_cents, paid_at, status, refunded_at, refunded_by: { name } | null }], meta: { page, per_page, total_count, total_pages, refund_batch_limit, summary: { count, refunded_count, total_cents, refunded_cents } }, filters: { race_id, races: [{ id, name, registration_status }], payment_types: [{ id, name }] } }`. Summary uses the same filters except `status`.
 - `POST /api/v1/staff/refund_batches` (`params.expect(completed_requirement_ids: [])`, `confirmation`, `expected_total_cents`) → 201 `{ batch }` or 422/400 `render_errors(..., code:)` with `errors` from the service. `POST /:id/retry` → 201 `{ batch }` or 422. `GET /:id` calls `batch.mark_stalled!` then → 200 `{ batch: { id, created_at, finished_at, retry_of_id, items: [{ id, completed_requirement_id, team_name, payment_type, amount_cents, status, error_code, message, finished_at }] } }`.
 - `TeamChecklist` fee line: `refunded: Boolean` (from the already loaded completed requirement; no extra query).
 
-- [ ] **Step 1: Failing request specs.** Authorization: `"a racer gets 403"` (and 401 logged out); `"refunder, operator and admin get 200"`. Payments: `"defaults to the newest race"`, `"filters by payment_type and status"`, `"q matches team name, payer, owner and racer email, case-insensitively"`, `"q treats % and _ literally"`, `"pages 25 per page in created_at desc, id desc order"`, `"summary ignores the status filter"`, `"reports refund_batch_limit"`. Batches: one example per 422 code asserting `json["code"]` and that `RefundBatch.count` is unchanged; `"201 queues the batch and enqueues the job"` (`Workers::RefundBatch.jobs.size == 1`); `"retry returns a new batch with retry_of_id"`; `"show reports items stalled after 10 minutes"` (Timecop). Query count: `"GET /staff/payments does not add queries per row"` (measure with 1 payment, then 5, expect equal). `team_checklist_spec`: `"fee item is refunded after a refund"`.
+- [ ] **Step 1: Failing request specs.** Authorization: `"a racer gets 403"` (and 401 logged out); `"refunder, operator and admin get 200"`. Payments: `"defaults to the newest open race, and race_id=all lists every race"`, `"filters by payment_type and status"`, `"q matches team name, payer, owner and racer email, case-insensitively"`, `"q treats % and _ literally"`, `"pages 25 per page in created_at desc, id desc order"`, `"summary ignores the status filter"`, `"reports refund_batch_limit"`. Batches: one example per 422 code asserting `json["code"]` and that `RefundBatch.count` is unchanged; `"201 queues the batch and enqueues the job"` (`Workers::RefundBatch.jobs.size == 1`); `"retry returns a new batch with retry_of_id"`; `"show reports items stalled after 10 minutes"` (Timecop). Query count: `"GET /staff/payments does not add queries per row"` (measure with 1 payment, then 5, expect equal). `team_checklist_spec`: `"fee item is refunded after a refund"`.
 - [ ] **Step 2: Run** `bundle exec rspec spec/requests/api/v1/staff spec/services/payments/payment_search_spec.rb spec/requests/api/v1/query_count_spec.rb spec/services/team_checklist_spec.rb` — Expected: FAIL.
 - [ ] **Step 3: Implement.** Check the list query with `EXPLAIN ANALYZE` on a restored copy; add an index only if it helps (spec leaves this to the builder; note the result in the PR).
 - [ ] **Step 4: Run** `bin/check rspec` — Expected: all green.
@@ -214,7 +214,7 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 
 ---
 
-## PR C: payments page (Tasks 9-11) — Sonnet, medium effort
+## PR C: payments page, Browse mode (Tasks 9-11) — Sonnet, medium effort
 
 ### Task 9: API hooks, types and URL filters
 
@@ -223,31 +223,32 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 
 **Interfaces:**
 - Produces types mirroring Task 6 JSON: `PaymentStatus = 'paid' | 'refunding' | 'refunded' | 'not_refundable'`, `StaffPayment`, `PaymentsMeta`, `PaymentsFilters`, `PaymentsResponse`.
-- Produces: `PaymentFilterValues = { raceId?: number; paymentType?: number; status: PaymentStatus | 'all'; q: string; page: number }`; `usePaymentFilters() -> { values, setFilter(key, value) }` backed by `useSearchParams` (`race_id`, `payment_type`, `status` default `paid`, `q`, `page` default 1); changing any filter other than `page` resets `page` to 1; changing `race_id` drops `payment_type`.
+- Produces: `PaymentFilterValues = { raceId?: number; paymentType?: number; status: PaymentStatus | 'all'; q: string; page: number }`; `usePaymentFilters() -> { values, setFilter(key, value) }` backed by `useSearchParams` (`race_id`, `payment_type`, `status` default `all`, `q`, `page` default 1); changing any filter other than `page` resets `page` to 1; changing `race_id` drops `payment_type`; the race defaults to the server's choice (`filters.race_id`) when absent, and `all` means every race. Refund mode is local page state (not in the URL).
 - Produces: `paymentsQueryKey(values) = ['staff', 'payments', values]`, `usePayments(values)` (GET `/staff/payments?…`, `placeholderData: keepPreviousData`).
 
-- [ ] **Step 1: Failing tests:** `"reads defaults: status paid, page 1"`, `"setting q resets page"`, `"changing race drops payment_type"`, `"usePayments sends the filters as query params"` (MSW handler asserts the URL).
+- [ ] **Step 1: Failing tests:** `"reads defaults: status all, page 1"`, `"setting q resets page"`, `"changing race drops payment_type"`, `"usePayments sends the filters as query params"` (MSW handler asserts the URL).
 - [ ] **Step 2: Run** `npm --prefix frontend test -- --run src/features/staff-payments` — Expected: FAIL.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** same — Expected: PASS.
 - [ ] **Step 5: Commit** "Add staff payments query and URL filters".
 
-### Task 10: Table, filters, progress line, pagination and capped selection
+### Task 10: Browse page: filters, table and cards, progress line, pagination
+
+Mockups reviewed with the owner on 2026-11-24 (see spec "Payments page"). Read-only: no checkboxes and no Refund button in this PR.
 
 **Files:**
-- Create in `frontend/src/features/staff-payments/components/`: `payment-filters.tsx`, `progress-line.tsx`, `payments-table.tsx`, `pagination.tsx`, `payments-page.tsx`; `frontend/src/features/staff-payments/use-selection.ts`; tests `payments-page.test.tsx`, `use-selection.test.ts`
+- Create in `frontend/src/features/staff-payments/components/`: `payment-filters.tsx` (desktop row plus the 320 px `Filters` sheet), `filter-chips.tsx`, `progress-line.tsx`, `payments-table.tsx` (table from `sm`, cards below), `pagination.tsx`, `payments-page.tsx`; tests `payments-page.test.tsx`
 - Modify: `frontend/src/app/routes/staff-payments.tsx` (renders `PaymentsPage`), `frontend/src/locales/en.ts` (`staff.payments.*`)
 
 **Interfaces:**
-- Produces: `useSelection(limit: number) -> { selected: Map<number, StaffPayment>; toggle(row): void; selectNext(rows: StaffPayment[]): void; clear(): void; isFull: boolean }`. Only `status === 'paid'` rows can be selected; never more than `limit`; selection spans pages; `selectNext` adds the first unselected paid rows of the given page until full. The page clears the selection when the race filter changes.
-- Produces: `PaymentsPage()` composes filters (race select, type select with `All types`, status select with `All`, search input debounced 300 ms), `ProgressLine` (`{refunded_count} of {count} refunded · {refunded} of {total}` from `meta.summary`, using `formatCents` from `@/features/teams/utils`), `Select next {n}` button (n = remaining room), selected count, cap note `staff.payments.capReached` (`Batch limit is {limit}. Refund these first.`) when full, `PaymentsTable` (checkbox column, team, owner email, type, amount, paid date, status badge; stacked cards below `sm`; `grid-cols-[minmax(0,1fr)]` and `[overflow-wrap:anywhere]` on emails), `Pagination` (`‹ Prev`, `Page {page} of {total}`, `Next ›`).
+- Produces: `PaymentsPage()` titled `Payments`: filters (Race select with open/closed and `All races`; Payment type select with `All types`, listing only the chosen race's payment requirements from the top-level `filters`; Status as `All | Paid | Refunded`, a segmented control in the mobile sheet; Search debounced 300 ms), removable chips with `Clear all`, `ProgressLine` (`{refunded_count} of {count} refunded · {refunded} of {total}` from `meta.summary`, `formatCents` from `@/features/teams/utils`), `PaymentsTable` (team, account holder email, type, amount, paid date, status badge with `Refunded {date}`; cards below `sm` with `grid-cols-[minmax(0,1fr)]` and `[overflow-wrap:anywhere]` on emails), `Pagination` (`‹ Prev`, `Page {page} of {total}`, `Next ›`). Below `sm`, only Search stays on top and the rest sit behind a `Filters` row opening a sheet with `Show {n} payments` and `Clear all`.
 - Consumes: `usePayments`, `usePaymentFilters`.
 
-- [ ] **Step 1: Failing tests:** `"shows the progress line from summary"` (`37 of 142 refunded · $1,850.00 of $7,100.00`); `"only paid rows have enabled checkboxes"`; `"stops at refund_batch_limit and disables the rest with the cap note"` (limit 5, 8 paid rows); `"Select next N ticks the first paid rows up to the cap"`; `"selection survives moving to page 2"`; `"changing race clears the selection"`; `"empty list shows the empty state"`; `"error shows QueryError with retry"`.
+- [ ] **Step 1: Failing tests:** `"shows the progress line from summary"` (`37 of 142 refunded · $1,850.00 of $7,100.00`); `"payment type options follow the chosen race"`; `"status filter and chips update the URL"`; `"search is debounced"`; `"refunded rows show their refund date"`; `"empty list shows the empty state"`; `"error shows QueryError with retry"`; `"at 320px the Filters row opens a sheet"`.
 - [ ] **Step 2: Run** `npm --prefix frontend test -- --run src/features/staff-payments` — Expected: FAIL.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** same — Expected: PASS.
-- [ ] **Step 5: Commit** "Add the staff payments table with filters, progress and capped selection".
+- [ ] **Step 5: Commit** "Add the staff payments Browse page with filters, cards and progress".
 
 ### Task 11: Payments page e2e
 
@@ -258,7 +259,7 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 **Interfaces:**
 - Produces `test_seeds:payments_admin`: race `Race Payments <id8>` (open, newest `race_datetime` so it is the default), a `MockPaymentRequirement` named `Cart Deposit` and one named `Registration`, a refunder `payments-refunder-<id>@example.com`, 7 teams `Test Team Payments <n> <id8>` each with an owner `payments-owner-<n>-<id>@example.com` and a completed `Cart Deposit` (mock metadata, `charge_id: "mock_ch_…"`, `amount: 5000`), one team also paid `Registration`, one `Cart Deposit` already refunded (`refunded_at` set). Credentials: refunder email/password, race id, owner emails. Covered by existing cleanup (Task 2).
 
-- [ ] **Step 1: Write the spec:** refunder opens Staff → Payments; picks the seeded race and `Cart Deposit`; progress reads `1 of 7 refunded`; status `Paid` lists 6 rows; search by one owner email shows that team only; with `REFUND_BATCH_LIMIT` unset, `Select next 5` ticks 5 and the 6th checkbox is disabled with the cap note; reload keeps filters (URL).
+- [ ] **Step 1: Write the spec:** refunder opens Staff → Payments; picks the seeded race and `Cart Deposit`; progress reads `1 of 7 refunded`; status `Paid` lists 6 rows and `Refunded` lists 1; search by one owner email shows that team only; reload keeps filters (URL); at 320px rows are cards, the `Filters` sheet opens and `document.documentElement.scrollWidth <= 320`.
 - [ ] **Step 2: Run** `npm --prefix frontend run build && DATABASE_URL=postgres://postgres@localhost/dogtag_test_2 TEST_PORT=3199 PIDFILE=tmp/pids/e2e-3199.pid npx playwright test tests/spa/payments-admin.spec.ts` — Expected: PASS.
 - [ ] **Step 3: Commit** "Add payments page e2e spec and seed". CLAUDE.md: payments page entry.
 
@@ -266,7 +267,22 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 
 ---
 
-## PR D: refund confirmation, polling, retry, fee card (Tasks 12-15) — Sonnet, high effort
+## PR D: Refund mode, confirmation, polling, retry, fee card (Tasks 12-15) — Sonnet, high effort
+
+### Task 11b: Refund mode (selection and bottom bar)
+
+**Files:**
+- Create: `frontend/src/features/staff-payments/use-selection.ts`, `use-selection.test.ts`, `frontend/src/features/staff-payments/components/refund-bar.tsx`
+- Modify: `payments-page.tsx`, `payments-table.tsx`, `en.ts`
+
+**Interfaces:**
+- Produces: `useSelection(limit: number) -> { selected: Map<number, StaffPayment>; toggle(row): void; selectNext(rows: StaffPayment[]): void; clear(): void; isFull: boolean }`. Only `status === 'paid'` rows can be selected; never more than `limit`; selection spans pages; `selectNext` adds the first unselected paid rows of the given page until full; cleared when the race filter changes.
+- `PaymentsPage` gets a `Refund payments` button (local `mode: 'browse' | 'refund'` state, not in the URL). Entering sets status to `paid` (locked) and keeps the other filters; shows a red top edge, the title `Payments · Refund mode`, `Cancel`, a banner `Tick up to {limit} paid payments. Refunds cannot be undone.` and `Select next {n}`. The table shows checkboxes (about 44 px targets) on paid rows; refunded rows are greyed with no checkbox; at the cap the rest disable with `staff.payments.capReached` (`Batch limit is {limit}. Refund these first.`). `RefundBar` is pinned to the bottom: `{n} of {limit} selected · {total}` and `Review and refund {n}…` (full width on mobile). Cancel clears the selection and returns to Browse.
+
+- [ ] **Step 1: Failing tests:** `"only paid rows have enabled checkboxes"`; `"stops at refund_batch_limit and disables the rest with the cap note"` (limit 5, 8 paid rows); `"Select next N ticks the first paid rows up to the cap"`; `"selection survives moving to page 2"`; `"changing race clears the selection"`; `"entering refund mode locks status to Paid and Cancel returns to Browse"`; `"the bottom bar shows count and total"`.
+- [ ] **Step 2: Run** `npm --prefix frontend test -- --run src/features/staff-payments` — Expected: FAIL.
+- [ ] **Step 3: Implement.** **Step 4: Run** — PASS.
+- [ ] **Step 5: Commit** "Add Refund mode with capped selection and the bottom bar".
 
 ### Task 12: Batch hooks
 
@@ -287,12 +303,12 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 
 **Files:**
 - Create: `frontend/src/features/staff-payments/components/confirm-refund-dialog.tsx`, `confirm-refund-dialog.test.tsx`
-- Modify: `payments-page.tsx` (`Refund {n}…` button, enabled when 1+ selected), `en.ts`
+- Modify: `payments-page.tsx` (the bottom bar's `Review and refund {n}…` opens it), `en.ts`
 
 **Interfaces:**
-- `ConfirmRefundDialog({ snapshot: StaffPayment[]; current: Map<number, StaffPayment>; latestRows: StaffPayment[]; onConfirmed(batch: RefundBatch): void; onClose(): void })` on `DialogSheet` (`closeOnBackdrop={false}`): lists every snapshot row (team, owner email, type, amount), the total, the warning `staff.refund.irreversible` ("Refunds cannot be undone."), `staff.refund.emailNote` ("Each team's account holder will be emailed."), and an input labelled `Type REFUND {n} to confirm`. Confirm is enabled only when the input equals `REFUND {n}` exactly and the snapshot still matches: same ids as `current`, and every snapshot row that appears in `latestRows` still has `status === 'paid'` and the same `amount_cents`. A mismatch shows `staff.refund.changed` ("The selection changed. Close and review again.") and disables Confirm. 422 responses show copy per code (`batch_too_large`, `confirmation_mismatch`, `selection_changed`, `not_refundable` listing the failing ids' teams). Close/Escape do nothing while the POST is in flight.
+- `ConfirmRefundDialog({ snapshot: StaffPayment[]; current: Map<number, StaffPayment>; latestRows: StaffPayment[]; onConfirmed(batch: RefundBatch): void; onClose(): void })` on `DialogSheet` (`closeOnBackdrop={false}`): lists every snapshot row (team, owner email, type, amount), the total, the title `Refund {n} payments?`, a bold red warning `staff.refund.irreversible` ("This cannot be undone. The money goes back to each card."), `staff.refund.emailNote` ("Each team's account holder will be emailed. Refunds take about 5 to 10 business days to appear."), the total,, and an input labelled `Type REFUND {n} to confirm`. Confirm (a red button, faded while disabled) is enabled only when the input equals `REFUND {n}` (case and surrounding spaces ignored; the number must equal the count) and the snapshot still matches: same ids as `current`, and every snapshot row that appears in `latestRows` still has `status === 'paid'` and the same `amount_cents`. A mismatch shows `staff.refund.changed` ("The selection changed. Close and review again.") and disables Confirm. 422 responses show copy per code (`batch_too_large`, `confirmation_mismatch`, `selection_changed`, `not_refundable` listing the failing ids' teams). Close/Escape do nothing while the POST is in flight.
 
-- [ ] **Step 1: Failing tests:** `"lists every payment and the total"`; `"Confirm stays disabled for 'refund 5', 'REFUND 4' and 'REFUND 5 '"`; `"enables for exactly REFUND 5 and posts ids, confirmation and expected total"`; `"refuses when a refetch shows a selected row refunded"`; `"refuses when the selection changed"`; `"shows the server's selection_changed message"`; `"Escape does not close while submitting"`.
+- [ ] **Step 1: Failing tests:** `"lists every payment and the total"`; `"Confirm stays disabled for 'REFUND 4' and 'REFUND 50' and enables for ' refund 5 '"`; `"enables for exactly REFUND 5 and posts ids, confirmation and expected total"`; `"refuses when a refetch shows a selected row refunded"`; `"refuses when the selection changed"`; `"shows the server's selection_changed message"`; `"Escape does not close while submitting"`.
 - [ ] **Step 2-4:** run `npm --prefix frontend test -- --run src/features/staff-payments/components/confirm-refund-dialog.test.tsx` (FAIL → implement → PASS).
 - [ ] **Step 5: Commit** "Add the typed refund confirmation dialog".
 
@@ -303,7 +319,7 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 - Modify: `payments-page.tsx`, `frontend/src/types/api.ts` (`FeeItem.refunded: boolean`), `frontend/src/test/fixtures.ts`, `frontend/src/features/payments/components/fee-card.tsx`, `fee-card.test.tsx`, `en.ts` (`fee.refunded`)
 
 **Interfaces:**
-- `BatchResults({ batchId: number; onFinished(): void })`: one line per item: `Queued…`, `Refunded`, `Already refunded`, `Failed: {message}`, `Stalled`; while any item is queued it shows `Refunding {done} of {n}…`. When the batch has `failed` or `stalled` items it shows one `Retry {k} failed` button (`useRetryRefundBatch`, then follows the new batch id). The retry is per batch, not per row, because the API re-queues all of a batch's failed and stalled items. `onFinished` clears the selection and invalidates payments, so refunded rows leave the Paid view.
+- `BatchResults({ batchId: number; onFinished(): void })`, shown inside the dialog after confirming (title `Refunding… {done} of {n} done`; the dialog cannot be closed while the job runs; `Done` calls `onFinished`): one line per item: `Queued…`, `Refunded`, `Already refunded`, `Failed: {message}`, `Stalled`; while any item is queued it shows `Refunding {done} of {n}…`. When the batch has `failed` or `stalled` items it shows one `Retry {k} failed` button (`useRetryRefundBatch`, then follows the new batch id). The retry is per batch, not per row, because the API re-queues all of a batch's failed and stalled items. `onFinished` clears the selection, leaves Refund mode and invalidates payments, so refunded rows leave the Paid view.
 - Fee card: a fee item with `refunded` shows `Refunded` on its row; in the collapsed paid/finalized summary, each refunded item adds a line `{name}: refunded`. Finalization and `paid_cents` text unchanged.
 
 - [ ] **Step 1: Failing tests:** `"shows each item's result as polling advances"` (MSW returns queued, then finished); `"Retry posts to /retry and follows the new batch"`; `"finishing clears the selection and refetches the list"`; fee card `"shows Refunded on a refunded item"` and `"finalized summary notes the refund"`.
@@ -315,7 +331,7 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 **Files:**
 - Modify: `tests/spa/payments-admin.spec.ts`, `lib/tasks/test_seeds.rake` (`payments_admin` credentials add one owner password so the spec can log in as that racer)
 
-- [ ] **Step 1: Extend the spec** (Playwright runs with `SIDEKIQ_INLINE=true`, so the batch finishes inside the POST; the page still polls once and shows results): `Select next 5` → `Refund 5…` → dialog lists 5 teams and `$250.00`; typing `REFUND 4` keeps Confirm disabled; `REFUND 5` → results show 5 `Refunded`; progress line reads `6 of 7 refunded`; Paid view shows 1 row; `waitForEmail` finds one refund email for a refunded owner and `countEmails` stays 1 for that owner after reloading; log in as that owner, the team page fee card shows `Refunded`; the legacy team page as the refunder shows the `refunded` label.
+- [ ] **Step 1: Extend the spec** (Playwright runs with `SIDEKIQ_INLINE=true`, so the batch finishes inside the POST; the page still polls once and shows results): `Refund payments` → `Select next 5` → `Review and refund 5…` → dialog lists 5 teams and `$250.00`; typing `REFUND 4` keeps Confirm disabled; `REFUND 5` → results show 5 `Refunded`; progress line reads `6 of 7 refunded`; Paid view shows 1 row; at 320px the bottom bar and dialog buttons stay inside the viewport; `waitForEmail` finds one refund email for a refunded owner and `countEmails` stays 1 for that owner after reloading; log in as that owner, the team page fee card shows `Refunded`; the legacy team page as the refunder shows the `refunded` label.
 - [ ] **Step 2: Run** `npm --prefix frontend run build && DATABASE_URL=postgres://postgres@localhost/dogtag_test_2 TEST_PORT=3199 PIDFILE=tmp/pids/e2e-3199.pid npx playwright test tests/spa/payments-admin.spec.ts tests/spa/staff-shell.spec.ts` and `npm test` (whole suite, legacy flow included) — Expected: PASS.
 - [ ] **Step 3: Commit** "Cover bulk refund end to end". README/CLAUDE.md: refund flow, `REFUND_BATCH_LIMIT`, "retry is per batch".
 
@@ -325,5 +341,5 @@ Service order (spec "RefundCharge" 1-6): `not_refundable` unless `payment_status
 
 ## Self-review notes
 
-- Spec coverage: data (T1-2), status (T2), service (T3), worker (T4), legacy + Ability (T5), API + cap + fee item (T6), shell (T7-8), page (T9-11), dialog/polling/retry/fee card/e2e (T12-15), email (T3), deploy (PR notes).
+- Spec coverage: data (T1-2), status (T2), service (T3), worker (T4), legacy + Ability (T5), API + cap + fee item (T6), shell (T7-8), page (T9-11 Browse, T11b Refund mode), dialog/polling/retry/fee card/e2e (T12-15), email (T3), deploy (PR notes).
 - Builder's calls fixed here: page size 25, poll 2 s, job `retry: 3`, `payment_type` = requirement id, retry action named `retry_failed`, two migrations (columns, batch tables), retry is per batch.

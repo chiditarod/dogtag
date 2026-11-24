@@ -141,22 +141,31 @@ The legacy `ChargesController#refund` calls this service too (synchronously, one
 - Entry points: a "Staff" link in the SPA header for users with a staff role; a "Payments" item in the legacy navbar admin dropdown (an edit to the existing navbar).
 - Feature folder `frontend/src/features/staff-payments/{api,components}` (Bulletproof React). Copy in `en.ts` under `staff.*` (the SPA's only string mechanism; not translated).
 
-### Payments page
+### Payments page (Browse and Refund mode)
+
+The page is called **Payments**. It opens in Browse mode, a read-only lookup for every staff role. **Refund mode** is a deliberate mode entered with a `Refund payments` button. Mockups were reviewed with the owner on 2026-11-24 (visual companion; the screens are not committed).
 
 ```
-Race [CHIditarod 2026 ▾]  Type [Cart Deposit ▾]  Status [Paid ▾]  Search [________]
-37 of 142 refunded · $1,850 of $7,100                [Select next 10] [Refund 10…]
-☑ Team Name        owner@…   Cart Deposit   $50   Nov 2   Paid
-☑ …
-                                                   ‹ Prev  Page 1 of 11  Next ›
+Browse:       Payments                                    [Refund payments]
+              CHIditarod 2026 ▾  All types ▾  All ▾  Search team, name or email
+              37 of 142 deposits refunded · $1,850 of $7,100
+              Team                Type          Amount  Status
+              The Secret Gents    Cart Deposit  $50     Paid
+              Wheelie Good        Cart Deposit  $50     Refunded Nov 20
+
+Refund mode:  red top edge, "Payments · Refund mode"                [Cancel]
+              "Tick up to 5 paid payments. Refunds cannot be undone."   [Select next 5]
+              ☑ Team  Cart Deposit  $50   (refunded rows greyed, no checkbox)
+              ┌ 2 of 5 selected · $100            [Review and refund 2…] ┐  (bottom bar)
 ```
 
-- Defaults: the newest race, all payment types, status Paid. Filters live in the URL query so a reload keeps them.
-- Checkboxes on refundable rows only; once `refund_batch_limit` rows are ticked, the rest disable with a note saying why. Selection may span pages.
-- "Select next N" ticks the first refundable rows on the current page up to the cap.
-- "Refund N…" opens the confirmation dialog (built on `DialogSheet`/`useFocusTrap`): every payment (team, team owner, type, amount), the total, an irreversibility warning and the email note ("each team's account holder will be emailed"), and a text field that must read exactly `REFUND N`. The dialog snapshots the selection; if the selection or a refetch changes those rows while it is open, it refuses and asks to review again. The server repeats the checks above.
-- After confirming: the page polls `GET /staff/refund_batches/:id` (about every 2 s) and shows each row's result (Refunded, Already refunded, Failed: message, Stalled). Failed and stalled rows get a Retry button (`POST .../retry`). When the batch finishes, the selection clears, the list and progress line refetch, and refunded rows drop out of the Paid view, so the next round starts with "Select next N".
-- Works at 320 px (rows stack), like the rest of the SPA.
+- **Filters** (all in the URL query, so a reload or a shared link keeps them): Race (default the newest open race; lists every race with open/closed; `All races` allowed), Payment type (only the chosen race's payment requirements, so a filter can never return nothing; changing the race drops it), Status (`All`, `Paid`, `Refunded`; default `All` in Browse), and Search (debounced about 300 ms; matches team name, account holder, racer names and any email). Active filters show as removable chips with `Clear all`. No payment date range in v1.
+- **Mobile (must work at 320 px, no horizontal scroll):** rows become cards below `sm` (emails use `[overflow-wrap:anywhere]` inside a `grid-cols-[minmax(0,1fr)]` grid); search stays on top and the other filters sit behind one `Filters` row that opens a sheet (Race, Payment type, a three-way Status control, `Show N payments`, `Clear all`); checkboxes are about 44 px tap targets; the Refund-mode bottom bar is pinned with a full-width button; the confirmation dialog fills the screen and scrolls its list while the total, typed field and buttons stay visible. The Playwright spec asserts `scrollWidth <= 320` and that the buttons sit inside the viewport.
+- **Entering Refund mode** keeps the filters and sets Status to `Paid` (locked while in the mode). Refunded rows are greyed and cannot be ticked. Refund mode is local page state, not in the URL, so a reload returns to Browse. Cancel, or finishing a batch, clears the selection and returns to Browse.
+- **Selection:** checkboxes on refundable rows only; once `refund_batch_limit` rows are ticked, the rest disable with a note saying why. Selection may span pages and is cleared when the race changes. `Select next N` (in the banner row) ticks the first refundable rows on the current page up to the cap.
+- **`Review and refund N…`** opens the confirmation dialog (built on `DialogSheet`/`useFocusTrap`, `closeOnBackdrop={false}`): the title states the count (`Refund N payments?`), a bold red `This cannot be undone. The money goes back to each card.`, every payment (team, account holder, type, amount), the total, the email note (`Each team's account holder will be emailed. Refunds take about 5 to 10 business days to appear.`), and a text field that must read `REFUND N` (case and surrounding spaces ignored, the number must match the count). The red button stays faded until it matches. The dialog snapshots the selection; if the selection or a refetch changes those rows while it is open, it refuses and asks to review again. The server repeats the checks above.
+- **After confirming:** the dialog switches to a results view (`Refunding… 1 of 2 done`) and polls `GET /staff/refund_batches/:id` (about every 2 s), showing each row's result (`Refunded`, `Already refunded`, `Failed: message`, `Stalled`). It cannot be closed while the job runs (backdrop and Escape do nothing). Failed and stalled rows get a Retry (`POST .../retry`, per batch). `Done` ends Refund mode, clears the selection and refetches the list and progress line, so refunded rows leave the Paid view.
+- **Not in v1:** clicking a row for a details view, a payment date range, a "cart returned" marker.
 
 ### Refund email
 
