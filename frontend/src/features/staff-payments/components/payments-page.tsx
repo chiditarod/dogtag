@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
+import type { RefundBatch, StaffPayment } from '../types';
 import { usePayments } from '../api/use-payments';
 import { usePaymentFilters } from '../use-payment-filters';
 import { useSelection } from '../use-selection';
@@ -11,6 +12,7 @@ import { Pagination } from './pagination';
 import { PaymentFilters } from './payment-filters';
 import { PaymentsTable } from './payments-table';
 import { ProgressLine } from './progress-line';
+import { ConfirmRefundDialog } from './confirm-refund-dialog';
 import { RefundBar } from './refund-bar';
 
 type Mode = 'browse' | 'refund';
@@ -24,6 +26,9 @@ export function PaymentsPage() {
   const limit = data?.meta.refund_batch_limit ?? 0;
   const selection = useSelection(limit);
   const capNoteId = useId();
+  // The rows shown in the confirmation dialog: a snapshot taken when it opened.
+  const [reviewing, setReviewing] = useState<StaffPayment[] | null>(null);
+  const [, setBatch] = useState<RefundBatch | null>(null);
   const { clear: clearSelection } = selection;
 
   // A selection belongs to one race.
@@ -54,6 +59,11 @@ export function PaymentsPage() {
   function enterRefundMode() {
     setMode('refund');
     setFilter('status', 'paid');
+  }
+
+  function confirmed(created: RefundBatch) {
+    setReviewing(null);
+    setBatch(created);
   }
 
   function cancelRefundMode() {
@@ -153,7 +163,23 @@ export function PaymentsPage() {
           />
         </div>
       )}
-      {refundMode && <RefundBar count={selectedRows.length} limit={limit} totalCents={totalCents} />}
+      {refundMode && (
+        <RefundBar
+          count={selectedRows.length}
+          limit={limit}
+          totalCents={totalCents}
+          onReview={() => setReviewing(selectedRows)}
+        />
+      )}
+      {reviewing && (
+        <ConfirmRefundDialog
+          snapshot={reviewing}
+          current={selection.selected}
+          latestRows={data?.payments ?? []}
+          onConfirmed={confirmed}
+          onClose={() => setReviewing(null)}
+        />
+      )}
     </div>
   );
 }

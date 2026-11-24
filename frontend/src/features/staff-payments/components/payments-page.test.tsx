@@ -422,4 +422,18 @@ describe('PaymentsPage Refund mode', () => {
     expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Review and refund 2…' })).toBeEnabled();
   });
+
+  it('Review and refund opens the confirmation dialog with the ticked rows', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(boxes()[2]);
+    await userEvent.click(screen.getByRole('button', { name: 'Review and refund 2…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Refund 2 payments?' });
+    expect(within(dialog).getByText('Team 1')).toBeInTheDocument();
+    expect(within(dialog).getByText('Team 3')).toBeInTheDocument();
+    expect(within(dialog).queryByText('Team 2')).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: t('staff.refund.cancel') }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
+  });
 });
