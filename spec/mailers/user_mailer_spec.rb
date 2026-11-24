@@ -272,6 +272,24 @@ describe UserMailer do
     end
   end
 
+  describe "#email_changed_email" do
+    let(:user) { FactoryBot.create(:user, email: "after@example.com") }
+
+    it "goes to the old address and names both addresses" do
+      mail = UserMailer.email_changed_email(user, "before@example.com")
+      body = mail.body.encoded
+
+      expect(mail.to).to eq(["before@example.com"])
+      expect(mail.subject).to eq("Your dogtag email address was changed")
+      expect(body).to include("before@example.com", "after@example.com", user.fullname, "dogtag@chiditarod.org")
+    end
+
+    it "tracks kind email_changed" do
+      UserMailer.email_changed_email(user, "before@example.com").deliver_now
+      expect(SentEmail.last).to have_attributes(kind: "email_changed", user_id: user.id)
+    end
+  end
+
   describe "#payment_refunded_email" do
     let(:team) { FactoryBot.create(:team) }
     let(:details) do

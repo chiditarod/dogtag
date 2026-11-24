@@ -59,6 +59,18 @@ describe "API v1 accounts", type: :request do
         expect(user.reload.valid_password?("12345678")).to be(true)
       end
 
+      it "rejects a confirmation sent without a new password" do
+        patch "/api/v1/me",
+              params: { current_password: "12345678",
+                        user: { first_name: "Grace", password: "", password_confirmation: "brandnew123" } },
+              as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["errors"]["password"]).to be_present
+        user.reload
+        expect(user.first_name).to eq("Ada")
+        expect(user.valid_password?("12345678")).to be(true)
+      end
+
       it "reports a taken email without saving" do
         FactoryBot.create(:user, email: "taken@example.com")
         patch "/api/v1/me", params: { current_password: "12345678", user: { email: "taken@example.com" } }, as: :json

@@ -28,6 +28,11 @@ export function useResetPassword(token: string) {
       }),
     onSuccess: ({ user }) => {
       clearCsrfToken();
+      // The reset can replace another account's session in this browser, so drop what was cached for it.
+      // The token query stays: the form still reads it until it navigates away.
+      queryClient.removeQueries({
+        predicate: ({ queryKey }) => queryKey[0] !== meQueryKey[0] && queryKey[0] !== 'password-reset',
+      });
       queryClient.setQueryData(meQueryKey, user);
     },
   });

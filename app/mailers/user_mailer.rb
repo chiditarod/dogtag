@@ -56,6 +56,14 @@ class UserMailer < ActionMailer::Base
     mail(to: user.email, subject: t(".subject", race: @race_name, team: team.name))
   end
 
+  # Sent to the address an account used to have, so its owner hears about a change they did not make.
+  def email_changed_email(user, old_email)
+    @user = user
+    @old_email = old_email
+    track(kind: "email_changed", user: user)
+    mail(to: old_email, subject: t(".subject"))
+  end
+
   def password_reset_instructions(user, host)
     track(kind: "password_reset", user: user)
     @edit_password_reset_url = RegistrationUi.password_reset_url(user.perishable_token, host: host)

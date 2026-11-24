@@ -118,6 +118,20 @@ describe "API v1 password resets", type: :request do
       expect(response).to have_http_status(:ok)
     end
 
+    it "logs the user in once" do
+      expect { put "/api/v1/password_resets/#{token}", params: new_password, as: :json }
+        .to change { user.reload.login_count }.by(1)
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "lets an account that fails a newer validation reset its password" do
+      user.update_columns(phone: nil)
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.valid_password?("newpassword456")).to be(true)
+      expect(user.phone).to be_nil
+    end
+
     it "does not claim success when the session cannot be created" do
       allow(UserSession).to receive(:create).and_return(instance_double(UserSession, persisted?: false))
       put "/api/v1/password_resets/#{token}", params: new_password, as: :json

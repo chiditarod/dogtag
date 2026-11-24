@@ -199,6 +199,7 @@ en:
       invalid_buddies: Pick only other teams in this race.
       buddies_need_collaborating: Answer Yes to the same-route question before picking teams.
       person_not_on_team: Pick one of this team's racers.
+      current_password_incorrect: is not correct
       reset_login_failed: Your password was changed, but we could not log you in. Please log in with your new password.
 
   captains:
@@ -409,6 +410,10 @@ en:
       tier_change: "The registration fee is changing to %{price} on %{date}."
       closing: "Registration closes on %{date}."
       link: "Finish registering:"
+    email_changed_email:
+      subject: Your dogtag email address was changed
+      changed: "The email address for your dogtag account (%{name}) was changed from %{old_email} to %{new_email}."
+      not_you: "If you did not make this change, reply to this email or write to"
     payment_refunded_email:
       subject: "%{race}: Refund for %{team}"
       heading: "A payment for your team %{team} in %{race} was refunded."

@@ -51,6 +51,8 @@ class PasswordResetsController < ApplicationController
 
     @user.password = params[:password]
     @user.password_confirmation = params[:password_confirmation]
+    # A valid token proves control of the inbox, so it also lifts a brute-force lockout.
+    @user.failed_login_count = 0
 
     # Use @user.save_without_session_maintenance instead if you
     # don't want the user to be signed in automatically.

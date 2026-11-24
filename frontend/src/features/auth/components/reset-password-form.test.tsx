@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -84,7 +84,8 @@ describe('ResetPasswordForm', () => {
         return HttpResponse.json({ user });
       }),
     );
-    const { router } = renderApp('/reset-password/tok123');
+    const { router, queryClient } = renderApp('/reset-password/tok123');
+    queryClient.setQueryData(['teams', 'someone-else'], { teams: [{ id: 99 }] });
     await fillAndSubmit('hunter2222', 'hunter2222');
     expect(
       await screen.findByRole('heading', { name: t('teams.listHeading') }),
@@ -93,6 +94,10 @@ describe('ResetPasswordForm', () => {
     const notice = await screen.findByText(t('teams.passwordChanged'));
     expect(notice).toHaveAttribute('role', 'status');
     expect(body).toEqual({ password: 'hunter2222', password_confirmation: 'hunter2222' });
+    // The previous session's cache is gone, and a reload would not show the notice again.
+    expect(queryClient.getQueryData(['teams', 'someone-else'])).toBeUndefined();
+    await waitFor(() => expect(router.state.location.state).toBeNull());
+    expect(screen.getByText(t('teams.passwordChanged'))).toBeInTheDocument();
   });
 
   it('shows server field errors', async () => {
