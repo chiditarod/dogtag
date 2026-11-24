@@ -102,6 +102,20 @@ describe CompletedRequirement do
       expect(cr).not_to be_refundable
     end
 
+    it "is paid again once a still-queued item's batch is older than RefundBatch::STALL_AFTER (its job was lost)" do
+      start = Time.utc(2026, 11, 24, 12, 0, 0)
+      cr = payment
+      batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch) }
+      FactoryBot.create(:refund_batch_item, refund_batch: batch, completed_requirement: cr)
+
+      Timecop.freeze(start + 9.minutes) { expect(cr.payment_status).to eq("refunding") }
+      Timecop.freeze(start + 10.minutes) do
+        expect(cr.payment_status).to eq("paid")
+        expect(batch.reported_status(batch.items.first)).to eq("stalled")
+        expect(CompletedRequirement.joins(:requirement).with_payment_status(:paid)).to include(cr)
+      end
+    end
+
     it "is paid again after the batch item has finished without refunding" do
       cr = payment
       FactoryBot.create(:refund_batch_item, completed_requirement: cr, status: "failed")
