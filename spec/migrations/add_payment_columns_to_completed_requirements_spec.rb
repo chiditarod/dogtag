@@ -25,6 +25,17 @@ describe AddPaymentColumnsToCompletedRequirements do
     expect(cr.amount_cents).to eq(5000)
   end
 
+  it "reads a string amount as base 10 and leaves a non-decimal one blank" do
+    leading_zero = build_cr(JSON.generate(JSON.generate(hash.merge("amount" => "0100"))))
+    hex = build_cr(JSON.generate(JSON.generate(hash.merge("amount" => "0x10"))))
+
+    backfill
+
+    expect(leading_zero.reload.amount_cents).to eq(100)
+    expect(hex.reload.amount_cents).to be_nil
+    expect(hex.charge_id).to eq("ch_1")
+  end
+
   it "copies them from triple-encoded metadata" do
     cr = build_cr(JSON.generate(JSON.generate(JSON.generate(hash))))
 
