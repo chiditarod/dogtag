@@ -243,4 +243,16 @@ describe('PaymentsPage', () => {
     expect(within(dialog).getByRole('status')).toHaveTextContent(t('staff.payments.count_one', { n: 1 }));
     expect(list).toHaveAttribute('aria-busy', 'false');
   });
+
+  it('Clear all drops a search still waiting on the debounce', async () => {
+    serve();
+    const { router } = await open('/staff/payments?status=paid');
+    await userEvent.type(screen.getByRole('searchbox'), 'ada');
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.filters.clearAll') }));
+    await waitFor(() => expect(router.state.location.search).toBe(''));
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(router.state.location.search).toBe('');
+    expect(requests.some((url) => url.searchParams.has('q'))).toBe(false);
+  });
 });

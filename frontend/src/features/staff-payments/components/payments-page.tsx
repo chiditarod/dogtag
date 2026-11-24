@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
 import { usePayments } from '../api/use-payments';
@@ -14,6 +14,12 @@ export function PaymentsPage() {
   const { values, setFilter, clearAll } = usePaymentFilters();
   const { data, isPending, isError, isPlaceholderData, refetch } = usePayments(values);
   const active = hasActiveFilters(values);
+  // Bumped by Clear all so the search box starts over, dropping text still waiting on its debounce.
+  const [searchReset, setSearchReset] = useState(0);
+  const clearEverything = useCallback(() => {
+    clearAll();
+    setSearchReset((n) => n + 1);
+  }, [clearAll]);
 
   // A stale link or a shrunken result can ask for a page past the end: go to the last page instead.
   const lastPage = data?.meta.total_pages ?? 0;
@@ -30,14 +36,15 @@ export function PaymentsPage() {
         options={data?.filters}
         setFilter={setFilter}
         totalCount={isPlaceholderData ? undefined : data?.meta.total_count}
-        onClearAll={clearAll}
+        onClearAll={clearEverything}
         canClear={active}
+        searchReset={searchReset}
       />
       <FilterChips
         values={values}
         options={data?.filters}
         onRemove={(key) => setFilter(key, key === 'status' ? 'all' : key === 'q' ? '' : undefined)}
-        onClearAll={clearAll}
+        onClearAll={clearEverything}
       />
       {isPending && <QueryLoading />}
       {isError && !data && <QueryError onRetry={() => void refetch()} />}

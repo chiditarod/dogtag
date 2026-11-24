@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import type { BrowseStatus, PaymentFilterValues } from './types';
 
@@ -14,7 +14,11 @@ type Key = keyof PaymentFilterValues;
 
 /** The page's filters live in the URL query, so a reload or a shared link keeps them. */
 export function usePaymentFilters() {
-  const [params, setParams] = useSearchParams();
+  const [params, setSearchParams] = useSearchParams();
+  // useSearchParams hands back a new setter whenever the URL changes. Read it through a ref so setFilter and
+  // clearAll keep one identity, and a filter click does not restart the search box's debounce.
+  const setParamsRef = useRef(setSearchParams);
+  setParamsRef.current = setSearchParams;
 
   const values = useMemo<PaymentFilterValues>(() => {
     const race = params.get('race_id');
@@ -30,7 +34,7 @@ export function usePaymentFilters() {
 
   const setFilter = useCallback(
     <K extends Key>(key: K, value: PaymentFilterValues[K]) => {
-      setParams(
+      setParamsRef.current(
         (previous) => {
           const next = new URLSearchParams(previous);
           const names: Record<Key, string> = {
@@ -50,12 +54,12 @@ export function usePaymentFilters() {
         { replace: true },
       );
     },
-    [setParams],
+    [],
   );
 
   /** Drops every filter except the race. */
   const clearAll = useCallback(() => {
-    setParams(
+    setParamsRef.current(
       (previous) => {
         const next = new URLSearchParams();
         const race = previous.get('race_id');
@@ -64,7 +68,7 @@ export function usePaymentFilters() {
       },
       { replace: true },
     );
-  }, [setParams]);
+  }, []);
 
   return { values, setFilter, clearAll };
 }

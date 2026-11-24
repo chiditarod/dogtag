@@ -169,7 +169,14 @@ export function PaymentFilters({
   totalCount,
   onClearAll,
   canClear,
-}: FilterProps & { totalCount: number | undefined; onClearAll: () => void; canClear: boolean }) {
+  searchReset,
+}: FilterProps & {
+  totalCount: number | undefined;
+  onClearAll: () => void;
+  canClear: boolean;
+  /** Changes on Clear all: the search box remounts, which cancels a pending debounce and empties it. */
+  searchReset: number;
+}) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const titleId = useId();
 
@@ -179,7 +186,7 @@ export function PaymentFilters({
       {!sheetOpen && <ResultCount count={totalCount} />}
       {/* Search has its own row until lg, and the inline controls wrap, so nothing overflows just above sm. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <SearchBox values={values} setFilter={setFilter} />
+        <SearchBox key={searchReset} values={values} setFilter={setFilter} />
         <div className="hidden min-w-0 gap-3 sm:flex sm:flex-wrap sm:items-end">
           <FilterControls values={values} options={options} setFilter={setFilter} idPrefix="inline" />
         </div>

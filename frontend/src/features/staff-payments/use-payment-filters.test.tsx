@@ -70,4 +70,13 @@ describe('usePaymentFilters', () => {
     expect(setup('/x?status=refunding').result.current.values.status).toBe('all');
     expect(setup('/x?status=not_refundable').result.current.values.status).toBe('all');
   });
+
+  it('setFilter and clearAll keep their identity when the URL changes', () => {
+    const { result } = setup();
+    const { setFilter, clearAll } = result.current;
+    act(() => result.current.setFilter('status', 'paid'));
+    expect(result.current.values.status).toBe('paid');
+    expect(result.current.setFilter).toBe(setFilter);
+    expect(result.current.clearAll).toBe(clearAll);
+  });
 });
