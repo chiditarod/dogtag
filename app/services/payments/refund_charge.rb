@@ -90,6 +90,7 @@ module Payments
         "user_id" => team.user_id,
         "team_id" => team.id,
         "completed_requirement_id" => cr.id,
+        "charge_id" => cr.charge_id,
         "requirement_name" => cr.requirement.name,
         "amount_cents" => cr.amount_cents,
         "race_name" => team.race.name
