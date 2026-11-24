@@ -574,6 +574,60 @@ describe TeamsController do
           end
         end
 
+        context "with a paid requirement" do
+          render_views
+
+          let(:requirement) { FactoryBot.create :payment_requirement_with_tier }
+          let(:team) { FactoryBot.create :team, :with_enough_people, race: requirement.race }
+          let(:the_user) { team.user }
+
+          def refund_buttons
+            Nokogiri::HTML(response.body).css("form[action$='/charges/ch_paid/refund']")
+          end
+
+          before do
+            requirement.complete(team.id, team.user, "charge_id" => "ch_paid", "amount" => 5000)
+            get :show, params: { :id => team.id }
+          end
+
+          it "does not show a Refund button to the racer" do
+            expect(response.body).to include("50.00")
+            expect(refund_buttons).to be_empty
+          end
+
+          [:operator_user, :refunder_user].each do |role|
+            context "when #{role.to_s.delete_suffix("_user")} views the team" do
+              let(:the_user) { FactoryBot.create role }
+
+              it "shows one Refund button" do
+                expect(refund_buttons.size).to eq(1)
+              end
+            end
+          end
+
+          context "when an admin views the team" do
+            let(:the_user) { FactoryBot.create :admin_user }
+
+            it "also shows refund and invalidate" do
+              expect(refund_buttons.size).to eq(2)
+            end
+          end
+
+          context "once the payment is refunded" do
+            let(:the_user) { FactoryBot.create :operator_user }
+
+            before do
+              CompletedRequirement.find_by!(charge_id: "ch_paid").update!(refunded_at: Time.current)
+              get :show, params: { :id => team.id }
+            end
+
+            it "shows Refunded and no buttons" do
+              expect(refund_buttons).to be_empty
+              expect(Nokogiri::HTML(response.body).css("span.label-primary").map { |node| node.text.strip }).to include("Refunded")
+            end
+          end
+        end
+
         it 'does not cache this page' do
           get :show, params: { :id => team.id }
           # Rails 7.0: Cache-Control header changed from 'no-cache, no-store' to 'no-store'

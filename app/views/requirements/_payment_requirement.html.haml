@@ -11,7 +11,7 @@
       = price_in_dollars_and_cents cr.metadata['amount']
     = t('completed')
 
-    - if current_user.is_any_of? [:refunder, :admin]
+    - if can? :refund, :charges
       = button_to t('refund'), charge_refund_url(cr.charge_id),:method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
     - if current_user.is? :admin
       = button_to t('refund_and_invalidate'), charge_refund_url(cr.charge_id),:method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}

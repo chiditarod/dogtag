@@ -1,6 +1,18 @@
 require "spec_helper"
 
 describe Ability do
+  describe "refunding charges" do
+    %i[refunder_user operator_user admin_user].each do |factory|
+      it "lets a #{factory.to_s.delete_suffix("_user")} refund" do
+        expect(Ability.new(FactoryBot.create(factory)).can?(:refund, :charges)).to be(true)
+      end
+    end
+
+    it "does not let a racer refund" do
+      expect(Ability.new(FactoryBot.create(:user)).can?(:refund, :charges)).to be(false)
+    end
+  end
+
   describe "an operator" do
     let(:race) { FactoryBot.create :race }
     let(:ability) { Ability.new(FactoryBot.create(:operator_user)) }

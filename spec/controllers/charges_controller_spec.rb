@@ -443,42 +443,21 @@ describe ChargesController do
       end
     end
 
+
     describe '#refund' do
 
       let(:valid_user) { FactoryBot.create :refunder_user }
 
-      let(:cr)   { FactoryBot.create :completed_requirement }
-      let(:req)  { cr.requirement }
-      let(:team) { cr.team }
-
-      let(:customer) do
-        Stripe::Customer.create({
-          card: stripe_helper.generate_card_token,
-          email: team.user.email,
-          metadata: {
-            user_id: team.user.id
-          }
-        })
-      end
-
-      let(:charge) do
-        Stripe::Charge.create({
-          customer:    customer.id,
-          amount:      7000,
-          currency:    'usd',
-          description: 'Registration Fee for Arizona Quints | Chiditarod X',
-          metadata: {
-            race_name: team.race.name,
-            team_name: team.name,
-            requirement_id: req.id,
-            team_id: team.id
-          }
-        })
+      let(:charge) { Stripe::Charge.create(amount: 7000, currency: 'usd', source: stripe_helper.generate_card_token) }
+      let(:cr) do
+        FactoryBot.create :completed_requirement, charge_id: charge.id, amount_cents: 7000,
+          metadata: JSON.generate('charge_id' => charge.id, 'amount' => 7000)
       end
 
       before do
         session[:prior_url] = '/prior_url/'
         StripeMock.start
+        cr
       end
       after { StripeMock.stop }
 
@@ -489,77 +468,104 @@ describe ChargesController do
           post :refund, params: { charge_id: charge.id }
           expect(response.status).to eq(400)
           expect(response.body).to eq(error_json)
+          expect(cr.reload).not_to be_refunded
         end
       end
 
-      context 'when the charge is not found' do
-        it 'renders 404' do
-          post :refund, params: { charge_id: 0 }
-          expect(response.status).to eq(404)
+      it '404s for an unknown charge id' do
+        post :refund, params: { charge_id: 'ch_nope' }
+
+        expect(response.status).to eq(404)
+        expect(JSON.parse(response.body)['error']).to include('ch_nope')
+      end
+
+      it 'refunds through the service and records refunded_by' do
+        post :refund, params: { charge_id: charge.id }
+
+        expect(flash[:notice]).to eq("The refund has processed successfully")
+        expect(response).to redirect_to('/prior_url/')
+        cr.reload
+        expect(cr).to be_refunded
+        expect(cr.refunded_by).to eq(valid_user)
+        expect(cr.metadata['refunded']).to eq(true)
+        expect(cr.metadata['charge_id']).to eq(charge.id)
+        expect(Stripe::Charge.retrieve(charge.id).refunded).to eq(true)
+        expect(Workers::PaymentRefundedEmail.jobs.size).to eq(1)
+      end
+
+      it 'reports already refunded without calling Stripe again' do
+        cr.update!(refunded_at: 1.day.ago)
+        expect(Stripe::Charge).not_to receive(:retrieve)
+        expect(Stripe::Refund).not_to receive(:create)
+
+        post :refund, params: { charge_id: charge.id }
+
+        expect(flash[:notice]).to eq("This payment was already refunded")
+        expect(response).to redirect_to('/prior_url/')
+        expect(Workers::PaymentRefundedEmail.jobs).to be_empty
+      end
+
+      it "shows the service's message when Stripe fails" do
+        cr.update_columns(charge_id: 'ch_seed_1')
+
+        post :refund, params: { charge_id: 'ch_seed_1' }
+
+        expect(flash[:error]).to include('ch_seed_1')
+        expect(flash[:notice]).to be_nil
+        expect(response).to redirect_to('/prior_url/')
+        expect(cr.reload).not_to be_refunded
+      end
+
+      context 'when a racer asks' do
+        let(:valid_user) { FactoryBot.create :user }
+
+        it 'is denied and refunds nothing' do
+          expect { post :refund, params: { charge_id: charge.id } }.to raise_error(CanCan::AccessDenied)
+
+          expect(cr.reload).not_to be_refunded
+          expect(Stripe::Charge.retrieve(charge.id).refunded).to eq(false)
         end
       end
 
-      context 'when charge is found and already refunded' do
-        let(:error_json) {{ error: "Charge ID #{charge.id} is already refunded" }.to_json}
-        it 'renders 400 with json message' do
-          charge.refund
-          post :refund, params: { charge_id: charge.id }
-          expect(response.status).to eq(400)
-          expect(response.body).to eq(error_json)
-        end
-      end
+      context 'when delete_completed_requirement is passed' do
 
-      context 'when the charge tries to be refunded but fails' do
-        let(:error_json) {{ error: "Charge ID: #{charge.id} could not be refunded. No action taken." }.to_json}
-        it 'renders 500 with json message' do
-          expect(charge).to receive(:refund).and_raise(StandardError)
-          expect(Stripe::Charge).to receive(:retrieve).with(charge.id).and_return(charge)
-          post :refund, params: { charge_id: charge.id }
-          expect(response.status).to eq(500)
-          expect(response.body).to eq(error_json)
-        end
-      end
+        context 'and the user is an admin' do
+          let(:the_user) { FactoryBot.create :admin_user }
 
-      context 'when the refund is successful' do
-        let(:flash_msg) { "The refund has processed successfully" }
+          it 'deletes the completed requirement after refunding, sets flash notice, and redirects to prior url' do
+            post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
 
-        it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
-          expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
-          post :refund, params: { charge_id: charge.id }
-          expect(flash[:notice]).to eq(flash_msg)
-          expect(response).to redirect_to('/prior_url/')
-        end
-
-        it 'marks the matching CompletedRequirement as refunded' do
-          cr.update!(metadata: { 'charge_id' => charge.id, 'amount' => 7000 })
-          post :refund, params: { charge_id: charge.id }
-          expect(cr.reload.metadata["refunded"]).to eq(true)
-          expect(cr.metadata["charge_id"]).to eq(charge.id)
-        end
-
-        context 'when delete_completed_requirement is passed' do
-
-          context 'and the user is an admin' do
-            let(:the_user)  { FactoryBot.create :admin_user }
-            let(:flash_msg) { "The refund has processed successfully, and the completed requirement was deleted" }
-
-            it 'deletes the CompletedRequirement object, sets flash notice, and redirects to prior url' do
-              expect(CompletedRequirement).to receive(:delete_by_charge)
-              post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
-              expect(flash[:notice]).to eq(flash_msg)
-              expect(response).to redirect_to('/prior_url/')
-            end
+            expect(flash[:notice]).to eq("The refund has processed successfully, and the completed requirement was deleted")
+            expect(response).to redirect_to('/prior_url/')
+            expect(CompletedRequirement.where(id: cr.id)).to be_empty
+            expect(Stripe::Charge.retrieve(charge.id).refunded).to eq(true)
+            expect(Workers::PaymentRefundedEmail.jobs.size).to eq(1)
           end
 
-          context 'when the user is not an admin' do
-            let(:flash_msg) { "The refund has processed successfully, but the completed requirement was not deleted because you do not have the appropriate permissions" }
+          it 'keeps the row when delete_completed_requirement is "false"' do
+            post :refund, params: { charge_id: charge.id, delete_completed_requirement: 'false' }
 
-            it 'does not delete the CompletedRequirement object, sets flash notice, and redirects to prior url' do
-              expect(CompletedRequirement).to_not receive(:delete_by_charge).with(charge)
-              post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
-              expect(flash[:notice]).to eq(flash_msg)
-              expect(response).to redirect_to('/prior_url/')
-            end
+            expect(flash[:notice]).to eq("The refund has processed successfully")
+            expect(cr.reload).to be_refunded
+          end
+
+          it 'keeps the row when the refund fails' do
+            cr.update_columns(charge_id: 'ch_seed_1')
+
+            post :refund, params: { charge_id: 'ch_seed_1', delete_completed_requirement: true }
+
+            expect(flash[:error]).to be_present
+            expect(CompletedRequirement.where(id: cr.id)).to be_present
+          end
+        end
+
+        context 'when the user is not an admin' do
+          it 'refunds but keeps the completed requirement, sets flash notice, and redirects to prior url' do
+            post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
+
+            expect(flash[:notice]).to eq("The refund has processed successfully, but the completed requirement was not deleted because you do not have the appropriate permissions")
+            expect(response).to redirect_to('/prior_url/')
+            expect(cr.reload).to be_refunded
           end
         end
       end
