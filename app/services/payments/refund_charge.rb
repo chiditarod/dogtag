@@ -13,6 +13,12 @@ module Payments
   class RefundCharge
     Result = Data.define(:ok, :code, :message)
 
+    # Test-only failure hook for the partial-failure e2e spec: a mock payment whose charge id starts with this
+    # fails its first refund attempt with a retryable error and refunds on the next. It is reachable only
+    # through refund_mock, which refuses in production before looking at the charge id, and mock payments are
+    # not refundable in production at all (CompletedRequirement.payment_status_sql).
+    FAIL_ONCE_PREFIX = "mock_fail_once_"
+
     def self.call(**) = new(**).call
 
     def initialize(user:, completed_requirement:)
@@ -65,7 +71,19 @@ module Payments
       # recorded as refunded there, whatever the caller checked.
       return failure(:not_refundable, "Mock payments cannot be refunded in production.") if Rails.env.production?
 
+      return fail_once if fail_once_pending?
+
       record(:refunded, "The mock payment was marked refunded.", nil)
+    end
+
+    def fail_once_pending?
+      cr.charge_id.to_s.start_with?(FAIL_ONCE_PREFIX) && !(cr.metadata || {})["fail_once_tripped"]
+    end
+
+    # Remembered in the payment's metadata so the retry succeeds.
+    def fail_once
+      cr.update_columns(metadata: JSON.generate((cr.metadata || {}).merge("fail_once_tripped" => true)), updated_at: Time.current)
+      failure(:stripe_error, "Stripe could not refund this payment: simulated failure on the first attempt (test data). Retry it.")
     end
 
     # Writes the refund and queues the email, once. Never called for a payment already recorded as refunded.

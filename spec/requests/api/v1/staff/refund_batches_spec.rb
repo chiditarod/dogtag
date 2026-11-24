@@ -131,6 +131,48 @@ describe "API v1 staff refund batches", type: :request do
       end
     end
 
+    describe "a batch with one failure, then a retry" do
+      it "refunds each payment exactly once and emails each team once" do
+        crs = [paid, paid, paid]
+        flaky = crs[1]
+        failed_once = false
+        refunds = Hash.new(0)
+        allow(Stripe::Refund).to receive(:create).and_wrap_original do |original, params, opts|
+          if params[:charge] == flaky.charge_id && !failed_once
+            failed_once = true
+            raise Stripe::APIConnectionError.new("Connection reset")
+          end
+          refunds[params[:charge]] += 1
+          original.call(params, opts)
+        end
+
+        Sidekiq::Testing.inline! do
+          create_batch(crs.map(&:id), total: 15_000)
+          expect(response).to have_http_status(:created)
+          batch_id = json["batch"]["id"]
+
+          get "/api/v1/staff/refund_batches/#{batch_id}"
+          items = json["batch"]["items"]
+          expect(json["batch"]["finished_at"]).to be_present
+          expect(items.map { |item| item["status"] }).to eq(%w[refunded failed refunded])
+          expect(items[1]).to include("error_code" => "stripe_error", "message" => be_present)
+          expect(crs.map { |cr| cr.reload.refunded? }).to eq([true, false, true])
+          expect(SentEmail.where(kind: "refund").count).to eq(2)
+
+          post "/api/v1/staff/refund_batches/#{batch_id}/retry", as: :json
+          expect(response).to have_http_status(:created)
+          expect(json["batch"]).to include("retry_of_id" => batch_id)
+          expect(json["batch"]["items"].map { |item| [item["completed_requirement_id"], item["status"]] }).to eq([[flaky.id, "refunded"]])
+        end
+
+        expect(crs.map { |cr| cr.reload.refunded? }).to eq([true, true, true])
+        expect(crs.map(&:charge_id).map { |id| refunds[id] }).to eq([1, 1, 1])
+        expect(SentEmail.where(kind: "refund").count).to eq(3)
+        expect(SentEmail.where(kind: "refund").pluck(:team_id).uniq.size).to eq(3)
+        expect(ActionMailer::Base.deliveries.size).to eq(3)
+      end
+    end
+
     describe "POST /staff/refund_batches/:id/retry" do
       it "returns a new batch with retry_of_id" do
         batch = FactoryBot.create(:refund_batch, user: refunder)
