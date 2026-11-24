@@ -22,6 +22,7 @@ class CompletedRequirement < ApplicationRecord
   belongs_to :team
   belongs_to :requirement
   belongs_to :user
+  belongs_to :refunded_by, class_name: "User", optional: true
 
   validates :team, :requirement, :user, presence: true
   validates :team, uniqueness: { :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.' }
@@ -37,12 +38,14 @@ class CompletedRequirement < ApplicationRecord
     m
   end
 
+  def refunded? = refunded_at.present?
+
   # flag the completed requirement for a stripe charge as refunded, so views need not ask Stripe.
   def self.mark_refunded_by_charge(charge_id)
     where("metadata LIKE ?", "%#{sanitize_sql_like(charge_id.to_s)}%").find_each do |cr|
       next unless cr.metadata["charge_id"] == charge_id
 
-      cr.update!(metadata: cr.metadata.merge("refunded" => true))
+      cr.update!(metadata: cr.metadata.merge("refunded" => true), refunded_at: Time.current)
     end
   end
 

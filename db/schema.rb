@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_24_062730) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -29,6 +29,13 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
     t.text "metadata"
     t.datetime "created_at", precision: nil
     t.datetime "updated_at", precision: nil
+    t.text "charge_id"
+    t.integer "amount_cents"
+    t.datetime "refunded_at"
+    t.text "stripe_refund_id"
+    t.bigint "refunded_by_id"
+    t.index ["charge_id"], name: "index_completed_requirements_on_charge_id"
+    t.index ["refunded_by_id"], name: "index_completed_requirements_on_refunded_by_id"
     t.index ["requirement_id"], name: "index_completed_requirements_on_requirement_id"
     t.index ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id", unique: true
     t.index ["team_id"], name: "index_completed_requirements_on_team_id"
@@ -172,6 +179,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_20_082540) do
     t.integer "classy_id"
   end
 
+  add_foreign_key "completed_requirements", "users", column: "refunded_by_id", on_delete: :nullify
   add_foreign_key "team_buddies", "teams", column: "buddy_team_id", on_delete: :cascade
   add_foreign_key "team_buddies", "teams", on_delete: :cascade
   add_foreign_key "teams", "people", column: "captain_id", on_delete: :nullify

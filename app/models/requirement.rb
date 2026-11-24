@@ -54,6 +54,8 @@ class Requirement < ApplicationRecord
       :requirement_id => id,
       :team_id => team_id,
       :user => user,
+      :charge_id => metadata["charge_id"],
+      :amount_cents => metadata["amount"],
       :metadata => JSON.generate(metadata)
     )
     cr.subscribe(CompletedRequirementAuditor.new)

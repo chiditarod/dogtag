@@ -73,6 +73,21 @@ describe Requirement do
       end.to change(CompletedRequirement, :count).by 1
     end
 
+    it "stores charge_id and amount_cents" do
+      cr = requirement.complete(team.id, user, "charge_id" => "ch_1", "amount" => 5000)
+
+      expect(cr.charge_id).to eq("ch_1")
+      expect(cr.amount_cents).to eq(5000)
+      expect(cr.reload.metadata["charge_id"]).to eq("ch_1")
+    end
+
+    it "leaves the payment columns blank when there is no charge metadata" do
+      cr = requirement.complete(team.id, user)
+
+      expect(cr.charge_id).to be_nil
+      expect(cr.amount_cents).to be_nil
+    end
+
     it 'broadcasts when creating' do
       expect do
         requirement.complete team.id, user
