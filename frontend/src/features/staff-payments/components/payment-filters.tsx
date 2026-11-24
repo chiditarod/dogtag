@@ -174,7 +174,7 @@ export function PaymentFilters({
           </div>
           <div className="flex flex-col gap-2 border-t border-flag px-4 py-3">
             <Button onClick={() => setSheetOpen(false)}>
-              {t('staff.payments.filters.show', { n: totalCount ?? 0 })}
+              {t(`staff.payments.filters.show_${(totalCount ?? 0) === 1 ? 'one' : 'other'}`, { n: totalCount ?? 0 })}
             </Button>
             {canClear && (
               <Button variant="ghost" onClick={onClearAll}>

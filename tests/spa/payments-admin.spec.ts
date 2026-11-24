@@ -75,7 +75,7 @@ test.describe('SPA staff payments (Browse)', () => {
     const dialog = page.getByRole('dialog', { name: 'Filter payments' });
     await expect(dialog).toBeVisible();
     await dialog.getByRole('radio', { name: 'Refunded' }).check({ force: true });
-    await expect(dialog.getByRole('button', { name: 'Show 1 payments' })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Show 1 payment' })).toBeVisible();
     const button = await dialog.getByRole('button', { name: /^Show/ }).boundingBox();
     expect(button!.x + button!.width).toBeLessThanOrEqual(320);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);

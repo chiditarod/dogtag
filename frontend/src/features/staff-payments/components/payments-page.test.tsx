@@ -160,7 +160,7 @@ describe('PaymentsPage', () => {
     const dialog = await screen.findByRole('dialog', { name: t('staff.payments.filters.sheetTitle') });
     await userEvent.click(within(dialog).getByRole('radio', { name: t('staff.payments.filters.statusRefunded') }));
     await waitFor(() => expect(requests.at(-1)!.searchParams.get('status')).toBe('refunded'));
-    await userEvent.click(within(dialog).getByRole('button', { name: t('staff.payments.filters.show', { n: 60 }) }));
+    await userEvent.click(within(dialog).getByRole('button', { name: t('staff.payments.filters.show_other', { n: 60 }) }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
