@@ -177,11 +177,25 @@ describe "API v1 registrations", type: :request do
     expect(json["registering"].first["deletable"]).to be(true)
   end
 
+  it "still returns the page when a team's user row is gone" do
+    api_login(FactoryBot.create(:operator_user))
+    owner = FactoryBot.create(:user, email: "owner@example.com")
+    kept = finalized_team(user: owner)
+    orphan = finalized_team
+    orphan.update_column(:user_id, 0)
+
+    get path
+
+    expect(response).to have_http_status(:ok)
+    expect(ids(json["finalized"])).to contain_exactly(kept.id, orphan.id)
+    expect(json["emails"]["finalized"]["owners"]).to eq(["owner@example.com"])
+  end
+
   it "labels filter fields and normalizes answers" do
     api_login(viewer)
-    race.update_columns(filter_field: "racer-type,racing-for-time,colors")
+    race.update_columns(filter_field: "racer-type,racing-for-time,colors,nested")
     team = FactoryBot.create(:team, race: race)
-    team.update_columns(jsonform: { "racer-type" => "Racer", "racing-for-time" => false, "colors" => ["red", "blue"] }.to_json)
+    team.update_columns(jsonform: { "racer-type" => "Racer", "racing-for-time" => false, "colors" => ["red", "blue"], "nested" => { "a" => 1 } }.to_json)
     broken = FactoryBot.create(:team, race: race)
     broken.update_columns(jsonform: "{not json")
 
@@ -190,11 +204,12 @@ describe "API v1 registrations", type: :request do
     expect(json["filter_fields"]).to eq([
       { "key" => "racer-type", "label" => "Racer type" },
       { "key" => "racing-for-time", "label" => "Racing for time" },
-      { "key" => "colors", "label" => "Colors" }
+      { "key" => "colors", "label" => "Colors" },
+      { "key" => "nested", "label" => "Nested" }
     ])
     rows = json["registering"].index_by { |row| row["id"] }
-    expect(rows[team.id]["answers"]).to eq("racer-type" => "Racer", "racing-for-time" => "No", "colors" => "red, blue")
-    expect(rows[broken.id]["answers"]).to eq("racer-type" => nil, "racing-for-time" => nil, "colors" => nil)
+    expect(rows[team.id]["answers"]).to eq("racer-type" => "Racer", "racing-for-time" => "No", "colors" => "red, blue", "nested" => nil)
+    expect(rows[broken.id]["answers"]).to eq("racer-type" => nil, "racing-for-time" => nil, "colors" => nil, "nested" => nil)
   end
 
   it "returns empty filter fields when the race has none" do

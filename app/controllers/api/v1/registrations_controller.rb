@@ -60,6 +60,7 @@ class Api::V1::RegistrationsController < Api::V1::BaseController
     when true then "Yes"
     when false then "No"
     when Array then value.map(&:to_s).join(", ").presence
+    when Hash then nil
     else value.to_s.presence
     end
   end

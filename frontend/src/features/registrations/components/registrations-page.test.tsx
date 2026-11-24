@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { clearCsrfToken } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
@@ -346,6 +346,65 @@ describe('RegistrationsPage', () => {
     renderApp('/races/7/registrations');
     expect(await screen.findByRole('alert')).toHaveTextContent(t('common.genericError'));
     expect(screen.getByRole('button', { name: t('common.retry') })).toBeInTheDocument();
+  });
+
+  describe('copy addresses', () => {
+    const emails = {
+      to: 'dogtag@chiditarod.org',
+      finalized: { owners: ['o1@example.com', 'o2@example.com'], racers: ['r1@example.com'] },
+      registering: { owners: [], racers: [] },
+    };
+    const operatorResponse = () => response({ viewer: { staff: true, can_email: true }, emails });
+
+    it('copies the owner addresses and confirms in a polite live region', async () => {
+      serve(operatorResponse(), ['operator']);
+      const click = userEvent.setup();
+      const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue();
+      renderApp('/races/7/registrations');
+      await click.click(await screen.findByRole('button', { name: t('registrations.copyOwners') }));
+
+      expect(writeText).toHaveBeenCalledWith('o1@example.com, o2@example.com');
+      expect(await screen.findByText(t('registrations.copied'))).toBeInTheDocument();
+      expect(screen.getByText(t('registrations.copied')).closest('[aria-live]')).toHaveAttribute('aria-live', 'polite');
+
+      await click.click(screen.getByRole('button', { name: t('registrations.copyRacers') }));
+      expect(writeText).toHaveBeenLastCalledWith('r1@example.com');
+    });
+
+    it('says when the copy failed', async () => {
+      serve(operatorResponse(), ['operator']);
+      const click = userEvent.setup();
+      vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('denied'));
+      renderApp('/races/7/registrations');
+      await click.click(await screen.findByRole('button', { name: t('registrations.copyOwners') }));
+
+      expect(await screen.findByText(t('registrations.copyFailed'))).toBeInTheDocument();
+    });
+
+    it('leaves out the copy buttons for empty lists', async () => {
+      serve(operatorResponse(), ['operator']);
+      const click = userEvent.setup();
+      renderApp('/races/7/registrations?tab=registering');
+      await screen.findByText('Late Starters');
+      expect(screen.queryByRole('button', { name: t('registrations.copyOwners') })).toBeNull();
+      expect(screen.queryByRole('button', { name: t('registrations.copyRacers') })).toBeNull();
+      await click.click(screen.getByRole('tab', { name: 'Registered (2)' }));
+      expect(screen.getByRole('button', { name: t('registrations.copyRacers') })).toBeInTheDocument();
+    });
+  });
+
+  it('clears the active filter from the inline controls', async () => {
+    serve(response({ filter_fields: [{ key: 'racer-type', label: 'Team type' }] }));
+    const click = userEvent.setup();
+    const { router } = renderApp('/races/7/registrations?q=doge&f_racer-type=Racer');
+    await screen.findByText('Doge Sled');
+    const inline = screen.getAllByRole('button', { name: t('registrations.clearFilters') });
+    expect(inline).toHaveLength(1);
+
+    await click.click(inline[0]);
+    expect(router.state.location.search).not.toContain('f_racer-type');
+    expect(router.state.location.search).toContain('q=doge');
+    expect(screen.queryByRole('button', { name: t('registrations.clearFilters') })).toBeNull();
   });
 
   it('says when no teams match a search', async () => {

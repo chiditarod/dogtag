@@ -80,6 +80,11 @@ export function RegistrationFilters({
           <>
             <div className="hidden min-w-0 gap-3 sm:flex sm:flex-wrap sm:items-end">
               <FilterSelects {...fieldFilters} idPrefix="inline" />
+              {active > 0 && (
+                <Button variant="ghost" onClick={onClear}>
+                  {t('registrations.clearFilters')}
+                </Button>
+              )}
             </div>
             <Button variant="secondary" className="shrink-0 sm:hidden" onClick={() => setSheetOpen(true)}>
               {active > 0 ? t('registrations.filtersCount', { n: active }) : t('registrations.filters')}

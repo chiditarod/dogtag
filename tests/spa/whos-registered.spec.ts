@@ -153,6 +153,8 @@ test.describe("SPA who's registered (read-only views)", () => {
 
     const owners = page.getByRole('link', { name: 'Email team owners (bcc)' });
     await expect(page.getByRole('link', { name: 'Email all racers (bcc)' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy racer emails' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Copy owner emails' })).toBeVisible();
     const registeredHref = (await owners.getAttribute('href'))!;
     expect(registeredHref).toMatch(/^mailto:/);
     for (const email of c.registered_owner_emails) expect(registeredHref).toContain(encodeURIComponent(email));
@@ -165,6 +167,22 @@ test.describe("SPA who's registered (read-only views)", () => {
     const registeringHref = (await owners.getAttribute('href'))!;
     for (const email of c.registering_owner_emails) expect(registeringHref).toContain(encodeURIComponent(email));
     expect(registeringHref).not.toContain(encodeURIComponent(c.registered_owner_emails[1]));
+  });
+
+  test('at 320px the operator mail links and copy buttons wrap inside the page', async ({ page }) => {
+    const c = seeded.credentials;
+    await page.setViewportSize({ width: 320, height: 700 });
+    await login(page, c.operator_email, c.password);
+    await page.goto(`/register/races/${c.open_race_id}/registrations`);
+
+    await expect(registeredTab(page, 2)).toBeVisible();
+    for (const name of ['Copy racer emails', 'Copy owner emails']) {
+      await insideViewport(page.getByRole('button', { name }), 320);
+    }
+    for (const name of ['Email all racers (bcc)', 'Email team owners (bcc)']) {
+      await insideViewport(page.getByRole('link', { name }), 320);
+    }
+    await noSidewaysScroll(page);
   });
 
   test('at 1024px each staff row keeps one cell per column, with Delete in the last column', async ({ page }) => {

@@ -18,7 +18,7 @@ if @can_email
     json.to Api::V1::RegistrationsController::MAIL_TO
     { finalized: @finalized, registering: @registering }.each do |tab, teams|
       json.set! tab do
-        json.owners teams.map { |team| team.user.email }.uniq.sort
+        json.owners teams.filter_map { |team| team.user&.email }.uniq.sort
         json.racers teams.flat_map { |team| team.people.map(&:email) }.compact_blank.uniq.sort
       end
     end
