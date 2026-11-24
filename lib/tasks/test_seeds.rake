@@ -14,7 +14,8 @@
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
-#   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
+#   rails test_seeds:staff_shell              (a racer and a refunder, for the staff shell)
+#   rails test_seeds:team_captain            (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -632,6 +633,39 @@ namespace :test_seeds do
       team_name: team.name
     )
     puts "✅ Seeded captain #{captain.email} with #{team.name} in #{race.name}"
+  end
+
+  desc "A racer and a refunder with no teams (staff shell)"
+  task staff_shell: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff shell test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    racer = FactoryBot.create(:user,
+      first_name: "Racer",
+      last_name: "Shell",
+      email: "staff-shell-racer-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    refunder = FactoryBot.create(:user,
+      first_name: "Refunder",
+      last_name: "Shell",
+      email: "staff-shell-refunder-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      roles: [:refunder]
+    )
+
+    write_test_credentials(unique_id,
+      racer_email: racer.email,
+      refunder_email: refunder.email,
+      password: "password123"
+    )
+    puts "✅ Seeded racer #{racer.email} and refunder #{refunder.email}"
   end
 
   desc "Four races in each registration state (race dates run opposite to the list order) and a captain with a team in the open and the closed race"
