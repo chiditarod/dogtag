@@ -73,7 +73,7 @@ describe('router', () => {
     expect(screen.getByRole('main')).toHaveClass('max-w-5xl');
     unmount();
 
-    renderAt('/register/');
+    renderAt('/register/login');
     expect(screen.getByRole('main')).toHaveClass('max-w-xl');
     expect(screen.getByRole('main')).not.toHaveClass('max-w-5xl');
   });

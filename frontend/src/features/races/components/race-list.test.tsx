@@ -123,7 +123,9 @@ describe('RaceList', () => {
     renderApp('/');
     await screen.findByText('Third by date');
     expect(
-      screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
+      within(screen.getByText('Third by date').closest('ul')!)
+        .getAllByRole('heading', { level: 2 })
+        .map((h) => h.textContent),
     ).toEqual(['Third by date', 'First by date', 'Second by date']);
   });
 
