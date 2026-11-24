@@ -25,12 +25,22 @@ describe('RegistrationIntro', () => {
     );
     renderApp('/');
     expect(
-      await screen.findByText(t('intro.summary', { n: 5 })),
+      await screen.findByText(t('intro.summary_other', { n: 5 })),
     ).toBeInTheDocument();
     await userEvent.click(
       screen.getByRole('button', { name: t('intro.toggle') }),
     );
-    expect(screen.getByText(t('intro.step2', { n: 5 }))).toBeInTheDocument();
+    expect(screen.getByText(t('intro.step2_other', { n: 5 }))).toBeInTheDocument();
+  });
+
+  it('uses singular copy for a one-racer team', async () => {
+    mockRaces(buildRace({ people_per_team: 1 }));
+    renderApp('/');
+    expect(
+      await screen.findByText(t('intro.summary_one')),
+    ).toBeInTheDocument();
+    expect(screen.getByText(t('intro.step2_one'))).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/1 racers/);
   });
 
   it('drops the number when no race is open', async () => {
@@ -51,7 +61,7 @@ describe('RegistrationIntro', () => {
     );
     renderApp('/');
     expect(screen.getByText(noCount)).toBeInTheDocument();
-    await screen.findByText(t('races.heading'));
+    await screen.findByRole('alert');
     expect(screen.getByText(noCount)).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/\{n\}|undefined|NaN/);
   });

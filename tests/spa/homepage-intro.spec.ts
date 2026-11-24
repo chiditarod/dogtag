@@ -55,7 +55,7 @@ test.describe('SPA homepage intro', () => {
     const step = page.getByText('Add all 3 racers.');
     await expect(step).toBeVisible();
 
-    const intro = page.getByRole('heading', { name: 'Register for CHIditarod' }).locator('xpath=ancestor::*[self::section or self::div][.//*[normalize-space(.)="Add all 3 racers."]][1]');
+    const intro = page.getByRole('region', { name: 'Register for CHIditarod' });
     const introBox = await intro.boundingBox();
     const listBox = await page.getByRole('heading', { name: 'Choose your race' }).boundingBox();
     expect(introBox).not.toBeNull();

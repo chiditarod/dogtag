@@ -22,22 +22,23 @@ export function RegistrationIntro() {
   const { data: races } = useRaces();
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const headingId = useId();
   const n = races?.find((race) => race.open_for_registration)?.people_per_team;
   const hasCount = n !== undefined;
 
   return (
-    <Card>
-      <h2 className="font-display text-xl font-bold">{t('intro.heading')}</h2>
+    <Card role="region" aria-labelledby={headingId}>
+      <h2 id={headingId} className="font-display text-xl font-bold">{t('intro.heading')}</h2>
       <p className="mt-1 hidden text-sm lg:block">{t('intro.tagline')}</p>
       <p className="mt-1 text-sm lg:hidden">
-        {hasCount ? t('intro.summary', { n }) : t('intro.summaryNoCount')}
+        {hasCount ? t(n === 1 ? 'intro.summary_one' : 'intro.summary_other', { n }) : t('intro.summaryNoCount')}
       </p>
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
-        className="mt-2 w-full border-t border-slate-200 pt-2 text-left text-sm font-semibold text-link lg:hidden"
+        className="mt-2 min-h-11 w-full border-t border-slate-200 pt-2 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-link text-sm font-semibold text-link lg:hidden"
       >
         <span aria-hidden="true">{open ? '▾ ' : '▸ '}</span>
         {t('intro.toggle')}
@@ -50,7 +51,7 @@ export function RegistrationIntro() {
           </Step>
           <Step n={2}>
             <b>
-              {hasCount ? t('intro.step2', { n }) : t('intro.step2NoCount')}
+              {hasCount ? t(n === 1 ? 'intro.step2_one' : 'intro.step2_other', { n }) : t('intro.step2NoCount')}
             </b>
           </Step>
           <Step n={3}>

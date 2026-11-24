@@ -42,7 +42,7 @@ export const routes: RouteObject[] = [
   {
     element: <RegisterLayout />,
     children: [
-      { path: '/', element: <RacesRoute />, handle: { wide: true } },
+      { path: '/', element: <RacesRoute />, handle: { wide: 'lg' } },
       { path: '/login', element: <LoginRoute /> },
       { path: '/signup', element: <SignupRoute /> },
       { path: '/forgot-password', element: <ForgotPasswordRoute /> },

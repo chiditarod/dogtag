@@ -152,14 +152,17 @@ export const en = {
   'forgotPassword.back': 'Back to log in',
   'intro.heading': 'Register for CHIditarod',
   'intro.tagline': "Chicago's annual urban shopping-cart race and mobile food drive.",
-  'intro.summary':
+  'intro.summary_one':
+    'Start a team, add 1 racer, answer the questions and pay the fee to register your team.',
+  'intro.summary_other':
     'Start a team, add {n} racers, answer the questions and pay the fee to register your team.',
   'intro.summaryNoCount':
     'Start a team, add your racers, answer the questions and pay the fee to register your team.',
   'intro.toggle': 'How registration and the waitlist work',
   'intro.step1Lead': 'Make an account',
   'intro.step1Rest': ' and start a team for the race.',
-  'intro.step2': 'Add all {n} racers.',
+  'intro.step2_one': 'Add your 1 racer.',
+  'intro.step2_other': 'Add all {n} racers.',
   'intro.step2NoCount': 'Add all your racers.',
   'intro.step3': 'Answer the team questions and pay the fee.',
   'intro.step4Lead': 'Your team is registered.',
