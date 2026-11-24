@@ -15,6 +15,7 @@
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
+#   rails test_seeds:homepage_intro            (the soonest open race, 3 racers per team, for the /register intro)
 #   rails test_seeds:staff_shell              (a racer and a refunder with a long first name, for the staff shell)
 #   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:payments_partial_failure (a refunder and three mock Cart Deposit payments, the second fails its first refund)
@@ -879,6 +880,23 @@ namespace :test_seeds do
       closed_team_name: closed_team.name
     )
     puts "✅ Seeded four races for #{short} and captain #{captain.email}"
+  end
+
+  desc "The soonest open race (3 racers per team), for the /register intro"
+  task homepage_intro: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding homepage intro test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    # One day out, so it is the first open race in the list (N comes from it).
+    race = FactoryBot.create(:race, name: "Race Intro #{unique_id[0..7]}", people_per_team: 3, max_teams: 100,
+      registration_close: 20.hours.from_now, final_edits_close: 22.hours.from_now, race_datetime: 1.day.from_now)
+
+    write_test_credentials(unique_id, race_name: race.name)
+    puts "✅ Seeded #{race.name}"
   end
 
   desc "Captain's unfinalized team with two racers (neither is the account holder) and no team captain"
