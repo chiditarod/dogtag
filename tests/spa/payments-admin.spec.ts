@@ -21,6 +21,16 @@ async function login(page: Page, email: string, password: string) {
   await expect(page.getByRole('link', { name: 'My teams' })).toBeVisible();
 }
 
+/**
+ * The status radios are sr-only and controlled by the URL, so `check({ force: true })` can land before React
+ * re-renders and fail with "did not change its state". Click the visible label, as a person would.
+ */
+async function chooseStatus(page: Page, label: 'All' | 'Paid' | 'Refunded') {
+  const group = page.getByRole('group', { name: 'Status' });
+  await group.getByText(label, { exact: true }).click();
+  await expect(group.getByRole('radio', { name: label, exact: true })).toBeChecked();
+}
+
 test.describe('SPA staff payments (Browse)', () => {
   test.beforeAll(() => {
     seeded = seed<Credentials>('payments_admin');
@@ -38,12 +48,12 @@ test.describe('SPA staff payments (Browse)', () => {
     await expect(page.getByText('1 of 7 refunded · $50 of $350')).toBeVisible();
     await expect(page.getByRole('row').filter({ hasText: 'Test Team Payments' })).toHaveCount(7);
 
-    await page.getByRole('radio', { name: 'Paid' }).check({ force: true });
+    await chooseStatus(page, 'Paid');
     await expect(page.getByRole('row').filter({ hasText: 'Test Team Payments' })).toHaveCount(6);
-    await page.getByRole('radio', { name: 'Refunded' }).check({ force: true });
+    await chooseStatus(page, 'Refunded');
     await expect(page.getByRole('row').filter({ hasText: 'Test Team Payments' })).toHaveCount(1);
     await expect(page.getByText(/^Refunded [A-Z][a-z]{2} \d+$/)).toBeVisible();
-    await page.getByRole('radio', { name: 'All', exact: true }).check({ force: true });
+    await chooseStatus(page, 'All');
 
     await page.getByRole('searchbox').fill(c.owner_emails[2]);
     const rows = page.getByRole('row').filter({ hasText: 'Test Team Payments' });
