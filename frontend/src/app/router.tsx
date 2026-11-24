@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import { StaffLayout } from '@/components/layouts/staff-layout';
 import { RegisterLayout } from '@/components/layouts/register-layout';
+import { AccountRoute } from '@/app/routes/account';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
 import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
@@ -53,6 +54,10 @@ export const routes: RouteObject[] = [
           {
             path: '/races/:raceId/teams/new',
             element: <NewTeamRoute />,
+          },
+          {
+            path: '/account',
+            element: <AccountRoute />,
           },
           {
             path: '/teams',
