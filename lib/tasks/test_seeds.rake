@@ -14,7 +14,7 @@
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
-#   rails test_seeds:staff_shell              (a racer and a refunder, for the staff shell)
+#   rails test_seeds:staff_shell              (a racer and a refunder with a long first name, for the staff shell)
 #   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -651,8 +651,9 @@ namespace :test_seeds do
       password: "password123",
       password_confirmation: "password123"
     )
+    # A 16-character first name: the 320px header check needs a long one.
     refunder = FactoryBot.create(:user,
-      first_name: "Refunder",
+      first_name: "Maximilienne-Ann",
       last_name: "Shell",
       email: "staff-shell-refunder-#{unique_id}@example.com",
       password: "password123",

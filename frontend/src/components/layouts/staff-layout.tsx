@@ -14,7 +14,7 @@ export function StaffLayout() {
 
   return (
     <div className="min-h-screen bg-page">
-      <SiteHeader width="max-w-6xl">
+      <SiteHeader width="max-w-6xl" staffLink={false}>
         {isStaff(me) && (
           <nav
             aria-label={t('staff.nav')}

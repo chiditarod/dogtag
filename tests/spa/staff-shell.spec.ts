@@ -43,13 +43,33 @@ test.describe('SPA staff shell', () => {
     await expect(page.getByRole('navigation', { name: 'Staff' })).toHaveCount(0);
   });
 
-  test('the staff page does not scroll sideways at 320px', async ({ page }) => {
+  // The seeded refunder has a 16-character first name, the worst case for the header row.
+  async function expectHeaderFits(page: Page) {
+    const width = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(width).toBeLessThanOrEqual(320);
+    const logo = await page.getByAltText('dogtag, CHIditarod registration').boundingBox();
+    expect(logo?.width ?? 0).toBeGreaterThanOrEqual(100);
+    const items = page.getByRole('navigation', { name: 'Account' }).locator('a, button, span');
+    for (const item of await items.all()) {
+      const box = await item.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(320);
+    }
+  }
+
+  test('the staff page and a racer page with the Staff link fit at 320px', async ({ page }) => {
     const c = seeded.credentials;
     await page.setViewportSize({ width: 320, height: 700 });
     await login(page, c.refunder_email, c.password);
+
     await page.goto('/register/staff/payments');
     await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible();
-    const width = await page.evaluate(() => document.documentElement.scrollWidth);
-    expect(width).toBeLessThanOrEqual(320);
+    await expect(page.getByRole('link', { name: 'Staff', exact: true })).toHaveCount(0);
+    await expectHeaderFits(page);
+
+    await page.goto('/register');
+    await expect(page.getByRole('link', { name: 'Staff', exact: true })).toBeVisible();
+    await expectHeaderFits(page);
   });
 });
