@@ -242,6 +242,39 @@ describe('RegistrationsPage', () => {
     ]);
   });
 
+  it('keeps one cell per column when a staff row has no new-team tag and another row is deletable', async () => {
+    serve(
+      response({
+        viewer: { staff: true, can_email: false },
+        finalized: [
+          row({ id: 1, name: 'Doge Sled', staff: staff({ new_team: null }) }),
+          row({ id: 2, name: 'Mush Hour', deletable: true, staff: staff({ new_team: true }) }),
+        ],
+      }),
+      ['admin'],
+    );
+    renderApp('/races/7/registrations');
+    await screen.findByText('Doge Sled');
+
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers.map((h) => h.textContent)).toEqual([
+      '#',
+      'Team',
+      'Experience',
+      'Payments',
+      'New team',
+      'Actions',
+    ]);
+    // The first row has no tag and no Delete button; its cells must still line up under the headers.
+    for (const rowEl of screen.getAllByRole('row').slice(1)) {
+      expect(within(rowEl).getAllByRole('cell')).toHaveLength(headers.length);
+    }
+    // Hiding an empty cell is for cards only (below sm), never for the table.
+    const emptyCells = screen.getAllByRole('cell').filter((cell) => cell.textContent === '');
+    expect(emptyCells.length).toBeGreaterThan(0);
+    for (const cell of emptyCells) expect(cell.className).toContain('max-sm:empty:hidden');
+  });
+
   it('refunder sees staff columns but no email links', async () => {
     serve(
       response({

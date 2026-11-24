@@ -111,7 +111,9 @@ export function RegistrationsList({ rows, tab, kind, fields, staff, timeZone, on
           ))}
           {staff && registered ? (
             <ListCell label={t('registrations.col.experience')} className="text-sm">
-              <div>{t('registrations.teamExperience', { label: row.experience_label })}</div>
+              <div className="[overflow-wrap:anywhere]">
+                {t('registrations.teamExperience', { label: row.experience_label })}
+              </div>
               <div className="text-navy/70">{t('registrations.racerYears', { years: row.racer_years })}</div>
             </ListCell>
           ) : (
@@ -145,13 +147,13 @@ export function RegistrationsList({ rows, tab, kind, fields, staff, timeZone, on
                   </>
                 )}
               </ListCell>
-              <ListCell className="text-sm empty:hidden">
+              <ListCell className="text-sm max-sm:empty:hidden">
                 {row.staff?.new_team === true && <Badge>{t('registrations.newTeamTag')}</Badge>}
               </ListCell>
             </>
           )}
           {deletable && (
-            <ListCell className="empty:hidden sm:text-right">
+            <ListCell className="max-sm:empty:hidden sm:text-right">
               {row.deletable && (
                 <Button
                   variant="ghost"
