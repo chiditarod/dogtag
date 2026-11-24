@@ -23,6 +23,11 @@ export function matchesConfirmation(typed: string, count: number): boolean {
   return typed.trim().replace(/\s+/g, ' ').toUpperCase() === `REFUND ${count}`;
 }
 
+/**
+ * Client-side refusal, in addition to the server's 422 (the real guard). The list is locked to status=paid,
+ * so a row refunded meanwhile simply drops out of it and is not seen here; this only fires when the ticked
+ * set differs from the snapshot, or a snapshot row still on the current page shows another status or amount.
+ */
 function snapshotChanged(snapshot: StaffPayment[], current: Map<number, StaffPayment>, latestRows: StaffPayment[]) {
   if (snapshot.length !== current.size || snapshot.some((row) => !current.has(row.id))) return true;
   return snapshot.some((row) => {
