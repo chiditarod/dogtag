@@ -62,12 +62,15 @@ module Payments
     end
 
     # Writes the refund and queues the email, once. Never called for a payment already recorded as refunded.
+    # Skips validations on purpose: a refund that reached Stripe is always recorded, even if the row would no
+    # longer validate (for example the payer's account was deleted), or every retry would repeat the failure.
     def record(code, message, stripe_refund_id)
-      cr.update!(
+      cr.update_columns(
         refunded_at: Time.current,
-        refunded_by: user,
+        refunded_by_id: user.id,
         stripe_refund_id: stripe_refund_id,
-        metadata: JSON.generate((cr.metadata || {}).merge("refunded" => true))
+        metadata: JSON.generate((cr.metadata || {}).merge("refunded" => true)),
+        updated_at: Time.current
       )
       queue_email
       success(code, message)

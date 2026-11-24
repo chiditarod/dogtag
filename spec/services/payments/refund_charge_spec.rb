@@ -75,6 +75,19 @@ describe Payments::RefundCharge do
     expect(email_jobs).to be_empty
   end
 
+  it "records the refund even when the payer's account was deleted" do
+    User.where(id: cr.user_id).delete_all
+
+    result = call(CompletedRequirement.find(cr.id))
+
+    expect(result.code).to eq(:refunded)
+    cr.reload
+    expect(cr.refunded_at).to be_present
+    expect(cr.refunded_by).to eq(refunder)
+    expect(cr.stripe_refund_id).to include("re_")
+    expect(email_jobs.size).to eq(1)
+  end
+
   it "a second call after a refund does nothing" do
     expect(call.code).to eq(:refunded)
 
@@ -131,7 +144,7 @@ describe Payments::RefundCharge do
   end
 
   it "alerts and returns unexpected when saving fails after Stripe refunded" do
-    allow_any_instance_of(CompletedRequirement).to receive(:update!).and_raise(ActiveRecord::StatementInvalid, "boom")
+    allow_any_instance_of(CompletedRequirement).to receive(:update_columns).and_raise(ActiveRecord::StatementInvalid, "boom")
     expect(Payments::AdvisoryLock).to receive(:alert).with(/Refunded at Stripe but not recorded.*re_.*#{charge.id}/)
 
     result = call
