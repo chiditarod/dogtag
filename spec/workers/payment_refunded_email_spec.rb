@@ -23,4 +23,18 @@ describe Workers::PaymentRefundedEmail do
     expect(ActionMailer::Base.deliveries.count).to eq(1)
     expect(SentEmail.where(kind: "refund", dedupe_key: "refund-cr-9").count).to eq(1)
   end
+
+  it "skips without raising, so Sidekiq does not retry, when the owner's account is gone" do
+    User.where(id: team.user_id).delete_all
+
+    expect { described_class.new.perform(job) }.not_to raise_error
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
+
+  it "skips without raising when the team is gone" do
+    Team.where(id: team.id).delete_all
+
+    expect { described_class.new.perform(job) }.not_to raise_error
+    expect(ActionMailer::Base.deliveries).to be_empty
+  end
 end

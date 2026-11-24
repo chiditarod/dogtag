@@ -10,8 +10,11 @@ module Workers
     sidekiq_options failures: true
 
     def run(job, data = {})
-      user = User.find(job["user_id"])
-      team = Team.find(job["team_id"])
+      user = User.find_by(id: job["user_id"])
+      team = Team.find_by(id: job["team_id"])
+      # Nobody to email: skip rather than raise, or Sidekiq would retry for weeks.
+      return log("skipped", reason: "user or team no longer exists", user_id: job["user_id"], team_id: job["team_id"]) unless user && team
+
       details = {
         completed_requirement_id: job["completed_requirement_id"],
         requirement_name: job["requirement_name"],
