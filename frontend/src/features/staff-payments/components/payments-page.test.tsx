@@ -196,4 +196,16 @@ describe('PaymentsPage', () => {
     expect(cells[2]).toHaveAccessibleName(`${t('staff.payments.col.type')} Cart Deposit`);
     expect(cells[3]).toHaveAccessibleName(`${t('staff.payments.col.amount')} $50`);
   });
+
+  it('an unknown race id says the race was not found instead of All races', async () => {
+    serve({ ...emptyPayments, filters: { ...emptyPayments.filters, race_id: null, payment_types: [] } });
+    renderApp('/staff/payments?race_id=999');
+    expect(await screen.findByText(t('staff.payments.raceNotFound'))).toBeInTheDocument();
+    const select = screen.getByLabelText(t('staff.payments.filters.race'));
+    expect(select).toHaveValue('999');
+    expect(within(select).getByRole('option', { selected: true })).toHaveTextContent(
+      t('staff.payments.filters.raceNotFound'),
+    );
+    expect(screen.queryByText(t('staff.payments.empty'))).not.toBeInTheDocument();
+  });
 });

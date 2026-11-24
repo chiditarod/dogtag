@@ -3,7 +3,7 @@ import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
 import { usePayments } from '../api/use-payments';
 import { usePaymentFilters } from '../use-payment-filters';
-import { hasActiveFilters } from '../utils';
+import { hasActiveFilters, raceNotFound } from '../utils';
 import { FilterChips } from './filter-chips';
 import { Pagination } from './pagination';
 import { PaymentFilters } from './payment-filters';
@@ -46,7 +46,11 @@ export function PaymentsPage() {
           <ProgressLine summary={data.meta.summary} />
           {data.payments.length === 0 ? (
             <p className="rounded-lg bg-white p-4 text-navy">
-              {data.filters.races.length === 0 ? t('staff.payments.noRaces') : t('staff.payments.empty')}
+              {data.filters.races.length === 0
+                ? t('staff.payments.noRaces')
+                : raceNotFound(values, data.filters)
+                  ? t('staff.payments.raceNotFound')
+                  : t('staff.payments.empty')}
             </p>
           ) : (
             <PaymentsTable payments={data.payments} />

@@ -1,5 +1,5 @@
 import { DEFAULT_TIME_ZONE } from '@/lib/dates';
-import type { PaymentFilterValues } from './types';
+import type { PaymentFilterValues, PaymentsFilterOptions } from './types';
 
 /** "$7,100" for whole dollars, "$7,100.50" otherwise. */
 export function formatMoney(cents: number): string {
@@ -29,6 +29,11 @@ export function formatPaidDate(iso: string): string {
     year: 'numeric',
     timeZone: DEFAULT_TIME_ZONE,
   }).format(new Date(iso));
+}
+
+/** The URL names a race id the server does not know (it then lists nothing). */
+export function raceNotFound(values: PaymentFilterValues, options: PaymentsFilterOptions | undefined): boolean {
+  return typeof values.raceId === 'number' && !!options && !options.races.some((race) => race.id === values.raceId);
 }
 
 export function hasActiveFilters(values: PaymentFilterValues): boolean {

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { t } from '@/locales/en';
 import type { PaymentFilterValues, PaymentsFilterOptions } from '../types';
+import { raceNotFound } from '../utils';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -44,6 +45,9 @@ function FilterControls({ values, options, setFilter, idPrefix }: FilterProps & 
             setFilter('raceId', event.target.value === 'all' ? 'all' : Number(event.target.value))
           }
         >
+          {raceNotFound(values, options) && (
+            <option value={values.raceId}>{t('staff.payments.filters.raceNotFound')}</option>
+          )}
           <option value="all">{t('staff.payments.filters.allRaces')}</option>
           {options?.races.map((race) => (
             <option key={race.id} value={race.id}>
