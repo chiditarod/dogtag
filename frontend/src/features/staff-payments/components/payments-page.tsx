@@ -12,6 +12,7 @@ import { Pagination } from './pagination';
 import { PaymentFilters } from './payment-filters';
 import { PaymentsTable } from './payments-table';
 import { ProgressLine } from './progress-line';
+import { BatchResults } from './batch-results';
 import { ConfirmRefundDialog } from './confirm-refund-dialog';
 import { RefundBar } from './refund-bar';
 
@@ -28,7 +29,7 @@ export function PaymentsPage() {
   const capNoteId = useId();
   // The rows shown in the confirmation dialog: a snapshot taken when it opened.
   const [reviewing, setReviewing] = useState<StaffPayment[] | null>(null);
-  const [, setBatch] = useState<RefundBatch | null>(null);
+  const [batchId, setBatchId] = useState<number | null>(null);
   const { clear: clearSelection } = selection;
 
   // A selection belongs to one race.
@@ -63,7 +64,13 @@ export function PaymentsPage() {
 
   function confirmed(created: RefundBatch) {
     setReviewing(null);
-    setBatch(created);
+    setBatchId(created.id);
+  }
+
+  // Done: refunded rows leave the Paid view, the selection is spent and the page goes back to Browse.
+  function finished() {
+    setBatchId(null);
+    cancelRefundMode();
   }
 
   function cancelRefundMode() {
@@ -171,6 +178,7 @@ export function PaymentsPage() {
           onReview={() => setReviewing(selectedRows)}
         />
       )}
+      {batchId !== null && <BatchResults batchId={batchId} onFinished={finished} />}
       {reviewing && (
         <ConfirmRefundDialog
           snapshot={reviewing}

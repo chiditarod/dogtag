@@ -48,6 +48,7 @@ export function buildChecklist(overrides: Partial<Checklist> = {}): Checklist {
           amount_due_cents: 15000,
           paid_cents: 0,
           next_tier: null,
+          refunded: false,
         },
       ],
     },

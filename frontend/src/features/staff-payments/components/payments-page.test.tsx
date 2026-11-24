@@ -6,7 +6,7 @@ import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
-import { emptyPayments, payment } from '../test-fixtures';
+import { batchItem, emptyPayments, payment, refundBatch } from '../test-fixtures';
 import type { RegistrationStatus } from '@/types/api';
 import type { PaymentsResponse } from '../types';
 
@@ -435,5 +435,38 @@ describe('PaymentsPage Refund mode', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: t('staff.refund.cancel') }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
+  });
+
+  it('finishing a batch clears the selection, refetches the list and returns to Browse', async () => {
+    await openRefundMode();
+    const listCalls = requests.length;
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.post('/api/v1/staff/refund_batches', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 9, items: [batchItem({ team_name: 'Team 1', status: 'queued' })] }) }, { status: 201 }),
+      ),
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({
+            id: 9,
+            finished_at: '2026-11-24T18:00:05Z',
+            items: [batchItem({ team_name: 'Team 1', status: 'refunded' })],
+          }),
+        }),
+      ),
+    );
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Review and refund 1…' }));
+    await userEvent.type(await screen.findByLabelText('Type REFUND 1 to confirm'), 'REFUND 1');
+    await userEvent.click(screen.getByRole('button', { name: 'Refund 1 payment' }));
+    const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
+    expect(within(results).getByText('Refunded')).toBeInTheDocument();
+    await waitFor(() => expect(requests.length).toBeGreaterThan(listCalls));
+    await userEvent.click(within(results).getByRole('button', { name: t('staff.refund.done') }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+    expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument();
   });
 });

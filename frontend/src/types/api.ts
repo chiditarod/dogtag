@@ -56,6 +56,8 @@ export interface FeeItem {
   paid_cents: number;
   /** Upcoming price change; null once paid. */
   next_tier: ChecklistNextTier | null;
+  /** Paid, then refunded by staff. The requirement stays complete; only this row's label changes. */
+  refunded: boolean;
 }
 
 export interface Checklist {

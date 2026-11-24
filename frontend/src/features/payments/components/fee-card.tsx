@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState, type RefObject } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/features/auth/api/use-me';
 import { usePay, type PayVariables } from '@/features/payments/api/use-pay';
@@ -42,21 +43,30 @@ export function FeeCard({ team }: { team: Team }) {
   const focusPaid = useRef<number | null>(null);
 
   if (checklist.finalized || (fee.done && fee.paid_cents > 0)) {
+    // A refund does not change the total: the payment still counts as paid. It only gets a line of its own.
+    const refunded = fee.items.filter((line) => line.refunded);
     return (
-      <p
-        tabIndex={-1}
-        ref={(element) => {
-          if (element && focusPaid.current !== null) {
-            focusPaid.current = null;
-            element.focus();
-          }
-        }}
-        className="text-base font-semibold text-navy focus:outline-none"
-      >
-        {fee.paid_cents > 0
-          ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
-          : t('fee.paidNoAmount')}
-      </p>
+      <div className="space-y-1">
+        <p
+          tabIndex={-1}
+          ref={(element) => {
+            if (element && focusPaid.current !== null) {
+              focusPaid.current = null;
+              element.focus();
+            }
+          }}
+          className="text-base font-semibold text-navy focus:outline-none"
+        >
+          {fee.paid_cents > 0
+            ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
+            : t('fee.paidNoAmount')}
+        </p>
+        {refunded.map((line) => (
+          <p key={line.requirement_id} className="text-sm text-navy/80">
+            {t('fee.refundedLine', { name: line.name })}
+          </p>
+        ))}
+      </div>
     );
   }
   if (!race.open_for_registration) {
@@ -269,6 +279,11 @@ function FeeRow({
         {item.paid_cents > 0
           ? t('fee.paid', { amount: formatCents(item.paid_cents) })
           : t('team.pillPaid')}
+        {item.refunded && (
+          <Badge tone="neutral" className="ml-2 align-middle">
+            {t('fee.refunded')}
+          </Badge>
+        )}
       </p>
     );
   } else if (item.amount_due_cents === null) {

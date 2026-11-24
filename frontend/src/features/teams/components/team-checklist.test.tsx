@@ -65,6 +65,7 @@ describe('TeamChecklist header', () => {
             amount_due_cents: null,
             paid_cents: 0,
             next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+            refunded: false,
           },
         ],
       },
@@ -241,8 +242,8 @@ describe('TeamChecklist cards', () => {
         next_tier: opens,
         requirement_id: null,
         items: [
-          { requirement_id: 3, name: 'Cart Deposit', done: true, amount_due_cents: null, paid_cents: 8800, next_tier: null },
-          { requirement_id: 4, name: 'Race Registration', done: false, amount_due_cents: null, paid_cents: 0, next_tier: opens },
+          { requirement_id: 3, name: 'Cart Deposit', done: true, amount_due_cents: null, paid_cents: 8800, next_tier: null, refunded: false },
+          { requirement_id: 4, name: 'Race Registration', done: false, amount_due_cents: null, paid_cents: 0, next_tier: opens, refunded: false },
         ],
       },
     });
@@ -269,6 +270,7 @@ describe('TeamChecklist cards', () => {
             amount_due_cents: null,
             paid_cents: 0,
             next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+            refunded: false,
           },
         ],
       },
