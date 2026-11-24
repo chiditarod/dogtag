@@ -23,6 +23,8 @@ class User < ApplicationRecord
 
   has_many :completed_requirements
   has_many :teams
+  # Refund batches are the audit of who refunded what, so a staff user who made one cannot be deleted.
+  has_many :refund_batches, dependent: :restrict_with_error
 
   default_scope ->{ order(:last_name) }
 
