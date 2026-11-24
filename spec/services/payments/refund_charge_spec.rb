@@ -27,7 +27,7 @@ describe Payments::RefundCharge do
 
   it "refunds the charge and records who and when" do
     expect(Stripe::Refund).to receive(:create)
-      .with(hash_including(charge: charge.id), hash_including(idempotency_key: "refund-cr-#{cr.id}"))
+      .with(hash_including(charge: charge.id), hash_including(idempotency_key: "refund-#{cr.charge_id}"))
       .and_call_original
 
     result = Timecop.freeze(Time.utc(2026, 11, 24, 15, 0, 0)) { call }

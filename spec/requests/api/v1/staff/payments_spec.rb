@@ -61,6 +61,22 @@ describe "API v1 staff payments", type: :request do
       )
     end
 
+    it "shows a refund found already made at Stripe as done at Stripe" do
+      payment.update_columns(refunded_at: Time.utc(2026, 11, 20, 12), refunded_by_id: nil, stripe_refund_id: "re_dashboard")
+
+      get "/api/v1/staff/payments"
+
+      expect(json["payments"].first).to include("status" => "refunded", "refunded_by" => { "name" => "Done at Stripe" })
+    end
+
+    it "shows no refunder for a refund with no recorded Stripe refund (backfilled)" do
+      payment.update_columns(refunded_at: Time.utc(2026, 11, 20, 12), refunded_by_id: nil, stripe_refund_id: nil)
+
+      get "/api/v1/staff/payments"
+
+      expect(json["payments"].first).to include("status" => "refunded", "refunded_by" => nil)
+    end
+
     it "reports who refunded a payment" do
       payment.update!(refunded_at: Time.utc(2026, 11, 20, 12), refunded_by: refunder)
 
