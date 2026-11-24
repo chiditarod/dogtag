@@ -15,6 +15,7 @@
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
 #   rails test_seeds:staff_shell              (a racer and a refunder, for the staff shell)
+#   rails test_seeds:payments_admin           (a refunder and a race with 7 mock Cart Deposit payments, one already refunded)
 #   rails test_seeds:team_captain            (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -666,6 +667,71 @@ namespace :test_seeds do
       password: "password123"
     )
     puts "✅ Seeded racer #{racer.email} and refunder #{refunder.email}"
+  end
+
+  desc "A refunder and a race with seven mock Cart Deposit payments (one refunded) and one Registration payment (payments admin)"
+  task payments_admin: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding payments admin test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    refunder = FactoryBot.create(:user,
+      first_name: "Refunder",
+      last_name: "Payments",
+      email: "payments-refunder-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      roles: [:refunder]
+    )
+
+    # The newest race_datetime, so it is the default race on the page.
+    race = FactoryBot.create(:race, name: "Race Payments #{short}", race_datetime: 5.years.from_now)
+    deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    Tier.create!(requirement: deposit, price: 5000, begin_at: 10.days.ago)
+    registration = MockPaymentRequirement.create!(name: "Registration", race: race)
+    Tier.create!(requirement: registration, price: 2500, begin_at: 10.days.ago)
+
+    owners = (1..7).map do |n|
+      owner = FactoryBot.create(:user,
+        first_name: "Owner#{n}",
+        last_name: "Payments",
+        email: "payments-owner-#{n}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123"
+      )
+      team = FactoryBot.create(:team, name: "Test Team Payments #{n} #{short}", race: race, user: owner)
+      CompletedRequirement.create!(
+        team: team, requirement: deposit, user: owner,
+        charge_id: "mock_ch_#{short}_#{n}", amount_cents: 5000,
+        metadata: { "charge_id" => "mock_ch_#{short}_#{n}", "amount" => 5000 }
+      )
+      owner
+    end
+
+    first_team = Team.find_by!(name: "Test Team Payments 1 #{short}")
+    CompletedRequirement.create!(
+      team: first_team, requirement: registration, user: owners.first,
+      charge_id: "mock_ch_#{short}_reg", amount_cents: 2500,
+      metadata: { "charge_id" => "mock_ch_#{short}_reg", "amount" => 2500 }
+    )
+
+    refunded_team = Team.find_by!(name: "Test Team Payments 7 #{short}")
+    refunded_team.completed_requirements.find_by!(requirement: deposit).update!(
+      refunded_at: 3.days.ago, refunded_by: refunder, stripe_refund_id: "re_mock_#{short}"
+    )
+
+    write_test_credentials(unique_id,
+      refunder_email: refunder.email,
+      password: "password123",
+      race_id: race.id,
+      race_name: race.name,
+      owner_emails: owners.map(&:email)
+    )
+    puts "✅ Seeded #{race.name} (ID: #{race.id}) with 7 Cart Deposit payments and refunder #{refunder.email}"
   end
 
   desc "Four races in each registration state (race dates run opposite to the list order) and a captain with a team in the open and the closed race"
