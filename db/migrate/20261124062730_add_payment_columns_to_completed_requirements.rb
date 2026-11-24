@@ -22,7 +22,7 @@ class AddPaymentColumnsToCompletedRequirements < ActiveRecord::Migration[8.0]
       end
 
       attrs = { charge_id: metadata["charge_id"], amount_cents: Integer(metadata["amount"].to_s, exception: false) }
-      attrs[:refunded_at] = cr.updated_at if metadata["refunded"] && cr.refunded_at.nil?
+      attrs[:refunded_at] = cr.updated_at || cr.created_at || Time.current if metadata["refunded"] && cr.refunded_at.nil?
       cr.update_columns(attrs)
     rescue JSON::ParserError, TypeError => e
       Rails.logger.warn("Skipping completed requirement #{cr.id}: metadata cannot be decoded (#{e.class})")

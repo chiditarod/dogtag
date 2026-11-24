@@ -45,6 +45,26 @@ describe AddPaymentColumnsToCompletedRequirements do
     expect(cr.refunded_by_id).to be_nil
   end
 
+  it "falls back to created_at for a legacy refunded row with no updated_at" do
+    cr = build_cr(JSON.generate(JSON.generate(hash.merge("refunded" => true))))
+    stamp = Time.utc(2026, 10, 1, 9, 0, 0)
+    cr.update_columns(updated_at: nil, created_at: stamp)
+
+    backfill
+
+    expect(cr.reload.refunded_at).to eq(stamp)
+    expect(cr.charge_id).to eq("ch_1")
+  end
+
+  it "still marks a legacy refunded row refunded when it has no timestamps at all" do
+    cr = build_cr(JSON.generate(JSON.generate(hash.merge("refunded" => true))))
+    cr.update_columns(updated_at: nil, created_at: nil)
+
+    backfill
+
+    expect(cr.reload.refunded_at).to be_present
+  end
+
   it "leaves refunded_at blank for rows that were never refunded" do
     cr = build_cr(JSON.generate(JSON.generate(hash)))
 
