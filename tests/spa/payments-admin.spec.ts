@@ -74,7 +74,8 @@ test.describe('SPA staff payments (Browse)', () => {
     await page.getByRole('button', { name: 'Filters' }).click();
     const dialog = page.getByRole('dialog', { name: 'Filter payments' });
     await expect(dialog).toBeVisible();
-    await dialog.getByRole('radio', { name: 'Refunded' }).check({ force: true });
+    await dialog.getByText('Refunded', { exact: true }).click();
+    await expect(dialog.getByRole('radio', { name: 'Refunded' })).toBeChecked();
     await expect(dialog.getByRole('button', { name: 'Show 1 payment' })).toBeVisible();
     const button = await dialog.getByRole('button', { name: /^Show/ }).boundingBox();
     expect(button!.x + button!.width).toBeLessThanOrEqual(320);
