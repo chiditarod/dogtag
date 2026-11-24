@@ -6,13 +6,16 @@ export class ApiError extends Error {
   status: number;
   error: string;
   errors: FieldErrors;
+  /** The API's stable machine code (e.g. `selection_changed`), when the response carries one. */
+  code?: string;
 
-  constructor(status: number, error: string, errors: FieldErrors = {}) {
+  constructor(status: number, error: string, errors: FieldErrors = {}, code?: string) {
     super(error);
     this.name = 'ApiError';
     this.status = status;
     this.error = error;
     this.errors = errors;
+    this.code = code;
   }
 }
 
@@ -66,6 +69,7 @@ async function toApiError(response: Response): Promise<ApiError> {
     response.status,
     body.error || `HTTP ${response.status}`,
     body.errors || {},
+    typeof body.code === 'string' ? body.code : undefined,
   );
 }
 

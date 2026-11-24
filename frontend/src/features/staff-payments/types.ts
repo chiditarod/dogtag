@@ -61,3 +61,31 @@ export interface PaymentFilterValues {
   q: string;
   page: number;
 }
+
+export type RefundItemStatus = 'queued' | 'refunded' | 'already_refunded' | 'failed' | 'stalled';
+
+export interface RefundBatchItem {
+  id: number;
+  completed_requirement_id: number;
+  team_name: string;
+  payment_type: string;
+  amount_cents: number | null;
+  status: RefundItemStatus;
+  error_code: string | null;
+  message: string | null;
+  finished_at: string | null;
+}
+
+export interface RefundBatch {
+  id: number;
+  created_at: string;
+  finished_at: string | null;
+  retry_of_id: number | null;
+  items: RefundBatchItem[];
+}
+
+export interface CreateRefundBatchVariables {
+  ids: number[];
+  confirmation: string;
+  expectedTotalCents: number;
+}
