@@ -94,4 +94,22 @@ test.describe('SPA staff payments (Browse)', () => {
     await expect(dialog).toBeHidden();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
+
+  for (const width of [640, 768, 1024]) {
+    test(`at ${width}px the inline filters fit and the search box stays usable`, async ({ page }) => {
+      const c = seeded.credentials;
+      await page.setViewportSize({ width, height: 800 });
+      await login(page, c.refunder_email, c.password);
+      await page.goto(`/register/staff/payments?race_id=${c.race_id}`);
+      await expect(page.getByText('Test Team Payments 1').first()).toBeVisible();
+      await expect(page.getByLabel('Race')).toBeVisible();
+      await expect(page.getByRole('group', { name: 'Status' })).toBeVisible();
+      const search = await page.getByRole('searchbox').boundingBox();
+      expect(search!.width).toBeGreaterThanOrEqual(150);
+      expect(search!.x + search!.width).toBeLessThanOrEqual(width);
+      const status = await page.getByRole('group', { name: 'Status' }).boundingBox();
+      expect(status!.x + status!.width).toBeLessThanOrEqual(width);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    });
+  }
 });

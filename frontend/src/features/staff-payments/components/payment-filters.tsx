@@ -124,7 +124,7 @@ function SearchBox({ values, setFilter }: Pick<FilterProps, 'values' | 'setFilte
   }, [text, setFilter]);
 
   return (
-    <div className="min-w-0 flex-1">
+    <div className="min-w-0 flex-1 sm:basis-full lg:min-w-48 lg:basis-0">
       <label htmlFor={id} className="sr-only">
         {t('staff.payments.filters.search')}
       </label>
@@ -153,9 +153,10 @@ export function PaymentFilters({
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+      {/* Search has its own row until lg, and the inline controls wrap, so nothing overflows just above sm. */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <SearchBox values={values} setFilter={setFilter} />
-        <div className="hidden gap-3 sm:flex sm:items-end">
+        <div className="hidden min-w-0 gap-3 sm:flex sm:flex-wrap sm:items-end">
           <FilterControls values={values} options={options} setFilter={setFilter} idPrefix="inline" />
         </div>
         <Button variant="secondary" className="sm:hidden" onClick={() => setSheetOpen(true)}>
