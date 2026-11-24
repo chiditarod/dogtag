@@ -1,9 +1,14 @@
 - if req.completed?(team)
-  %i.fa.fa-check-circle-o.fa-5x.pull-left
-  .lead
-    $
-    = price_in_dollars_and_cents req.cr_for(team).metadata['amount']
-  = t('completed')
+  - cr = req.cr_for(team)
+  - if cr.refunded?
+    %span.label.label-primary
+      = t('refunded')
+  - else
+    %i.fa.fa-check-circle-o.fa-5x.pull-left
+    .lead
+      $
+      = price_in_dollars_and_cents cr.metadata['amount']
+    = t('completed')
 - else
   - if req.race.open_for_registration?
     .lead
