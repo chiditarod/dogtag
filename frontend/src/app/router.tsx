@@ -9,6 +9,7 @@ import { StaffLayout } from '@/components/layouts/staff-layout';
 import { RegisterLayout } from '@/components/layouts/register-layout';
 import { AccountRoute } from '@/app/routes/account';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
+import { ResetPasswordRoute } from '@/app/routes/reset-password';
 import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
@@ -44,6 +45,7 @@ export const routes: RouteObject[] = [
       { path: '/login', element: <LoginRoute /> },
       { path: '/signup', element: <SignupRoute /> },
       { path: '/forgot-password', element: <ForgotPasswordRoute /> },
+      { path: '/reset-password/:token', element: <ResetPasswordRoute /> },
       {
         element: (
           <RequireAuth>
