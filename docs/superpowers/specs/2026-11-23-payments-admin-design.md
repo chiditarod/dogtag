@@ -1,6 +1,6 @@
 # Payments admin page: search and bulk refund (issue #343)
 
-Full design, worked out with the owner on 2026-11-23 and 2026-11-24. Not yet approved.
+Full design, worked out with the owner on 2026-11-23 and 2026-11-24. Approved by the owner 2026-11-24.
 
 ## Intent and why
 
