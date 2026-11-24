@@ -105,6 +105,41 @@ describe User do
     end
   end
 
+  describe '#reset_password_from_link' do
+    let(:user) { FactoryBot.create(:user) }
+
+    it 'saves a new password and clears a lockout even when another field is now invalid' do
+      user.update_columns(phone: nil, failed_login_count: 15)
+      expect(user.reset_password_from_link('brandnew123', 'brandnew123')).to be(true)
+      user.reload
+      expect(user.valid_password?('brandnew123')).to be(true)
+      expect(user.failed_login_count).to eq(0)
+    end
+
+    it 'reports only password errors and saves nothing' do
+      user.update_columns(phone: nil)
+      expect(user.reset_password_from_link('short', 'other')).to be(false)
+      expect(user.errors.attribute_names).to contain_exactly(:password, :password_confirmation)
+      expect(user.reload.valid_password?('12345678')).to be(true)
+    end
+  end
+
+  describe 'email change notice' do
+    let(:user) { FactoryBot.create(:user, email: 'before@example.com') }
+    before { user; Workers::EmailChangedEmail.jobs.clear }
+
+    it 'queues a notice to the old address when the email changes' do
+      user.update!(email: 'after@example.com')
+      expect(Workers::EmailChangedEmail.jobs.map { |job| job['args'].first })
+        .to eq([{ 'user_id' => user.id, 'old_email' => 'before@example.com' }])
+    end
+
+    it 'queues nothing when other fields change' do
+      user.update!(first_name: 'Grace')
+      expect(Workers::EmailChangedEmail.jobs).to be_empty
+    end
+  end
+
   describe '#gets_admin_menu?' do
     it 'true if user.roles contains :admin' do
       expect(FactoryBot.build(:admin_user).gets_admin_menu?).to be true
