@@ -58,7 +58,7 @@ class UserMailer < ActionMailer::Base
 
   def password_reset_instructions(user, host)
     track(kind: "password_reset", user: user)
-    @edit_password_reset_url = edit_password_reset_url(user.perishable_token, host: host)
+    @edit_password_reset_url = RegistrationUi.password_reset_url(user.perishable_token, host: host)
     mail(to: user.email, subject: 'dogTag Password Reset Instructions')
   end
 

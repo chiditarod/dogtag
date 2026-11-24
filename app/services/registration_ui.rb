@@ -12,6 +12,13 @@ module RegistrationUi
     "#{url_options[:protocol] || "http"}://#{url_options.fetch(:host)}/register/teams/#{team.id}"
   end
 
+  def self.password_reset_url(token, host:)
+    protocol = url_options[:protocol] || "http"
+    return Rails.application.routes.url_helpers.edit_password_reset_url(token, host: host, protocol: protocol) unless spa?
+
+    "#{protocol}://#{host}/register/reset-password/#{token}"
+  end
+
   def self.url_options = UserMailer.default_url_options
   private_class_method :url_options
 end

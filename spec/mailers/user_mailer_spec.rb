@@ -163,6 +163,10 @@ describe UserMailer do
     it 'sets the subject' do
       expect(deliveries.first.subject).to eq('dogTag Password Reset Instructions')
     end
+    it "links the reset page through RegistrationUi" do
+      expect(deliveries.first.body.encoded).to include(RegistrationUi.password_reset_url(user.perishable_token, host: "80"))
+    end
+
     include_examples "common tests"
   end
 
