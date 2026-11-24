@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
@@ -114,5 +114,47 @@ describe('BatchResults', () => {
     setup();
     await userEvent.click(await screen.findByRole('button', { name: 'Retry 1 failed' }));
     expect(await screen.findByText('Could not retry: Nothing to retry.')).toBeInTheDocument();
+  });
+
+  it('Escape and Done do nothing while a retry request is in flight', async () => {
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.get('/api/v1/staff/refund_batches/9', () => HttpResponse.json({ batch: finishedBatch(9, [['failed', 'x']]) })),
+      http.post('/api/v1/staff/refund_batches/9/retry', async () => {
+        await gate;
+        return HttpResponse.json({ batch: refundBatch({ id: 10, retry_of_id: 9, items: [batchItem({ status: 'queued' })] }) }, { status: 201 });
+      }),
+      http.get('/api/v1/staff/refund_batches/10', () => HttpResponse.json({ batch: finishedBatch(10, [['refunded']]) })),
+    );
+    const { onFinished } = setup();
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry 1 failed' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: t('staff.refund.done') })).toBeDisabled());
+    await userEvent.keyboard('{Escape}');
+    expect(onFinished).not.toHaveBeenCalled();
+    release();
+    await screen.findByText('Refunded');
+  });
+
+  it('stops polling once the batch is done', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    let calls = 0;
+    server.use(
+      http.get('/api/v1/staff/refund_batches/9', () => {
+        calls += 1;
+        return HttpResponse.json({ batch: calls < 2 ? refundBatch({ items: items3([['queued']]) }) : finishedBatch(9, [['refunded']]) });
+      }),
+    );
+    try {
+      setup();
+      await act(() => vi.advanceTimersByTimeAsync(2100));
+      await screen.findByText('Refunded');
+      const atDone = calls;
+      await act(() => vi.advanceTimersByTimeAsync(10_000));
+      expect(calls).toBe(atDone);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import { isBatchDone, useRefundBatch } from '../api/use-refund-batch';
+import { isBatchDone, refundBatchQueryKey, useRefundBatch } from '../api/use-refund-batch';
 import { useRetryRefundBatch } from '../api/use-retry-refund-batch';
 import type { RefundBatch, RefundBatchItem } from '../types';
 import { formatMoney } from '../utils';
@@ -57,6 +57,8 @@ export function BatchResults({ batchId, onFinished }: BatchResultsProps) {
   function retryFailed(previous: RefundBatch) {
     retry.mutate(previous.id, {
       onSuccess: (next) => {
+        // Seed the cache so the retried rows do not flash "2 of 2" while the first poll is on its way.
+        queryClient.setQueryData(refundBatchQueryKey(next.id), next);
         setCarried((earlier) => [...earlier, ...previous.items.filter((item) => !needsAttention(item))]);
         setCurrentId(next.id);
       },
@@ -64,7 +66,7 @@ export function BatchResults({ batchId, onFinished }: BatchResultsProps) {
   }
 
   return (
-    <DialogSheet labelledBy={titleId} onClose={() => canClose && onFinished()} className="sm:max-w-xl">
+    <DialogSheet labelledBy={titleId} onClose={() => canClose && !retry.isPending && onFinished()} className="sm:max-w-xl">
       <div className="border-b border-flag px-4 py-3">
         <h2 id={titleId} ref={titleRef} tabIndex={-1} className="font-display text-xl font-semibold focus:outline-none">
           {done
