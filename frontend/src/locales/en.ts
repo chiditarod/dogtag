@@ -6,6 +6,13 @@ export const en = {
   'layout.signup': 'Sign up',
   'layout.myTeams': 'My teams',
   'layout.logout': 'Log out',
+  'layout.staff': 'Staff',
+  'staff.nav': 'Staff',
+  'staff.nav.payments': 'Payments',
+  'staff.nav.legacy': 'Legacy admin',
+  'staff.payments.heading': 'Payments',
+  'staff.notAllowed.heading': 'Not allowed',
+  'staff.notAllowed.body': 'Your account does not have access to the staff pages.',
   'feedback.open': 'Report a problem',
   'feedback.title': 'Report a problem or share feedback',
   'feedback.intro':

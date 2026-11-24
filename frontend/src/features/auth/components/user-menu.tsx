@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useLogout } from '@/features/auth/api/use-login';
 import { useMe } from '@/features/auth/api/use-me';
+import { isStaff } from '@/features/staff/utils';
 import { t } from '@/locales/en';
 
 export function UserMenu() {
@@ -22,6 +23,11 @@ export function UserMenu() {
       <Link to="/teams" className="font-semibold text-link hover:underline">
         {t('layout.myTeams')}
       </Link>
+      {isStaff(user) && (
+        <Link to="/staff/payments" className="font-semibold text-link hover:underline">
+          {t('layout.staff')}
+        </Link>
+      )}
       <button
         type="button"
         disabled={logout.isPending}

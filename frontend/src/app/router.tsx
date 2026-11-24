@@ -1,18 +1,22 @@
 import {
   createBrowserRouter,
   Link,
+  Navigate,
   Outlet,
   type RouteObject,
 } from 'react-router-dom';
+import { StaffLayout } from '@/components/layouts/staff-layout';
 import { RegisterLayout } from '@/components/layouts/register-layout';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
 import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
+import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
 import { SignupRoute } from '@/app/routes/signup';
 import { TeamRoute } from '@/app/routes/team';
 import { TeamsRoute } from '@/app/routes/teams';
 import { RequireAuth } from '@/features/auth/components/require-auth';
+import { RequireStaff } from '@/features/staff/components/require-staff';
 import { t } from '@/locales/en';
 
 export const BASENAME = '/register';
@@ -62,6 +66,25 @@ export const routes: RouteObject[] = [
         ],
       },
       { path: '*', element: <NotFound /> },
+    ],
+  },
+  {
+    path: '/staff',
+    element: <StaffLayout />,
+    children: [
+      {
+        element: (
+          <RequireAuth>
+            <RequireStaff>
+              <Outlet />
+            </RequireStaff>
+          </RequireAuth>
+        ),
+        children: [
+          { index: true, element: <Navigate to="payments" replace /> },
+          { path: 'payments', element: <StaffPaymentsRoute /> },
+        ],
+      },
     ],
   },
 ];

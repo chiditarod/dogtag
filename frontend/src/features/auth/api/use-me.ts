@@ -7,6 +7,7 @@ export interface User {
   last_name: string;
   email: string;
   phone: string | null;
+  roles: string[];
 }
 
 export const meQueryKey = ['me'] as const;
