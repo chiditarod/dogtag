@@ -8,16 +8,20 @@ interface FilterChipsProps {
   options: PaymentsFilterOptions | undefined;
   onRemove: (key: ChipKey) => void;
   onClearAll: () => void;
+  /** Refund mode: the status is fixed to Paid, so it is not a chip. */
+  hideStatus?: boolean;
 }
 
 /** Removable chips for each active filter besides the race, plus Clear all. */
-export function FilterChips({ values, options, onRemove, onClearAll }: FilterChipsProps) {
+export function FilterChips({ values, options, onRemove, onClearAll, hideStatus }: FilterChipsProps) {
   const chips: { key: ChipKey; label: string }[] = [];
   if (values.paymentType !== undefined) {
     const type = options?.payment_types.find((candidate) => candidate.id === values.paymentType);
     chips.push({ key: 'paymentType', label: type?.name ?? String(values.paymentType) });
   }
-  if (values.status === 'paid') {
+  if (hideStatus) {
+    // Fixed by Refund mode.
+  } else if (values.status === 'paid') {
     chips.push({ key: 'status', label: t('staff.payments.filters.statusPaid') });
   } else if (values.status === 'refunded') {
     chips.push({ key: 'status', label: t('staff.payments.filters.statusRefunded') });

@@ -57,13 +57,15 @@ export function usePaymentFilters() {
     [],
   );
 
-  /** Drops every filter except the race. */
-  const clearAll = useCallback(() => {
+  /** Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). */
+  const clearAll = useCallback((keepStatus = false) => {
     setParamsRef.current(
       (previous) => {
         const next = new URLSearchParams();
         const race = previous.get('race_id');
         if (race) next.set('race_id', race);
+        const status = previous.get('status');
+        if (keepStatus && status) next.set('status', status);
         return next;
       },
       { replace: true },
