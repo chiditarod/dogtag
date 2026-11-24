@@ -15,7 +15,7 @@
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
 #   rails test_seeds:staff_shell              (a racer and a refunder, for the staff shell)
-#   rails test_seeds:team_captain            (captain's team with two racers and no team captain chosen)
+#   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
