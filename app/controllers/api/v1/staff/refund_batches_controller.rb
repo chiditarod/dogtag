@@ -37,6 +37,7 @@ class Api::V1::Staff::RefundBatchesController < Api::V1::Staff::BaseController
     case code
     when :batch_too_large then "You can refund at most #{RefundBatch.max_size} payments at a time."
     when :confirmation_mismatch then "Type REFUND #{count} to confirm."
+    when :invalid_total then "expected_total_cents must be a whole number of cents."
     when :selection_changed then "The selection changed since you reviewed it. Review it again."
     when :not_refundable then "Some of these payments cannot be refunded."
     when :nothing_to_retry then "Nothing to retry."

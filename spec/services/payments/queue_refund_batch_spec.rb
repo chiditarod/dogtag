@@ -77,6 +77,27 @@ describe Payments::QueueRefundBatch do
       end
     end
 
+    it "compares the reviewed total as a number: 10000.0, \"10000\" and \"10000.0\" all match 10000" do
+      [10_000.0, "10000", "10000.0"].each do |total|
+        ids = [paid.id, paid.id]
+        result = queue(ids, total: total)
+        expect(result.ok).to be(true), "expected #{total.inspect} to match"
+      end
+    end
+
+    it "rejects a total that is not a whole number of cents as invalid_total" do
+      ids = [paid.id]
+
+      no_batch_created do
+        ["abc", "", "50.5", 50.5, "Infinity", [5000]].each do |total|
+          result = queue(ids, total: total)
+          expect(result.code).to eq(:invalid_total), "expected #{total.inspect} to be invalid"
+        end
+        result = described_class.call(user: refunder, completed_requirement_ids: ids, confirmation: "REFUND 1", expected_total_cents: nil)
+        expect(result.code).to eq(:invalid_total)
+      end
+    end
+
     it "reports not_refundable with errors keyed by id for refunded, refunding, not refundable and unknown ids" do
       refunded = paid(refunded_at: 1.day.ago)
       refunding = paid

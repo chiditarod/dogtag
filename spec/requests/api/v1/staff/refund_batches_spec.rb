@@ -85,6 +85,18 @@ describe "API v1 staff refund batches", type: :request do
         end
       end
 
+      it "accepts the total as 5000.0 and 422 invalid_total for non-numeric" do
+        cr = paid
+        create_batch([cr.id], total: 5000.0)
+        expect(response).to have_http_status(:created)
+
+        no_batch_created_after = RefundBatch.count
+        create_batch([paid.id], total: "lots")
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json).to include("code" => "invalid_total")
+        expect(RefundBatch.count).to eq(no_batch_created_after)
+      end
+
       it "422 not_refundable with errors keyed by id" do
         refunded = paid
         refunded.update!(refunded_at: 1.day.ago)

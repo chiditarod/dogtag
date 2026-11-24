@@ -17,10 +17,13 @@ module Payments
       return failure(:batch_too_large) if ids.size > RefundBatch.max_size
       return failure(:confirmation_mismatch) unless confirmation == "REFUND #{ids.size}"
 
+      expected_total = parse_cents(expected_total_cents)
+      return failure(:invalid_total) if expected_total.nil?
+
       payments = payments_by_id(ids)
       errors = refusals(ids, payments)
       return failure(:not_refundable, errors) if errors.any?
-      return failure(:selection_changed) if expected_total_cents.to_s != payments.values.sum { |cr| cr.amount_cents.to_i }.to_s
+      return failure(:selection_changed) if expected_total != payments.values.sum { |cr| cr.amount_cents.to_i }
 
       queue(user, ids)
     end
@@ -36,6 +39,17 @@ module Payments
 
       queue(user, ids, retry_of: batch)
     end
+
+    # A whole number of cents from an Integer, or a numeric String or Float with no fraction (10000.0 is
+    # 10000, so a client that sends a float is not told the selection changed); nil for anything else.
+    def self.parse_cents(value)
+      return value if value.is_a?(Integer)
+      return nil unless value.is_a?(String) || value.is_a?(Float)
+
+      number = Float(value.to_s, exception: false)
+      number.to_i if number&.finite? && number == number.floor
+    end
+    private_class_method :parse_cents
 
     def self.normalize(ids)
       return nil unless ids.is_a?(Array)
