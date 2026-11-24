@@ -44,7 +44,19 @@ describe "API v1 accounts", type: :request do
               as: :json
         expect(response).to have_http_status(:ok)
         expect(user.reload.valid_password?("brandnew123")).to be(true)
-        expect(session_user_id).to eq(user.id)
+        get "/api/v1/me"
+        expect(response).to have_http_status(:ok)
+        expect(json["user"]["id"]).to eq(user.id)
+      end
+
+      it "rejects a mismatched password confirmation" do
+        patch "/api/v1/me",
+              params: { current_password: "12345678",
+                        user: { password: "brandnew123", password_confirmation: "different456" } },
+              as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["errors"]).to have_key("password_confirmation")
+        expect(user.reload.valid_password?("12345678")).to be(true)
       end
 
       it "reports a taken email without saving" do
