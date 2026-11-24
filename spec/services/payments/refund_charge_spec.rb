@@ -43,7 +43,7 @@ describe Payments::RefundCharge do
     expect(Stripe::Charge.retrieve(charge.id).refunded).to be(true)
     expect(email_jobs.size).to eq(1)
     expect(email_jobs.first["args"].first).to include(
-      "user_id" => team.user.id, "team_id" => team.id, "completed_requirement_id" => cr.id,
+      "user_id" => team.user.id, "team_id" => team.id, "completed_requirement_id" => cr.id, "charge_id" => cr.charge_id,
       "requirement_name" => requirement.name, "amount_cents" => 5000, "race_name" => team.race.name
     )
   end
