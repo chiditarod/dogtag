@@ -266,6 +266,19 @@ describe Payments::RefundCharge do
       expect(email_jobs.size).to eq(1)
     end
 
+    it "is never refunded without Stripe in production, even if the status check were bypassed" do
+      mock_cr
+      allow(Rails.env).to receive(:production?).and_return(true)
+      allow_any_instance_of(CompletedRequirement).to receive(:payment_status).and_return("paid")
+      expect(Stripe::Charge).not_to receive(:retrieve)
+
+      result = call(mock_cr)
+
+      expect(result.code).to eq(:not_refundable)
+      expect(mock_cr.reload.refunded_at).to be_nil
+      expect(email_jobs).to be_empty
+    end
+
     it "is not_refundable in production" do
       mock_cr
       allow(Rails.env).to receive(:production?).and_return(true)

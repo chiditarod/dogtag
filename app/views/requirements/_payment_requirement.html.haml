@@ -12,9 +12,9 @@
     = t('completed')
 
     - if can? :refund, :charges
-      = button_to t('refund'), charge_refund_url(cr.charge_id),:method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
+      = button_to t("refund"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger)
     - if current_user.is? :admin
-      = button_to t('refund_and_invalidate'), charge_refund_url(cr.charge_id),:method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
+      = button_to t("refund_and_invalidate"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
 
 - else
 

@@ -61,6 +61,10 @@ module Payments
 
     # Mock payments (development and test only; production never gets here, see payment_status) have no charge.
     def refund_mock
+      # payment_status already says not_refundable in production; this keeps a mock payment from ever being
+      # recorded as refunded there, whatever the caller checked.
+      return failure(:not_refundable, "Mock payments cannot be refunded in production.") if Rails.env.production?
+
       record(:refunded, "The mock payment was marked refunded.", nil)
     end
 
