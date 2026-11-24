@@ -67,6 +67,14 @@ export function RaceList() {
                   {hasTeam ? t('races.startAnother') : t('races.start')}
                 </Link>
               )}
+              <div>
+                <Link
+                  to={`/races/${race.id}/registrations`}
+                  className="inline-flex min-h-11 items-center text-sm font-semibold text-link hover:underline"
+                >
+                  {t('races.whoRegistered')}
+                </Link>
+              </div>
             </Card>
           </li>
         );

@@ -11,6 +11,7 @@ import { AccountRoute } from '@/app/routes/account';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
 import { ResetPasswordRoute } from '@/app/routes/reset-password';
 import { NewTeamRoute } from '@/app/routes/new-team';
+import { RaceRegistrationsRoute } from '@/app/routes/race-registrations';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
@@ -56,6 +57,11 @@ export const routes: RouteObject[] = [
           {
             path: '/races/:raceId/teams/new',
             element: <NewTeamRoute />,
+          },
+          {
+            path: '/races/:raceId/registrations',
+            element: <RaceRegistrationsRoute />,
+            handle: { wide: true },
           },
           {
             path: '/account',
