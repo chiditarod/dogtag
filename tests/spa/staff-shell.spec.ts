@@ -34,6 +34,19 @@ test.describe('SPA staff shell', () => {
     await expect(page.getByRole('navigation', { name: 'Staff' })).toBeVisible();
   });
 
+  test('a logged-out visit to Payments logs in and lands back on it', async ({ page }) => {
+    const c = seeded.credentials;
+    await page.goto('/register/staff/payments');
+    await expect(page).toHaveURL(/\/register\/login\?next=/);
+    expect(new URL(page.url()).searchParams.get('next')).toBe('/staff/payments');
+    await page.getByLabel('Email', { exact: true }).fill(c.refunder_email);
+    await page.getByLabel('Password', { exact: true }).fill(c.password);
+    await page.getByRole('button', { name: 'Log in' }).click();
+    await expect(page).toHaveURL(/\/register\/staff\/payments$/);
+    await expect(page.getByRole('heading', { name: 'Payments' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Staff' })).toBeVisible();
+  });
+
   test('a racer sees Not allowed and no staff nav', async ({ page }) => {
     const c = seeded.credentials;
     await login(page, c.racer_email, c.password);
