@@ -40,7 +40,17 @@ class CompletedRequirement < ApplicationRecord
 
   has_many :refund_batch_items, dependent: :destroy
 
-  def refunded? = refunded_at.present?
+  # Both fall back to the metadata on a row loaded without the payment columns (a dyno running before
+  # AddPaymentColumnsToCompletedRequirements has run), so the legacy team page and TeamChecklist still work.
+  def refunded?
+    return refunded_at.present? if has_attribute?(:refunded_at)
+
+    legacy_metadata["refunded"].present?
+  end
+
+  def charge_id
+    has_attribute?(:charge_id) ? super : legacy_metadata["charge_id"]
+  end
 
   # The one definition of a payment's status: refunded, refunding (a refund batch item is queued),
   # not_refundable (no Stripe charge, or a mock payment in production) or paid. Needs `requirements`
@@ -72,4 +82,11 @@ class CompletedRequirement < ApplicationRecord
   end
 
   def refundable? = payment_status == "paid"
+
+  private
+
+  def legacy_metadata
+    data = metadata
+    data.is_a?(Hash) ? data : {}
+  end
 end
