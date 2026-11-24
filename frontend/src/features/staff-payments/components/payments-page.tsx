@@ -4,6 +4,7 @@ import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
 import type { RefundBatch, StaffPayment } from '../types';
 import { usePayments } from '../api/use-payments';
+import { useActiveBatch } from '../use-active-batch';
 import { usePaymentFilters } from '../use-payment-filters';
 import { useSelection } from '../use-selection';
 import { hasActiveFilters, raceNotFound } from '../utils';
@@ -29,7 +30,7 @@ export function PaymentsPage() {
   const capNoteId = useId();
   // The rows shown in the confirmation dialog: a snapshot taken when it opened.
   const [reviewing, setReviewing] = useState<StaffPayment[] | null>(null);
-  const [batchId, setBatchId] = useState<number | null>(null);
+  const { batchId, setBatchId } = useActiveBatch();
   const { clear: clearSelection } = selection;
 
   // A selection belongs to one race.
@@ -187,7 +188,7 @@ export function PaymentsPage() {
           onReview={() => setReviewing(selectedRows)}
         />
       )}
-      {batchId !== null && <BatchResults batchId={batchId} onFinished={finished} />}
+      {batchId !== null && <BatchResults batchId={batchId} onBatchChange={setBatchId} onFinished={finished} />}
       {reviewing && (
         <ConfirmRefundDialog
           snapshot={reviewing}

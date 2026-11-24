@@ -299,6 +299,16 @@ test.describe('SPA staff payments (Refund mode, partial failure at 320px)', () =
     await waitForEmail({ to: c.owner_emails[2], subjectIncludes: refundSubject });
     expect(await countEmails({ to: c.owner_emails[1], subjectIncludes: refundSubject })).toBe(0);
 
+    // Reload mid-results: the batch id is in the URL, so the results (and Retry) come back.
+    await page.reload();
+    await expect(page).toHaveURL(/batch=\d+/);
+    await expect(results).toBeVisible();
+    await expect(results.locator('li[data-status="refunded"]')).toHaveCount(2);
+    await expect(results.locator('li[data-status="failed"]')).toHaveCount(1);
+    await expect(retry).toBeVisible();
+    await insideViewport(retry, 320);
+    await noSidewaysScroll(page);
+
     await retry.click();
     await expect(results.locator('li[data-status="refunded"]')).toHaveCount(3);
     await expect(results.locator('li[data-status="failed"]')).toHaveCount(0);
@@ -307,6 +317,7 @@ test.describe('SPA staff payments (Refund mode, partial failure at 320px)', () =
     await results.getByRole('button', { name: 'Done' }).click();
 
     await expect(page.getByRole('heading', { name: 'Payments', exact: true })).toBeVisible();
+    await expect(page).not.toHaveURL(/batch=/);
     await expect(page.getByText('3 of 3 refunded · $150 of $150')).toBeVisible();
 
     await waitForEmail({ to: c.owner_emails[1], subjectIncludes: refundSubject });

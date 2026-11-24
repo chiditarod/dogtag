@@ -438,7 +438,7 @@ describe('PaymentsPage Refund mode', () => {
   });
 
   it('finishing a batch clears the selection, refetches the list and returns to Browse', async () => {
-    await openRefundMode();
+    const { router } = await openRefundMode();
     const listCalls = requests.length;
     server.use(
       http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
@@ -461,8 +461,11 @@ describe('PaymentsPage Refund mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Refund 1 payment' }));
     const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
     expect(within(results).getByText('Refunded')).toBeInTheDocument();
+    // The active batch is in the URL, so a reload reopens the results.
+    expect(router.state.location.search).toContain('batch=9');
     await waitFor(() => expect(requests.length).toBeGreaterThan(listCalls));
     await userEvent.click(within(results).getByRole('button', { name: t('staff.refund.done') }));
+    expect(router.state.location.search).not.toContain('batch=');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
@@ -502,5 +505,32 @@ describe('PaymentsPage Refund mode', () => {
     const row = screen.getAllByRole('row').find((candidate) => candidate.getAttribute('data-payment-id') === '1')!;
     expect(row).toHaveAttribute('data-selected', 'true');
     expect(row).not.toHaveAttribute('aria-selected');
+  });
+
+  it('a reload with ?batch= reopens the results, and Retry is reachable for a dead job', async () => {
+    serve();
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({ id: 9, items: [batchItem({ team_name: 'Team 1', status: 'stalled' })] }),
+        }),
+      ),
+      http.post('/api/v1/staff/refund_batches/9/retry', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 10, retry_of_id: 9, items: [batchItem({ team_name: 'Team 1', status: 'queued' })] }) }, { status: 201 }),
+      ),
+      http.get('/api/v1/staff/refund_batches/10', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 10, finished_at: '2026-11-24T18:00:05Z', items: [batchItem({ team_name: 'Team 1', status: 'refunded' })] }) }),
+      ),
+    );
+    const { router } = renderApp('/staff/payments?batch=9');
+    const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
+    expect(within(results).getByText('Stalled')).toBeInTheDocument();
+    await userEvent.click(within(results).getByRole('button', { name: 'Retry 1 failed' }));
+    await waitFor(() => expect(router.state.location.search).toContain('batch=10'));
+    await within(results).findByText('Refunded');
+    await userEvent.click(within(results).getByRole('button', { name: t('staff.refund.done') }));
+    expect(router.state.location.search).not.toContain('batch=');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

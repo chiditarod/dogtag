@@ -13,6 +13,8 @@ interface BatchResultsProps {
   batchId: number;
   /** Staff pressed Done (or Escape once the job is over): leave Refund mode and refresh the list. */
   onFinished: () => void;
+  /** A retry started a new batch: the page keeps its id in the URL so a reload follows it. */
+  onBatchChange?: (batchId: number) => void;
 }
 
 const needsAttention = (item: RefundBatchItem) => item.status === 'failed' || item.status === 'stalled';
@@ -33,7 +35,7 @@ function itemLabel(item: RefundBatchItem): string {
  * job runs. A retry is per batch: it re-queues every failed and stalled item as a new batch, and the lines
  * already finished in earlier batches stay on screen.
  */
-export function BatchResults({ batchId, onFinished }: BatchResultsProps) {
+export function BatchResults({ batchId, onFinished, onBatchChange }: BatchResultsProps) {
   const titleId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const queryClient = useQueryClient();
@@ -61,6 +63,7 @@ export function BatchResults({ batchId, onFinished }: BatchResultsProps) {
         queryClient.setQueryData(refundBatchQueryKey(next.id), next);
         setCarried((earlier) => [...earlier, ...previous.items.filter((item) => !needsAttention(item))]);
         setCurrentId(next.id);
+        onBatchChange?.(next.id);
       },
     });
   }
