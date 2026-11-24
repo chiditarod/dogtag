@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
 import { usePayments } from '../api/use-payments';
@@ -11,8 +12,15 @@ import { ProgressLine } from './progress-line';
 
 export function PaymentsPage() {
   const { values, setFilter, clearAll } = usePaymentFilters();
-  const { data, isPending, isError, refetch } = usePayments(values);
+  const { data, isPending, isError, isPlaceholderData, refetch } = usePayments(values);
   const active = hasActiveFilters(values);
+
+  // A stale link or a shrunken result can ask for a page past the end: go to the last page instead.
+  const lastPage = data?.meta.total_pages ?? 0;
+  const pastEnd = !!data && !isPlaceholderData && lastPage > 0 && data.meta.page > lastPage;
+  useEffect(() => {
+    if (pastEnd) setFilter('page', lastPage);
+  }, [pastEnd, lastPage, setFilter]);
 
   return (
     <div className="space-y-4">

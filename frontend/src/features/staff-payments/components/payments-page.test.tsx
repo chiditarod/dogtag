@@ -163,4 +163,26 @@ describe('PaymentsPage', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: t('staff.payments.filters.show_other', { n: 60 }) }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
+
+  it('a page past the last one moves to the last page', async () => {
+    requests.length = 0;
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+      http.get('/api/v1/staff/payments', ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url);
+        const requested = Number(url.searchParams.get('page'));
+        return HttpResponse.json(
+          requested > 3
+            ? { ...page, payments: [], meta: { ...page.meta, page: requested } }
+            : { ...page, meta: { ...page.meta, page: requested } },
+        );
+      }),
+    );
+    const { router } = renderApp('/staff/payments?page=9');
+    expect(await screen.findByText('The Secret Gents')).toBeInTheDocument();
+    expect(router.state.location.search).toContain('page=3');
+    expect(requests.at(-1)!.searchParams.get('page')).toBe('3');
+    expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
+  });
 });
