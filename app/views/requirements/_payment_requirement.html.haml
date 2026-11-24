@@ -1,7 +1,7 @@
 - if req.completed?(team)
   -# todo: this is now my least favorite part of this codebase. put this somewhere better.
   - cr = req.cr_for(team)
-  - if cr.metadata["refunded"]
+  - if cr.refunded?
     %span.label.label-primary
       = t('refunded')
   - else
@@ -11,10 +11,10 @@
       = price_in_dollars_and_cents cr.metadata['amount']
     = t('completed')
 
-    - if current_user.is_any_of? [:refunder, :admin]
-      = button_to t('refund'), charge_refund_url(cr.metadata['charge_id']), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger)
+    - if can? :refund, :charges
+      = button_to t("refund"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger)
     - if current_user.is? :admin
-      = button_to t('refund_and_invalidate'), charge_refund_url(cr.metadata['charge_id']), :method=>:post, :data => { :confirm => 'Are you sure?'}, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
+      = button_to t("refund_and_invalidate"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
 
 - else
 

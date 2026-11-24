@@ -44,6 +44,24 @@ describe "API v1 index query counts", type: :request do
     expect(json["races"].size).to eq(3)
   end
 
+  it "GET /api/v1/staff/payments does not add queries per row" do
+    api_login(FactoryBot.create(:refunder_user))
+    race = FactoryBot.create(:race)
+    requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+    add_payment = lambda do |n|
+      team = FactoryBot.create(:team, race: race)
+      FactoryBot.create(:person, team: team)
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: "ch_#{n}", amount_cents: 5000,
+        refunded_at: (Time.current if n.even?), refunded_by: (FactoryBot.create(:refunder_user) if n.even?))
+    end
+    add_payment.call(2) # refunded, so the baseline already loads who refunded
+    one = query_count { get "/api/v1/staff/payments" }
+    [1, 3, 4, 5].each { |n| add_payment.call(n) }
+
+    expect(query_count { get "/api/v1/staff/payments" }).to eq(one)
+    expect(json["payments"].size).to eq(5)
+  end
+
   it "GET /api/v1/teams/:id/buddy_options does not add queries per team" do
     api_login(user)
     race = FactoryBot.create(:race)

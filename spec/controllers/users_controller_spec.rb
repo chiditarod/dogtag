@@ -241,6 +241,16 @@ describe UsersController do
         end
       end
 
+      it 'refuses to delete a staff user who made refund batches, with a message instead of a 500' do
+        staff = FactoryBot.create :refunder_user
+        FactoryBot.create :refund_batch, user: staff
+
+        expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to include('refund batches')
+        expect(response).to redirect_to users_path
+      end
+
       it 'sets flash error and redirects if delete fails' do
         user = FactoryBot.create :user
         allow_any_instance_of(User).to receive(:destroy).and_return(false)

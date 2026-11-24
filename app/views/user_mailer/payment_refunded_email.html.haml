@@ -1,0 +1,21 @@
+%html
+  %head
+    %meta{"http-equiv" => "Content-Type", :content => "text/html; charset=utf-8"}
+  %body
+    %h1 dogtag  :::  Chiditarod registration bot
+    %h4= t(".heading", team: @team.name, race: @race_name)
+    %p
+      = t(".payment", type: @requirement_name)
+      - if @amount
+        %br
+        = t(".amount", amount: @amount)
+    %p= t(".timing")
+    %p
+      = t(".help")
+      %a{:href => "mailto:dogtag@chiditarod.org"}
+        dogtag@chiditarod.org
+    %p
+      glory,
+      %br
+      %a{:href => "mailto:dogtag@chiditarod.org"}
+        dogtag bot

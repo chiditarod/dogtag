@@ -71,6 +71,8 @@ class UsersController < ApplicationController
   def destroy
     @user = User.find params[:id]
     try_to_delete(@user, users_path)
+    # a user the database refuses to delete (e.g. one who made refund batches) says why
+    flash[:error] = @user.errors.full_messages.to_sentence if flash[:error] && @user.errors.any?
   end
 
   private

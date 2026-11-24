@@ -403,3 +403,10 @@ en:
       tier_change: "The registration fee is changing to %{price} on %{date}."
       closing: "Registration closes on %{date}."
       link: "Finish registering:"
+    payment_refunded_email:
+      subject: "%{race}: Refund for %{team}"
+      heading: "A payment for your team %{team} in %{race} was refunded."
+      payment: "Payment: %{type}"
+      amount: "Amount refunded: %{amount}"
+      timing: "Refunds usually take 5-10 business days to appear on your card statement."
+      help: "Questions? Email"

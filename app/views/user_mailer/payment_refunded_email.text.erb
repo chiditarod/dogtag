@@ -1,0 +1,15 @@
+dogtag  :::  Chiditarod registration bot
+
+<%= t(".heading", team: @team.name, race: @race_name) %>
+
+<%= t(".payment", type: @requirement_name) %>
+<% if @amount %>
+<%= t(".amount", amount: @amount) %>
+<% end %>
+
+<%= t(".timing") %>
+
+<%= t(".help") %> dogtag@chiditarod.org
+
+glory,
+-- dogtag bot

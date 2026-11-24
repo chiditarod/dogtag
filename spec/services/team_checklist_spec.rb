@@ -77,6 +77,17 @@ describe TeamChecklist do
 
       expect(TeamChecklist.new(team.reload).to_h[:fee]).to include(done: true, paid_cents: 5000)
     end
+
+    it "fee item is refunded after a refund, and still done and counted in paid_cents" do
+      cr = requirement.complete(team.id, team.user, "amount" => 5000, "charge_id" => "ch_1")
+      item = -> { TeamChecklist.new(team.reload).to_h[:fee][:items].first }
+      expect(item.call).to include(done: true, refunded: false)
+
+      cr.update!(refunded_at: Time.current)
+
+      expect(item.call).to include(done: true, refunded: true, paid_cents: 5000)
+      expect(TeamChecklist.new(team.reload).to_h[:fee]).to include(done: true, paid_cents: 5000)
+    end
   end
 
   context "with two payment requirements" do
@@ -98,7 +109,7 @@ describe TeamChecklist do
       expect(fee[:items].length).to eq(2)
       expect(fee[:items].first).to eq(
         requirement_id: deposit.id, name: "Cart Deposit", done: false, amount_due_cents: 5000, paid_cents: 0,
-        next_tier: nil
+        next_tier: nil, refunded: false
       )
       expect(fee[:items].second).to include(
         requirement_id: registration.id, name: "Race Registration", done: false, amount_due_cents: 13000, paid_cents: 0

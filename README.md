@@ -40,6 +40,7 @@ APP_HOST                       # host (and :port, if any) used in email links; p
 REGISTRATION_UI=spa            # optional: use the React SPA under /register (only takes effect once the SPA is built, or VITE_DEV_SERVER is set)
 SIDEKIQ_INLINE=true            # dev/e2e only: run jobs in-process without a Sidekiq worker (ignored in production)
 VITE_DEV_SERVER=http://localhost:5173  # dev only: redirect /register/* to the Vite dev server
+REFUND_BATCH_LIMIT=5           # optional: most payments one staff refund batch may hold (a positive integer; default 5, anything else falls back to 5)
 ```
 
 ## Email delivery tracking
@@ -50,6 +51,14 @@ All email is sent through MXRoute over SMTP (the `SMTP_*` settings above). Every
 - **Verify a team:** `bundle exec rake "emails:verify[<team_id>]"` (on Heroku: `heroku run rake "emails:verify[<team_id>]"`) prints each expected email with a label of `OK`, `MISSING`, `NOT DELIVERED` or `UNTRACKED`. It exits 1 if any is `MISSING` or `NOT DELIVERED`.
   - `UNTRACKED` means the email would have been sent before logging began. It does not fail the check.
   - A `sent` row counts as OK.
+
+## Refunds
+
+Staff with the refunder, operator or admin role can refund payments. Every refund records who did it and when (`completed_requirements.refunded_by_id`, `refunded_at`) and emails the team's account holder once.
+
+- **Legacy Refund button** on the team page (`POST /charges/:charge_id/refund`): refunds one payment through `Payments::RefundCharge`. Admins also get "Refund and invalidate", which deletes the completed requirement afterwards.
+- **Staff API** for the payments admin page (SPA work follows): `GET /api/v1/staff/payments` (filters `race_id`, `payment_type`, `status`, `q`, `page`; 25 per page), `POST /api/v1/staff/refund_batches` (`completed_requirement_ids`, `confirmation` = `REFUND <count>`, `expected_total_cents`), `POST /api/v1/staff/refund_batches/:id/retry` and `GET /api/v1/staff/refund_batches/:id`. A batch is refunded in the background by a Sidekiq job on the `important` queue and holds at most `REFUND_BATCH_LIMIT` payments.
+- Refunds are always full. A charge already refunded at Stripe is recorded as refunded, not as an error; a partly refunded charge is left for staff to finish in Stripe.
 
 ## Custom questions using jsonform
 

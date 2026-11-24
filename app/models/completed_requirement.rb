@@ -22,6 +22,7 @@ class CompletedRequirement < ApplicationRecord
   belongs_to :team
   belongs_to :requirement
   belongs_to :user
+  belongs_to :refunded_by, class_name: "User", optional: true
 
   validates :team, :requirement, :user, presence: true
   validates :team, uniqueness: { :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.' }
@@ -37,30 +38,59 @@ class CompletedRequirement < ApplicationRecord
     m
   end
 
-  # flag the completed requirement for a stripe charge as refunded, so views need not ask Stripe.
-  def self.mark_refunded_by_charge(charge_id)
-    where("metadata LIKE ?", "%#{sanitize_sql_like(charge_id.to_s)}%").find_each do |cr|
-      next unless cr.metadata["charge_id"] == charge_id
+  has_many :refund_batch_items, dependent: :destroy
 
-      cr.update!(metadata: cr.metadata.merge("refunded" => true))
-    end
+  # Both fall back to the metadata on a row loaded without the payment columns (a dyno running before
+  # AddPaymentColumnsToCompletedRequirements has run), so the legacy team page and TeamChecklist still work.
+  def refunded?
+    return refunded_at.present? if has_attribute?(:refunded_at)
+
+    legacy_metadata["refunded"].present?
   end
 
-  # lookup a completed requirement by a stripe charge and delete it.
-  def self.delete_by_charge(charge)
+  def charge_id
+    has_attribute?(:charge_id) ? super : legacy_metadata["charge_id"]
+  end
 
-    req_id = charge['metadata']['requirement_id']
+  # The one definition of a payment's status: refunded, refunding (a refund batch item is queued in a batch
+  # younger than RefundBatch::STALL_AFTER), not_refundable (no Stripe charge, or a mock payment in production)
+  # or paid. An item still queued after that is stalled (RefundBatch#reported_status), so a lost job never
+  # leaves a payment stuck refunding. Needs `requirements` joined, so scope with joins(:requirement).
+  # Nothing else re-derives it.
+  def self.payment_status_sql
+    mock_in_production = Rails.env.production? ? "requirements.type = 'MockPaymentRequirement'" : "FALSE"
+    <<~SQL.squish
+      CASE
+        WHEN completed_requirements.refunded_at IS NOT NULL THEN 'refunded'
+        WHEN EXISTS (
+          SELECT 1 FROM refund_batch_items
+          JOIN refund_batches ON refund_batches.id = refund_batch_items.refund_batch_id
+          WHERE refund_batch_items.completed_requirement_id = completed_requirements.id
+            AND refund_batch_items.status = 'queued'
+            AND refund_batches.created_at > #{connection.quote(RefundBatch.stall_cutoff)}
+        ) THEN 'refunding'
+        WHEN completed_requirements.charge_id IS NULL OR #{mock_in_production} THEN 'not_refundable'
+        ELSE 'paid'
+      END
+    SQL
+  end
 
-    # we used to have a registration table that linked a team (to be used more than once) to a race. we later
-    # removed the registration table in favor of a single-use team object that registers for a single race.
-    # We used to store the registration_id in stripe, and later changed to a team_id but kept support for
-    # loading registration_id for older datasets.
-    team_id = charge['metadata']['team_id'] || charge['metadata']['registration_id']
+  scope :with_payment_status, ->(status) { where("#{payment_status_sql} = ?", status.to_s) }
 
-    # TODO: Introduce papertrail on completed requirement to track when the requirement is deleted and by whom
-    if cr = CompletedRequirement.where(requirement_id: req_id, team_id: team_id).first
-      cr.subscribe(CompletedRequirementAuditor.new)
-      cr.destroy
-    end
+  # Rows loaded with `select(..., "#{payment_status_sql} AS payment_status")` already carry it; any other row
+  # asks the database, so a loaded status can be stale after the row changes (reload it).
+  def payment_status
+    return self[:payment_status] if has_attribute?(:payment_status)
+
+    self.class.unscoped.joins(:requirement).where(id: id).pick(Arel.sql(self.class.payment_status_sql))
+  end
+
+  def refundable? = payment_status == "paid"
+
+  private
+
+  def legacy_metadata
+    data = metadata
+    data.is_a?(Hash) ? data : {}
   end
 end

@@ -16,7 +16,6 @@
 class ChargesController < ApplicationController
   before_action :require_user
   before_action :require_stripe_params, only: [:create]
-  before_action :require_charge_object, only: [:refund]
   before_action :require_prior_url
 
   STRIPE_PARAMS = %i{amount stripeToken stripeEmail description metadata}
@@ -58,33 +57,16 @@ class ChargesController < ApplicationController
     authorize! :refund, :charges
     Rails.logger.info "Refund requested for charge: #{params[:charge_id]}"
 
-    StripeHelper.safely_call_stripe do
-      @charge = @charge.refund
+    cr = CompletedRequirement.find_by(charge_id: params[:charge_id])
+    return render status: :not_found, json: { error: "No payment found for charge #{params[:charge_id]}" } unless cr
+
+    result = Payments::RefundCharge.call(user: current_user, completed_requirement: cr)
+    if result.ok
+      flash[:notice] = refund_notice(result, cr)
+    else
+      flash[:error] = result.message
     end
-
-    # TODO: re-evaluate if we want to render 500 here.
-    unless @charge.refunded
-      str = "Charge ID: #{@charge.id} could not be refunded. No action taken."
-      Rails.logger.error(str)
-      return render status: :internal_server_error, json: {error: str}
-    end
-
-    CompletedRequirement.mark_refunded_by_charge(@charge.id)
-
-    msg = "The refund has processed successfully"
-
-    if params.fetch(:delete_completed_requirement, false)
-      if current_user.is?(:admin)
-        CompletedRequirement.delete_by_charge(@charge)
-        msg = "#{msg}, and the completed requirement was deleted"
-      else
-        msg = "#{msg}, but the completed requirement was not deleted because you do not have the appropriate permissions"
-      end
-    end
-
-    flash[:notice] = msg
-    url = session.delete(:prior_url)
-    redirect_to(url)
+    redirect_to session.delete(:prior_url)
   end
 
   private
@@ -93,6 +75,19 @@ class ChargesController < ApplicationController
     StripeHelper.log_and_return_error(ex)
     url = session.delete :prior_url
     redirect_to url
+  end
+
+  # The notice for a successful refund. An admin may also delete the completed requirement ("refund and
+  # invalidate"). Deleting the row deletes its refunded_by/refunded_at too, so one log line keeps the audit.
+  def refund_notice(result, cr)
+    msg = result.message.chomp(".")
+    return msg unless ActiveModel::Type::Boolean.new.cast(params[:delete_completed_requirement])
+    return "#{msg}, but the completed requirement was not deleted because you do not have the appropriate permissions" unless current_user.is?(:admin)
+
+    Rails.logger.info "Completed requirement deleted after refund: charge #{cr.charge_id}, team #{cr.team_id}, requirement #{cr.requirement_id}, admin user #{current_user.id}, at #{Time.current.iso8601}"
+    cr.subscribe(CompletedRequirementAuditor.new)
+    cr.destroy
+    "#{msg}, and the completed requirement was deleted"
   end
 
   # require that session[:prior_url] exists. this allows this controller's methods
@@ -119,14 +114,5 @@ class ChargesController < ApplicationController
         errors: error_message
       }
     )
-  end
-
-  def require_charge_object
-    success, ex = StripeHelper.safely_call_stripe do
-      @charge = Stripe::Charge.retrieve(params[:charge_id])
-    end
-
-    return render status: :not_found, json: {error: ex.message} unless success
-    return render status: :bad_request, json: {error: "Charge ID #{@charge.id} is already refunded"} if @charge.refunded
   end
 end

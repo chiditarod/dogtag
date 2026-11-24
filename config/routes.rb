@@ -122,6 +122,13 @@ Rails.application.routes.draw do
         resource :confirmation, only: [:create]
         resources :mock_payments, only: [:create] if Rails.env.development? || Rails.env.test?
       end
+      namespace :staff do
+        resources :payments, only: [:index]
+        resources :refund_batches, only: [:create, :show] do
+          # `retry` is a Ruby keyword, so the action is retry_failed.
+          post :retry, on: :member, action: :retry_failed
+        end
+      end
       match "*path", to: "base#route_not_found", via: :all
     end
   end

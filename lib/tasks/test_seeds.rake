@@ -782,6 +782,10 @@ namespace :test_seeds do
 
     # Delete test data (keep the static admin and operator users)
     SentEmail.where("recipient LIKE ?", "%@example.com").delete_all
+    # Refund batches reference users and their items reference completed requirements (FK cascade),
+    # so both go before the users and races below. Completed requirements are not deleted with teams.
+    RefundBatch.where(user_id: User.where("email LIKE ?", "%@example.com").select(:id)).delete_all
+    CompletedRequirement.where(requirement_id: Requirement.where(race_id: Race.where("name LIKE ?", "Race %").select(:id)).select(:id)).delete_all
     User.where("email LIKE ? AND email NOT IN (?)", "%@example.com", keep).destroy_all
     Team.where("name LIKE ?", "Test Team%").destroy_all
     # Every seed names its races "Race ...", its teams "Test Team ..." and its users @example.com, so

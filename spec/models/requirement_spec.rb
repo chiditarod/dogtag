@@ -73,10 +73,47 @@ describe Requirement do
       end.to change(CompletedRequirement, :count).by 1
     end
 
+    it "stores charge_id and amount_cents" do
+      cr = requirement.complete(team.id, user, "charge_id" => "ch_1", "amount" => 5000)
+
+      expect(cr.charge_id).to eq("ch_1")
+      expect(cr.amount_cents).to eq(5000)
+      expect(cr.reload.metadata["charge_id"]).to eq("ch_1")
+    end
+
+    it "leaves the payment columns blank when there is no charge metadata" do
+      cr = requirement.complete(team.id, user)
+
+      expect(cr.charge_id).to be_nil
+      expect(cr.amount_cents).to be_nil
+    end
+
     it 'broadcasts when creating' do
       expect do
         requirement.complete team.id, user
       end.to broadcast(:create_completed_requirement_successful)
+    end
+
+    context "before the payment columns migration has run (deploy window)" do
+      before do
+        legacy_columns = CompletedRequirement.column_names - %w[charge_id amount_cents refunded_at stripe_refund_id refunded_by_id]
+        allow(CompletedRequirement).to receive(:column_names).and_return(legacy_columns)
+      end
+
+      it "still records the payment, with the charge only in the metadata" do
+        # Assigning a missing column would raise UnknownAttributeError, so the new columns must not be passed.
+        expect(CompletedRequirement).to receive(:new).with(hash_excluding(:charge_id, :amount_cents)).and_call_original
+        cr = nil
+        expect do
+          cr = requirement.complete(team.id, user, "charge_id" => "ch_1", "amount" => 5000)
+        end.to change(CompletedRequirement, :count).by(1)
+
+        expect(cr).to be_persisted
+        cr.reload
+        expect(cr.metadata).to include("charge_id" => "ch_1", "amount" => 5000)
+        expect(cr.read_attribute(:charge_id)).to be_nil
+        expect(cr.amount_cents).to be_nil
+      end
     end
   end
 
