@@ -157,4 +157,20 @@ describe('BatchResults', () => {
       vi.useRealTimers();
     }
   });
+
+  it('refetches the list again when a retry comes back already finished', async () => {
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.get('/api/v1/staff/refund_batches/9', () => HttpResponse.json({ batch: finishedBatch(9, [['failed', 'x']]) })),
+      http.post('/api/v1/staff/refund_batches/9/retry', () =>
+        HttpResponse.json({ batch: finishedBatch(10, [['refunded']], { retry_of_id: 9 }) }, { status: 201 }),
+      ),
+      http.get('/api/v1/staff/refund_batches/10', () => HttpResponse.json({ batch: finishedBatch(10, [['refunded']]) })),
+    );
+    const { invalidate } = setup();
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry 1 failed' }));
+    await screen.findByText('Refunded');
+    const listCalls = () => invalidate.mock.calls.filter(([filters]) => JSON.stringify(filters).includes('payments')).length;
+    await waitFor(() => expect(listCalls()).toBe(2));
+  });
 });

@@ -54,7 +54,7 @@ export function BatchResults({ batchId, onFinished, onBatchChange }: BatchResult
   // A finished batch changes the list and the progress line behind the dialog.
   useEffect(() => {
     if (done) void queryClient.invalidateQueries({ queryKey: ['staff', 'payments'] });
-  }, [done, queryClient]);
+  }, [done, currentId, queryClient]);
 
   function retryFailed(previous: RefundBatch) {
     retry.mutate(previous.id, {
