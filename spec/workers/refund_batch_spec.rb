@@ -103,6 +103,26 @@ describe Workers::RefundBatch do
     expect(stalled.completed_requirement.reload).not_to be_refunded
   end
 
+  it "skips an item whose payment was deleted mid-batch (Refund and invalidate) and finishes the rest" do
+    first = queue_item(paid)
+    deleted = queue_item(paid)
+    last = queue_item(paid)
+    deleted_cr = deleted.completed_requirement
+    allow(Payments::RefundCharge).to receive(:call).and_wrap_original do |original, **args|
+      result = original.call(**args)
+      # An admin's "Refund and invalidate" deletes the payment (and its batch items) while the job runs.
+      deleted_cr.destroy if args[:completed_requirement].id == first.completed_requirement_id
+      result
+    end
+
+    expect { run_worker }.not_to raise_error
+
+    expect(RefundBatchItem.exists?(deleted.id)).to be(false)
+    expect([first.reload.status, last.reload.status]).to eq(%w[refunded refunded])
+    expect(Payments::RefundCharge).to have_received(:call).twice
+    expect(batch.reload).to be_finished
+  end
+
   it "a late-running job still refunds an item that only looked stalled" do
     start = Time.utc(2026, 11, 24, 12, 0, 0)
     old_batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
