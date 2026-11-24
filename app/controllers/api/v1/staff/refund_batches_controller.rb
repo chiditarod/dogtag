@@ -16,18 +16,13 @@ class Api::V1::Staff::RefundBatchesController < Api::V1::Staff::BaseController
     render_batch(Payments::QueueRefundBatch.retry(user: current_user, batch: RefundBatch.find(params[:id])))
   end
 
-  # Staff can read any batch. Items still queued long after the batch was created show as stalled.
+  # Staff can read any batch. A GET never writes: items still queued long after the batch was created are
+  # only reported as stalled (RefundBatch#reported_status).
   def show
-    RefundBatch.find(params[:id]).mark_stalled!
-    load_batch(params[:id])
+    @batch = RefundBatch.includes(items: { completed_requirement: [:requirement, :team] }).find(params[:id])
   end
 
   private
-
-  def load_batch(id)
-    @batch = RefundBatch.includes(items: { completed_requirement: [:requirement, :team] }).find(id)
-    render :show
-  end
 
   def render_batch(result, count = nil)
     if result.ok

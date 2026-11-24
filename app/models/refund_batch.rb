@@ -17,10 +17,19 @@ class RefundBatch < ApplicationRecord
   def finished? = finished_at.present?
 
   # Items still queued long after the batch was created (the worker died, or Sidekiq lost the job) are
-  # reported as stalled so staff can retry them. Retrying marks them stalled first, so a payment is never
-  # queued twice.
+  # reported as stalled so staff can retry them. Reading a batch never writes: the report is derived here.
+  # A late-running job may still refund such an item, which is safe (see Payments::RefundCharge).
+  def reported_status(item)
+    item.status == "queued" && stalled? ? "stalled" : item.status
+  end
+
+  def stalled? = created_at <= STALL_AFTER.ago
+
+  # Only a retry rewrites stalled items, right before it re-queues them, so a payment is never queued twice.
+  # The unique index on queued items and RefundCharge's lock and Stripe check keep a late original job from
+  # refunding it a second time.
   def mark_stalled!
-    return unless created_at <= STALL_AFTER.ago
+    return unless stalled?
 
     items.queued.update_all(status: "stalled", finished_at: Time.current, updated_at: Time.current)
   end

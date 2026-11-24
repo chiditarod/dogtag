@@ -7,6 +7,7 @@ json.batch do
     json.team_name cr.team.name
     json.payment_type cr.requirement.name
     json.amount_cents cr.amount_cents
-    json.extract! item, :status, :error_code, :message, :finished_at
+    json.status @batch.reported_status(item)
+    json.extract! item, :error_code, :message, :finished_at
   end
 end

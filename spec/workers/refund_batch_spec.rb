@@ -103,6 +103,60 @@ describe Workers::RefundBatch do
     expect(stalled.completed_requirement.reload).not_to be_refunded
   end
 
+  it "a late-running job still refunds an item that only looked stalled" do
+    start = Time.utc(2026, 11, 24, 12, 0, 0)
+    old_batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+    item = FactoryBot.create(:refund_batch_item, refund_batch: old_batch, completed_requirement: paid)
+
+    Timecop.freeze(start + 11.minutes) do
+      expect(old_batch.items.reload.pluck(:status)).to eq(["queued"])
+      described_class.new.perform("refund_batch_id" => old_batch.id)
+    end
+
+    expect(item.reload.status).to eq("refunded")
+    expect(item.completed_requirement.reload).to be_refunded
+  end
+
+  it "retrying a stalled batch and then running the original job never refunds twice" do
+    start = Time.utc(2026, 11, 24, 12, 0, 0)
+    old_batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+    cr = paid
+    old_item = FactoryBot.create(:refund_batch_item, refund_batch: old_batch, completed_requirement: cr)
+    expect(Stripe::Refund).to receive(:create).once.and_call_original
+
+    Timecop.freeze(start + 11.minutes) do
+      retry_result = Payments::QueueRefundBatch.retry(user: refunder, batch: old_batch)
+      expect(old_item.reload.status).to eq("stalled")
+      new_item = retry_result.batch.items.first
+
+      described_class.new.perform("refund_batch_id" => retry_result.batch.id)
+      described_class.new.perform("refund_batch_id" => old_batch.id)
+
+      expect(new_item.reload.status).to eq("refunded")
+      expect(old_item.reload.status).to eq("stalled")
+    end
+    expect(Workers::PaymentRefundedEmail.jobs.size).to eq(1)
+  end
+
+  it "an original job that was already in flight, then the retried batch, refunds once" do
+    start = Time.utc(2026, 11, 24, 12, 0, 0)
+    old_batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+    cr = paid
+    FactoryBot.create(:refund_batch_item, refund_batch: old_batch, completed_requirement: cr)
+    expect(Stripe::Refund).to receive(:create).once.and_call_original
+
+    Timecop.freeze(start + 11.minutes) do
+      retry_result = Payments::QueueRefundBatch.retry(user: refunder, batch: old_batch)
+      new_item = retry_result.batch.items.first
+      # the original job was already in flight when the retry marked its item stalled, and refunds first
+      Payments::RefundCharge.call(user: refunder, completed_requirement: cr.reload)
+
+      described_class.new.perform("refund_batch_id" => retry_result.batch.id)
+
+      expect(new_item.reload.status).to eq("already_refunded")
+    end
+  end
+
   it "rerunning a finished batch does nothing" do
     queue_item(paid)
     run_worker

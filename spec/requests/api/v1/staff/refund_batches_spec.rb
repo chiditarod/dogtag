@@ -173,6 +173,19 @@ describe "API v1 staff refund batches", type: :request do
         expect(json["batch"]["items"].first["status"]).to eq("stalled")
       end
 
+      it "does not write anything on GET: a stalled item stays queued in the database" do
+        start = Time.utc(2026, 11, 24, 12, 0, 0)
+        batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+        item = FactoryBot.create(:refund_batch_item, refund_batch: batch)
+        before = item.reload.attributes
+
+        Timecop.freeze(start + 11.minutes) { get "/api/v1/staff/refund_batches/#{batch.id}" }
+
+        expect(json["batch"]["items"].first["status"]).to eq("stalled")
+        expect(item.reload.attributes).to eq(before)
+        expect(item.finished_at).to be_nil
+      end
+
       it "404 for an unknown batch" do
         get "/api/v1/staff/refund_batches/0"
         expect(response).to have_http_status(:not_found)
