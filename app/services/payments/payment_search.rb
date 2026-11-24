@@ -66,8 +66,8 @@ module Payments
     def default_race
       now = Time.current
       newest_first = Race.order(race_datetime: :desc, id: :desc)
-      newest_first.where(race_datetime: ..now).first ||
-        newest_first.where("registration_open <= ? AND registration_close >= ?", now, now).first ||
+      newest_first.where("registration_open <= ? AND registration_close >= ?", now, now).first ||
+        newest_first.where(race_datetime: ..now).first ||
         newest_first.first
     end
 

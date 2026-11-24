@@ -27,14 +27,27 @@ describe Payments::PaymentSearch do
       expect(search.filters[:race_id]).to eq(race.id)
     end
 
-    it "defaults to the most recent race that has already run, before any open race" do
+    it "prefers the newest open race over a race that has already run" do
+      past = FactoryBot.create(:race, name: "Race Past")
+      past.update_columns(registration_open: 10.weeks.ago, registration_close: 1.week.ago, race_datetime: 2.days.ago)
+      pay(FactoryBot.create(:payment_requirement, race: past))
+      mine = pay(deposit)
+
+      expect(ids).to eq([mine.id])
+      expect(search.filters[:race_id]).to eq(race.id)
+    end
+
+    it "falls back to the most recent race that has already run when none is open" do
       recent = FactoryBot.create(:race, name: "Race Recent")
       recent.update_columns(registration_open: 10.weeks.ago, registration_close: 1.week.ago, race_datetime: 2.days.ago)
       older = FactoryBot.create(:race, name: "Race Older")
       older.update_columns(registration_open: 60.weeks.ago, registration_close: 53.weeks.ago, race_datetime: 1.year.ago)
+      upcoming = FactoryBot.create(:race, name: "Race Upcoming")
+      upcoming.update_columns(registration_open: 1.week.from_now, registration_close: 9.weeks.from_now, race_datetime: 12.weeks.from_now)
+      [race, old_race].each { |r| r.update_columns(registration_close: 3.days.ago, race_datetime: 4.days.from_now) }
       mine = pay(FactoryBot.create(:payment_requirement, race: recent))
       pay(FactoryBot.create(:payment_requirement, race: older))
-      pay(deposit)
+      pay(FactoryBot.create(:payment_requirement, race: upcoming))
 
       expect(ids).to eq([mine.id])
       expect(search.filters[:race_id]).to eq(recent.id)
