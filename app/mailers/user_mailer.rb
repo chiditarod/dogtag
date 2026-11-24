@@ -44,6 +44,18 @@ class UserMailer < ActionMailer::Base
     set_vars_and_send(user, team, user.email, "#{team.race.name}: Registration Waitlisted for #{team.name}")
   end
 
+  # Sent to the team's account holder when one of its payments is refunded. `details` are plain values
+  # (:completed_requirement_id, :requirement_name, :amount_cents, :race_name) rather than the completed
+  # requirement, because an admin may delete that row after refunding.
+  def payment_refunded_email(user, team, details)
+    @team = team
+    @requirement_name = details[:requirement_name]
+    @race_name = details[:race_name]
+    @amount = ActiveSupport::NumberHelper.number_to_currency(details[:amount_cents] / 100.0) if details[:amount_cents]
+    track(kind: "refund", team: team, user: user, dedupe_key: "refund-cr-#{details.fetch(:completed_requirement_id)}")
+    mail(to: user.email, subject: t(".subject", race: @race_name, team: team.name))
+  end
+
   def password_reset_instructions(user, host)
     track(kind: "password_reset", user: user)
     @edit_password_reset_url = edit_password_reset_url(user.perishable_token, host: host)

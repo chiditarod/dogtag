@@ -1,0 +1,118 @@
+# Fully refunds one payment (a completed requirement with a Stripe charge) and records who did it and when.
+# Called by the legacy Refund button and by Workers::RefundBatch, so both are audited, emailed and safe to
+# repeat. Safety comes from three things:
+#
+# - the same advisory lock as Payments::ChargeTeam, so a refund and a charge, or two refunds, of one
+#   payment never run at once;
+# - a check of the charge at Stripe before refunding, so a charge already refunded (in the Stripe
+#   dashboard, or by an earlier attempt that died before saving) is recorded instead of refunded again;
+# - a Stripe idempotency key per payment, so a repeat after a crash returns the same refund.
+#
+# Messages are for staff and are not translated; the racer's email is.
+module Payments
+  class RefundCharge
+    Result = Data.define(:ok, :code, :message)
+
+    def self.call(**) = new(**).call
+
+    def initialize(user:, completed_requirement:)
+      @user = user
+      @cr = completed_requirement
+    end
+
+    def call
+      return failure(:not_refundable, "This payment cannot be refunded here (no Stripe charge).") if cr.payment_status == "not_refundable"
+
+      result = AdvisoryLock.with_lock(team_id: cr.team_id, requirement_id: cr.requirement_id) { refund }
+      result.equal?(AdvisoryLock::HELD) ? failure(:in_progress, "Another request is working on this payment. Try again in a moment.") : result
+    rescue Stripe::InvalidRequestError => e
+      stripe_failure(e, "Stripe could not refund this payment: #{StripeHelper.exception_to_hash(e)[:reason]}")
+    rescue Stripe::StripeError => e
+      alert_unknown_outcome(e)
+      stripe_failure(e, "Stripe did not answer cleanly (#{StripeHelper.exception_to_hash(e)[:reason]}). Try again; a retry checks Stripe before refunding.")
+    rescue => e
+      alert_unknown_outcome(e)
+      alert("Refunded at Stripe but not recorded: refund #{@refund.id}, charge #{cr.charge_id}, team #{cr.team_id}, requirement #{cr.requirement_id} (#{e.class}: #{e.message}). Retrying records it.") if @refund
+      Rails.logger.error("Refund failed for completed requirement #{cr.id}: #{e.class}: #{e.message}")
+      failure(:unexpected, "The refund could not be completed. Try again, and check Stripe if it keeps failing.")
+    end
+
+    private
+
+    attr_reader :user, :cr
+
+    # Runs inside the lock.
+    def refund
+      cr.reload
+      return success(:already_refunded, "This payment was already refunded.") if cr.refunded?
+      return refund_mock if cr.requirement.is_a?(MockPaymentRequirement)
+
+      charge = Stripe::Charge.retrieve(cr.charge_id)
+      return record(:already_refunded, "This charge was already refunded at Stripe; it is now recorded here.", stripe_refund_id_of(charge)) if charge.refunded
+      return failure(:partially_refunded, partial_message(charge)) if charge.amount_refunded.to_i.positive?
+
+      @refund_attempted = true
+      @refund = Stripe::Refund.create({ charge: cr.charge_id }, { idempotency_key: "refund-cr-#{cr.id}" })
+      record(:refunded, "The refund has processed successfully.", @refund.id)
+    end
+
+    # Mock payments (development and test only; production never gets here, see payment_status) have no charge.
+    def refund_mock
+      record(:refunded, "The mock payment was marked refunded.", nil)
+    end
+
+    # Writes the refund and queues the email, once. Never called for a payment already recorded as refunded.
+    def record(code, message, stripe_refund_id)
+      cr.update!(
+        refunded_at: Time.current,
+        refunded_by: user,
+        stripe_refund_id: stripe_refund_id,
+        metadata: JSON.generate((cr.metadata || {}).merge("refunded" => true))
+      )
+      queue_email
+      success(code, message)
+    end
+
+    # The refund is already recorded, so a failure to queue the email must not fail the refund.
+    def queue_email
+      team = cr.team
+      Workers::PaymentRefundedEmail.perform_async(
+        "user_id" => team.user_id,
+        "team_id" => team.id,
+        "completed_requirement_id" => cr.id,
+        "requirement_name" => cr.requirement.name,
+        "amount_cents" => cr.amount_cents,
+        "race_name" => team.race.name
+      )
+    rescue => e
+      alert("Refund email not queued for completed requirement #{cr.id}, team #{cr.team_id} (#{e.class}: #{e.message}). The refund is recorded.")
+    end
+
+    def stripe_refund_id_of(charge) = charge[:refunds]&.data&.last&.id
+
+    def partial_message(charge)
+      "This charge is already partially refunded (#{dollars(charge.amount_refunded)} of #{dollars(charge.amount)}). " \
+        "Nothing was changed; finish it in the Stripe dashboard."
+    end
+
+    # A Stripe error that hides whether the refund happened. A retry heals it: it finds the charge refunded.
+    def alert_unknown_outcome(exception)
+      return unless @refund_attempted && @refund.nil?
+
+      alert("Refund outcome unknown (#{exception.class}: #{exception.message}) for charge #{cr.charge_id}, team #{cr.team_id}, requirement #{cr.requirement_id}. Retry heals it: it checks Stripe before refunding.")
+    end
+
+    def dollars(cents) = ActiveSupport::NumberHelper.number_to_currency(cents.to_i / 100.0)
+
+    def alert(message) = AdvisoryLock.alert(message)
+
+    def success(code, message) = Result.new(ok: true, code: code, message: message)
+
+    def failure(code, message) = Result.new(ok: false, code: code, message: message)
+
+    def stripe_failure(exception, message)
+      StripeHelper.log_and_return_error(exception)
+      failure(:stripe_error, message)
+    end
+  end
+end

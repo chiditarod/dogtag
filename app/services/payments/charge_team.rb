@@ -74,30 +74,11 @@ module Payments
     end
 
     # Serializes payments for one team and requirement across processes, so two requests (even with
-    # different card tokens) cannot both pass the already-paid check and charge. Session-level, so it is
-    # taken and released on the same connection and does not depend on a transaction.
+    # different card tokens) cannot both pass the already-paid check and charge. The same lock guards
+    # refunds of the payment (Payments::RefundCharge).
     def with_advisory_lock
-      ActiveRecord::Base.with_connection do |connection|
-        keys = "#{Integer(team.id)}, #{Integer(requirement.id)}"
-        return failure(:in_progress) unless connection.select_value("SELECT pg_try_advisory_lock(#{keys})")
-
-        begin
-          yield
-        ensure
-          release_advisory_lock(connection, keys)
-        end
-      end
-    end
-
-    # Never lets a failed unlock replace the payment's result. A lock that was not held at release
-    # (e.g. the session changed under a transaction-pooling proxy) may be stuck on another
-    # connection, which would block this team's payments with :in_progress, so it is alerted.
-    def release_advisory_lock(connection, keys)
-      return if connection.select_value("SELECT pg_advisory_unlock(#{keys})")
-
-      alert("Payment advisory lock (#{keys}) for team #{team.id}, requirement #{requirement.id} was not held at release. Check for a stuck lock.")
-    rescue => e
-      alert("Failed to release payment advisory lock (#{keys}) for team #{team.id}, requirement #{requirement.id}: #{e.class}: #{e.message}")
+      result = Payments::AdvisoryLock.with_lock(team_id: team.id, requirement_id: requirement.id) { yield }
+      result.equal?(Payments::AdvisoryLock::HELD) ? failure(:in_progress) : result
     end
 
     def charge_and_record
@@ -177,10 +158,7 @@ module Payments
 
     def format_cents(cents) = ActiveSupport::NumberHelper.number_to_currency(cents / 100.0)
 
-    def alert(message)
-      Rails.logger.error(message)
-      Rollbar.error(message) if defined?(Rollbar)
-    end
+    def alert(message) = Payments::AdvisoryLock.alert(message)
 
     def success(completed_requirement)
       Result.new(ok: true, error_code: nil, message: nil, completed_requirement: completed_requirement)

@@ -268,6 +268,35 @@ describe UserMailer do
     end
   end
 
+  describe "#payment_refunded_email" do
+    let(:team) { FactoryBot.create(:team) }
+    let(:details) do
+      { completed_requirement_id: 77, requirement_name: "Cart Deposit", amount_cents: 5000, race_name: team.race.name }
+    end
+
+    it "goes to the team owner with race, team, payment type and amount" do
+      mail = UserMailer.payment_refunded_email(team.user, team, details)
+      body = mail.body.encoded
+
+      expect(mail.to).to eq([team.user.email])
+      expect(mail.subject).to eq("#{team.race.name}: Refund for #{team.name}")
+      expect(body).to include(team.race.name, team.name, "Cart Deposit", "$50.00", "5-10 business days", "dogtag@chiditarod.org")
+    end
+
+    it "tracks kind refund with dedupe_key refund-cr-<id>" do
+      UserMailer.payment_refunded_email(team.user, team, details).deliver_now
+
+      expect(SentEmail.last).to have_attributes(kind: "refund", team_id: team.id, user_id: team.user.id, dedupe_key: "refund-cr-77")
+    end
+
+    it "suppresses a second delivery with the same dedupe key" do
+      2.times { UserMailer.payment_refunded_email(team.user, team, details).deliver_now }
+
+      expect(SentEmail.where(kind: "refund").count).to eq(1)
+      expect(deliveries.size).to eq(1)
+    end
+  end
+
   describe "#feedback_email" do
     let(:team) { FactoryBot.create(:team) }
     let(:user) { team.user }

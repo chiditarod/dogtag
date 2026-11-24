@@ -73,6 +73,13 @@ describe AddPaymentColumnsToCompletedRequirements do
     expect(cr.amount_cents).to be_nil
   end
 
+  it "sends no email" do
+    build_cr(JSON.generate(JSON.generate(hash.merge("refunded" => true))))
+
+    expect { backfill }.not_to change { ActionMailer::Base.deliveries.count }
+    expect(Workers::PaymentRefundedEmail.jobs).to be_empty
+  end
+
   it "is idempotent" do
     cr = build_cr(JSON.generate(JSON.generate(hash.merge("refunded" => true))))
 
