@@ -19,7 +19,7 @@ export function FilterChips({ values, options, onRemove, onClearAll }: FilterChi
   }
   if (values.status === 'paid') {
     chips.push({ key: 'status', label: t('staff.payments.filters.statusPaid') });
-  } else if (values.status !== 'all') {
+  } else if (values.status === 'refunded') {
     chips.push({ key: 'status', label: t('staff.payments.filters.statusRefunded') });
   }
   if (values.q) chips.push({ key: 'q', label: t('staff.payments.filters.searchChip', { q: values.q }) });

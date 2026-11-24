@@ -64,4 +64,10 @@ describe('usePaymentFilters', () => {
       page: 1,
     });
   });
+
+  it('Browse accepts only the paid and refunded statuses', () => {
+    expect(setup('/x?status=refunded').result.current.values.status).toBe('refunded');
+    expect(setup('/x?status=refunding').result.current.values.status).toBe('all');
+    expect(setup('/x?status=not_refundable').result.current.values.status).toBe('all');
+  });
 });

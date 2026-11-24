@@ -48,11 +48,14 @@ export interface PaymentsResponse {
   filters: PaymentsFilterOptions;
 }
 
+/** The statuses Browse filters on; the server also knows refunding and not_refundable. */
+export type BrowseStatus = Extract<PaymentStatus, 'paid' | 'refunded'>;
+
 export interface PaymentFilterValues {
   /** Absent means the server's default race; `all` means every race. */
   raceId?: number | 'all';
   paymentType?: number;
-  status: PaymentStatus | 'all';
+  status: BrowseStatus | 'all';
   q: string;
   page: number;
 }

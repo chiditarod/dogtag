@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { PaymentFilterValues, PaymentStatus } from './types';
+import type { BrowseStatus, PaymentFilterValues } from './types';
 
-const STATUSES: PaymentStatus[] = ['paid', 'refunding', 'refunded', 'not_refundable'];
+/** Any other status in the URL (refunding, not_refundable, junk) falls back to all, so no chip mislabels it. */
+const STATUSES: BrowseStatus[] = ['paid', 'refunded'];
 
 function positiveInt(value: string | null): number | undefined {
   const n = Number(value);
@@ -21,7 +22,7 @@ export function usePaymentFilters() {
     return {
       raceId: race === 'all' ? 'all' : positiveInt(race),
       paymentType: positiveInt(params.get('payment_type')),
-      status: STATUSES.includes(status as PaymentStatus) ? (status as PaymentStatus) : 'all',
+      status: STATUSES.includes(status as BrowseStatus) ? (status as BrowseStatus) : 'all',
       q: params.get('q') ?? '',
       page: positiveInt(params.get('page')) ?? 1,
     };
