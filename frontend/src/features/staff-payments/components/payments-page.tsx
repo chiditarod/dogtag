@@ -69,7 +69,10 @@ export function PaymentsPage() {
           <Pagination
             page={data.meta.page}
             totalPages={data.meta.total_pages}
-            onPage={(page) => setFilter('page', page)}
+            onPage={(page) => {
+              setFilter('page', page);
+              window.scrollTo({ top: 0 });
+            }}
           />
         </div>
       )}

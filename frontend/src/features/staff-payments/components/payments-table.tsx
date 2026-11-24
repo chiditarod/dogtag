@@ -8,7 +8,7 @@ function StatusBadge({ payment }: { payment: StaffPayment }) {
     payment.status === 'refunded' && payment.refunded_at
       ? t('staff.payments.status.refunded', { date: formatShortDate(payment.refunded_at) })
       : payment.status === 'refunded'
-        ? t('staff.payments.statusRefundedPlain')
+        ? t('staff.payments.status.refundedUndated')
         : t(`staff.payments.status.${payment.status}` as 'staff.payments.status.paid');
   const tone = payment.status === 'paid' ? 'success' : payment.status === 'refunding' ? 'warning' : 'neutral';
   return <Badge tone={tone}>{label}</Badge>;
@@ -50,15 +50,16 @@ export function PaymentsTable({ payments }: { payments: StaffPayment[] }) {
             data-payment-id={payment.id}
             className="grid grid-cols-[minmax(0,1fr)] rounded-lg border border-flag bg-white py-2 sm:table-row sm:rounded-none sm:border-0 sm:border-t sm:py-0"
           >
-            <div role="cell" className={`${cell} font-semibold [overflow-wrap:anywhere]`}>
+            <div role="cell" className={`${cell} break-words font-semibold`}>
               {payment.team.name}
             </div>
-            <div role="cell" className={`${cell} text-sm [overflow-wrap:anywhere]`}>
+            <div role="cell" className={`${cell} break-words text-sm`}>
               <Label>{t('staff.payments.col.owner')}</Label>
               {payment.owner && (
                 <>
                   <span>{payment.owner.name}</span>{' '}
-                  <span className="text-navy/70">{payment.owner.email}</span>
+                  {/* An email has no spaces to break at, so it may break anywhere. */}
+                  <span className="text-navy/70 [overflow-wrap:anywhere]">{payment.owner.email}</span>
                 </>
               )}
             </div>

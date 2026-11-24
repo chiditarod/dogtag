@@ -14,8 +14,8 @@
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
-#   rails test_seeds:staff_shell              (a racer and a refunder, for the staff shell)
-#   rails test_seeds:payments_admin           (a refunder and a race with 7 mock Cart Deposit payments, one already refunded)
+#   rails test_seeds:staff_shell               (a racer and a refunder, for the staff shell)
+#   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:team_captain            (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -688,7 +688,8 @@ namespace :test_seeds do
       roles: [:refunder]
     )
 
-    # The newest race_datetime, so it is the default race on the page.
+    # Registration is open and the race is years out, so it is usually the page's default race (the newest
+    # open race). Other seeded open races can change that, so the spec still picks it from the Race select.
     race = FactoryBot.create(:race, name: "Race Payments #{short}", race_datetime: 5.years.from_now)
     deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
     Tier.create!(requirement: deposit, price: 5000, begin_at: 10.days.ago)

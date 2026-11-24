@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -50,6 +50,8 @@ async function open(path = '/staff/payments') {
 }
 
 describe('PaymentsPage', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('shows the progress line from summary', async () => {
     serve();
     await open();
@@ -125,7 +127,8 @@ describe('PaymentsPage', () => {
     expect(screen.getAllByText('$50').length).toBeGreaterThan(0);
   });
 
-  it('pages through the results', async () => {
+  it('pages through the results and scrolls back to the top', async () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     serve();
     const { router } = await open();
     expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
@@ -133,6 +136,9 @@ describe('PaymentsPage', () => {
     await userEvent.click(screen.getByRole('button', { name: t('staff.payments.next') }));
     await waitFor(() => expect(requests.at(-1)!.searchParams.get('page')).toBe('2'));
     expect(router.state.location.search).toContain('page=2');
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
+    // The arrows are decoration, so the buttons read just Prev and Next.
+    expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument();
   });
 
   it('empty list shows the empty state', async () => {
@@ -155,7 +161,7 @@ describe('PaymentsPage', () => {
     expect(await screen.findByText('The Secret Gents')).toBeInTheDocument();
   });
 
-  it('at 320px the Filters row opens a sheet', async () => {
+  it('the Filters button opens a sheet that sets the status', async () => {
     serve();
     await open();
     await userEvent.click(screen.getByRole('button', { name: t('staff.payments.filters.open') }));
@@ -271,5 +277,39 @@ describe('PaymentsPage', () => {
       'CHIditarod 2025 (closed)',
       'CHIditarod 2024 (paused)',
     ]);
+  });
+
+  it('the search box follows a removed search chip', async () => {
+    serve();
+    const { router } = await open('/staff/payments?q=ada');
+    expect(screen.getByRole('searchbox')).toHaveValue('ada');
+    const chips = screen.getByRole('list', { name: t('staff.payments.filters.active') });
+    await userEvent.click(
+      within(chips).getByRole('button', {
+        name: t('staff.payments.filters.remove', { label: t('staff.payments.filters.searchChip', { q: 'ada' }) }),
+      }),
+    );
+    await waitFor(() => expect(router.state.location.search).not.toContain('q='));
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+  });
+
+  it('a whitespace-only search sends nothing and surrounding spaces are trimmed', async () => {
+    serve();
+    const { router } = await open();
+    const before = requests.length;
+    await userEvent.type(screen.getByRole('searchbox'), '   ');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(requests).toHaveLength(before);
+    expect(router.state.location.search).toBe('');
+
+    await userEvent.type(screen.getByRole('searchbox'), 'ada ');
+    await waitFor(() => expect(requests.at(-1)!.searchParams.get('q')).toBe('ada'), { timeout: 2000 });
+    expect(screen.getByRole('searchbox')).toHaveValue('   ada ');
+  });
+
+  it('a refunded payment with no refund date reads Refunded', async () => {
+    serve({ ...page, payments: [payment({ status: 'refunded', refunded_at: null })] });
+    renderApp('/staff/payments');
+    expect(await screen.findByText(t('staff.payments.status.refundedUndated'))).toBeInTheDocument();
   });
 });

@@ -118,10 +118,12 @@ function SearchBox({ values, setFilter }: Pick<FilterProps, 'values' | 'setFilte
   }, [values.q]);
 
   useEffect(() => {
-    if (text === sent.current) return;
+    // Only the trimmed text goes to the URL, so spaces alone send nothing and the box keeps what was typed.
+    const next = text.trim();
+    if (next === sent.current) return;
     const timer = setTimeout(() => {
-      sent.current = text;
-      setFilter('q', text);
+      sent.current = next;
+      setFilter('q', next);
     }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [text, setFilter]);

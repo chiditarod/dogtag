@@ -79,4 +79,16 @@ describe('usePaymentFilters', () => {
     expect(result.current.setFilter).toBe(setFilter);
     expect(result.current.clearAll).toBe(clearAll);
   });
+
+  it('ignores out-of-range and junk params', () => {
+    const { result } = setup('/x?page=-1&race_id=abc&payment_type=0&status=bogus');
+    expect(result.current.values).toEqual({
+      raceId: undefined,
+      paymentType: undefined,
+      status: 'all',
+      q: '',
+      page: 1,
+    });
+    expect(setup('/x?page=2.5&race_id=-4').result.current.values).toMatchObject({ page: 1, raceId: undefined });
+  });
 });
