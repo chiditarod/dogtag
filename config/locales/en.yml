@@ -152,8 +152,11 @@ en:
     update:
       update_user: Update your account
       update_success: Account information successfully updated.
+      current_password_wrong: Your current password is not correct. Nothing was saved.
     edit:
       update_user: Update your account
+    form:
+      current_password: Current password (required to save)
 
   tiers:
     form:
