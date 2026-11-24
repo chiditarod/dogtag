@@ -8,6 +8,7 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
+#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
@@ -352,6 +353,33 @@ namespace :test_seeds do
     puts "✅ Seeded!"
     puts "  User: #{user.email} / oldpassword123"
     puts "  Credentials file: #{credentials_file}"
+  end
+
+  desc "Create a racer with a known password for the SPA account page test"
+  task account: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+
+    user = FactoryBot.create(:user,
+      first_name: "Account",
+      last_name: "TestUser",
+      email: "account-#{unique_id}@example.com",
+      password: "oldpassword123",
+      password_confirmation: "oldpassword123")
+
+    credentials = {
+      user_email: user.email,
+      password: "oldpassword123",
+      new_password: "newpassword456",
+      user_id: user.id
+    }
+    File.write(credentials_file, credentials.to_json)
+
+    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Generate perishable token for password reset test"

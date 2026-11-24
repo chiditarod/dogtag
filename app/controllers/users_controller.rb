@@ -65,6 +65,11 @@ class UsersController < ApplicationController
 
   def update
     @user = User.find(params[:id])
+    if @user.id == current_user.id && !current_user.valid_password?(params[:current_password].to_s)
+      flash.now[:error] = I18n.t("users.update.current_password_wrong")
+      return render :edit, status: :unprocessable_entity
+    end
+
     try_to_update(@user, user_params, user_url(@user), 'users.update.update_success')
   end
 

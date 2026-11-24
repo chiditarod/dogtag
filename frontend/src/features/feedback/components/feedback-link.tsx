@@ -6,6 +6,7 @@ import { useMe } from '@/features/auth/api/use-me';
 import { useFeedback } from '@/features/feedback/api/use-feedback';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
+import { feedbackPath } from '@/features/feedback/utils';
 
 /** Footer link that opens a dialog for telling staff about a problem. Only shown when logged in. */
 export function FeedbackLink() {
@@ -72,7 +73,7 @@ function FeedbackDialog({ onClose }: { onClose: () => void }) {
     feedback.mutate({
       message,
       context: {
-        path: window.location.pathname,
+        path: feedbackPath(window.location.pathname),
         team_id: teamId,
         user_agent: navigator.userAgent,
       },
