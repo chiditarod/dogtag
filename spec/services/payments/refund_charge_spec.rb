@@ -110,6 +110,27 @@ describe Payments::RefundCharge do
     expect(email_jobs).to be_empty
   end
 
+  it "refuses with amount_mismatch when the charge is not the recorded amount, and does not call Stripe" do
+    cr.update_columns(amount_cents: 4000)
+    expect(Stripe::Refund).not_to receive(:create)
+
+    result = call
+
+    expect(result.ok).to be(false)
+    expect(result.code).to eq(:amount_mismatch)
+    expect(result.message).to include("$50.00", "$40.00")
+    expect(cr.reload.refunded_at).to be_nil
+    expect(email_jobs).to be_empty
+  end
+
+  it "refuses with amount_mismatch when the recorded amount is unknown" do
+    cr.update_columns(amount_cents: nil)
+    expect(Stripe::Refund).not_to receive(:create)
+
+    expect(call.code).to eq(:amount_mismatch)
+    expect(cr.reload.refunded_at).to be_nil
+  end
+
   it "returns stripe_error with Stripe's reason for an unknown charge" do
     fake = FactoryBot.create(:completed_requirement, requirement: requirement, team: FactoryBot.create(:team, race: requirement.race), charge_id: "ch_seed_1")
 

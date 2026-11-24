@@ -51,6 +51,9 @@ module Payments
       return record(:already_refunded, "This charge was already refunded at Stripe; it is now recorded here.", stripe_refund_id_of(charge)) if charge.refunded
       return failure(:partially_refunded, partial_message(charge)) if charge.amount_refunded.to_i.positive?
 
+      # Whole-charge refunds only: refuse unless Stripe's charge is exactly what this app recorded.
+      return failure(:amount_mismatch, amount_message(charge)) unless charge.amount == cr.amount_cents
+
       @refund_attempted = true
       @refund = Stripe::Refund.create({ charge: cr.charge_id }, { idempotency_key: "refund-cr-#{cr.id}" })
       record(:refunded, "The refund has processed successfully.", @refund.id)
@@ -96,6 +99,12 @@ module Payments
     def partial_message(charge)
       "This charge is already partially refunded (#{dollars(charge.amount_refunded)} of #{dollars(charge.amount)}). " \
         "Nothing was changed; finish it in the Stripe dashboard."
+    end
+
+    def amount_message(charge)
+      recorded = cr.amount_cents ? dollars(cr.amount_cents) : "not recorded"
+      "The Stripe charge is #{dollars(charge.amount)} but this payment is recorded as #{recorded}. " \
+        "Nothing was refunded; check the payment in Stripe."
     end
 
     # A Stripe error that hides whether the refund happened. A retry heals it: it finds the charge refunded.
