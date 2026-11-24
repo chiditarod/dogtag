@@ -32,4 +32,71 @@ describe "API v1 password resets", type: :request do
     expect(host).to eq(ActionMailer::Base.default_url_options[:host])
     expect(host).not_to include("evil.example")
   end
+
+  describe "with a reset token" do
+    let(:token) do
+      user.reset_perishable_token!
+      user.perishable_token
+    end
+    let(:new_password) { { password: "newpassword456", password_confirmation: "newpassword456" } }
+
+    it "shows the email for a valid token" do
+      get "/api/v1/password_resets/#{token}"
+      expect(response).to have_http_status(:ok)
+      expect(json).to eq("email" => user.email)
+    end
+
+    it "404s an unknown token" do
+      get "/api/v1/password_resets/nope"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "404s a token older than 3 hours" do
+      token
+      Timecop.travel(3.hours.from_now + 1.minute) do
+        get "/api/v1/password_resets/#{token}"
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    it "sets the password and logs the user in" do
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(json["user"]["id"]).to eq(user.id)
+      expect(session_user_id).to eq(user.id)
+      expect(user.reload.valid_password?("newpassword456")).to be(true)
+    end
+
+    it "is single use" do
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+
+      put "/api/v1/password_resets/#{token}", params: new_password.merge(password: "another789pw", password_confirmation: "another789pw"), as: :json
+      expect(response).to have_http_status(:not_found)
+      expect(user.reload.valid_password?("newpassword456")).to be(true)
+    end
+
+    it "logs in as the token's user even when someone else is logged in" do
+      other = FactoryBot.create(:user)
+      api_login(other)
+      expect(session_user_id).to eq(other.id)
+
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(session_user_id).to eq(user.id)
+    end
+
+    it "rejects blank, short and mismatched passwords" do
+      [
+        { password: "", password_confirmation: "" },
+        { password: "short", password_confirmation: "short" },
+        { password: "newpassword456", password_confirmation: "different456" }
+      ].each do |attrs|
+        put "/api/v1/password_resets/#{token}", params: attrs, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["errors"].keys & %w[password password_confirmation]).not_to be_empty
+        expect(user.reload.valid_password?("12345678")).to be(true)
+      end
+    end
+  end
 end

@@ -110,7 +110,7 @@ Rails.application.routes.draw do
       patch "me", to: "accounts#update"
       resource :session, only: [:create, :destroy]
       resources :users, only: [:create]
-      resources :password_resets, only: [:create]
+      resources :password_resets, only: [:create, :show, :update]
       resources :feedback, only: [:create]
       resources :races, only: [:index, :show]
       resources :teams, only: [:index, :show, :create, :update, :destroy] do
