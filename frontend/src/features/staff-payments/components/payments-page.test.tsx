@@ -113,7 +113,8 @@ describe('PaymentsPage', () => {
     await open();
     expect(screen.getByText('Refunded Nov 20')).toBeInTheDocument();
     const rows = screen.getAllByRole('row').filter((row) => row.hasAttribute('data-payment-id'));
-    expect(within(rows[0]).getByText(t('staff.payments.status.paid'), { selector: 'span:not([aria-hidden])' })).toBeInTheDocument();
+    const statusCell = within(rows[0]).getAllByRole('cell').at(-1)!;
+    expect(within(statusCell).getByText(t('staff.payments.status.paid'))).toBeInTheDocument();
   });
 
   it('shows account holder email and the amount', async () => {
@@ -184,5 +185,15 @@ describe('PaymentsPage', () => {
     expect(router.state.location.search).toContain('page=3');
     expect(requests.at(-1)!.searchParams.get('page')).toBe('3');
     expect(screen.getByText('Page 3 of 3')).toBeInTheDocument();
+  });
+
+  it('card labels are read with their values (sm:hidden hides them on the table)', async () => {
+    serve();
+    await open();
+    const row = screen.getAllByRole('row').find((r) => r.getAttribute('data-payment-id') === '1')!;
+    const cells = within(row).getAllByRole('cell');
+    expect(cells[1]).toHaveAccessibleName(`${t('staff.payments.col.owner')} Ada Owner ada@example.com`);
+    expect(cells[2]).toHaveAccessibleName(`${t('staff.payments.col.type')} Cart Deposit`);
+    expect(cells[3]).toHaveAccessibleName(`${t('staff.payments.col.amount')} $50`);
   });
 });

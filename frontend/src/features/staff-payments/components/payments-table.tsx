@@ -17,11 +17,14 @@ function StatusBadge({ payment }: { payment: StaffPayment }) {
 const headCell = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-navy/70';
 const cell = 'block min-w-0 px-3 py-0.5 sm:table-cell sm:py-2 sm:align-top';
 
-/** Mobile label shown only below `sm`, where each row is a card. */
+/**
+ * Mobile label shown only below `sm`, where each row is a card and has no column header, so screen readers
+ * read it too. `sm:hidden` takes it out of the table (and the accessibility tree) from `sm`.
+ */
 function Label({ children }: { children: string }) {
   return (
-    <span aria-hidden="true" className="mr-1 text-xs font-semibold uppercase text-navy/60 sm:hidden">
-      {children}
+    <span className="mr-1 text-xs font-semibold uppercase text-navy/60 sm:hidden">
+      {children}{' '}
     </span>
   );
 }
