@@ -48,6 +48,11 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # Authlogic would save users.last_request_at on every authenticated request, and its
+  # before_save reset_perishable_token would rotate a pending password reset token.
+  # Nothing reads last_request_at.
+  def last_request_update_allowed? = false
+
   def is_production?
     Rails.env.production?
   end

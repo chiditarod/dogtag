@@ -114,6 +114,21 @@ describe('ResetPasswordForm', () => {
     );
   });
 
+  it('shows a non-field error from the server', async () => {
+    server.use(
+      validToken(),
+      http.put('/api/v1/password_resets/tok123', () =>
+        HttpResponse.json(
+          { error: 'invalid', errors: { base: ['We could not log you in.'] } },
+          { status: 422 },
+        ),
+      ),
+    );
+    renderApp('/reset-password/tok123');
+    await fillAndSubmit('hunter2222', 'hunter2222');
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not log you in.');
+  });
+
   it('shows the expired state if the PUT 404s', async () => {
     server.use(validToken(), http.put('/api/v1/password_resets/tok123', notFound));
     renderApp('/reset-password/tok123');

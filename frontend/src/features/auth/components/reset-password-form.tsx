@@ -67,7 +67,8 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   const fieldErrors = reset.error instanceof ApiError ? reset.error.errors : {};
-  const otherError = reset.isError && Object.keys(fieldErrors).length === 0;
+  const baseError = fieldErrors.base?.[0];
+  const otherError = reset.isError && !fieldErrors.password && !fieldErrors.password_confirmation;
 
   return (
     <div className="space-y-4">
@@ -84,7 +85,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
               role="alert"
               className="rounded-md border border-star bg-white p-3 text-sm text-starText"
             >
-              {t('common.genericError')}
+              {baseError ?? t('common.genericError')}
             </div>
           )}
           <Field

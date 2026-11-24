@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { clearInbox, waitForEmail } from '../helpers/mailpit';
 import { seed, type Seed } from '../helpers/seed';
 
 /** SPA end-to-end: edit the account with the current password, then log in with a changed password. */
@@ -63,6 +64,39 @@ test.describe('SPA account page', () => {
       await page.getByLabel('Current password', { exact: true }).fill(c.new_password);
       await page.getByRole('button', { name: 'Save changes' }).click();
       await expect(page.getByRole('status')).toHaveText('Saved.');
+    });
+
+    await test.step('Log out and log in with the new password', async () => {
+      await page.getByRole('button', { name: 'Log out' }).click();
+      await login(page, c.user_email, c.new_password);
+    });
+  });
+
+  test('a logged-in racer can finish a reset from the Forgot it? link', async ({ page }) => {
+    const c = seeded.credentials;
+    await clearInbox();
+    await login(page, c.user_email, c.password);
+
+    await test.step('Follow Forgot it? and request the reset while logged in', async () => {
+      await page.goto('/register/account');
+      await page.getByRole('link', { name: 'Forgot it?' }).click();
+      await expect(page).toHaveURL(/\/register\/forgot-password$/);
+      await page.getByLabel('Email', { exact: true }).fill(c.user_email);
+      await page.getByRole('button', { name: 'Send reset link' }).click();
+      await expect(page.getByRole('status')).toContainText("we've sent a reset link");
+    });
+
+    await test.step('The emailed link still works in the same logged-in browser', async () => {
+      const email = await waitForEmail({ to: c.user_email, subjectIncludes: 'Password Reset' });
+      const link = email.links.find((url) => /\/register\/reset-password\/[^/]+$/.test(url));
+      expect(link).toBeTruthy();
+      await page.goto(link!);
+      await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
+      await page.getByLabel('New password', { exact: true }).fill(c.new_password);
+      await page.getByLabel('Confirm new password').fill(c.new_password);
+      await page.getByRole('button', { name: 'Save new password' }).click();
+      await expect(page.getByRole('heading', { name: 'My teams' })).toBeVisible();
+      await expect(page.getByRole('status')).toContainText("Your password is changed and you're logged in.");
     });
 
     await test.step('Log out and log in with the new password', async () => {

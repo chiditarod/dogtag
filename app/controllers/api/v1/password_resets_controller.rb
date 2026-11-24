@@ -21,10 +21,15 @@ class Api::V1::PasswordResetsController < Api::V1::BaseController
     @user.errors.add(:password_confirmation, :blank) if password_confirmation.blank?
     return render_errors(@user) if @user.errors.any?
 
-    if @user.update(password:, password_confirmation:)
+    # A valid token proves control of the inbox, so it also lifts a brute-force lockout.
+    if @user.update(password:, password_confirmation:, failed_login_count: 0)
       # Replaces any session already in this browser, even another user's.
-      UserSession.create(@user)
-      render "api/v1/users/show"
+      if UserSession.create(@user).persisted?
+        render "api/v1/users/show"
+      else
+        @user.errors.add(:base, I18n.t("api.errors.reset_login_failed"))
+        render_errors(@user)
+      end
     else
       render_errors(@user)
     end

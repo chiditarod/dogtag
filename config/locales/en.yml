@@ -199,6 +199,7 @@ en:
       invalid_buddies: Pick only other teams in this race.
       buddies_need_collaborating: Answer Yes to the same-route question before picking teams.
       person_not_on_team: Pick one of this team's racers.
+      reset_login_failed: Your password was changed, but we could not log you in. Please log in with your new password.
 
   captains:
     update:

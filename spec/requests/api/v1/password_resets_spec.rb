@@ -76,6 +76,56 @@ describe "API v1 password resets", type: :request do
       expect(user.reload.valid_password?("newpassword456")).to be(true)
     end
 
+    it "keeps the token valid when the same user is logged in and the SPA calls /me" do
+      api_login(user)
+      user.reset_perishable_token!
+      token = user.perishable_token
+
+      get "/api/v1/me"
+      expect(response).to have_http_status(:ok)
+
+      get "/api/v1/password_resets/#{token}"
+      expect(response).to have_http_status(:ok)
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(user.reload.valid_password?("newpassword456")).to be(true)
+
+      put "/api/v1/password_resets/#{token}", params: new_password.merge(password: "another789pw", password_confirmation: "another789pw"), as: :json
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "keeps the token valid after an authenticated legacy page request" do
+      post "/user_session", params: { user_session: { email: user.email, password: "12345678" } }
+      expect(response).to have_http_status(:found)
+      user.reset_perishable_token!
+      token = user.perishable_token
+
+      get "/teams"
+      expect(response).to have_http_status(:ok)
+      get "/api/v1/password_resets/#{token}"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "clears a brute-force lockout, logs the user in, and lets them log in again" do
+      user.update_columns(failed_login_count: 15)
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(session_user_id).to eq(user.id)
+      expect(user.reload.failed_login_count).to eq(0)
+
+      delete "/api/v1/session"
+      post "/api/v1/session", params: { email: user.email, password: "newpassword456" }, as: :json
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "does not claim success when the session cannot be created" do
+      allow(UserSession).to receive(:create).and_return(instance_double(UserSession, persisted?: false))
+      put "/api/v1/password_resets/#{token}", params: new_password, as: :json
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["errors"]["base"]).to eq([I18n.t("api.errors.reset_login_failed")])
+      expect(user.reload.valid_password?("newpassword456")).to be(true)
+    end
+
     it "logs in as the token's user even when someone else is logged in" do
       other = FactoryBot.create(:user)
       api_login(other)
