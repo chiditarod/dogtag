@@ -15,11 +15,13 @@ class Api::V1::PasswordResetsController < Api::V1::BaseController
 
   # Saving rotates the perishable token, which is what makes the link single use.
   def update
-    attrs = params.permit(:password, :password_confirmation)
-    %i[password password_confirmation].each { |field| @user.errors.add(field, :blank) if attrs[field].blank? }
+    password = params[:password].to_s
+    password_confirmation = params[:password_confirmation].to_s
+    @user.errors.add(:password, :blank) if password.blank?
+    @user.errors.add(:password_confirmation, :blank) if password_confirmation.blank?
     return render_errors(@user) if @user.errors.any?
 
-    if @user.update(attrs)
+    if @user.update(password:, password_confirmation:)
       # Replaces any session already in this browser, even another user's.
       UserSession.create(@user)
       render "api/v1/users/show"
