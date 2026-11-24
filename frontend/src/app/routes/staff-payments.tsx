@@ -1,9 +1,5 @@
-import { t } from '@/locales/en';
+import { PaymentsPage } from '@/features/staff-payments/components/payments-page';
 
 export function StaffPaymentsRoute() {
-  return (
-    <h1 className="font-display text-2xl font-semibold">
-      {t('staff.payments.heading')}
-    </h1>
-  );
+  return <PaymentsPage />;
 }
