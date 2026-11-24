@@ -82,7 +82,8 @@ class TeamChecklist
       done: done,
       amount_due_cents: done ? nil : requirement.amount_due_cents,
       paid_cents: completed_requirement&.metadata&.fetch("amount", nil).to_i,
-      next_tier: done ? nil : tier_hash(requirement.next_tiers.first)
+      next_tier: done ? nil : tier_hash(requirement.next_tiers.first),
+      refunded: completed_requirement&.refunded? || false
     }
   end
 

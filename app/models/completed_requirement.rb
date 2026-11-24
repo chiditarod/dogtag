@@ -63,7 +63,11 @@ class CompletedRequirement < ApplicationRecord
 
   scope :with_payment_status, ->(status) { where("#{payment_status_sql} = ?", status.to_s) }
 
+  # Rows loaded with `select(..., "#{payment_status_sql} AS payment_status")` already carry it; any other row
+  # asks the database, so a loaded status can be stale after the row changes (reload it).
   def payment_status
+    return self[:payment_status] if has_attribute?(:payment_status)
+
     self.class.unscoped.joins(:requirement).where(id: id).pick(Arel.sql(self.class.payment_status_sql))
   end
 
