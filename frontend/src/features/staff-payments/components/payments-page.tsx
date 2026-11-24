@@ -29,7 +29,7 @@ export function PaymentsPage() {
         values={values}
         options={data?.filters}
         setFilter={setFilter}
-        totalCount={data?.meta.total_count}
+        totalCount={isPlaceholderData ? undefined : data?.meta.total_count}
         onClearAll={clearAll}
         canClear={active}
       />
@@ -42,7 +42,11 @@ export function PaymentsPage() {
       {isPending && <QueryLoading />}
       {isError && !data && <QueryError onRetry={() => void refetch()} />}
       {data && (
-        <>
+        // While new filters load, the previous results stay on screen, dimmed and marked busy.
+        <div
+          aria-busy={isPlaceholderData}
+          className={`space-y-4 transition-opacity ${isPlaceholderData ? 'opacity-60' : ''}`}
+        >
           <ProgressLine summary={data.meta.summary} />
           {data.payments.length === 0 ? (
             <p className="rounded-lg bg-white p-4 text-navy">
@@ -60,7 +64,7 @@ export function PaymentsPage() {
             totalPages={data.meta.total_pages}
             onPage={(page) => setFilter('page', page)}
           />
-        </>
+        </div>
       )}
     </div>
   );

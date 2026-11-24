@@ -144,6 +144,24 @@ function SearchBox({ values, setFilter }: Pick<FilterProps, 'values' | 'setFilte
   );
 }
 
+/** Announces the number of matching payments once a response settles; empty while one loads. */
+function ResultCount({ count }: { count: number | undefined }) {
+  return (
+    <p role="status" className="sr-only">
+      {count === undefined ? '' : t(`staff.payments.count_${count === 1 ? 'one' : 'other'}`, { n: count })}
+    </p>
+  );
+}
+
+function showLabel(count: number | undefined) {
+  if (count === undefined) return t('staff.payments.filters.showPending');
+  return t(`staff.payments.filters.show_${count === 1 ? 'one' : 'other'}`, { n: count });
+}
+
+/**
+ * `totalCount` is undefined until the response for the current filters settles, so neither the sheet
+ * button nor the live count shows a number from the previous filters.
+ */
 export function PaymentFilters({
   values,
   options,
@@ -157,6 +175,8 @@ export function PaymentFilters({
 
   return (
     <div className="space-y-3">
+      {/* The open sheet is modal, so the live count moves into it. */}
+      {!sheetOpen && <ResultCount count={totalCount} />}
       {/* Search has its own row until lg, and the inline controls wrap, so nothing overflows just above sm. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <SearchBox values={values} setFilter={setFilter} />
@@ -178,9 +198,8 @@ export function PaymentFilters({
             <FilterControls values={values} options={options} setFilter={setFilter} idPrefix="sheet" />
           </div>
           <div className="flex flex-col gap-2 border-t border-flag px-4 py-3">
-            <Button onClick={() => setSheetOpen(false)}>
-              {t(`staff.payments.filters.show_${(totalCount ?? 0) === 1 ? 'one' : 'other'}`, { n: totalCount ?? 0 })}
-            </Button>
+            <ResultCount count={totalCount} />
+            <Button onClick={() => setSheetOpen(false)}>{showLabel(totalCount)}</Button>
             {canClear && (
               <Button variant="ghost" onClick={onClearAll}>
                 {t('staff.payments.filters.clearAll')}

@@ -161,7 +161,7 @@ describe('PaymentsPage', () => {
     const dialog = await screen.findByRole('dialog', { name: t('staff.payments.filters.sheetTitle') });
     await userEvent.click(within(dialog).getByRole('radio', { name: t('staff.payments.filters.statusRefunded') }));
     await waitFor(() => expect(requests.at(-1)!.searchParams.get('status')).toBe('refunded'));
-    await userEvent.click(within(dialog).getByRole('button', { name: t('staff.payments.filters.show_other', { n: 60 }) }));
+    await userEvent.click(await within(dialog).findByRole('button', { name: t('staff.payments.filters.show_other', { n: 60 }) }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
@@ -207,5 +207,40 @@ describe('PaymentsPage', () => {
       t('staff.payments.filters.raceNotFound'),
     );
     expect(screen.queryByText(t('staff.payments.empty'))).not.toBeInTheDocument();
+  });
+
+  it('while a filter change loads, the list is busy and the sheet waits for the new count', async () => {
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+      http.get('/api/v1/staff/payments', async ({ request }) => {
+        if (new URL(request.url).searchParams.get('status') === 'refunded') {
+          await held;
+          return HttpResponse.json({ ...page, meta: { ...page.meta, total_count: 1, total_pages: 1 } });
+        }
+        return HttpResponse.json(page);
+      }),
+    );
+    renderApp('/staff/payments');
+    await screen.findByText('The Secret Gents');
+    const list = screen.getByRole('table', { name: t('staff.payments.list') }).closest('[aria-busy]')!;
+    expect(list).toHaveAttribute('aria-busy', 'false');
+    expect(screen.getByRole('status')).toHaveTextContent(t('staff.payments.count_other', { n: 60 }));
+
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.filters.open') }));
+    const dialog = await screen.findByRole('dialog', { name: t('staff.payments.filters.sheetTitle') });
+    await userEvent.click(within(dialog).getByRole('radio', { name: t('staff.payments.filters.statusRefunded') }));
+    await waitFor(() => expect(list).toHaveAttribute('aria-busy', 'true'));
+    expect(list).toHaveClass('opacity-60');
+    expect(within(dialog).getByRole('button', { name: t('staff.payments.filters.showPending') })).toBeInTheDocument();
+    expect(within(dialog).getByRole('status')).toHaveTextContent('');
+
+    release();
+    expect(await within(dialog).findByRole('button', { name: t('staff.payments.filters.show_one', { n: 1 }) })).toBeInTheDocument();
+    expect(within(dialog).getByRole('status')).toHaveTextContent(t('staff.payments.count_one', { n: 1 }));
+    expect(list).toHaveAttribute('aria-busy', 'false');
   });
 });
