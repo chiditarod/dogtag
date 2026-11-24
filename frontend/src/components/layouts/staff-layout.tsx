@@ -1,7 +1,7 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
+import { SiteHeader } from '@/components/layouts/site-header';
 import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
 import { useMe } from '@/features/auth/api/use-me';
-import { UserMenu } from '@/features/auth/components/user-menu';
 import { isStaff } from '@/features/staff/utils';
 import { t } from '@/locales/en';
 
@@ -14,21 +14,7 @@ export function StaffLayout() {
 
   return (
     <div className="min-h-screen bg-page">
-      <header className="border-b-4 border-flag bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3">
-          <Link to="/" className="min-w-0 shrink">
-            <img
-              src={`${import.meta.env.BASE_URL}logo.png`}
-              alt={t('layout.logoAlt')}
-              width={640}
-              height={389}
-              className="h-16 w-auto max-w-full object-contain object-left min-[400px]:h-20 sm:h-24"
-            />
-          </Link>
-          <nav aria-label={t('layout.userMenu')} className="shrink-0 text-sm">
-            <UserMenu />
-          </nav>
-        </div>
+      <SiteHeader width="max-w-6xl">
         {isStaff(me) && (
           <nav
             aria-label={t('staff.nav')}
@@ -42,7 +28,7 @@ export function StaffLayout() {
             </a>
           </nav>
         )}
-      </header>
+      </SiteHeader>
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
         <Outlet />
       </main>
