@@ -34,6 +34,8 @@
               %li.dropdown-header= t '.admin_functions'
               %li= link_to t('search'), users_path
               %li= link_to t('new'), new_user_path
+              - if can?(:refund, :charges)
+                %li= link_to t('.payments'), "/register/staff/payments"
               %li.divider
 
     %ul.nav.navbar-nav.navbar-right

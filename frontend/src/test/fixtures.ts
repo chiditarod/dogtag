@@ -6,6 +6,7 @@ export const user = {
   last_name: 'L',
   email: 'ada@example.com',
   phone: null,
+  roles: [] as string[],
 };
 
 export function buildRace(overrides: Partial<Race> = {}): Race {

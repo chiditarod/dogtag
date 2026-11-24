@@ -71,8 +71,16 @@ describe "API v1 sessions", type: :request do
       api_login(user)
       get "/api/v1/me"
       expect(response).to have_http_status(:ok)
-      expect(json["user"].keys).to match_array(%w[id first_name last_name email phone])
+      expect(json["user"].keys).to match_array(%w[id first_name last_name email phone roles])
+      expect(json["user"]["roles"]).to eq([])
       expect(json["user"]["id"]).to eq(user.id)
+    end
+
+    it "includes roles" do
+      refunder = FactoryBot.create(:refunder_user)
+      api_login(refunder)
+      get "/api/v1/me"
+      expect(json["user"]["roles"]).to eq(["refunder"])
     end
 
     it "returns 401 when not logged in" do
