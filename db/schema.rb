@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_24_062730) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_24_062955) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -73,6 +73,30 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_24_062730) do
     t.text "experience_labels", default: [], null: false, array: true
     t.text "time_zone", default: "America/Chicago", null: false
     t.text "confirmation_text"
+  end
+
+  create_table "refund_batch_items", force: :cascade do |t|
+    t.bigint "refund_batch_id", null: false
+    t.bigint "completed_requirement_id", null: false
+    t.text "status", default: "queued", null: false
+    t.text "error_code"
+    t.text "message"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["completed_requirement_id"], name: "index_refund_batch_items_on_completed_requirement_id"
+    t.index ["completed_requirement_id"], name: "index_refund_batch_items_one_queued_per_payment", unique: true, where: "(status = 'queued'::text)"
+    t.index ["refund_batch_id"], name: "index_refund_batch_items_on_refund_batch_id"
+  end
+
+  create_table "refund_batches", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "retry_of_id"
+    t.datetime "finished_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["retry_of_id"], name: "index_refund_batches_on_retry_of_id"
+    t.index ["user_id"], name: "index_refund_batches_on_user_id"
   end
 
   create_table "requirements", force: :cascade do |t|
@@ -180,6 +204,10 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_24_062730) do
   end
 
   add_foreign_key "completed_requirements", "users", column: "refunded_by_id", on_delete: :nullify
+  add_foreign_key "refund_batch_items", "completed_requirements", on_delete: :cascade
+  add_foreign_key "refund_batch_items", "refund_batches", on_delete: :cascade
+  add_foreign_key "refund_batches", "refund_batches", column: "retry_of_id", on_delete: :nullify
+  add_foreign_key "refund_batches", "users"
   add_foreign_key "team_buddies", "teams", column: "buddy_team_id", on_delete: :cascade
   add_foreign_key "team_buddies", "teams", on_delete: :cascade
   add_foreign_key "teams", "people", column: "captain_id", on_delete: :nullify

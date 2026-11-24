@@ -47,6 +47,78 @@ describe CompletedRequirement do
     end
   end
 
+  describe "#payment_status" do
+    let(:requirement) { FactoryBot.create(:payment_requirement) }
+    let(:team) { FactoryBot.create(:team, race: requirement.race) }
+
+    def payment(attrs = {})
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: "ch_1", **attrs)
+    end
+
+    it "is paid for a payment with a charge that has not been refunded" do
+      cr = payment
+      expect(cr.payment_status).to eq("paid")
+      expect(cr).to be_refundable
+    end
+
+    it "is refunded once refunded_at is set" do
+      cr = payment(refunded_at: Time.current)
+      expect(cr.payment_status).to eq("refunded")
+      expect(cr).not_to be_refundable
+    end
+
+    it "is refunding while a batch item is queued" do
+      cr = payment
+      FactoryBot.create(:refund_batch_item, completed_requirement: cr)
+      expect(cr.payment_status).to eq("refunding")
+      expect(cr).not_to be_refundable
+    end
+
+    it "is paid again after the batch item has finished without refunding" do
+      cr = payment
+      FactoryBot.create(:refund_batch_item, completed_requirement: cr, status: "failed")
+      expect(cr.payment_status).to eq("paid")
+    end
+
+    it "is not_refundable without a charge id" do
+      expect(payment(charge_id: nil).payment_status).to eq("not_refundable")
+    end
+
+    it "refunded wins over refunding and not_refundable" do
+      cr = payment(refunded_at: Time.current, charge_id: nil)
+      FactoryBot.create(:refund_batch_item, completed_requirement: cr)
+      expect(cr.payment_status).to eq("refunded")
+    end
+
+    it "mock payment is not_refundable in production and paid elsewhere" do
+      mock = MockPaymentRequirement.create!(name: "Mock fee", race: requirement.race)
+      cr = FactoryBot.create(:completed_requirement, requirement: mock, team: team, charge_id: "mock_ch_1")
+      expect(cr.payment_status).to eq("paid")
+
+      allow(Rails.env).to receive(:production?).and_return(true)
+      expect(cr.payment_status).to eq("not_refundable")
+    end
+
+    it "with_payment_status matches #payment_status for every row" do
+      other = ->(attrs) { FactoryBot.create(:completed_requirement, requirement: requirement, team: FactoryBot.create(:team, race: requirement.race), **attrs) }
+      queued = other.call(charge_id: "ch_q")
+      FactoryBot.create(:refund_batch_item, completed_requirement: queued)
+      rows = [
+        other.call(charge_id: "ch_p"),
+        other.call(charge_id: "ch_r", refunded_at: Time.current),
+        other.call(charge_id: nil),
+        queued
+      ]
+
+      %w[paid refunded refunding not_refundable].each do |status|
+        expected = rows.select { |cr| cr.payment_status == status }.map(&:id)
+        found = CompletedRequirement.joins(:requirement).with_payment_status(status).pluck(:id)
+        expect(found).to match_array(expected), "status #{status}"
+        expect(expected).not_to be_empty
+      end
+    end
+  end
+
   describe 'validation' do
     describe 'fails' do
       let (:rr) { FactoryBot.create :completed_requirement }

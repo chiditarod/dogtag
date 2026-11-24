@@ -38,7 +38,36 @@ class CompletedRequirement < ApplicationRecord
     m
   end
 
+  has_many :refund_batch_items, dependent: :destroy
+
   def refunded? = refunded_at.present?
+
+  # The one definition of a payment's status: refunded, refunding (a refund batch item is queued),
+  # not_refundable (no Stripe charge, or a mock payment in production) or paid. Needs `requirements`
+  # joined, so scope with joins(:requirement). Nothing else re-derives it.
+  def self.payment_status_sql
+    mock_in_production = Rails.env.production? ? "requirements.type = 'MockPaymentRequirement'" : "FALSE"
+    <<~SQL.squish
+      CASE
+        WHEN completed_requirements.refunded_at IS NOT NULL THEN 'refunded'
+        WHEN EXISTS (
+          SELECT 1 FROM refund_batch_items
+          WHERE refund_batch_items.completed_requirement_id = completed_requirements.id
+            AND refund_batch_items.status = 'queued'
+        ) THEN 'refunding'
+        WHEN completed_requirements.charge_id IS NULL OR #{mock_in_production} THEN 'not_refundable'
+        ELSE 'paid'
+      END
+    SQL
+  end
+
+  scope :with_payment_status, ->(status) { where("#{payment_status_sql} = ?", status.to_s) }
+
+  def payment_status
+    self.class.unscoped.joins(:requirement).where(id: id).pick(Arel.sql(self.class.payment_status_sql))
+  end
+
+  def refundable? = payment_status == "paid"
 
   # flag the completed requirement for a stripe charge as refunded, so views need not ask Stripe.
   def self.mark_refunded_by_charge(charge_id)
