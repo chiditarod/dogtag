@@ -1,7 +1,8 @@
 # The staff payments list: every completed payment, filtered and paged on the server. The page, the
 # filters and the progress summary all come from this one object, so they always agree.
 #
-# - race_id: absent means the newest open race (the newest race if none is open); "all" means every race.
+# - race_id: absent means the most recent race that has already run (refunds follow a race), else the
+#   newest open race, else the newest race; "all" means every race.
 # - payment_type: a requirement id (within the chosen race).
 # - status: paid, refunding, refunded, not_refundable or all (absent is all); see CompletedRequirement.payment_status_sql.
 # - q: case-insensitive text matched against the team name, the account holder, the payer and the racers
@@ -9,6 +10,8 @@
 module Payments
   class PaymentSearch
     PER_PAGE = 25
+    # A page past this is clamped, so a huge page number cannot overflow the OFFSET.
+    MAX_PAGE = 10_000
     STATUSES = %w[paid refunding refunded not_refundable].freeze
 
     def initialize(race_id: nil, payment_type: nil, status: nil, q: nil, page: nil)
@@ -16,7 +19,7 @@ module Payments
       @payment_type = Integer(payment_type.to_s, 10, exception: false)
       @status = status.to_s.strip.presence_in(STATUSES)
       @q = q.to_s.strip.presence
-      @page = [Integer(page.to_s, 10, exception: false) || 1, 1].max
+      @page = (Integer(page.to_s, 10, exception: false) || 1).clamp(1, MAX_PAGE)
     end
 
     # The page of payments, with everything the rows show preloaded (no per-row queries).
@@ -62,8 +65,10 @@ module Payments
 
     def default_race
       now = Time.current
-      Race.where("registration_open <= ? AND registration_close >= ?", now, now).order(race_datetime: :desc, id: :desc).first ||
-        Race.order(race_datetime: :desc, id: :desc).first
+      newest_first = Race.order(race_datetime: :desc, id: :desc)
+      newest_first.where(race_datetime: ..now).first ||
+        newest_first.where("registration_open <= ? AND registration_close >= ?", now, now).first ||
+        newest_first.first
     end
 
     # An unknown race id lists nothing rather than every race.
