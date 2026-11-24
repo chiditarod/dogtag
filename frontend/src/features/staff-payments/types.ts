@@ -1,3 +1,5 @@
+import type { RegistrationStatus } from '@/types/api';
+
 export type PaymentStatus = 'paid' | 'refunding' | 'refunded' | 'not_refundable';
 
 export interface StaffPerson {
@@ -38,7 +40,7 @@ export interface PaymentsMeta {
 export interface PaymentsFilterOptions {
   /** The race the server chose (or `all`); null when no race exists. */
   race_id: number | 'all' | null;
-  races: { id: number; name: string; registration_status: string }[];
+  races: { id: number; name: string; registration_status: RegistrationStatus }[];
   payment_types: { id: number; name: string }[];
 }
 

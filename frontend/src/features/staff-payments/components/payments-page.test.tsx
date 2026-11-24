@@ -7,6 +7,7 @@ import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
 import { emptyPayments, payment } from '../test-fixtures';
+import type { RegistrationStatus } from '@/types/api';
 import type { PaymentsResponse } from '../types';
 
 const page: PaymentsResponse = {
@@ -254,5 +255,21 @@ describe('PaymentsPage', () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(router.state.location.search).toBe('');
     expect(requests.some((url) => url.searchParams.has('q'))).toBe(false);
+  });
+
+  it('race options name the registration status, or show an unknown one as sent', async () => {
+    const races = [
+      ...emptyPayments.filters.races,
+      { id: 2, name: 'CHIditarod 2024', registration_status: 'paused' as RegistrationStatus },
+    ];
+    serve({ ...page, filters: { ...page.filters, races } });
+    await open();
+    const select = screen.getByLabelText(t('staff.payments.filters.race'));
+    expect(within(select).getAllByRole('option').map((o) => o.textContent)).toEqual([
+      t('staff.payments.filters.allRaces'),
+      'CHIditarod 2026 (open)',
+      'CHIditarod 2025 (closed)',
+      'CHIditarod 2024 (paused)',
+    ]);
   });
 });

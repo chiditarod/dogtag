@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { t } from '@/locales/en';
 import type { PaymentFilterValues, PaymentsFilterOptions } from '../types';
-import { raceNotFound } from '../utils';
+import { raceNotFound, raceStatusLabel } from '../utils';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -51,8 +51,7 @@ function FilterControls({ values, options, setFilter, idPrefix }: FilterProps & 
           <option value="all">{t('staff.payments.filters.allRaces')}</option>
           {options?.races.map((race) => (
             <option key={race.id} value={race.id}>
-              {race.name} (
-              {t(`staff.payments.raceStatus.${race.registration_status}` as 'staff.payments.raceStatus.open')})
+              {`${race.name} (${raceStatusLabel(race.registration_status)})`}
             </option>
           ))}
         </select>
