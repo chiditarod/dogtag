@@ -271,7 +271,7 @@ test.describe('SPA staff payments (Refund mode, partial failure at 320px)', () =
     await login(page, c.refunder_email, c.password);
     await page.goto(`/register/staff/payments?race_id=${c.race_id}`);
     await page.getByRole('button', { name: 'Refund payments' }).click();
-    await page.getByRole('button', { name: 'Select next 5' }).click();
+    await page.getByRole('button', { name: 'Select next 3' }).click();
     await expect(page.getByText('3 of 5 selected · $150')).toBeVisible();
     await page.getByRole('button', { name: 'Review and refund 3…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Refund 3 payments?' });

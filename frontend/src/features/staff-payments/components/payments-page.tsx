@@ -55,6 +55,14 @@ export function PaymentsPage() {
 
   const active = hasActiveFilters(refundMode ? { ...values, status: 'all' } : values);
   const selectedRows = [...selection.selected.values()];
+  // keepPreviousData leaves the old filters' rows on screen while new ones load; they must not be ticked
+  // (a selection belongs to one race) and Select next must not read them.
+  const nextCount = isPlaceholderData
+    ? 0
+    : Math.min(
+        limit - selection.selected.size,
+        data?.payments.filter((row) => row.status === 'paid' && !selection.selected.has(row.id)).length ?? 0,
+      );
   const totalCents = selectedRows.reduce((sum, row) => sum + row.amount_cents, 0);
 
   function enterRefundMode() {
@@ -99,10 +107,10 @@ export function PaymentsPage() {
           </p>
           <Button
             variant="secondary"
-            disabled={selection.isFull || !data?.payments.some((row) => row.status === 'paid' && !selection.selected.has(row.id))}
+            disabled={nextCount <= 0}
             onClick={() => data && selection.selectNext(data.payments)}
           >
-            {t('staff.payments.refundMode.selectNext', { n: limit })}
+            {t('staff.payments.refundMode.selectNext', { n: Math.max(nextCount, 0) })}
           </Button>
         </div>
       )}
@@ -154,6 +162,7 @@ export function PaymentsPage() {
                       selected: selection.selected,
                       onToggle: selection.toggle,
                       isFull: selection.isFull,
+                      stale: isPlaceholderData,
                       capNoteId,
                     }
                   : undefined

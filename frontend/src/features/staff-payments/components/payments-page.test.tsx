@@ -363,7 +363,7 @@ describe('PaymentsPage Refund mode', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Select next 5' }));
     expect(boxes().filter((box) => box.checked)).toHaveLength(5);
     expect(boxes().slice(0, 5).every((box) => box.checked)).toBe(true);
-    expect(screen.getByRole('button', { name: 'Select next 5' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Select next 0' })).toBeDisabled();
   });
 
   it('selection survives moving to page 2', async () => {
@@ -468,5 +468,39 @@ describe('PaymentsPage Refund mode', () => {
     expect(screen.getByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
     expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument();
+  });
+
+  it("disables the boxes and Select next while another race's rows are still on screen", async () => {
+    await openRefundMode();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get('/api/v1/staff/payments', async () => {
+        await gate;
+        return HttpResponse.json({ ...refundPage, payments: eight(40) });
+      }),
+    );
+    await userEvent.selectOptions(screen.getByLabelText(t('staff.payments.filters.race')), '3');
+    await waitFor(() => expect(boxes().every((box) => box.disabled)).toBe(true));
+    expect(screen.getByRole('button', { name: /^Select next/ })).toBeDisabled();
+    release();
+    await screen.findByText('Team 40');
+    expect(boxes().every((box) => !box.disabled)).toBe(true);
+    expect(screen.getByRole('button', { name: 'Select next 5' })).toBeEnabled();
+  });
+
+  it('Select next shows how many it will actually tick', async () => {
+    await openRefundMode('/staff/payments', { ...refundPage, payments: [...eight().slice(0, 2), refundPage.payments[8]] });
+    expect(screen.getByRole('button', { name: 'Select next 2' })).toBeInTheDocument();
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByRole('button', { name: 'Select next 1' })).toBeInTheDocument();
+  });
+
+  it('marks ticked rows with data-selected, not aria-selected', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    const row = screen.getAllByRole('row').find((candidate) => candidate.getAttribute('data-payment-id') === '1')!;
+    expect(row).toHaveAttribute('data-selected', 'true');
+    expect(row).not.toHaveAttribute('aria-selected');
   });
 });

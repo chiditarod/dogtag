@@ -33,6 +33,8 @@ export interface RefundSelection {
   selected: Map<number, StaffPayment>;
   onToggle: (payment: StaffPayment) => void;
   isFull: boolean;
+  /** The rows on screen belong to the previous filters while the new ones load: nothing can be ticked. */
+  stale: boolean;
   /** Id of the note that says why the rest are disabled at the cap. */
   capNoteId: string;
 }
@@ -42,6 +44,7 @@ function SelectBox({ payment, refund }: { payment: StaffPayment; refund: RefundS
   if (payment.status !== 'paid') return null;
   const checked = refund.selected.has(payment.id);
   const capped = refund.isFull && !checked;
+  const disabled = capped || refund.stale;
   return (
     <label className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center">
       <input
@@ -50,7 +53,7 @@ function SelectBox({ payment, refund }: { payment: StaffPayment; refund: RefundS
         aria-label={t('staff.payments.refundMode.select', { team: payment.team.name })}
         aria-describedby={capped ? refund.capNoteId : undefined}
         checked={checked}
-        disabled={capped}
+        disabled={disabled}
         onChange={() => refund.onToggle(payment)}
       />
     </label>
@@ -77,7 +80,7 @@ export function PaymentsTable({ payments, refund }: { payments: StaffPayment[]; 
             key={payment.id}
             role="row"
             data-payment-id={payment.id}
-            aria-selected={refund ? refund.selected.has(payment.id) : undefined}
+            data-selected={refund ? refund.selected.has(payment.id) : undefined}
             className={`grid grid-cols-[minmax(0,1fr)] rounded-lg border border-flag py-2 sm:table-row sm:rounded-none sm:border-0 sm:border-t sm:py-0 ${
               refund && payment.status !== 'paid' ? 'bg-page text-navy/60' : 'bg-white'
             }`}
