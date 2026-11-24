@@ -6,7 +6,7 @@ import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
-import { emptyPayments, payment } from '../test-fixtures';
+import { batchItem, emptyPayments, payment, refundBatch } from '../test-fixtures';
 import type { RegistrationStatus } from '@/types/api';
 import type { PaymentsResponse } from '../types';
 
@@ -58,11 +58,12 @@ describe('PaymentsPage', () => {
     expect(screen.getByText('37 of 142 refunded · $1,850 of $7,100')).toBeInTheDocument();
   });
 
-  it('is read-only: no checkboxes and no refund button', async () => {
+  it('Browse is read-only: no checkboxes, and no bottom bar', async () => {
     serve();
     await open();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /refund/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Review and refund/ })).not.toBeInTheDocument();
   });
 
   it('payment type options follow the chosen race', async () => {
@@ -311,5 +312,225 @@ describe('PaymentsPage', () => {
     serve({ ...page, payments: [payment({ status: 'refunded', refunded_at: null })] });
     renderApp('/staff/payments');
     expect(await screen.findByText(t('staff.payments.status.refundedUndated'))).toBeInTheDocument();
+  });
+});
+
+const eight = (from = 1) =>
+  Array.from({ length: 8 }, (_, i) =>
+    payment({ id: from + i, team: { id: 100 + from + i, name: `Team ${from + i}` } }),
+  );
+
+const refundPage: PaymentsResponse = {
+  ...emptyPayments,
+  payments: [...eight(), payment({ id: 20, team: { id: 120, name: 'Already Refunded' }, status: 'refunded', refunded_at: '2026-11-20T18:00:00Z' })],
+  meta: { ...emptyPayments.meta, total_count: 60, total_pages: 3, refund_batch_limit: 5 },
+};
+
+async function openRefundMode(path = '/staff/payments', response = refundPage) {
+  serve(response);
+  const utils = renderApp(path);
+  await screen.findByText('Team 1');
+  await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+  return utils;
+}
+
+const boxes = () => screen.getAllByRole('checkbox') as HTMLInputElement[];
+
+describe('PaymentsPage Refund mode', () => {
+  it('only paid rows have enabled checkboxes', async () => {
+    await openRefundMode();
+    expect(boxes()).toHaveLength(8);
+    expect(boxes().every((box) => !box.disabled)).toBe(true);
+    const refundedRow = screen.getAllByRole('row').find((row) => row.getAttribute('data-payment-id') === '20')!;
+    expect(within(refundedRow).queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
+  it('stops at refund_batch_limit and disables the rest with the cap note', async () => {
+    await openRefundMode();
+    for (const box of boxes().slice(0, 5)) await userEvent.click(box);
+    const unticked = boxes().filter((box) => !box.checked);
+    expect(unticked).toHaveLength(3);
+    expect(unticked.every((box) => box.disabled)).toBe(true);
+    const note = screen.getByText(t('staff.payments.capReached', { limit: 5 }));
+    expect(unticked[0]).toHaveAccessibleDescription(note.textContent!);
+    // Unticking one frees the others.
+    await userEvent.click(boxes()[0]);
+    expect(boxes().filter((box) => !box.checked).every((box) => !box.disabled)).toBe(true);
+  });
+
+  it('Select next N ticks the first paid rows up to the cap', async () => {
+    await openRefundMode();
+    await userEvent.click(screen.getByRole('button', { name: 'Select next 5' }));
+    expect(boxes().filter((box) => box.checked)).toHaveLength(5);
+    expect(boxes().slice(0, 5).every((box) => box.checked)).toBe(true);
+    expect(screen.getByRole('button', { name: 'Select next 0' })).toBeDisabled();
+  });
+
+  it('selection survives moving to page 2', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(boxes()[1]);
+    serve({ ...refundPage, payments: eight(30), meta: { ...refundPage.meta, page: 2 } });
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.next') }));
+    await screen.findByText('Team 30');
+    expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByText('3 of 5 selected · $150')).toBeInTheDocument();
+  });
+
+  it('changing race clears the selection', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByText('1 of 5 selected · $50')).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText(t('staff.payments.filters.race')), '3');
+    await waitFor(() => expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument());
+  });
+
+  it('entering refund mode locks status to Paid and Cancel returns to Browse', async () => {
+    const { router } = await openRefundMode();
+    await waitFor(() => expect(requests.at(-1)!.searchParams.get('status')).toBe('paid'));
+    expect(router.state.location.search).toContain('status=paid');
+    expect(screen.getByRole('heading', { name: t('staff.payments.refundMode.title') })).toBeInTheDocument();
+    for (const radio of screen.getAllByRole('radio')) expect(radio).toBeDisabled();
+    expect(screen.getByText(t('staff.payments.refundMode.banner', { limit: 5 }))).toBeInTheDocument();
+
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.cancel') }));
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
+    expect(screen.queryByText(/selected/)).not.toBeInTheDocument();
+    for (const radio of screen.getAllByRole('radio')) expect(radio).toBeEnabled();
+    // Selection was cleared: re-entering starts empty.
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+    expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument();
+  });
+
+  it('Clear all keeps the Paid status in Refund mode', async () => {
+    const { router } = await openRefundMode('/staff/payments?q=ada');
+    await waitFor(() => expect(router.state.location.search).toContain('status=paid'));
+    await userEvent.click(screen.getAllByRole('button', { name: t('staff.payments.filters.clearAll') })[0]);
+    await waitFor(() => expect(router.state.location.search).not.toContain('q='));
+    expect(router.state.location.search).toContain('status=paid');
+  });
+
+  it('the bottom bar shows count and total', async () => {
+    await openRefundMode();
+    const review = screen.getByRole('button', { name: 'Review and refund 0…' });
+    expect(review).toBeDisabled();
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(boxes()[1]);
+    expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review and refund 2…' })).toBeEnabled();
+  });
+
+  it('Review and refund opens the confirmation dialog with the ticked rows', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(boxes()[2]);
+    await userEvent.click(screen.getByRole('button', { name: 'Review and refund 2…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Refund 2 payments?' });
+    expect(within(dialog).getByText('Team 1')).toBeInTheDocument();
+    expect(within(dialog).getByText('Team 3')).toBeInTheDocument();
+    expect(within(dialog).queryByText('Team 2')).not.toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole('button', { name: t('staff.refund.cancel') }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('2 of 5 selected · $100')).toBeInTheDocument();
+  });
+
+  it('finishing a batch clears the selection, refetches the list and returns to Browse', async () => {
+    const { router } = await openRefundMode();
+    const listCalls = requests.length;
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.post('/api/v1/staff/refund_batches', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 9, items: [batchItem({ team_name: 'Team 1', status: 'queued' })] }) }, { status: 201 }),
+      ),
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({
+            id: 9,
+            finished_at: '2026-11-24T18:00:05Z',
+            items: [batchItem({ team_name: 'Team 1', status: 'refunded' })],
+          }),
+        }),
+      ),
+    );
+    await userEvent.click(boxes()[0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Review and refund 1…' }));
+    await userEvent.type(await screen.findByLabelText('Type REFUND 1 to confirm'), 'REFUND 1');
+    await userEvent.click(screen.getByRole('button', { name: 'Refund 1 payment' }));
+    const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
+    expect(within(results).getByText('Refunded')).toBeInTheDocument();
+    // The active batch is in the URL, so a reload reopens the results.
+    expect(router.state.location.search).toContain('batch=9');
+    await waitFor(() => expect(requests.length).toBeGreaterThan(listCalls));
+    await userEvent.click(within(results).getByRole('button', { name: t('staff.refund.done') }));
+    expect(router.state.location.search).not.toContain('batch=');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+    expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument();
+  });
+
+  it("disables the boxes and Select next while another race's rows are still on screen", async () => {
+    await openRefundMode();
+    let release: () => void = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get('/api/v1/staff/payments', async () => {
+        await gate;
+        return HttpResponse.json({ ...refundPage, payments: eight(40) });
+      }),
+    );
+    await userEvent.selectOptions(screen.getByLabelText(t('staff.payments.filters.race')), '3');
+    await waitFor(() => expect(boxes().every((box) => box.disabled)).toBe(true));
+    expect(screen.getByRole('button', { name: /^Select next/ })).toBeDisabled();
+    release();
+    await screen.findByText('Team 40');
+    expect(boxes().every((box) => !box.disabled)).toBe(true);
+    expect(screen.getByRole('button', { name: 'Select next 5' })).toBeEnabled();
+  });
+
+  it('Select next shows how many it will actually tick', async () => {
+    await openRefundMode('/staff/payments', { ...refundPage, payments: [...eight().slice(0, 2), refundPage.payments[8]] });
+    expect(screen.getByRole('button', { name: 'Select next 2' })).toBeInTheDocument();
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByRole('button', { name: 'Select next 1' })).toBeInTheDocument();
+  });
+
+  it('marks ticked rows with data-selected, not aria-selected', async () => {
+    await openRefundMode();
+    await userEvent.click(boxes()[0]);
+    const row = screen.getAllByRole('row').find((candidate) => candidate.getAttribute('data-payment-id') === '1')!;
+    expect(row).toHaveAttribute('data-selected', 'true');
+    expect(row).not.toHaveAttribute('aria-selected');
+  });
+
+  it('a reload with ?batch= reopens the results, and Retry is reachable for a dead job', async () => {
+    serve();
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({ id: 9, items: [batchItem({ team_name: 'Team 1', status: 'stalled' })] }),
+        }),
+      ),
+      http.post('/api/v1/staff/refund_batches/9/retry', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 10, retry_of_id: 9, items: [batchItem({ team_name: 'Team 1', status: 'queued' })] }) }, { status: 201 }),
+      ),
+      http.get('/api/v1/staff/refund_batches/10', () =>
+        HttpResponse.json({ batch: refundBatch({ id: 10, finished_at: '2026-11-24T18:00:05Z', items: [batchItem({ team_name: 'Team 1', status: 'refunded' })] }) }),
+      ),
+    );
+    const { router } = renderApp('/staff/payments?batch=9');
+    const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
+    expect(within(results).getByText('Stalled')).toBeInTheDocument();
+    await userEvent.click(within(results).getByRole('button', { name: 'Retry 1 failed' }));
+    await waitFor(() => expect(router.state.location.search).toContain('batch=10'));
+    await within(results).findByText('Refunded');
+    await userEvent.click(within(results).getByRole('button', { name: t('staff.refund.done') }));
+    expect(router.state.location.search).not.toContain('batch=');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

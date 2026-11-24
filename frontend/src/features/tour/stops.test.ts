@@ -57,6 +57,7 @@ describe('teamTourStops', () => {
               amount_due_cents: null,
               paid_cents: 0,
               next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+              refunded: false,
             },
           ],
         },

@@ -29,6 +29,7 @@ function item(overrides: Partial<FeeItem> = {}): FeeItem {
     amount_due_cents: 30000,
     paid_cents: 0,
     next_tier: null,
+    refunded: false,
     ...overrides,
   };
 }
@@ -408,6 +409,40 @@ describe('FeeCard', () => {
     expect(fee.getByText('$300', { selector: 'p' })).toBeInTheDocument();
     expect(fee.getByText(t('fee.rosterFirst'))).toBeInTheDocument();
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('shows Refunded on a refunded item', async () => {
+    serve({
+      checklist: {
+        racers: { filled: 4, total: 5, captain: false, done: false },
+        fee: feeOf([
+          item({ requirement_id: 3, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800, refunded: true }),
+          item({ requirement_id: 4, name: 'Registration fee' }),
+        ]),
+      },
+    });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText(t('fee.refunded'))).toBeInTheDocument();
+    expect(fee.getByText(t('fee.paid', { amount: '$88' }), { exact: false })).toBeInTheDocument();
+    expect(fee.getAllByText(t('fee.refunded'))).toHaveLength(1);
+  });
+
+  it('finalized summary notes the refund and keeps the paid total', async () => {
+    serve({
+      checklist: {
+        finalized: true,
+        fee: feeOf([
+          item({ requirement_id: 3, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800, refunded: true }),
+          item({ requirement_id: 4, name: 'Registration fee', done: true, amount_due_cents: null, paid_cents: 30000 }),
+        ]),
+      },
+    });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText('Paid $388 total')).toBeInTheDocument();
+    expect(fee.getByText('Deposit: refunded')).toBeInTheDocument();
+    expect(fee.queryByText('Registration fee: refunded')).not.toBeInTheDocument();
   });
 
   it('says when the fee opens later, with no button', async () => {

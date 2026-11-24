@@ -16,6 +16,8 @@ interface FilterProps {
   values: PaymentFilterValues;
   options: PaymentsFilterOptions | undefined;
   setFilter: SetFilter;
+  /** Refund mode only works on paid rows, so the status cannot be changed. */
+  statusLocked?: boolean;
 }
 
 function raceValue(values: PaymentFilterValues, options: PaymentsFilterOptions | undefined) {
@@ -23,7 +25,7 @@ function raceValue(values: PaymentFilterValues, options: PaymentsFilterOptions |
 }
 
 /** Race, payment type and status. Shown inline from `sm` and in the sheet below it. */
-function FilterControls({ values, options, setFilter, idPrefix }: FilterProps & { idPrefix: string }) {
+function FilterControls({ values, options, setFilter, statusLocked, idPrefix }: FilterProps & { idPrefix: string }) {
   const statusName = `${idPrefix}-status`;
   const statuses = [
     ['all', t('staff.payments.filters.statusAll')],
@@ -81,7 +83,7 @@ function FilterControls({ values, options, setFilter, idPrefix }: FilterProps & 
         <legend className="mb-1 text-sm font-semibold text-navy">
           {t('staff.payments.filters.status')}
         </legend>
-        <div className="flex overflow-hidden rounded-md border border-flag">
+        <div className={`flex overflow-hidden rounded-md border border-flag ${statusLocked ? 'opacity-60' : ''}`}>
           {statuses.map(([value, label]) => (
             <label
               key={value}
@@ -92,6 +94,7 @@ function FilterControls({ values, options, setFilter, idPrefix }: FilterProps & 
                 name={statusName}
                 className="sr-only"
                 checked={values.status === value}
+                disabled={statusLocked}
                 onChange={() => setFilter('status', value)}
               />
               {label}
@@ -171,6 +174,7 @@ export function PaymentFilters({
   onClearAll,
   canClear,
   searchReset,
+  statusLocked,
 }: FilterProps & {
   totalCount: number | undefined;
   onClearAll: () => void;
@@ -189,7 +193,7 @@ export function PaymentFilters({
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <SearchBox key={searchReset} values={values} setFilter={setFilter} />
         <div className="hidden min-w-0 gap-3 sm:flex sm:flex-wrap sm:items-end">
-          <FilterControls values={values} options={options} setFilter={setFilter} idPrefix="inline" />
+          <FilterControls values={values} options={options} setFilter={setFilter} statusLocked={statusLocked} idPrefix="inline" />
         </div>
         <Button variant="secondary" className="sm:hidden" onClick={() => setSheetOpen(true)}>
           {t('staff.payments.filters.open')}
@@ -203,7 +207,7 @@ export function PaymentFilters({
             </h2>
           </div>
           <div className="space-y-4 overflow-y-auto px-4 py-4">
-            <FilterControls values={values} options={options} setFilter={setFilter} idPrefix="sheet" />
+            <FilterControls values={values} options={options} setFilter={setFilter} statusLocked={statusLocked} idPrefix="sheet" />
           </div>
           <div className="flex flex-col gap-2 border-t border-flag px-4 py-3">
             <ResultCount count={totalCount} />

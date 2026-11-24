@@ -269,7 +269,7 @@ describe Payments::RefundCharge do
     it "is never refunded without Stripe in production, even if the status check were bypassed" do
       mock_cr
       allow(Rails.env).to receive(:production?).and_return(true)
-      allow_any_instance_of(CompletedRequirement).to receive(:payment_status).and_return("paid")
+      allow(mock_cr).to receive(:payment_status).and_return("paid")
       expect(Stripe::Charge).not_to receive(:retrieve)
 
       result = call(mock_cr)
@@ -288,6 +288,51 @@ describe Payments::RefundCharge do
 
       expect(result.code).to eq(:not_refundable)
       expect(mock_cr.reload.refunded_at).to be_nil
+    end
+
+    describe "the fail-once test hook (mock_fail_once_ charge ids)" do
+      let(:hooked) { complete_with("mock_fail_once_abc", mock_requirement) }
+
+      it "fails the first attempt with a retryable error, then refunds, with one email" do
+        first = call(hooked)
+
+        expect(first.ok).to be(false)
+        expect(first.code).to eq(:stripe_error)
+        expect(hooked.reload.refunded_at).to be_nil
+        expect(email_jobs).to be_empty
+
+        second = call(hooked)
+
+        expect(second.code).to eq(:refunded)
+        expect(hooked.reload.refunded_by).to eq(refunder)
+        expect(email_jobs.size).to eq(1)
+
+        expect(call(hooked).code).to eq(:already_refunded)
+        expect(email_jobs.size).to eq(1)
+      end
+
+      it "does nothing in production: the payment is not refundable and nothing is recorded" do
+        hooked
+        allow(Rails.env).to receive(:production?).and_return(true)
+
+        expect(call(hooked).code).to eq(:not_refundable)
+        # Even if the status check were bypassed, the mock path itself refuses in production.
+        allow(hooked).to receive(:payment_status).and_return("paid")
+        expect(call(hooked).code).to eq(:not_refundable)
+
+        hooked.reload
+        expect(hooked.refunded_at).to be_nil
+        expect(hooked.metadata).not_to include("fail_once_tripped")
+      end
+
+      it "is not a way to fail a real Stripe payment: only mock payments reach the hook" do
+        real = cr
+        real.update_columns(charge_id: "mock_fail_once_real")
+
+        # StripeMock has no charge with that id, so the real Stripe path answers "No such charge".
+        expect(call(real).code).to eq(:stripe_error)
+        expect(real.reload.metadata).not_to include("fail_once_tripped")
+      end
     end
   end
 end
