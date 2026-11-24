@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useMemo } from 'react';
+import { useUrlFilters, type UrlChanges } from '@/components/list/use-url-filters';
 import type { BrowseStatus, PaymentFilterValues } from './types';
 
 /** Any other status in the URL (refunding, not_refundable, junk) falls back to all, so no chip mislabels it. */
@@ -12,13 +12,17 @@ function positiveInt(value: string | null): number | undefined {
 
 type Key = keyof PaymentFilterValues;
 
+const NAMES: Record<Key, string> = {
+  raceId: 'race_id',
+  paymentType: 'payment_type',
+  status: 'status',
+  q: 'q',
+  page: 'page',
+};
+
 /** The page's filters live in the URL query, so a reload or a shared link keeps them. */
 export function usePaymentFilters() {
-  const [params, setSearchParams] = useSearchParams();
-  // useSearchParams hands back a new setter whenever the URL changes. Read it through a ref so setFilter and
-  // clearAll keep one identity, and a filter click does not restart the search box's debounce.
-  const setParamsRef = useRef(setSearchParams);
-  setParamsRef.current = setSearchParams;
+  const { params, setParams, clearParams } = useUrlFilters();
 
   const values = useMemo<PaymentFilterValues>(() => {
     const race = params.get('race_id');
@@ -34,43 +38,22 @@ export function usePaymentFilters() {
 
   const setFilter = useCallback(
     <K extends Key>(key: K, value: PaymentFilterValues[K]) => {
-      setParamsRef.current(
-        (previous) => {
-          const next = new URLSearchParams(previous);
-          const names: Record<Key, string> = {
-            raceId: 'race_id',
-            paymentType: 'payment_type',
-            status: 'status',
-            q: 'q',
-            page: 'page',
-          };
-          const empty = value === undefined || value === '' || (key === 'status' && value === 'all');
-          if (empty || (key === 'page' && value === 1)) next.delete(names[key]);
-          else next.set(names[key], String(value));
-          if (key !== 'page') next.delete('page');
-          if (key === 'raceId') next.delete('payment_type');
-          return next;
-        },
-        { replace: true },
-      );
+      const empty = value === undefined || value === '' || (key === 'status' && value === 'all');
+      const changes: UrlChanges = {
+        [NAMES[key]]: empty || (key === 'page' && value === 1) ? undefined : String(value),
+      };
+      // Another race has other payment types.
+      if (key === 'raceId') changes.payment_type = undefined;
+      setParams(changes);
     },
-    [],
+    [setParams],
   );
 
   /** Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). */
-  const clearAll = useCallback((keepStatus = false) => {
-    setParamsRef.current(
-      (previous) => {
-        const next = new URLSearchParams();
-        const race = previous.get('race_id');
-        if (race) next.set('race_id', race);
-        const status = previous.get('status');
-        if (keepStatus && status) next.set('status', status);
-        return next;
-      },
-      { replace: true },
-    );
-  }, []);
+  const clearAll = useCallback(
+    (keepStatus = false) => clearParams(keepStatus ? ['race_id', 'status'] : ['race_id']),
+    [clearParams],
+  );
 
   return { values, setFilter, clearAll };
 }

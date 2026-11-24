@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useState } from 'react';
+import { Pagination } from '@/components/list/pagination';
 import { Button } from '@/components/ui/button';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { t } from '@/locales/en';
@@ -9,7 +10,6 @@ import { usePaymentFilters } from '../use-payment-filters';
 import { useSelection } from '../use-selection';
 import { hasActiveFilters, raceNotFound } from '../utils';
 import { FilterChips } from './filter-chips';
-import { Pagination } from './pagination';
 import { PaymentFilters } from './payment-filters';
 import { PaymentsTable } from './payments-table';
 import { ProgressLine } from './progress-line';
@@ -171,6 +171,12 @@ export function PaymentsPage() {
             />
           )}
           <Pagination
+            labels={{
+              nav: t('staff.payments.pagination'),
+              prev: t('staff.payments.prev'),
+              next: t('staff.payments.next'),
+              page: (page, total) => t('staff.payments.page', { page, total }),
+            }}
             page={data.meta.page}
             totalPages={data.meta.total_pages}
             onPage={(page) => {
