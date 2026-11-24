@@ -83,6 +83,7 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <Navigate to="payments" replace /> },
           { path: 'payments', element: <StaffPaymentsRoute /> },
+          { path: '*', element: <NotFound /> },
         ],
       },
     ],

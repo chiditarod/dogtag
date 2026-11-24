@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { t } from '@/locales/en';
@@ -15,6 +15,9 @@ describe('staff routes', () => {
     renderApp('/staff/payments');
     expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
     expect(screen.queryByRole('navigation', { name: t('staff.nav') })).not.toBeInTheDocument();
+    const header = screen.getByRole('banner');
+    expect(within(header).getByText(user.first_name)).toBeInTheDocument();
+    expect(within(header).queryByRole('link', { name: t('layout.staff') })).not.toBeInTheDocument();
   });
 
   it('refunder sees the staff nav and Payments heading', async () => {
@@ -36,6 +39,21 @@ describe('staff routes', () => {
     expect(await screen.findByRole('heading', { name: t('login.heading') })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/register/login');
     expect(router.state.location.search).toContain(encodeURIComponent('/staff/payments'));
+  });
+
+  it('staff see Page not found inside the staff shell for an unknown staff path', async () => {
+    asUser(['operator']);
+    renderApp('/staff/nope');
+    expect(await screen.findByRole('heading', { name: t('notFound.heading') })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: t('staff.nav') })).toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveClass('max-w-6xl');
+  });
+
+  it('racer sees not allowed at an unknown staff path', async () => {
+    asUser([]);
+    renderApp('/staff/nope');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('notFound.heading') })).not.toBeInTheDocument();
   });
 
   it('/staff redirects to /staff/payments', async () => {

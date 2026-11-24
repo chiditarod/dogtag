@@ -136,6 +136,13 @@ describe "API v1 staff payments", type: :request do
       expect(json["payments"].map { |row| row["id"] }).to eq(newest_first.last(2))
     end
 
+    it "answers 200 with no rows for a page far past the end" do
+      get "/api/v1/staff/payments", params: { page: "9" * 30 }
+
+      expect(response).to have_http_status(:ok)
+      expect(json["payments"]).to be_empty
+    end
+
     it "summary ignores the status filter" do
       FactoryBot.create(:completed_requirement, requirement: requirement, team: FactoryBot.create(:team, race: race),
         charge_id: "ch_5", amount_cents: 2500, refunded_at: 1.day.ago)

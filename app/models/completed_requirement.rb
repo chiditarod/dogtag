@@ -40,11 +40,23 @@ class CompletedRequirement < ApplicationRecord
 
   has_many :refund_batch_items, dependent: :destroy
 
-  def refunded? = refunded_at.present?
+  # Both fall back to the metadata on a row loaded without the payment columns (a dyno running before
+  # AddPaymentColumnsToCompletedRequirements has run), so the legacy team page and TeamChecklist still work.
+  def refunded?
+    return refunded_at.present? if has_attribute?(:refunded_at)
 
-  # The one definition of a payment's status: refunded, refunding (a refund batch item is queued),
-  # not_refundable (no Stripe charge, or a mock payment in production) or paid. Needs `requirements`
-  # joined, so scope with joins(:requirement). Nothing else re-derives it.
+    legacy_metadata["refunded"].present?
+  end
+
+  def charge_id
+    has_attribute?(:charge_id) ? super : legacy_metadata["charge_id"]
+  end
+
+  # The one definition of a payment's status: refunded, refunding (a refund batch item is queued in a batch
+  # younger than RefundBatch::STALL_AFTER), not_refundable (no Stripe charge, or a mock payment in production)
+  # or paid. An item still queued after that is stalled (RefundBatch#reported_status), so a lost job never
+  # leaves a payment stuck refunding. Needs `requirements` joined, so scope with joins(:requirement).
+  # Nothing else re-derives it.
   def self.payment_status_sql
     mock_in_production = Rails.env.production? ? "requirements.type = 'MockPaymentRequirement'" : "FALSE"
     <<~SQL.squish
@@ -52,8 +64,10 @@ class CompletedRequirement < ApplicationRecord
         WHEN completed_requirements.refunded_at IS NOT NULL THEN 'refunded'
         WHEN EXISTS (
           SELECT 1 FROM refund_batch_items
+          JOIN refund_batches ON refund_batches.id = refund_batch_items.refund_batch_id
           WHERE refund_batch_items.completed_requirement_id = completed_requirements.id
             AND refund_batch_items.status = 'queued'
+            AND refund_batches.created_at > #{connection.quote(RefundBatch.stall_cutoff)}
         ) THEN 'refunding'
         WHEN completed_requirements.charge_id IS NULL OR #{mock_in_production} THEN 'not_refundable'
         ELSE 'paid'
@@ -72,4 +86,11 @@ class CompletedRequirement < ApplicationRecord
   end
 
   def refundable? = payment_status == "paid"
+
+  private
+
+  def legacy_metadata
+    data = metadata
+    data.is_a?(Hash) ? data : {}
+  end
 end

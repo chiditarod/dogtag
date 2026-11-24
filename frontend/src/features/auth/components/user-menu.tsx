@@ -4,7 +4,16 @@ import { useMe } from '@/features/auth/api/use-me';
 import { isStaff } from '@/features/staff/utils';
 import { t } from '@/locales/en';
 
-export function UserMenu() {
+interface UserMenuProps {
+  /** Show the Staff link to staff. The staff layout turns it off: its own nav covers it. */
+  staffLink?: boolean;
+}
+
+/**
+ * Wraps onto more lines rather than widening the header: at 320px a long first
+ * name plus My teams, Staff and Log out is wider than the room beside the logo.
+ */
+export function UserMenu({ staffLink = true }: UserMenuProps) {
   const { data: user } = useMe();
   const logout = useLogout();
   const navigate = useNavigate();
@@ -18,12 +27,12 @@ export function UserMenu() {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 whitespace-nowrap">
       <span className="max-w-[8rem] truncate font-semibold">{user.first_name}</span>
       <Link to="/teams" className="font-semibold text-link hover:underline">
         {t('layout.myTeams')}
       </Link>
-      {isStaff(user) && (
+      {staffLink && isStaff(user) && (
         <Link to="/staff/payments" className="font-semibold text-link hover:underline">
           {t('layout.staff')}
         </Link>

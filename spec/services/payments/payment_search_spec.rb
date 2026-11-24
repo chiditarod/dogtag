@@ -27,6 +27,19 @@ describe Payments::PaymentSearch do
       expect(search.filters[:race_id]).to eq(race.id)
     end
 
+    it "defaults to the most recent race that has already run, before any open race" do
+      recent = FactoryBot.create(:race, name: "Race Recent")
+      recent.update_columns(registration_open: 10.weeks.ago, registration_close: 1.week.ago, race_datetime: 2.days.ago)
+      older = FactoryBot.create(:race, name: "Race Older")
+      older.update_columns(registration_open: 60.weeks.ago, registration_close: 53.weeks.ago, race_datetime: 1.year.ago)
+      mine = pay(FactoryBot.create(:payment_requirement, race: recent))
+      pay(FactoryBot.create(:payment_requirement, race: older))
+      pay(deposit)
+
+      expect(ids).to eq([mine.id])
+      expect(search.filters[:race_id]).to eq(recent.id)
+    end
+
     it "defaults to the newest race when none is open" do
       race.update_columns(registration_close: 1.day.ago)
       old_race.update_columns(registration_close: 2.days.ago)
@@ -142,6 +155,15 @@ describe Payments::PaymentSearch do
       meta = search(page: 2).meta
       expect(meta).to include(page: 2, per_page: 25, total_count: 28, total_pages: 2, refund_batch_limit: 5)
       expect(ids(page: "0")).to eq(expected.first(25))
+    end
+
+    it "clamps a huge page instead of failing" do
+      pay(deposit)
+
+      huge = search(page: "9" * 30)
+
+      expect(huge.payments).to eq([])
+      expect(huge.meta).to include(page: described_class::MAX_PAGE, total_count: 1)
     end
   end
 

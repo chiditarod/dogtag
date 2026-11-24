@@ -7,4 +7,8 @@ class RefundBatchItem < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
 
   scope :queued, -> { where(status: "queued") }
+  # Queued items whose batch is stalled (see RefundBatch#reported_status).
+  scope :stale, -> { queued.joins(:refund_batch).where(refund_batches: { created_at: ..RefundBatch.stall_cutoff }) }
+
+  def self.mark_stalled! = update_all(status: "stalled", finished_at: Time.current, updated_at: Time.current)
 end

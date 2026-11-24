@@ -23,7 +23,11 @@ class RefundBatch < ApplicationRecord
     item.status == "queued" && stalled? ? "stalled" : item.status
   end
 
-  def stalled? = created_at <= STALL_AFTER.ago
+  def stalled? = created_at <= self.class.stall_cutoff
+
+  # A batch created at or before this time is stalled. Shared with CompletedRequirement.payment_status_sql
+  # and RefundBatchItem.stale so they all agree.
+  def self.stall_cutoff = STALL_AFTER.ago
 
   # Only a retry rewrites stalled items, right before it re-queues them, so a payment is never queued twice.
   # The unique index on queued items and RefundCharge's lock and Stripe check keep a late original job from
@@ -31,6 +35,6 @@ class RefundBatch < ApplicationRecord
   def mark_stalled!
     return unless stalled?
 
-    items.queued.update_all(status: "stalled", finished_at: Time.current, updated_at: Time.current)
+    items.queued.mark_stalled!
   end
 end

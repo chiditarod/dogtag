@@ -142,6 +142,38 @@ describe Payments::QueueRefundBatch do
       expect(Workers::RefundBatch.jobs).to be_empty
     end
 
+    it "lists a payment whose batch stalled (lost job) as paid and queues it again" do
+      start = Time.utc(2026, 11, 24, 12, 0, 0)
+      cr = paid
+      old_batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+      stuck = FactoryBot.create(:refund_batch_item, refund_batch: old_batch, completed_requirement: cr)
+
+      Timecop.freeze(start + 11.minutes) do
+        listed = Payments::PaymentSearch.new(race_id: requirement.race_id.to_s, status: "paid").payments
+        expect(listed.map(&:id)).to eq([cr.id])
+        expect(listed.first.payment_status).to eq("paid")
+
+        result = queue([cr.id])
+
+        expect(result.ok).to be(true)
+        expect(stuck.reload.status).to eq("stalled")
+        expect(stuck.finished_at).to be_present
+        expect(result.batch.items.pluck(:completed_requirement_id, :status)).to eq([[cr.id, "queued"]])
+        expect(cr.payment_status).to eq("refunding")
+      end
+    end
+
+    it "still refuses a payment queued in a batch younger than RefundBatch::STALL_AFTER" do
+      start = Time.utc(2026, 11, 24, 12, 0, 0)
+      cr = paid
+      batch = Timecop.freeze(start) { FactoryBot.create(:refund_batch, user: refunder) }
+      FactoryBot.create(:refund_batch_item, refund_batch: batch, completed_requirement: cr)
+
+      Timecop.freeze(start + 9.minutes) do
+        no_batch_created { expect(queue([cr.id]).errors).to eq(cr.id.to_s => ["being refunded"]) }
+      end
+    end
+
     it "maps losing the race on the queued-item index to not_refundable" do
       ids = [paid.id, paid.id]
       allow(RefundBatchItem).to receive(:create!).and_raise(ActiveRecord::RecordNotUnique)
