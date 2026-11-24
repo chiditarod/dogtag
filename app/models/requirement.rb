@@ -50,14 +50,19 @@ class Requirement < ApplicationRecord
   # todo: figure out how to allow only child classes to call this method.
   # todo: move JSON and is_a? Hash calls into the model
   def complete(team_id, user, metadata = {})
-    cr = CompletedRequirement.new(
+    attributes = {
       :requirement_id => id,
       :team_id => team_id,
       :user => user,
-      :charge_id => metadata["charge_id"],
-      :amount_cents => metadata["amount"],
       :metadata => JSON.generate(metadata)
-    )
+    }
+    # Deploy window: from the push until AddPaymentColumnsToCompletedRequirements has run, these columns do
+    # not exist and assigning them raises UnknownAttributeError after the card was charged. The metadata
+    # still carries both, and the migration's backfill copies them into the columns.
+    if CompletedRequirement.column_names.include?("charge_id")
+      attributes.merge!(:charge_id => metadata["charge_id"], :amount_cents => metadata["amount"])
+    end
+    cr = CompletedRequirement.new(attributes)
     cr.subscribe(CompletedRequirementAuditor.new)
     return cr if cr.save
     false

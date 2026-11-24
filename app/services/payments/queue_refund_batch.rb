@@ -78,6 +78,9 @@ module Payments
 
     def self.queue(user, ids, retry_of: nil)
       batch = RefundBatch.transaction do
+        # A stale queued item (its job was lost) lists as paid, but would trip the unique index on queued
+        # items, so mark it stalled first, as a retry of its own batch would.
+        RefundBatchItem.stale.where(completed_requirement_id: ids).mark_stalled!
         RefundBatch.create!(user: user, retry_of: retry_of).tap do |created|
           ids.each { |id| RefundBatchItem.create!(refund_batch: created, completed_requirement_id: id, status: "queued") }
         end

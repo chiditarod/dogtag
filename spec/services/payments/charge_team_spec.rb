@@ -34,6 +34,19 @@ describe Payments::ChargeTeam do
     expect(cr.metadata).to include("amount" => 5000, "charge_id" => a_string_starting_with("test_ch"), "customer_id" => user.reload.stripe_customer_id)
   end
 
+  it "records the charge before the payment columns migration has run (deploy window)" do
+    legacy_columns = CompletedRequirement.column_names - %w[charge_id amount_cents refunded_at stripe_refund_id refunded_by_id]
+    allow(CompletedRequirement).to receive(:column_names).and_return(legacy_columns)
+    # Assigning a missing column would raise UnknownAttributeError after the card was charged.
+    expect(CompletedRequirement).to receive(:new).with(hash_excluding(:charge_id, :amount_cents)).and_call_original
+
+    result = call
+
+    expect(result.ok).to be(true)
+    expect(result.completed_requirement).to be_persisted
+    expect(result.completed_requirement.reload.metadata).to include("amount" => 5000, "charge_id" => a_string_starting_with("test_ch"))
+  end
+
   it "creates a new Stripe customer when the saved one no longer exists" do
     user.update!(stripe_customer_id: "cus_gone")
 
