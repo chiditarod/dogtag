@@ -57,10 +57,49 @@ describe Payments::RefundCharge do
     expect(result.ok).to be(true)
     expect(result.code).to eq(:already_refunded)
     cr.reload
-    expect(cr.refunded_at).to be_present
-    expect(cr.refunded_by).to eq(refunder)
-    expect(cr.stripe_refund_id).to include("re_")
+    stripe_refund = Stripe::Charge.retrieve(charge.id).refunds.data.first
+    expect(cr.refunded_at).to eq(Time.at(stripe_refund.created).utc)
+    expect(cr.refunded_by).to be_nil
+    expect(cr.stripe_refund_id).to eq(stripe_refund.id)
     expect(email_jobs.size).to eq(1)
+  end
+
+  describe "a charge refunded outside the app in several refunds" do
+    def refunded_charge(refunds)
+      Stripe::Charge.construct_from(id: charge.id, refunded: true, amount: 5000, amount_refunded: 5000, refunds: { data: refunds })
+    end
+
+    it "records the refund that covers the whole charge, whatever order Stripe lists them in" do
+      full = { id: "re_full", amount: 5000, created: Time.utc(2026, 11, 2).to_i }
+      allow(Stripe::Charge).to receive(:retrieve).and_return(refunded_charge([{ id: "re_x", amount: 100, created: Time.utc(2026, 11, 9).to_i }, full]))
+
+      call
+
+      cr.reload
+      expect(cr.stripe_refund_id).to eq("re_full")
+      expect(cr.refunded_at).to eq(Time.utc(2026, 11, 2))
+      expect(cr.refunded_by).to be_nil
+    end
+
+    it "records the most recent refund when none covers the charge alone (the one that completed it)" do
+      newest = { id: "re_new", amount: 2000, created: Time.utc(2026, 11, 9).to_i }
+      oldest = { id: "re_old", amount: 3000, created: Time.utc(2026, 11, 2).to_i }
+      allow(Stripe::Charge).to receive(:retrieve).and_return(refunded_charge([newest, oldest]))
+
+      call
+
+      expect(cr.reload.stripe_refund_id).to eq("re_new")
+      expect(cr.refunded_at).to eq(Time.utc(2026, 11, 9))
+    end
+
+    it "falls back to now when Stripe lists no refund" do
+      allow(Stripe::Charge).to receive(:retrieve).and_return(refunded_charge([]))
+
+      Timecop.freeze(Time.utc(2026, 11, 24, 15)) { call }
+
+      expect(cr.reload.refunded_at).to eq(Time.utc(2026, 11, 24, 15))
+      expect(cr.stripe_refund_id).to be_nil
+    end
   end
 
   it "returns already_refunded without calling Stripe when refunded_at is set" do

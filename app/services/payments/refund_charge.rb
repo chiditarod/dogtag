@@ -48,7 +48,7 @@ module Payments
       return refund_mock if cr.requirement.is_a?(MockPaymentRequirement)
 
       charge = Stripe::Charge.retrieve(cr.charge_id)
-      return record(:already_refunded, "This charge was already refunded at Stripe; it is now recorded here.", stripe_refund_id_of(charge)) if charge.refunded
+      return record_outside_refund(charge) if charge.refunded
       return failure(:partially_refunded, partial_message(charge)) if charge.amount_refunded.to_i.positive?
 
       # Whole-charge refunds only: refuse unless Stripe's charge is exactly what this app recorded.
@@ -67,10 +67,10 @@ module Payments
     # Writes the refund and queues the email, once. Never called for a payment already recorded as refunded.
     # Skips validations on purpose: a refund that reached Stripe is always recorded, even if the row would no
     # longer validate (for example the payer's account was deleted), or every retry would repeat the failure.
-    def record(code, message, stripe_refund_id)
+    def record(code, message, stripe_refund_id, refunded_at: Time.current, refunded_by: user)
       cr.update_columns(
-        refunded_at: Time.current,
-        refunded_by_id: user.id,
+        refunded_at: refunded_at,
+        refunded_by_id: refunded_by&.id,
         stripe_refund_id: stripe_refund_id,
         metadata: JSON.generate((cr.metadata || {}).merge("refunded" => true)),
         updated_at: Time.current
@@ -94,7 +94,22 @@ module Payments
       alert("Refund email not queued for completed requirement #{cr.id}, team #{cr.team_id} (#{e.class}: #{e.message}). The refund is recorded.")
     end
 
-    def stripe_refund_id_of(charge) = charge[:refunds]&.data&.last&.id
+    # The charge was refunded at Stripe by someone else (the dashboard) or by an attempt that died before saving.
+    # Nobody in this app did it, so refunded_by stays blank, and refunded_at is when Stripe refunded it.
+    def record_outside_refund(charge)
+      refund = covering_refund(charge)
+      record(
+        :already_refunded, "This charge was already refunded at Stripe; it is now recorded here.", refund&.id,
+        refunded_at: refund&.created ? Time.at(refund.created).utc : Time.current, refunded_by: nil
+      )
+    end
+
+    # The refund that refunded the whole charge, if one did; otherwise the most recent one, which is the one
+    # that completed it. Not the list's position: Stripe lists newest first (the mock appends), so order by time.
+    def covering_refund(charge)
+      refunds = charge[:refunds]&.data.to_a
+      refunds.find { |refund| refund.amount == charge.amount } || refunds.max_by { |refund| refund.created.to_i }
+    end
 
     def partial_message(charge)
       "This charge is already partially refunded (#{dollars(charge.amount_refunded)} of #{dollars(charge.amount)}). " \
