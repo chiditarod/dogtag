@@ -150,6 +150,11 @@ test.describe("SPA who's registered (read-only views)", () => {
     await expect(numbers.nth(0).getByRole('cell').first()).toHaveText(/7$/);
     await expect(numbers.nth(1)).toContainText(c.other_name);
     await expect(numbers.nth(1).getByRole('cell').first()).toHaveText(/12$/);
+    // Someone else's team opens on the legacy admin page, not the owner's SPA team page.
+    await expect(numbers.nth(1).getByRole('link', { name: c.other_name })).toHaveAttribute(
+      'href',
+      /^\/teams\/\d+$/,
+    );
 
     const owners = page.getByRole('link', { name: 'Email team owners (bcc)' });
     await expect(page.getByRole('link', { name: 'Email all racers (bcc)' })).toBeVisible();
