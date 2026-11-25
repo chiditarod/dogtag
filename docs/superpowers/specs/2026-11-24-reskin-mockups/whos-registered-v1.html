@@ -1,0 +1,135 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .ph { width: 340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .dk { width: 1000px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; border-bottom:4px solid #b3ddf2; display:flex; align-items:center; justify-content:space-between; padding:10px 12px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; letter-spacing:.5px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; line-height:1.5; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .bd { padding:14px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:24px; margin:0 0 2px; }
+  .sub { color:#12202fcc; font-size:13px; margin:0 0 12px; }
+  .search { border:1px solid #9fb3c6; border-radius:6px; padding:9px 10px; background:#fff; color:#12202f99; flex:1; }
+  .fbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:9px 12px; font-weight:600; background:#fff; white-space:nowrap; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:12px 0 10px; }
+  .tab { padding:8px 10px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sec { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:14px 0 8px; display:flex; justify-content:space-between; align-items:baseline; }
+  .sec span { font-family:Inter; font-size:12px; color:#12202fb3; }
+  .tc { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:12px; margin-bottom:8px; }
+  .tc .nm { font-weight:700; font-size:15px; }
+  .tc .ds { font-size:13px; color:#12202fcc; margin:3px 0 7px; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+  .chip { background:#eaf5fb; border:1px solid #b3ddf2; border-radius:99px; font-size:11px; padding:1px 8px; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .bar { height:6px; background:#e6edf3; border-radius:99px; overflow:hidden; margin:6px 0 2px; }
+  .bar i { display:block; height:100%; background:#e4002b; }
+  .mine { font-size:11px; background:#12202f; color:#fff; border-radius:99px; padding:1px 7px; margin-left:6px; vertical-align:middle; }
+  .del { font-size:12px; color:#c4001f; text-decoration:underline; float:right; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; border-radius:8px; overflow:hidden; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; font-weight:700; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .new { background:#fff0f2; border:1px solid #e4002b55; color:#c4001f; border-radius:99px; font-size:11px; padding:1px 7px; }
+  .ok { color:#1d7a46; font-weight:600; }
+  .warn { color:#a15c00; font-weight:600; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:6px 10px; font-weight:600; background:#fff; font-size:12px; display:inline-block; }
+  .snav { background:#12202f; color:#fff; padding:8px 14px; font-size:13px; display:flex; gap:18px; }
+  .snav b { border-bottom:2px solid #e4002b; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:340px; font-size:13px; margin-top:8px; }
+</style>
+
+<h2>Who's registered</h2>
+<p class="subtitle">Racers reach it from the race tile ("See who's registered"). Part 1: how racers see it on a phone, two layouts, click the one you prefer. Part 2: what staff see on a laptop. Tell me in the terminal what to change.</p>
+
+<h3>Part 1: racer, phone width</h3>
+<div class="options">
+  <div class="option" data-choice="tabs" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Tabs: Registered | Still registering <span class="pill">my pick</span></h3>
+      <div class="ph">
+        <div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Ada</b> <a>My teams</a><br><a>Account</a> <a>Log out</a></div></div>
+        <div class="bd">
+          <a class="l" style="font-size:13px">‹ All races</a>
+          <h1 class="t">Who's registered</h1>
+          <p class="sub">CHIditarod 2027 · 112 of 150 spots taken</p>
+          <div style="display:flex;gap:8px"><div class="search">Search team names</div><div class="fbtn">Filters (1)</div></div>
+          <div class="tabs"><div class="tab on">Registered (112)</div><div class="tab">Still registering (23)</div></div>
+          <div class="tc"><div class="nm">Doge Sled <span class="mine">Your team</span></div><div class="ds">Shibas pulling a cart full of canned beans.</div><div class="chips"><span class="chip">Racer</span><span class="chip">Not racing for time</span></div><div class="meta">Team: 3 years · Racers: 14 years raced</div></div>
+          <div class="tc"><div class="nm">Secret Gentlemen, The</div><div class="ds">Top hats, monocles, extremely loud kazoo.</div><div class="chips"><span class="chip">Art Cart</span><span class="chip">Not racing for time</span></div><div class="meta">Team: 5+ years · Racers: 31 years raced</div></div>
+          <div class="tc"><div class="nm">Cart Wheels of Fortune</div><div class="ds">TBD</div><div class="chips"><span class="chip">Racer</span><span class="chip">Racing for time</span></div><div class="meta">Team: First year · Racers: 0 years raced</div></div>
+        </div>
+      </div>
+      <p class="cap">"Filters" opens a sheet with one select per question staff chose for this race (here: team type, racing for time). Each count updates with search and filters.</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="stacked" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>One long page: both sections stacked</h3>
+      <div class="ph">
+        <div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Ada</b> <a>My teams</a><br><a>Account</a> <a>Log out</a></div></div>
+        <div class="bd">
+          <a class="l" style="font-size:13px">‹ All races</a>
+          <h1 class="t">Who's registered</h1>
+          <p class="sub">CHIditarod 2027 · 112 of 150 spots taken</p>
+          <div style="display:flex;gap:8px"><div class="search">Search team names</div><div class="fbtn">Filters</div></div>
+          <div class="sec">Registered <span>112 teams</span></div>
+          <div class="tc"><div class="nm">Doge Sled <span class="mine">Your team</span></div><div class="ds">Shibas pulling a cart full of canned beans.</div><div class="chips"><span class="chip">Racer</span><span class="chip">Not racing for time</span></div><div class="meta">Team: 3 years · Racers: 14 years raced</div></div>
+          <div class="meta" style="text-align:center;margin:6px 0 4px">… 111 more …</div>
+          <div class="sec">Still registering <span>23 teams</span></div>
+          <div class="tc"><a class="del">Delete</a><div class="nm">Ada's Second Try <span class="mine">Your team</span></div><div class="ds">TBD</div><div class="bar"><i style="width:60%"></i></div><div class="meta">60% done</div></div>
+          <div class="tc"><div class="nm">Mush Hour</div><div class="ds">Rush-hour commuters, but pushing carts.</div><div class="bar"><i style="width:85%"></i></div><div class="meta">85% done</div></div>
+        </div>
+      </div>
+      <p class="cap">Everything on one scroll. Simpler, but with 100+ registered teams the "Still registering" list is far down the page.</p>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:28px">Still registering tab, and when the race is full</h3>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+  <div>
+    <p class="label">Race has room</p>
+    <div class="ph"><div class="bd">
+      <div class="tabs" style="margin-top:0"><div class="tab">Registered (112)</div><div class="tab on">Still registering (23)</div></div>
+      <div class="tc"><a class="del">Delete</a><div class="nm">Ada's Second Try <span class="mine">Your team</span></div><div class="ds">TBD</div><div class="bar"><i style="width:60%"></i></div><div class="meta">60% done</div></div>
+      <div class="tc"><div class="nm">Mush Hour</div><div class="ds">Rush-hour commuters, but pushing carts.</div><div class="bar"><i style="width:85%"></i></div><div class="meta">85% done</div></div>
+    </div></div>
+    <p class="cap">Most recently active first. Delete shows only on your own team, and only while it can still be deleted.</p>
+  </div>
+  <div>
+    <p class="label">Race is full</p>
+    <div class="ph"><div class="bd">
+      <div class="tabs" style="margin-top:0"><div class="tab">Registered (150)</div><div class="tab on">Waitlist (31)</div></div>
+      <div class="tc"><div class="nm"><span style="color:#c4001f;font-family:Oswald">#1</span> Mush Hour</div><div class="ds">Rush-hour commuters, but pushing carts.</div><div class="meta">On the waitlist since Dec 9</div></div>
+      <div class="tc"><div class="nm"><span style="color:#c4001f;font-family:Oswald">#2</span> Ada's Second Try <span class="mine">Your team</span></div><div class="ds">TBD</div><div class="meta">On the waitlist since Dec 10</div></div>
+    </div></div>
+    <p class="cap">Ordered by waitlist position, the same order the waitlist uses today. The old page called every unfinished team "waitlisted" even when the race had room.</p>
+  </div>
+</div>
+
+<h3 style="margin-top:28px">Part 2: staff, laptop width</h3>
+<div class="dk">
+  <div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Sam</b> <a>My teams</a> <a>Staff</a> <a>Account</a> <a>Log out</a></div></div>
+  <div class="bd">
+    <a class="l" style="font-size:13px">‹ All races</a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px">
+      <div><h1 class="t">Who's registered</h1><p class="sub" style="margin:0">CHIditarod 2027 · 112 of 150 spots taken</p></div>
+      <div style="display:flex;gap:8px"><span class="sbtn">Email all racers (bcc)</span><span class="sbtn">Email team owners (bcc)</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin:12px 0"><div class="search" style="max-width:280px">Search team names</div><div class="fbtn">Team type: Any ▾</div><div class="fbtn">Racing for time: Any ▾</div></div>
+    <div class="tabs"><div class="tab on">Registered (112)</div><div class="tab">Still registering (23)</div></div>
+    <table class="st">
+      <tr><th>#</th><th>Team</th><th>Team type</th><th>Racing for time</th><th>Experience</th><th>Payments</th><th>New team</th></tr>
+      <tr><td><b>7</b></td><td><a class="l"><b>Doge Sled</b></a><div class="meta">Shibas pulling a cart full of canned beans.</div></td><td>Racer</td><td>No</td><td>Team: 3 years<br><span class="meta">Racers: 14</span></td><td><span class="ok">2 of 2 paid</span><br><span class="meta">3 hours ago</span></td><td></td></tr>
+      <tr><td><b>12</b></td><td><a class="l"><b>Secret Gentlemen, The</b></a><div class="meta">Top hats, monocles, extremely loud kazoo.</div></td><td>Art Cart</td><td>No</td><td>Team: 5+ years<br><span class="meta">Racers: 31</span></td><td><span class="ok">2 of 2 paid</span><br><span class="meta">Dec 8</span></td><td></td></tr>
+      <tr><td><b>13</b></td><td><a class="l"><b>Cart Wheels of Fortune</b></a><div class="meta">TBD</div></td><td>Racer</td><td>Yes</td><td>Team: First year<br><span class="meta">Racers: 0</span></td><td><span class="ok">2 of 2 paid</span><br><span class="meta">Dec 8</span></td><td><span class="new">New team</span></td></tr>
+    </table>
+    <p class="meta" style="margin-top:8px">The "Email" buttons open your mail app addressed to dogtag@chiditarod.org with everyone in bcc, for the tab you're on. Team names open the team page with the staff panel. "#" is the team number given at finalization. Refunders see the table but not the email buttons. On a phone, staff get the same cards as racers plus the number, payments and new-team lines.</p>
+  </div>
+</div>

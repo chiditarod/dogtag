@@ -1,0 +1,200 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .dk { width:1040px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .ph { width:340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; display:flex; align-items:center; justify-content:space-between; padding:10px 14px 4px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .nav { background:#fff; border-bottom:4px solid #b3ddf2; padding:2px 10px 8px; display:flex; gap:4px; flex-wrap:wrap; font-size:13px; }
+  .nav span { padding:3px 8px; border-radius:4px; color:#2f5aae; font-weight:600; }
+  .nav span.on { background:#b3ddf266; color:#12202f; }
+  .bd { padding:16px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:26px; margin:0; }
+  .sub { color:#12202fcc; font-size:13px; margin:2px 0 12px; }
+  .cd { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .cd h2 { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:0 0 10px; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .b { border-radius:99px; font-size:11px; padding:1px 8px; font-weight:600; border:1px solid; white-space:nowrap; }
+  .open { background:#e9f7ef; color:#1d7a46; border-color:#6cbf8a; }
+  .soon { background:#eaf5fb; color:#12202f; border-color:#b3ddf2; }
+  .closed { background:#f1f1f1; color:#555; border-color:#ccc; }
+  .warn { background:#fff8e1; color:#8a5a00; border-color:#f0d58a; }
+  .btn { background:#e4002b; color:#fff; font-weight:600; border-radius:6px; padding:8px 14px; display:inline-block; font-size:13px; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:7px 12px; font-weight:600; background:#fff; font-size:13px; display:inline-block; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:13px; }
+  .kv b { font-weight:600; }
+  .stat { font-family:Oswald; font-size:28px; font-weight:700; }
+  .f { margin-bottom:12px; }
+  .f label { display:block; font-weight:600; font-size:13px; margin-bottom:3px; }
+  .in { border:1px solid #9fb3c6; border-radius:6px; padding:8px 10px; background:#fff; min-height:18px; font-size:13px; }
+  .hp { font-size:12px; color:#12202fcc; margin-top:3px; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; background:#0f1b27; color:#d7e6f3; border-radius:6px; padding:10px; white-space:pre; line-height:1.45; overflow:hidden; height:260px; }
+  .err { color:#c4001f; font-weight:600; font-size:12px; margin-top:4px; }
+  .pv { border:1px dashed #9fb3c6; border-radius:6px; padding:10px; height:260px; overflow:hidden; background:#fff; font-size:13px; }
+  .pv .q { margin-bottom:10px; }
+  .pv .q b { display:block; margin-bottom:3px; }
+  .radio { display:inline-block; border:1px solid #9fb3c6; border-radius:99px; padding:2px 10px; margin-right:4px; font-size:12px; }
+  .chk { display:inline-flex; align-items:center; gap:4px; border:1px solid #b3ddf2; border-radius:6px; padding:3px 8px; margin:0 4px 4px 0; font-size:12px; background:#fff; }
+  .chk i { width:12px; height:12px; border:1px solid #2f5aae; border-radius:3px; display:inline-block; }
+  .chk.on i { background:#2f5aae; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:0 0 12px; flex-wrap:wrap; }
+  .tab { padding:8px 12px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sticky { position:relative; background:#fff; border-top:1px solid #b3ddf2; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:1040px; font-size:13px; margin-top:8px; }
+  .note { background:#eaf5fb; border-left:3px solid #2f5aae; padding:6px 10px; font-size:12px; border-radius:4px; }
+</style>
+
+<h2>Staff race setup</h2>
+<p class="subtitle">Three screens: the races list, one race's overview, and the race edit form (two ways to organize it; click the one you prefer). Staff nav as it will look once every staff page has shipped. Tell me in the terminal what to change.</p>
+
+<h3>1. Races list (/register/staff/races)</h3>
+<div class="dk">
+  <div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div>
+  <div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div>
+  <div class="bd">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h1 class="t">Races</h1><span class="btn">New race</span></div>
+    <table class="st">
+      <tr><th>Race</th><th>Race day</th><th>Registration</th><th>Teams</th><th>Setup</th></tr>
+      <tr><td><a class="l"><b>CHIditarod 2027</b></a></td><td>Sat Mar 6, 2027</td><td><span class="b open">Open</span> <span class="meta">closes Feb 14</span></td><td>112 of 150 registered<br><span class="meta">23 still registering</span></td><td>Ready</td></tr>
+      <tr><td><a class="l"><b>CHIditarod 2026</b></a></td><td>Sat Mar 7, 2026</td><td><span class="b closed">Over</span></td><td>150 of 150 registered</td><td>Ready</td></tr>
+      <tr><td><a class="l"><b>Test race (do not use)</b></a></td><td>Sun Mar 1, 2026</td><td><span class="b soon">Not open yet</span> <span class="meta">opens Jan 2</span></td><td>0</td><td><span class="b warn">Fee has no price tier</span></td></tr>
+    </table>
+    <p class="meta">Newest race first. "Setup" flags problems that would stop a racer paying or finishing (no enabled fee, no tiers, broken question form).</p>
+  </div>
+</div>
+
+<h3 style="margin-top:26px">2. Race overview (/register/staff/races/:id)</h3>
+<div class="dk">
+  <div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div>
+  <div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div>
+  <div class="bd">
+    <a class="l" style="font-size:13px">‹ Races</a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <div><h1 class="t">CHIditarod 2027</h1><p class="sub" style="margin:2px 0 0"><span class="b open">Open</span> · Race day Sat Mar 6, 2027 · America/Chicago</p></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="sbtn">Who's registered</span><span class="sbtn">Start a team</span><span class="btn">Edit race</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px">
+      <div class="cd"><div class="meta">Teams</div><div class="stat">112 / 150</div><div class="meta">23 still registering · 0 on waitlist</div></div>
+      <div class="cd"><div class="meta">Money collected</div><div class="stat">$16,800</div><div class="meta">All fees, before refunds</div></div>
+      <div class="cd"><div class="meta">Export (CSV)</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="sbtn">Registered teams</span><span class="sbtn">All teams</span></div><div class="meta" style="margin-top:6px">ⓘ Names are written "Secret Gentlemen, The"</div></div>
+    </div>
+    <div class="g2">
+      <div class="cd"><h2>Dates</h2><div class="kv">
+        <b>Registration opens</b><span>Mon Dec 7, 2026, 12:00 PM CST</span>
+        <b>Registration closes</b><span>Sun Feb 14, 2027, 11:59 PM CST</span>
+        <b>Final edits close</b><span>Sun Feb 28, 2027, 11:59 PM CST</span>
+        <b>Race day</b><span>Sat Mar 6, 2027, 10:00 AM CST</span></div></div>
+      <div class="cd"><div style="display:flex;justify-content:space-between"><h2>Fees</h2><a class="l" style="font-size:13px">+ Add fee</a></div>
+        <table class="st" style="border:none"><tr><th>Fee</th><th>Now</th><th>Tiers</th></tr>
+        <tr><td><a class="l">Registration Fee</a></td><td>$100 <span class="meta">→ $120 Jan 15</span></td><td>3</td></tr>
+        <tr><td><a class="l">Cart Deposit</a></td><td>$50</td><td>1</td></tr></table>
+        <p class="meta" style="margin:6px 0 0">Fee pages (prices by date) are the next mockup.</p></div>
+    </div>
+    <div class="g2">
+      <div class="cd"><h2>Teams and questions</h2><div class="kv"><b>Racers per team</b><span>5</span><b>Questions</b><span>14 questions · 2 shown on Who's registered</span><b>Experience choices</b><span>First year, 2 years, 3 years, 4 years, 5+ years</span></div></div>
+      <div class="cd"><h2>Fundraising and confirmation</h2><div class="kv"><b>Classy campaign</b><span>867400 · default goal $500</span><b>Confirmation text</b><span>Set (412 characters)</span></div></div>
+    </div>
+    <div class="meta">Staff email: <a class="l">Email all racers (bcc)</a></div>
+  </div>
+</div>
+
+<h3 style="margin-top:26px">3. Edit race: how to organize the form</h3>
+<div class="options">
+  <div class="option" data-choice="one-page" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>One page, section cards, Save bar at the bottom <span class="pill">my pick</span></h3>
+      <div class="dk">
+        <div class="bd">
+          <a class="l" style="font-size:13px">‹ CHIditarod 2027</a>
+          <h1 class="t" style="margin-bottom:12px">Edit race</h1>
+          <div class="cd"><h2>Basics</h2>
+            <div class="g3"><div class="f"><label>Name</label><div class="in">CHIditarod 2027</div></div><div class="f"><label>Max teams</label><div class="in">150</div></div><div class="f"><label>Racers per team</label><div class="in">5</div></div></div>
+          </div>
+          <div class="cd"><h2>Dates</h2>
+            <div class="f" style="max-width:340px"><label>Time zone</label><div class="in">America/Chicago (CST/CDT) ▾</div><div class="hp">All dates below are in this zone.</div></div>
+            <div class="g2">
+              <div class="f"><label>Registration opens</label><div class="in">12/07/2026, 12:00 PM <span class="meta">CST</span></div></div>
+              <div class="f"><label>Registration closes</label><div class="in">02/15/2027, 12:00 AM <span class="meta">CST</span></div><div class="hp">Midnight Feb 15 = racers see "closes Feb 14, 11:59 PM".</div></div>
+              <div class="f"><label>Final edits close</label><div class="in">03/01/2027, 12:00 AM <span class="meta">CST</span></div><div class="hp">Racers see "Feb 28, 11:59 PM".</div></div>
+              <div class="f"><label>Race day</label><div class="in">03/06/2027, 10:00 AM <span class="meta">CST</span></div></div>
+            </div>
+            <div class="note">You changed the time zone from America/Chicago to America/New_York. The times above are now read as Eastern; check them before saving.</div>
+          </div>
+          <div class="cd"><h2>Questions (JSONForm)</h2>
+            <div class="g2">
+              <div><label style="font-weight:600;font-size:13px">JSON</label>
+<div class="code">{
+  "schema": {
+    "racer-type": {
+      "type": "string",
+      "title": "What type of team are you?",
+      "enum": ["Racer", "Art Cart", "Unsure"],
+      "required": true
+    },
+    "racing-for-time": {
+      "type": "string",
+      "title": "Are you primarily racing for time?",
+      "enum": ["No", "Yes"]
+    },
+    "flame-effects": { ... }
+  },
+  "form": [ ...
+</div>
+<div class="err">✗ Line 14, column 5: expected "," or "}"</div>
+<div class="hp">Preview shows the last version that parsed.</div></div>
+              <div><label style="font-weight:600;font-size:13px">Preview (what racers see)</label>
+                <div class="pv"><div class="q"><b>What type of team are you? *</b><span class="radio">Racer</span><span class="radio">Art Cart</span><span class="radio">Unsure</span></div><div class="q"><b>Are you primarily racing for time?</b><span class="radio">No</span><span class="radio">Yes</span></div><div class="q"><b>Fire Effects</b><span class="radio">No</span><span class="radio">Yes</span></div><div class="meta">Fire details: shown when Fire Effects is "Yes"</div></div></div>
+            </div>
+            <div class="f" style="margin-top:12px"><label>Show on Who's registered</label><span class="chk on"><i></i>What type of team are you?</span><span class="chk on"><i></i>Racing for time?</span><span class="chk"><i></i>Fire Effects</span><span class="chk"><i></i>Fundraising</span><div class="hp">Each ticked question becomes a filter and column on Who's registered.</div></div>
+          </div>
+          <div class="cd"><h2>Experience choices</h2><div class="f"><div class="in" style="height:70px">First year<br>2 years<br>3 years<br>4 years<br>5+ years</div><div class="hp">One per line. These are the team-level choices; racers type their own years.</div></div></div>
+          <div class="cd"><h2>Fundraising (Classy)</h2><div class="g2"><div class="f"><label>Campaign ID</label><div class="in">867400</div></div><div class="f"><label>Default team goal ($)</label><div class="in">500</div></div></div></div>
+          <div class="cd"><h2>Confirmation text</h2><div class="g2"><div class="f"><div class="in" style="height:90px;font-family:ui-monospace,Menlo,monospace;font-size:12px">**You're in!** Orientation is Feb 21 at ...<br><br>Bring your cart to ...</div><div class="hp">Markdown. 412 / 5000. Shown when a team finishes, on the team page and in the email.</div></div><div class="pv" style="height:auto"><b>You're in!</b> Orientation is Feb 21 at ...<br><br>Bring your cart to ...</div></div></div>
+        </div>
+        <div class="sticky"><span class="meta">Unsaved changes</span><span><span class="sbtn">Cancel</span> <span class="btn">Save race</span></span></div>
+      </div>
+      <p class="cap">Everything visible at once; the Save bar sticks to the bottom of the window. Errors from the server appear under each field, and the page scrolls to the first one.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tabs" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Tabs: Basics · Dates · Questions · Fundraising · Confirmation</h3>
+      <div class="dk">
+        <div class="bd">
+          <a class="l" style="font-size:13px">‹ CHIditarod 2027</a>
+          <h1 class="t" style="margin-bottom:12px">Edit race</h1>
+          <div class="tabs"><div class="tab">Basics</div><div class="tab on">Dates</div><div class="tab">Questions ●</div><div class="tab">Fundraising</div><div class="tab">Confirmation</div></div>
+          <div class="cd"><div class="f" style="max-width:340px"><label>Time zone</label><div class="in">America/Chicago (CST/CDT) ▾</div></div>
+          <div class="g2"><div class="f"><label>Registration opens</label><div class="in">12/07/2026, 12:00 PM CST</div></div><div class="f"><label>Registration closes</label><div class="in">02/15/2027, 12:00 AM CST</div></div></div></div>
+        </div>
+        <div class="sticky"><span class="meta">● Questions tab has an error</span><span><span class="sbtn">Cancel</span> <span class="btn">Save race</span></span></div>
+      </div>
+      <p class="cap">Shorter screens, but an error on a tab you're not looking at is easy to miss, and you can't see dates and questions together.</p>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top:26px">Phone check (320–390px)</h3>
+<div class="ph">
+  <div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Log out</a></div></div>
+  <div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div>
+  <div class="bd">
+    <h1 class="t" style="font-size:22px">CHIditarod 2027</h1><p class="sub"><span class="b open">Open</span> · Mar 6, 2027</p>
+    <div class="cd"><div class="meta">Teams</div><div class="stat" style="font-size:22px">112 / 150</div></div>
+    <div class="cd"><div class="meta">Money collected</div><div class="stat" style="font-size:22px">$16,800</div></div>
+    <div class="cd"><h2>Questions (JSONForm)</h2><div class="code" style="height:90px">{ "schema": { ...</div><div class="sbtn" style="margin-top:8px">Show preview</div></div>
+  </div>
+</div>
+<p class="cap" style="max-width:340px">On a phone the cards stack and the JSON preview sits behind a button. Editing the JSON on a phone works but isn't the expected use.</p>

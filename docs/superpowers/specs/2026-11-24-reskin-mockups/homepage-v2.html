@@ -1,0 +1,78 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .ph { width: 340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .dk { width: 1000px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; border-bottom:4px solid #b3ddf2; display:flex; align-items:center; justify-content:space-between; padding:10px 12px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; letter-spacing:.5px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; line-height:1.5; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .bd { padding:14px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:24px; margin:0 0 2px; }
+  .sub { color:#12202fcc; font-size:13px; margin:0 0 12px; }
+  .search { border:1px solid #9fb3c6; border-radius:6px; padding:9px 10px; background:#fff; color:#12202f99; flex:1; }
+  .fbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:9px 12px; font-weight:600; background:#fff; white-space:nowrap; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:12px 0 10px; }
+  .tab { padding:8px 10px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sec { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:14px 0 8px; display:flex; justify-content:space-between; align-items:baseline; }
+  .sec span { font-family:Inter; font-size:12px; color:#12202fb3; }
+  .tc { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:12px; margin-bottom:8px; }
+  .tc .nm { font-weight:700; font-size:15px; }
+  .tc .ds { font-size:13px; color:#12202fcc; margin:3px 0 7px; }
+  .chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+  .chip { background:#eaf5fb; border:1px solid #b3ddf2; border-radius:99px; font-size:11px; padding:1px 8px; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .bar { height:6px; background:#e6edf3; border-radius:99px; overflow:hidden; margin:6px 0 2px; }
+  .bar i { display:block; height:100%; background:#e4002b; }
+  .mine { font-size:11px; background:#12202f; color:#fff; border-radius:99px; padding:1px 7px; margin-left:6px; vertical-align:middle; }
+  .del { font-size:12px; color:#c4001f; text-decoration:underline; float:right; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; border-radius:8px; overflow:hidden; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; font-weight:700; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .new { background:#fff0f2; border:1px solid #e4002b55; color:#c4001f; border-radius:99px; font-size:11px; padding:1px 7px; }
+  .ok { color:#1d7a46; font-weight:600; }
+  .warn { color:#a15c00; font-weight:600; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:6px 10px; font-weight:600; background:#fff; font-size:12px; display:inline-block; }
+  .snav { background:#12202f; color:#fff; padding:8px 14px; font-size:13px; display:flex; gap:18px; }
+  .snav b { border-bottom:2px solid #e4002b; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:340px; font-size:13px; margin-top:8px; }
+.steps { display:grid; gap:8px; margin:10px 0 4px; }
+.st4 { display:flex; gap:10px; align-items:flex-start; font-size:13px; }
+.st4 .n { flex:none; width:24px; height:24px; border-radius:99px; background:#e4002b; color:#fff; font-family:Oswald; font-weight:700; display:flex; align-items:center; justify-content:center; }
+.hero { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:14px; }
+.hero h2 { font-family:Oswald,sans-serif; font-weight:700; font-size:22px; margin:0 0 4px; }
+.rt { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:12px; margin-bottom:8px; }
+.rt .nm { font-family:Oswald; font-weight:500; font-size:18px; }
+.badge { background:#e9f7ef; color:#1d7a46; border:1px solid #6cbf8a; border-radius:99px; font-size:11px; padding:1px 8px; font-weight:600; }
+.btnr { background:#e4002b; color:#fff; font-weight:600; text-align:center; border-radius:6px; padding:10px; margin-top:8px; }
+.det { border-top:1px solid #e6edf3; margin-top:10px; padding-top:8px; font-size:13px; color:#2f5aae; font-weight:600; }
+.h2r { font-family:Oswald; font-weight:700; font-size:22px; margin:4px 0 8px; }
+</style>
+
+<h2>Homepage intro v2 (layout B)</h2>
+<p class="subtitle">Step 2 no longer mentions emails and texts; step 4 and the summary line are reworded. Left: closed. Right: opened. Below: laptop. Tell me in the terminal what to change.</p>
+<div style="display:flex;gap:16px;flex-wrap:wrap"><div class="ph"><div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><a>Log in</a> <a>Sign up</a></div></div><div class="bd">
+<div class="hero"><h2>Register for CHIditarod</h2><p class="sub" style="margin:0 0 4px">Start a team, add 5 racers, answer the questions and pay the fee to register your team.</p>
+<div class="det">▸ How registration and the waitlist work</div></div>
+<div class="h2r">Choose your race</div><div class="rt"><div style="display:flex;justify-content:space-between;align-items:center"><span class="nm">CHIditarod 2027</span><span class="badge">Open</span></div>
+<div class="meta">Race day Mar 6, 2027 · Registration closes Feb 14, 11:59 PM</div>
+<div class="btnr">Start a team</div><div style="text-align:center;margin-top:8px;font-size:13px"><a class="l">See who's registered</a></div></div></div></div><div class="ph"><div class="bd">
+<div class="hero"><h2>Register for CHIditarod</h2><p class="sub" style="margin:0 0 4px">Start a team, add 5 racers, answer the questions and pay the fee to register your team.</p>
+<div class="det">▾ How registration and the waitlist work</div><div class="steps">
+<div class="st4"><span class="n">1</span><div><b>Make an account</b> and start a team for the race.</div></div>
+<div class="st4"><span class="n">2</span><div><b>Add all 5 racers.</b></div></div>
+<div class="st4"><span class="n">3</span><div><b>Answer the team questions and pay the fee.</b></div></div>
+<div class="st4"><span class="n">4</span><div><b>Your team is registered.</b> We'll send you a confirmation email with your team number.</div></div>
+</div><p style="font-size:13px;margin:8px 0 0">Spots are first come, first served. When the race fills up, teams that haven't finished go on the waitlist in the order they started. You can change your team until registration closes.</p></div></div></div></div><h3 style="margin-top:24px">Laptop width (opened)</h3><div class="dk" style="width:960px"><div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><a>Log in</a> <a>Sign up</a></div></div><div class="bd" style="display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:start">
+<div class="hero" style="margin:0"><h2>Register for CHIditarod</h2><p class="sub" style="margin:0">Chicago's annual urban shopping-cart race and mobile food drive.</p><div class="steps">
+<div class="st4"><span class="n">1</span><div><b>Make an account</b> and start a team for the race.</div></div>
+<div class="st4"><span class="n">2</span><div><b>Add all 5 racers.</b></div></div>
+<div class="st4"><span class="n">3</span><div><b>Answer the team questions and pay the fee.</b></div></div>
+<div class="st4"><span class="n">4</span><div><b>Your team is registered.</b> We'll send you a confirmation email with your team number.</div></div>
+</div><p style="font-size:13px;margin:8px 0 0">Spots are first come, first served. When the race fills up, teams that haven't finished go on the waitlist in the order they started. You can change your team until registration closes.</p></div>
+<div><div class="h2r" style="margin-top:0">Choose your race</div><div class="rt"><div style="display:flex;justify-content:space-between;align-items:center"><span class="nm">CHIditarod 2027</span><span class="badge">Open</span></div>
+<div class="meta">Race day Mar 6, 2027 · Registration closes Feb 14, 11:59 PM</div>
+<div class="btnr">Start a team</div><div style="text-align:center;margin-top:8px;font-size:13px"><a class="l">See who's registered</a></div></div></div></div></div>

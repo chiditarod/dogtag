@@ -1,0 +1,106 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .dk { width:1040px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .ph { width:340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; display:flex; align-items:center; justify-content:space-between; padding:10px 14px 4px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .nav { background:#fff; border-bottom:4px solid #b3ddf2; padding:2px 10px 8px; display:flex; gap:4px; flex-wrap:wrap; font-size:13px; }
+  .nav span { padding:3px 8px; border-radius:4px; color:#2f5aae; font-weight:600; }
+  .nav span.on { background:#b3ddf266; color:#12202f; }
+  .bd { padding:16px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:26px; margin:0; }
+  .sub { color:#12202fcc; font-size:13px; margin:2px 0 12px; }
+  .cd { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .cd h2 { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:0 0 10px; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .b { border-radius:99px; font-size:11px; padding:1px 8px; font-weight:600; border:1px solid; white-space:nowrap; }
+  .open { background:#e9f7ef; color:#1d7a46; border-color:#6cbf8a; }
+  .soon { background:#eaf5fb; color:#12202f; border-color:#b3ddf2; }
+  .closed { background:#f1f1f1; color:#555; border-color:#ccc; }
+  .warn { background:#fff8e1; color:#8a5a00; border-color:#f0d58a; }
+  .btn { background:#e4002b; color:#fff; font-weight:600; border-radius:6px; padding:8px 14px; display:inline-block; font-size:13px; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:7px 12px; font-weight:600; background:#fff; font-size:13px; display:inline-block; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:13px; }
+  .kv b { font-weight:600; }
+  .stat { font-family:Oswald; font-size:28px; font-weight:700; }
+  .f { margin-bottom:12px; }
+  .f label { display:block; font-weight:600; font-size:13px; margin-bottom:3px; }
+  .in { border:1px solid #9fb3c6; border-radius:6px; padding:8px 10px; background:#fff; min-height:18px; font-size:13px; }
+  .hp { font-size:12px; color:#12202fcc; margin-top:3px; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; background:#0f1b27; color:#d7e6f3; border-radius:6px; padding:10px; white-space:pre; line-height:1.45; overflow:hidden; height:260px; }
+  .err { color:#c4001f; font-weight:600; font-size:12px; margin-top:4px; }
+  .pv { border:1px dashed #9fb3c6; border-radius:6px; padding:10px; height:260px; overflow:hidden; background:#fff; font-size:13px; }
+  .pv .q { margin-bottom:10px; }
+  .pv .q b { display:block; margin-bottom:3px; }
+  .radio { display:inline-block; border:1px solid #9fb3c6; border-radius:99px; padding:2px 10px; margin-right:4px; font-size:12px; }
+  .chk { display:inline-flex; align-items:center; gap:4px; border:1px solid #b3ddf2; border-radius:6px; padding:3px 8px; margin:0 4px 4px 0; font-size:12px; background:#fff; }
+  .chk i { width:12px; height:12px; border:1px solid #2f5aae; border-radius:3px; display:inline-block; }
+  .chk.on i { background:#2f5aae; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:0 0 12px; flex-wrap:wrap; }
+  .tab { padding:8px 12px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sticky { position:relative; background:#fff; border-top:1px solid #b3ddf2; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:1040px; font-size:13px; margin-top:8px; }
+  .note { background:#eaf5fb; border-left:3px solid #2f5aae; padding:6px 10px; font-size:12px; border-radius:4px; }
+.rb { font-size:12px; margin-top:4px; color:#1d7a46; }
+.in.bad { border-color:#c4001f; }
+.wn { font-size:12px; margin-top:4px; color:#8a5a00; }
+.picker { border:1px solid #9fb3c6; border-radius:8px; background:#fff; width:250px; font-size:12px; padding:8px; box-shadow:0 4px 12px #0002; }
+.picker .gr { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; }
+.picker .gr span { padding:3px 0; border-radius:4px; }
+.picker .gr .sel { background:#2f5aae; color:#fff; }
+</style>
+
+<h2>Fee pages</h2>
+<p class="subtitle">Reached from the Fees card on the race overview. A fee (today's "requirement") has a name, a type, and prices by date (today's "tiers"). Prices are typed in dollars. Tell me in the terminal what to change.</p>
+<p class="label">1. A fee's page (laptop), adding a third price inline</p><div class="dk"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div><div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div><div class="bd">
+<a class="l" style="font-size:13px">‹ CHIditarod 2027</a>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-top:4px">
+<div><h1 class="t">Registration Fee</h1><p class="sub" style="margin:2px 0 0">Card payment · <span class="b open">Racers can pay</span></p></div>
+<div><span class="sbtn" style="opacity:.5">Delete fee</span><div class="meta" style="max-width:240px">Can't delete: 112 teams have paid it.</div></div></div>
+<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:14px">
+<div class="cd"><h2>Name</h2><div class="f" style="margin:0"><div style="display:flex;gap:8px"><div class="in" style="flex:1">Registration Fee</div><span class="sbtn">Save name</span></div><div class="hp">Racers see this name on their team's fee card and receipt.</div></div></div>
+<div class="cd"><h2>Right now</h2><div class="kv"><b>Price</b><span>$100 since Mon Dec 7, 12:00 PM CST</span><b>Next</b><span>$120 from Fri Jan 15, 12:00 AM CST</span><b>Paid</b><span>112 teams · <a class="l">see payments</a></span></div></div>
+</div>
+<div class="cd"><h2>Prices by date</h2>
+<p class="meta" style="margin:-4px 0 10px">A team pays the price in effect when it pays, not when it registered.</p>
+<table class="st">
+<tr><th>Price</th><th>Starts</th><th>Status</th><th></th></tr>
+<tr><td><b>$100</b></td><td>Mon Dec 7, 2026, 12:00 PM CST</td><td><span class="b open">Current</span></td><td style="text-align:right"><a class="l">Edit</a> &nbsp; <a class="l" style="color:#c4001f">Delete</a></td></tr>
+<tr><td><b>$120</b></td><td>Fri Jan 15, 2027, 12:00 AM CST</td><td><span class="b soon">Next</span></td><td style="text-align:right"><a class="l">Edit</a> &nbsp; <a class="l" style="color:#c4001f">Delete</a></td></tr>
+<tr style="background:#f7fbfe"><td style="width:140px"><div class="in">$ 140</div></td><td><div style="display:flex;gap:6px;align-items:center"><div class="in" style="flex:1">02/01/2027 &nbsp;12:00 AM <span style="float:right">📅</span></div><span class="meta">CST</span></div><div class="rb">Racers pay $140 from Mon Feb 1, 2027, 12:00 AM CST</div></td><td></td><td style="text-align:right;white-space:nowrap"><span class="sbtn">Cancel</span> <span class="btn">Add price</span></td></tr>
+</table>
+<div style="margin-top:8px"><a class="l" style="font-size:13px">+ Add a price</a></div>
+<p class="meta" style="margin-top:8px">Changing a price only affects teams that haven't paid yet. Delete shows to admins only.</p>
+</div></div></div>
+<p class="label" style="margin-top:22px">2. What it catches</p><div class="cd" style="max-width:720px"><h2>Prices by date: problems it catches</h2>
+<table class="st"><tr><th>Price</th><th>Starts</th><th></th></tr>
+<tr><td style="width:140px"><div class="in bad">$ 120</div><div class="err">This fee already has a $120 price.</div></td><td><div style="display:flex;gap:6px;align-items:center"><div class="in bad" style="flex:1">01/15/2027 &nbsp;12:00 AM <span style="float:right">📅</span></div><span class="meta">CST</span></div><div class="err">A price already starts at this time.</div></td><td><span class="btn">Add price</span></td></tr>
+<tr><td><div class="in bad">$ 0.50</div><div class="err">Whole dollars only, $1 or more.</div></td><td><div style="display:flex;gap:6px;align-items:center"><div class="in" style="flex:1">02/01/2027 &nbsp;12:00 AM <span style="float:right">📅</span></div><span class="meta">CST</span></div><div class="rb">Racers pay from Mon Feb 1, 2027, 12:00 AM CST</div></td><td></td></tr>
+</table>
+<div class="note" style="margin-top:10px;background:#fff8e1;border-color:#f0d58a">⚠ The first price starts Dec 10, after registration opens (Dec 7). Teams can't pay this fee from Dec 7 to Dec 10.</div>
+</div>
+<div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin-top:22px">
+<div><p class="label">3. Add a fee (with its first price in one step)</p><div class="dk" style="width:640px"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div><div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div><div class="bd">
+<a class="l" style="font-size:13px">‹ CHIditarod 2027</a><h1 class="t" style="margin:4px 0 12px">Add a fee</h1>
+<div class="cd">
+<div class="f"><label>Name</label><div class="in">Cart Deposit</div><div class="hp">Racers see this name on their team's fee card.</div></div>
+<div class="f"><label>Type</label><div class="in">Card payment ▾</div><div class="hp">"Test payment (no card)" is offered on staging and local only.</div></div>
+<div class="g2"><div class="f"><label>First price</label><div class="in">$ 50</div></div><div class="f"><label>Starts</label><div style="display:flex;gap:6px;align-items:center"><div class="in" style="flex:1">12/07/2026 &nbsp;12:00 PM <span style="float:right">📅</span></div><span class="meta">CST</span></div><div class="rb">Racers pay $50 from Mon Dec 7, 2026, 12:00 PM CST</div></div></div>
+<div class="hp" style="margin-bottom:10px">Prefilled with registration opening. You can add more prices after saving.</div>
+<span class="btn">Add fee</span></div></div></div></div>
+<div><p class="label">4. Phone</p><div class="ph"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Log out</a></div></div><div class="nav"><span class="on">Races</span><span>Users</span><span>Emails</span><span>Payments</span></div><div class="bd">
+<h1 class="t" style="font-size:22px">Registration Fee</h1><p class="sub"><span class="b open">Racers can pay</span> · $100 now</p>
+<div class="cd" style="padding:10px"><div style="display:flex;justify-content:space-between"><b>$100</b><span class="b open">Current</span></div><div class="meta">from Mon Dec 7, 12:00 PM CST</div><div style="margin-top:4px;font-size:13px"><a class="l">Edit</a> &nbsp; <a class="l" style="color:#c4001f">Delete</a></div></div>
+<div class="cd" style="padding:10px"><div style="display:flex;justify-content:space-between"><b>$120</b><span class="b soon">Next</span></div><div class="meta">from Fri Jan 15, 12:00 AM CST</div><div style="margin-top:4px;font-size:13px"><a class="l">Edit</a> &nbsp; <a class="l" style="color:#c4001f">Delete</a></div></div>
+<a class="l" style="font-size:13px">+ Add a price</a></div></div></div></div>

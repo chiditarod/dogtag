@@ -1,0 +1,84 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .ph { width: 340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; border-bottom:4px solid #b3ddf2; display:flex; align-items:center; justify-content:space-between; padding:10px 12px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; letter-spacing:.5px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; line-height:1.5; }
+  .menu a { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  .menu b { color:#12202f; }
+  .bd { padding:14px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:24px; margin:0 0 4px; }
+  .sub { color:#12202fcc; font-size:13px; margin:0 0 12px; }
+  .cd { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:12px; box-shadow:0 1px 2px #0001; }
+  .cd h2 { font-family:Oswald,sans-serif; font-weight:500; font-size:17px; margin:0 0 10px; }
+  .f { margin-bottom:10px; }
+  .f label { display:block; font-weight:600; font-size:13px; margin-bottom:3px; }
+  .f .in { border:1px solid #9fb3c6; border-radius:6px; padding:9px 10px; background:#fff; min-height:20px; }
+  .f .in.chg { border-color:#2f5aae; box-shadow:0 0 0 2px #2f5aae33; }
+  .f .hp { font-size:12px; color:#12202fcc; margin-top:3px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .btn { background:#e4002b; color:#fff; font-weight:600; text-align:center; border-radius:6px; padding:11px; }
+  .note { background:#fff8e1; border:1px solid #f0d58a; border-radius:6px; padding:8px 10px; font-size:12px; margin-bottom:10px; }
+  .new { background:#eaf5fb; border-left:3px solid #2f5aae; padding:8px 10px; border-radius:4px; margin-bottom:10px; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .wrap { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .cap { max-width:340px; font-size:13px; margin-top:8px; }
+</style>
+
+<h2>Account page v2: current password for every change</h2>
+<p class="subtitle">The Current password box is always there, just above Save. Left: ready to save. Right: wrong password. Staff editing someone else on the staff Users page never see it. Tell me in the terminal what to change.</p>
+<div class="split" style="display:flex;gap:28px;flex-wrap:wrap">
+<div><p class="label">Editing</p><div class="ph">
+            <div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Ada</b> <a>My teams</a><br><a>Account</a> <a>Log out</a></div></div>
+            <div class="bd">
+              <h1 class="t">Your account</h1>
+              <p class="sub">ada@example.com</p>
+              <div class="cd">
+                <h2>Your details</h2>
+                <div class="row2">
+                  <div class="f"><label>First name</label><div class="in">Ada</div></div>
+                  <div class="f"><label>Last name</label><div class="in">Racer</div></div>
+                </div>
+                <div class="f"><label>Email</label><div class="in chg">ada.new@example.com</div><div class="hp">We send registration emails here.</div></div>
+                <div class="f"><label>Phone</label><div class="in">(312) 555-0142</div></div>
+              </div>
+              <div class="cd">
+                <h2>Change password</h2>
+                <div class="f"><label>New password</label><div class="in"></div><div class="hp">Leave blank to keep your password. At least 8 characters.</div></div>
+                <div class="f"><label>Confirm new password</label><div class="in"></div></div>
+              </div>
+              <div class="new">
+                <div class="f" style="margin:0"><label>Current password</label><div class="in"></div><div class="hp">Needed to save any change. <a style="color:#2f5aae;text-decoration:underline">Forgot it?</a></div></div>
+              </div>
+              <div class="btn">Save changes</div>
+            </div>
+          </div>
+          </div>
+<div><p class="label">Wrong current password</p><div class="ph">
+            <div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Ada</b> <a>My teams</a><br><a>Account</a> <a>Log out</a></div></div>
+            <div class="bd">
+              <h1 class="t">Your account</h1>
+              <p class="sub">ada@example.com</p><div style="border:1px solid #e4002b;background:#fff;color:#c4001f;border-radius:6px;padding:8px 10px;font-size:13px;margin-bottom:10px">Check the highlighted field.</div>
+              <div class="cd">
+                <h2>Your details</h2>
+                <div class="row2">
+                  <div class="f"><label>First name</label><div class="in">Ada</div></div>
+                  <div class="f"><label>Last name</label><div class="in">Racer</div></div>
+                </div>
+                <div class="f"><label>Email</label><div class="in chg">ada.new@example.com</div><div class="hp">We send registration emails here.</div></div>
+                <div class="f"><label>Phone</label><div class="in">(312) 555-0142</div></div>
+              </div>
+              <div class="cd">
+                <h2>Change password</h2>
+                <div class="f"><label>New password</label><div class="in"></div><div class="hp">Leave blank to keep your password. At least 8 characters.</div></div>
+                <div class="f"><label>Confirm new password</label><div class="in"></div></div>
+              </div>
+              <div class="new">
+                <div class="f" style="margin:0"><label>Current password</label><div class="in" style="border-color:#c4001f"></div><div class="hp" style="color:#c4001f;font-weight:600">That password is not right. Nothing was saved.</div><div class="hp">Needed to save any change. <a style="color:#2f5aae;text-decoration:underline">Forgot it?</a></div></div>
+              </div>
+              <div class="btn">Save changes</div>
+            </div>
+          </div>
+          </div>
+</div>

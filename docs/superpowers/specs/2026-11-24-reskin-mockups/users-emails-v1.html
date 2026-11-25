@@ -1,0 +1,121 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .dk { width:1040px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .ph { width:340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; display:flex; align-items:center; justify-content:space-between; padding:10px 14px 4px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .nav { background:#fff; border-bottom:4px solid #b3ddf2; padding:2px 10px 8px; display:flex; gap:4px; flex-wrap:wrap; font-size:13px; }
+  .nav span { padding:3px 8px; border-radius:4px; color:#2f5aae; font-weight:600; }
+  .nav span.on { background:#b3ddf266; color:#12202f; }
+  .bd { padding:16px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:26px; margin:0; }
+  .sub { color:#12202fcc; font-size:13px; margin:2px 0 12px; }
+  .cd { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .cd h2 { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:0 0 10px; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .b { border-radius:99px; font-size:11px; padding:1px 8px; font-weight:600; border:1px solid; white-space:nowrap; }
+  .open { background:#e9f7ef; color:#1d7a46; border-color:#6cbf8a; }
+  .soon { background:#eaf5fb; color:#12202f; border-color:#b3ddf2; }
+  .closed { background:#f1f1f1; color:#555; border-color:#ccc; }
+  .warn { background:#fff8e1; color:#8a5a00; border-color:#f0d58a; }
+  .btn { background:#e4002b; color:#fff; font-weight:600; border-radius:6px; padding:8px 14px; display:inline-block; font-size:13px; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:7px 12px; font-weight:600; background:#fff; font-size:13px; display:inline-block; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:13px; }
+  .kv b { font-weight:600; }
+  .stat { font-family:Oswald; font-size:28px; font-weight:700; }
+  .f { margin-bottom:12px; }
+  .f label { display:block; font-weight:600; font-size:13px; margin-bottom:3px; }
+  .in { border:1px solid #9fb3c6; border-radius:6px; padding:8px 10px; background:#fff; min-height:18px; font-size:13px; }
+  .hp { font-size:12px; color:#12202fcc; margin-top:3px; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; background:#0f1b27; color:#d7e6f3; border-radius:6px; padding:10px; white-space:pre; line-height:1.45; overflow:hidden; height:260px; }
+  .err { color:#c4001f; font-weight:600; font-size:12px; margin-top:4px; }
+  .pv { border:1px dashed #9fb3c6; border-radius:6px; padding:10px; height:260px; overflow:hidden; background:#fff; font-size:13px; }
+  .pv .q { margin-bottom:10px; }
+  .pv .q b { display:block; margin-bottom:3px; }
+  .radio { display:inline-block; border:1px solid #9fb3c6; border-radius:99px; padding:2px 10px; margin-right:4px; font-size:12px; }
+  .chk { display:inline-flex; align-items:center; gap:4px; border:1px solid #b3ddf2; border-radius:6px; padding:3px 8px; margin:0 4px 4px 0; font-size:12px; background:#fff; }
+  .chk i { width:12px; height:12px; border:1px solid #2f5aae; border-radius:3px; display:inline-block; }
+  .chk.on i { background:#2f5aae; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:0 0 12px; flex-wrap:wrap; }
+  .tab { padding:8px 12px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sticky { position:relative; background:#fff; border-top:1px solid #b3ddf2; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:1040px; font-size:13px; margin-top:8px; }
+  .note { background:#eaf5fb; border-left:3px solid #2f5aae; padding:6px 10px; font-size:12px; border-radius:4px; }
+.rb { font-size:12px; margin-top:4px; color:#1d7a46; }
+.in.bad { border-color:#c4001f; }
+.wn { font-size:12px; margin-top:4px; color:#8a5a00; }
+.picker { border:1px solid #9fb3c6; border-radius:8px; background:#fff; width:250px; font-size:12px; padding:8px; box-shadow:0 4px 12px #0002; }
+.picker .gr { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; }
+.picker .gr span { padding:3px 0; border-radius:4px; }
+.picker .gr .sel { background:#2f5aae; color:#fff; }
+</style>
+
+<h2>Users and Emails sent</h2>
+<p class="subtitle">Four laptop screens and two phone checks. Tell me in the terminal what to change.</p>
+<p class="label">1. Users list</p><div class="dk"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div><div class="nav"><span class="">Races</span><span class="on">Users</span><span class="">Emails</span><span class="">Payments</span></div><div class="bd">
+<h1 class="t" style="margin-bottom:10px">Users</h1>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="in" style="max-width:320px;color:#12202f99;flex:1">Search name, email or team</div><span class="meta">1,284 users</span></div>
+<table class="st" style="margin-top:12px">
+<tr><th>Name</th><th>Email</th><th>Phone</th><th>Teams</th><th>Roles</th></tr>
+<tr><td><a class="l"><b>Ada Racer</b></a></td><td>ada@example.com</td><td>(312) 555-0142</td><td><a class="l">Doge Sled</a> <span class="meta">2027</span><br><a class="l">Ada's Second Try</a> <span class="meta">2027</span></td><td></td></tr>
+<tr><td><a class="l"><b>Sam Staffer</b></a></td><td>sam@example.com</td><td>(773) 555-0199</td><td><span class="meta">none</span></td><td><span class="b soon">Operator</span> <span class="b soon">Refunder</span></td></tr>
+<tr><td><a class="l"><b>Bea Pusher</b></a></td><td>bea.pusher+cart@example.com</td><td>(312) 555-0107</td><td><a class="l">Secret Gentlemen, The</a> <span class="meta">2027</span><br><a class="l">Secret Gentlemen, The</a> <span class="meta">2026</span></td><td></td></tr>
+</table>
+<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13px"><span class="meta">1–35 of 1,284</span><span><span class="sbtn">‹ Prev</span> <span class="sbtn">Next ›</span></span></div>
+<p class="meta">One row per person (the old page repeated a person once per team). Search matches any word of a name, an email, or a team name. Refunders, operators and admins see this list.</p>
+</div></div>
+<p class="label" style="margin-top:22px">2. One user (as an admin sees it)</p><div class="dk"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div><div class="nav"><span class="">Races</span><span class="on">Users</span><span class="">Emails</span><span class="">Payments</span></div><div class="bd">
+<a class="l" style="font-size:13px">‹ Users</a>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-top:4px">
+<div><h1 class="t">Ada Racer</h1><p class="sub" style="margin:2px 0 0">ada@example.com · account since Dec 2023</p></div>
+<div style="text-align:right"><span class="sbtn" style="opacity:.5">Delete user</span><div class="meta">Can't delete: owns 2 teams.</div></div></div>
+<div class="g2" style="margin-top:14px">
+<div class="cd"><h2>Details</h2>
+<div class="g2"><div class="f"><label>First name</label><div class="in">Ada</div></div><div class="f"><label>Last name</label><div class="in">Racer</div></div></div>
+<div class="f"><label>Email</label><div class="in">ada@example.com</div></div>
+<div class="f"><label>Phone</label><div class="in">(312) 555-0142</div></div>
+<span class="btn">Save details</span><div class="hp">Admins only; operators and refunders see these as text. No password needed here.</div></div>
+<div><div class="cd"><h2>Roles</h2>
+<div><span class="chk"><i></i>Admin</span><span class="chk"><i></i>Operator</span><span class="chk"><i></i>Refunder</span></div>
+<div class="hp" style="margin-bottom:8px">Admin: everything. Operator: races, fees, team edits, exports, emails. Refunder: users, teams and refunds.</div><span class="btn">Save roles</span>
+<div class="hp">Admins only. You can't remove your own Admin role.</div></div>
+<div class="cd"><h2>Teams</h2>
+<table class="st" style="border:none"><tr><th>Team</th><th>Race</th><th>Status</th></tr>
+<tr><td><a class="l">Doge Sled</a></td><td>CHIditarod 2027</td><td><span class="b open">Registered #7</span></td></tr>
+<tr><td><a class="l">Ada's Second Try</a></td><td>CHIditarod 2027</td><td>60% done</td></tr></table>
+<div style="margin-top:8px;font-size:13px"><a class="l">Payments by this user</a> · <a class="l">Emails to this user</a></div></div></div>
+</div></div></div>
+<p class="label" style="margin-top:22px">3. Emails sent (filtered to one team from the team page)</p><div class="dk"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Racer site</a> <a>Account</a> <a>Log out</a></div></div><div class="nav"><span class="">Races</span><span class="">Users</span><span class="on">Emails</span><span class="">Payments</span></div><div class="bd">
+<h1 class="t" style="margin-bottom:10px">Emails sent</h1>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="in" style="max-width:260px;color:#12202f99;flex:1">Recipient email</div><div class="sbtn">Status: Any ▾</div><div class="sbtn">Kind: Any ▾</div><span class="b soon" style="font-size:12px;padding:4px 10px">Team: Doge Sled ✕</span><a class="l" style="font-size:13px">Clear all</a></div>
+<table class="st" style="margin-top:12px">
+<tr><th>Sent</th><th>Kind</th><th>To</th><th>Subject</th><th>Team</th><th>Status</th></tr>
+<tr><td>Dec 9, 2:14 PM</td><td>Team finalized</td><td>ada@example.com</td><td>You're in! Doge Sled is registered</td><td><a class="l">Doge Sled</a></td><td><span class="b open">Sent</span></td></tr>
+<tr><td>Dec 8, 9:00 AM</td><td>Registration reminder</td><td>ada@example.com</td><td>Doge Sled: 2 things left</td><td><a class="l">Doge Sled</a></td><td><span class="b open">Sent</span></td></tr>
+<tr><td>Dec 7, 12:03 PM</td><td>Welcome</td><td>ada@example.com</td><td>Welcome to CHIditarod registration</td><td></td><td><span class="b warn">Failed</span><div class="err" style="font-weight:400">Net::SMTPAuthenticationError: 535 Incorrect authentication data</div></td></tr>
+<tr><td>Dec 7, 12:03 PM</td><td>Welcome</td><td>ada@example.com</td><td>Welcome to CHIditarod registration</td><td></td><td><span class="b soon">Queued</span><div class="meta">for 2 min</div></td></tr>
+</table>
+<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:13px"><span class="meta">1–25 of 4</span><span><span class="sbtn">‹ Prev</span> <span class="sbtn">Next ›</span></span></div>
+<p class="meta">Newest first. Status choices: Sent, Queued, Failed (MXRoute reports nothing after "sent"; older rows with other statuses show as-is). Kind choices are the email types in plain words. Operators and admins only.</p>
+</div></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:22px"><div><p class="label">4. Users, phone</p><div class="ph"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Log out</a></div></div><div class="nav"><span>Races</span><span class="on">Users</span><span>Emails</span><span>Payments</span></div><div class="bd">
+<h1 class="t" style="font-size:22px;margin-bottom:8px">Users</h1><div class="in" style="max-width:none;color:#12202f99;flex:1">Search name, email or team</div>
+<div class="cd" style="padding:10px;margin-top:10px"><a class="l"><b>Bea Pusher</b></a><div class="meta" style="overflow-wrap:anywhere">bea.pusher+cart@example.com · (312) 555-0107</div><div style="font-size:12px;margin-top:4px">Secret Gentlemen, The (2027, 2026)</div></div>
+<div class="cd" style="padding:10px"><a class="l"><b>Sam Staffer</b></a> <span class="b soon">Operator</span><div class="meta">sam@example.com</div></div>
+</div></div></div><div><p class="label">5. Emails, phone</p><div class="ph"><div class="hd"><div class="logo">CHIditarod<small>staff</small></div><div class="menu"><b>Sam</b> <a>Log out</a></div></div><div class="nav"><span>Races</span><span>Users</span><span class="on">Emails</span><span>Payments</span></div><div class="bd">
+<h1 class="t" style="font-size:22px;margin-bottom:8px">Emails sent</h1>
+<div style="display:flex;gap:6px"><div class="in" style="max-width:none;color:#12202f99;flex:1">Recipient email</div><span class="sbtn">Filters (1)</span></div>
+<div class="cd" style="padding:10px;margin-top:10px"><div style="display:flex;justify-content:space-between"><b>Team finalized</b><span class="b open">Sent</span></div><div class="meta">Dec 9, 2:14 PM · ada@example.com</div><div style="font-size:13px">You're in! Doge Sled is registered</div><a class="l" style="font-size:12px">Doge Sled</a></div>
+<div class="cd" style="padding:10px"><div style="display:flex;justify-content:space-between"><b>Welcome</b><span class="b warn">Failed</span></div><div class="meta">Dec 7, 12:03 PM · ada@example.com</div><div class="err" style="font-weight:400">535 Incorrect authentication data</div></div>
+</div></div></div></div>
