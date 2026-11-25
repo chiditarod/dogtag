@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
 import { t } from '@/locales/en';
-import { useRaces } from '../api/use-races';
+import { useRaces } from '@/features/races/api/use-races';
 
 function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
