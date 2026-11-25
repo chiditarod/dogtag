@@ -52,6 +52,13 @@ describe "Sidekiq dashboard access", type: :request do
     cookies.delete("_dogtag_session")
     get "/sidekiq"
     expect(response).to have_http_status(:ok)
+    expect(response.cookies).not_to have_key("user_credentials")
+  end
+
+  it "returns 404 to an admin's single-access token on an rss request" do
+    admin = FactoryBot.create(:admin_user)
+    get "/sidekiq", params: { user_credentials: admin.single_access_token }, headers: { "Accept" => "application/rss+xml" }
+    expect(response).to have_http_status(:not_found)
   end
 
   it "returns 404, not 500, for a garbage session cookie" do

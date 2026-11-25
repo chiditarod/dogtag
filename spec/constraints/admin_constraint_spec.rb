@@ -24,7 +24,9 @@ describe AdminConstraint do
   it "restores the controller and refuses when the check raises" do
     Authlogic::Session::Base.controller = :sentinel
     allow(UserSession).to receive(:find).and_raise("boom")
+    allow(Rails.logger).to receive(:warn)
     expect(described_class.new.matches?(request)).to be(false)
+    expect(Rails.logger).to have_received(:warn).with(/AdminConstraint refused \/sidekiq: RuntimeError: boom/)
     expect(Authlogic::Session::Base.controller).to eq(:sentinel)
   end
 end
