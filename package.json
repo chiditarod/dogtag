@@ -11,7 +11,7 @@
     "e2e": "playwright test --project=unit --project=registration",
     "e2e:headed": "playwright test --project=unit --project=registration --headed",
     "e2e:stripe": "E2E_PAYMENTS=stripe playwright test --project=registration",
-    "e2e:staging": "E2E_TARGET=staging playwright test --project=unit --project=registration",
+    "e2e:staging": "E2E_TARGET=staging playwright test --project=unit --project=registration --project=refunds",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:ui": "playwright test --ui"

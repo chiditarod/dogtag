@@ -17,9 +17,12 @@ interface Match {
 
 const imap = () => target.inbox === 'imap';
 
-/** Mailpit: empties the inbox. IMAP: deletes only mail to this run's racer address. */
-export async function clearInbox(): Promise<void> {
-  if (imap()) return imapClear(target.racerEmail(runId()));
+/**
+ * Mailpit: empties the inbox. IMAP: deletes only mail to one address, this
+ * run's racer address unless another of this run's addresses is given.
+ */
+export async function clearInbox(address: string = target.racerEmail(runId())): Promise<void> {
+  if (imap()) return imapClear(address);
   return mailpit.clearInbox();
 }
 

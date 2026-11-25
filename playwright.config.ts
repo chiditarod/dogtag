@@ -137,6 +137,16 @@ export default defineConfig({
       dependencies: ['race-setup'],
       use: { ...devices['Desktop Chrome'], ...registrationRecording },
     },
+    {
+      // Staff refund one payment and then a batch, in the same kind of race. Runs on
+      // staging (npm run e2e:staging) with real Stripe test-card charges; locally,
+      // `--project=refunds` works with mock payments. Same recording rules as
+      // registration: the racer's password and the operator's session are in play.
+      name: 'refunds',
+      testMatch: /(^|[\\/])refunds\.spec\.ts$/,
+      dependencies: ['race-setup'],
+      use: { ...devices['Desktop Chrome'], ...registrationRecording },
+    },
     // Each live spec skips itself when its env vars are not set.
     { name: 'live', testMatch: /\.live\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
     ...(staging
