@@ -1,0 +1,110 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Oswald:wght@500;700&display=swap');
+  .dk { width:1040px; max-width:100%; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:10px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .ph { width:340px; background:#f4f8fb; border:1px solid #c9d6e2; border-radius:18px; overflow:hidden; font-family:Inter,system-ui,sans-serif; color:#12202f; font-size:14px; }
+  .hd { background:#fff; display:flex; align-items:center; justify-content:space-between; padding:10px 14px 4px; }
+  .logo { font-family:Oswald,sans-serif; font-weight:700; color:#c4001f; font-size:20px; line-height:1; }
+  .logo small { display:block; font-size:10px; color:#12202f; font-weight:500; }
+  .menu { font-size:12px; text-align:right; }
+  .menu a, a.l { color:#2f5aae; text-decoration:underline; margin-left:8px; }
+  a.l { margin:0; }
+  .nav { background:#fff; border-bottom:4px solid #b3ddf2; padding:2px 10px 8px; display:flex; gap:4px; flex-wrap:wrap; font-size:13px; }
+  .nav span { padding:3px 8px; border-radius:4px; color:#2f5aae; font-weight:600; }
+  .nav span.on { background:#b3ddf266; color:#12202f; }
+  .bd { padding:16px; }
+  h1.t { font-family:Oswald,sans-serif; font-weight:700; font-size:26px; margin:0; }
+  .sub { color:#12202fcc; font-size:13px; margin:2px 0 12px; }
+  .cd { background:#fff; border:1px solid #b3ddf2; border-radius:10px; padding:14px; margin-bottom:12px; }
+  .cd h2 { font-family:Oswald,sans-serif; font-weight:500; font-size:18px; margin:0 0 10px; }
+  table.st { width:100%; border-collapse:collapse; background:#fff; border:1px solid #b3ddf2; font-size:13px; }
+  table.st th { text-align:left; background:#eaf5fb; padding:8px; font-size:12px; border-bottom:1px solid #b3ddf2; }
+  table.st td { padding:8px; border-bottom:1px solid #e6edf3; vertical-align:top; }
+  .b { border-radius:99px; font-size:11px; padding:1px 8px; font-weight:600; border:1px solid; white-space:nowrap; }
+  .open { background:#e9f7ef; color:#1d7a46; border-color:#6cbf8a; }
+  .soon { background:#eaf5fb; color:#12202f; border-color:#b3ddf2; }
+  .closed { background:#f1f1f1; color:#555; border-color:#ccc; }
+  .warn { background:#fff8e1; color:#8a5a00; border-color:#f0d58a; }
+  .btn { background:#e4002b; color:#fff; font-weight:600; border-radius:6px; padding:8px 14px; display:inline-block; font-size:13px; }
+  .sbtn { border:1px solid #2f5aae; color:#2f5aae; border-radius:6px; padding:7px 12px; font-weight:600; background:#fff; font-size:13px; display:inline-block; }
+  .meta { font-size:12px; color:#12202fb3; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:13px; }
+  .kv b { font-weight:600; }
+  .stat { font-family:Oswald; font-size:28px; font-weight:700; }
+  .f { margin-bottom:12px; }
+  .f label { display:block; font-weight:600; font-size:13px; margin-bottom:3px; }
+  .in { border:1px solid #9fb3c6; border-radius:6px; padding:8px 10px; background:#fff; min-height:18px; font-size:13px; }
+  .hp { font-size:12px; color:#12202fcc; margin-top:3px; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .code { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; background:#0f1b27; color:#d7e6f3; border-radius:6px; padding:10px; white-space:pre; line-height:1.45; overflow:hidden; height:260px; }
+  .err { color:#c4001f; font-weight:600; font-size:12px; margin-top:4px; }
+  .pv { border:1px dashed #9fb3c6; border-radius:6px; padding:10px; height:260px; overflow:hidden; background:#fff; font-size:13px; }
+  .pv .q { margin-bottom:10px; }
+  .pv .q b { display:block; margin-bottom:3px; }
+  .radio { display:inline-block; border:1px solid #9fb3c6; border-radius:99px; padding:2px 10px; margin-right:4px; font-size:12px; }
+  .chk { display:inline-flex; align-items:center; gap:4px; border:1px solid #b3ddf2; border-radius:6px; padding:3px 8px; margin:0 4px 4px 0; font-size:12px; background:#fff; }
+  .chk i { width:12px; height:12px; border:1px solid #2f5aae; border-radius:3px; display:inline-block; }
+  .chk.on i { background:#2f5aae; }
+  .tabs { display:flex; border-bottom:2px solid #b3ddf2; margin:0 0 12px; flex-wrap:wrap; }
+  .tab { padding:8px 12px; font-weight:600; font-size:13px; color:#12202fb3; }
+  .tab.on { color:#12202f; border-bottom:3px solid #e4002b; margin-bottom:-2px; }
+  .sticky { position:relative; background:#fff; border-top:1px solid #b3ddf2; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; }
+  .pill { display:inline-block; background:#12202f; color:#fff; font-size:11px; border-radius:99px; padding:1px 8px; vertical-align:middle; }
+  .cap { max-width:1040px; font-size:13px; margin-top:8px; }
+  .note { background:#eaf5fb; border-left:3px solid #2f5aae; padding:6px 10px; font-size:12px; border-radius:4px; }
+.rb { font-size:12px; margin-top:4px; color:#1d7a46; }
+.in.bad { border-color:#c4001f; }
+.wn { font-size:12px; margin-top:4px; color:#8a5a00; }
+.picker { border:1px solid #9fb3c6; border-radius:8px; background:#fff; width:250px; font-size:12px; padding:8px; box-shadow:0 4px 12px #0002; }
+.picker .gr { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; text-align:center; }
+.picker .gr span { padding:3px 0; border-radius:4px; }
+.picker .gr .sel { background:#2f5aae; color:#fff; }
+.stars { display:flex; gap:10px; margin:8px 0; }
+.star { text-align:center; font-size:11px; color:#12202fb3; }
+.star i { display:block; font-style:normal; font-size:22px; color:#c9d6e2; }
+.star.lit i { color:#e4002b; }
+.staff { background:#fff; border:2px solid #12202f; border-radius:10px; padding:12px; margin-top:12px; }
+.staff h2 { font-family:Oswald; font-weight:500; font-size:17px; margin:0 0 2px; display:flex; justify-content:space-between; align-items:center; }
+.staff .tag { background:#12202f; color:#fff; font-family:Inter; font-size:10px; border-radius:99px; padding:1px 8px; font-weight:600; }
+.ck { border-bottom:1px solid #b3ddf2; padding:12px 14px; }
+.ck h3 { font-family:Oswald; font-weight:500; font-size:17px; margin:0 0 6px; display:flex; justify-content:space-between; }
+.rrow { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #eef3f7; }
+.obtn { border:1px solid #e4002b; color:#c4001f; border-radius:6px; padding:8px 14px; font-weight:600; display:inline-block; font-size:13px; background:#fff; }
+</style>
+
+<h2>Staff view of a team page</h2>
+<p class="subtitle">The same team page racers use, opened by a staff member (here: an operator, after registration closed, on a team with 3 of 5 racers). What staff add: a Staff card, edit controls whenever staff are allowed, and "Pay as staff" before the roster is full. Tell me in the terminal what to change.</p>
+<p class="label">Laptop: the Staff card sits under the team header in the left column</p><div class="dk" style="width:1040px"><div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Sam</b> <a>My teams</a> <a>Staff</a> <a>Account</a> <a>Log out</a></div></div><div style="height:4px;background:#b3ddf2"></div><div class="bd" style="display:grid;grid-template-columns:20rem 1fr;gap:28px;align-items:start">
+<div><a class="l" style="font-size:13px">‹ Who's registered</a>
+<h1 class="t" style="margin-top:4px">Ada's Second Try</h1><p class="sub" style="margin:2px 0 4px">CHIditarod 2027 · <span class="b closed">Registration closed</span></p>
+<div class="stars"><div class="star lit"><i>★</i>Team</div><div class="star"><i>★</i>Racers</div><div class="star lit"><i>★</i>Questions</div><div class="star"><i>★</i>Fee</div></div>
+<div class="note" style="margin:6px 0">Registration is closed. The racers can no longer change this team; you can, as staff.</div><div class="cd" style="margin:8px 0 0"><div class="meta">Team description</div><div style="font-size:13px">TBD</div></div><div class="staff"><h2>Staff <span class="tag">only staff see this</span></h2>
+<div class="kv" style="margin-top:8px"><b>Team number</b><span>not yet (given at finalization)</span>
+<b>New team</b><span><span class="in" style="display:inline-block;padding:3px 8px">Auto (yes: 0 years raced) ▾</span></span>
+<b>Collaborating</b><span>Yes</span><b>Racing with</b><span>Secret Gentlemen, The; Mush Hour</span></div>
+<div style="border-top:1px solid #e6edf3;margin:10px 0 8px"></div>
+<div class="kv"><b>Captain</b><span>Bea Pusher<br><a class="l">bea@example.com</a> · (312) 555-0107</span>
+<b>Account holder</b><span><a class="l">Ada Racer</a><br><a class="l">ada@example.com</a></span></div>
+<div style="border-top:1px solid #e6edf3;margin:10px 0 8px"></div>
+<div style="font-size:13px;display:flex;gap:12px;flex-wrap:wrap"><a class="l">Emails (4)</a><a class="l">Payments</a><a class="l">Who's registered</a></div></div></div>
+<div><div style="background:#fff;border:1px solid #b3ddf2;border-radius:10px">
+<div class="ck"><h3>Racers <span class="b warn">3 of 5</span></h3>
+<div class="rrow"><span>★ Bea Pusher <span class="meta">captain</span></span><span><a class="l">Edit</a> · <a class="l" style="color:#c4001f">Remove</a></span></div>
+<div class="rrow"><span>Ada Racer</span><span><a class="l">Edit</a> · <a class="l" style="color:#c4001f">Remove</a></span></div>
+<div class="rrow"><span>Cy Cart</span><span><a class="l">Edit</a> · <a class="l" style="color:#c4001f">Remove</a></span></div>
+<div style="margin-top:6px"><a class="l" style="font-size:13px">+ Add a racer (2 spots to fill)</a></div></div>
+<div class="ck"><h3>Questions <span class="b open">Done</span></h3><a class="l" style="font-size:13px">Review answers</a></div>
+<div class="ck"><h3>Fee <span class="b warn">$120 due</span></h3>
+<div class="rrow"><span>Registration Fee</span><b>$120</b></div>
+<div class="wn" style="margin:8px 0">⚠ The roster isn't full (3 of 5). Racers can't pay yet; staff can take payment anyway.</div>
+<span class="obtn">Pay $120 as staff</span>
+<div class="rrow" style="margin-top:10px"><span>Cart Deposit <span class="b open">Paid</span> <span class="meta">$50 · Dec 9 by card</span></span><a class="l" style="font-size:12px">Refund on Payments</a></div>
+</div></div></div></div></div>
+<div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:22px;align-items:flex-start"><div><p class="label">Phone: Staff card collapsed near the top</p><div class="ph"><div class="hd"><div class="logo">CHIditarod<small>registration</small></div><div class="menu"><b>Sam</b> <a>Log out</a></div></div><div style="height:4px;background:#b3ddf2"></div><div class="bd"><a class="l" style="font-size:13px">‹ Who's registered</a>
+<h1 class="t" style="margin-top:4px">Ada's Second Try</h1><p class="sub" style="margin:2px 0 4px">CHIditarod 2027 · <span class="b closed">Registration closed</span></p>
+<div class="stars"><div class="star lit"><i>★</i>Team</div><div class="star"><i>★</i>Racers</div><div class="star lit"><i>★</i>Questions</div><div class="star"><i>★</i>Fee</div></div>
+<div class="note" style="margin:6px 0">Closed for racers; you can still edit, as staff.</div>
+<div class="staff" style="margin:8px 0 12px;padding:10px"><h2 style="font-size:15px">▸ Staff details <span class="tag">staff only</span></h2><div class="meta">Captain Bea Pusher · Emails (4) · Payments</div></div>
+<div style="background:#fff;border:1px solid #b3ddf2;border-radius:10px"><div class="ck"><h3>Racers <span class="b warn">3 of 5</span></h3><div class="rrow"><span>★ Bea Pusher</span><a class="l">Edit</a></div></div><div class="ck"><h3>Fee <span class="b warn">$120 due</span></h3><div class="wn" style="margin:0 0 8px">⚠ Roster not full. Staff can take payment anyway.</div><span class="obtn">Pay $120 as staff</span></div></div>
+</div></div></div>
+<div class="cap" style="max-width:420px;margin-top:30px"><b>Who sees what</b><br>Refunders: the Staff card and the links (read only), no edit controls, no "Pay as staff".<br>Operators and admins: everything shown, including the New team setting.<br>"Refund on Payments" opens the Payments page filtered to this team; the old per-payment Refund button is gone.<br><br><b>"Pay as staff"</b> is outlined, not the usual red button, and its card names the gap, so it's hard to click by accident. It charges the same price a racer would pay now, through the same payment code.</div></div>
