@@ -3,12 +3,20 @@ import { SiteHeader } from '@/components/layouts/site-header';
 import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
 import { FeedbackLink } from '@/features/feedback/components/feedback-link';
 
+/** Route `handle.wide`: `true` widens at every size, `'lg'` only from the lg breakpoint. */
+type WideHandle = true | 'lg';
+
 export function RegisterLayout() {
   useUnauthorizedRedirect();
-  const wide = useMatches().some(
-    ({ handle }) => (handle as { wide?: boolean } | undefined)?.wide,
-  );
-  const width = wide ? 'max-w-5xl' : 'max-w-xl';
+  const wide = useMatches()
+    .map(({ handle }) => (handle as { wide?: WideHandle } | undefined)?.wide)
+    .find(Boolean);
+  const width =
+    wide === 'lg'
+      ? 'max-w-xl lg:max-w-5xl'
+      : wide
+        ? 'max-w-5xl'
+        : 'max-w-xl';
 
   return (
     <div className="min-h-screen bg-page">

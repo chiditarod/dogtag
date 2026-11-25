@@ -10,6 +10,7 @@ const asUser = (roles: string[]) =>
   server.use(
     http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles } })),
     http.get('/api/v1/races', () => HttpResponse.json({ races: [] })),
+    http.get('/api/v1/teams', () => HttpResponse.json({ teams: [] })),
   );
 
 describe('UserMenu', () => {
@@ -25,6 +26,15 @@ describe('UserMenu', () => {
     expect(await screen.findByRole('link', { name: t('layout.staff') })).toHaveAttribute(
       'href',
       '/register/staff/payments',
+    );
+  });
+
+  it('shows an Account link for logged-in users', async () => {
+    asUser([]);
+    renderApp('/');
+    expect(await screen.findByRole('link', { name: t('layout.account') })).toHaveAttribute(
+      'href',
+      '/register/account',
     );
   });
 });

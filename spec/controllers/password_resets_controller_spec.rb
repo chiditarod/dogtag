@@ -126,6 +126,16 @@ describe PasswordResetsController do
           include_examples 'assigns the user object'
         end
 
+        context 'when the account is locked out' do
+          let(:user) { FactoryBot.create(:user).tap { |u| u.update_columns(failed_login_count: 15) } }
+          let(:endpoint) { lambda { patch :update, params: { id: user.id, password: 'brandnew123', password_confirmation: 'brandnew123' } } }
+
+          it 'clears the failed login count' do
+            expect(user.reload.failed_login_count).to eq(0)
+            expect(user.valid_password?('brandnew123')).to be(true)
+          end
+        end
+
         context 'when new password is not accepted' do
           let(:errors) { double('errors', messages: 'foo') }
           let(:user) { double('user', id: '12345', save: false, errors: errors).as_null_object }

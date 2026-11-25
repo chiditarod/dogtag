@@ -1,4 +1,4 @@
-import { DEFAULT_TIME_ZONE } from '@/lib/dates';
+import { DEFAULT_TIME_ZONE, formatShortDay } from '@/lib/dates';
 import { en, t } from '@/locales/en';
 import type { RegistrationStatus } from '@/types/api';
 import type { PaymentFilterValues, PaymentsFilterOptions } from './types';
@@ -16,11 +16,7 @@ export function formatMoney(cents: number): string {
 
 /** "Nov 20". Staff pages show times in the default race zone (payments carry no zone). */
 export function formatShortDate(iso: string): string {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: DEFAULT_TIME_ZONE,
-  }).format(new Date(iso));
+  return formatShortDay(iso, DEFAULT_TIME_ZONE);
 }
 
 /** "Nov 20, 2026", for the paid column. */

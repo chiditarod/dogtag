@@ -8,16 +8,19 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
+#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
 #   rails test_seeds:buddy_picker              (captain's team, same-route question unanswered, plus two other teams in a race with questions)
 #   rails test_seeds:show_when                 (captain's team in a race whose form has a showWhen field)
 #   rails test_seeds:race_list_order           (open, waitlist, registration-over and not-yet-open races; a captain with teams in two of them)
+#   rails test_seeds:homepage_intro            (the soonest open race, 3 racers per team, for the /register intro)
 #   rails test_seeds:staff_shell              (a racer and a refunder with a long first name, for the staff shell)
 #   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:payments_partial_failure (a refunder and three mock Cart Deposit payments, the second fails its first refund)
 #   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
+#   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -352,6 +355,33 @@ namespace :test_seeds do
     puts "✅ Seeded!"
     puts "  User: #{user.email} / oldpassword123"
     puts "  Credentials file: #{credentials_file}"
+  end
+
+  desc "Create a racer with a known password for the SPA account page test"
+  task account: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+
+    user = FactoryBot.create(:user,
+      first_name: "Account",
+      last_name: "TestUser",
+      email: "account-#{unique_id}@example.com",
+      password: "oldpassword123",
+      password_confirmation: "oldpassword123")
+
+    credentials = {
+      user_email: user.email,
+      password: "oldpassword123",
+      new_password: "newpassword456",
+      user_id: user.id
+    }
+    File.write(credentials_file, credentials.to_json)
+
+    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Generate perishable token for password reset test"
@@ -852,6 +882,23 @@ namespace :test_seeds do
     puts "✅ Seeded four races for #{short} and captain #{captain.email}"
   end
 
+  desc "The soonest open race (3 racers per team), for the /register intro"
+  task homepage_intro: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding homepage intro test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+
+    # One day out, so it is the first open race in the list (N comes from it).
+    race = FactoryBot.create(:race, name: "Race Intro #{unique_id[0..7]}", people_per_team: 3, max_teams: 100,
+      registration_close: 20.hours.from_now, final_edits_close: 22.hours.from_now, race_datetime: 1.day.from_now)
+
+    write_test_credentials(unique_id, race_name: race.name)
+    puts "✅ Seeded #{race.name}"
+  end
+
   desc "Captain's unfinalized team with two racers (neither is the account holder) and no team captain"
   task team_captain: [:guard, :environment] do
     require "factory_bot_rails"
@@ -922,6 +969,97 @@ namespace :test_seeds do
       team_name: team.name
     )
     puts "✅ Seeded unfinalized team #{team.name} (ID: #{team.id}) in race closing in 23h"
+  end
+
+  desc "Who's registered: a racer, an operator and a refunder; an open race (2 finalized, 2 unfinalized teams) and a full race (2 on the waitlist)"
+  task who_registered: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding who's registered test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    make_user = lambda do |role, roles = []|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Who",
+        email: "who-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: roles
+      )
+    end
+    racer = make_user.call(:racer)
+    operator = make_user.call(:operator, [:operator])
+    refunder = make_user.call(:refunder, [:refunder])
+    owners = (1..4).map { |n| make_user.call(:"owner#{n}") }
+
+    answers = JSON.parse(File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json")))
+    answers_json = lambda do |racer_type, flame|
+      answers.merge("racer-type" => racer_type, "flame-effects" => flame).to_json
+    end
+    # Not Team#finalize: that enqueues TeamFinalizer (email, Classy) into the shared Redis.
+    finalize = lambda do |team, number|
+      people = FactoryBot.create_list(:person, team.race.people_per_team, team: team)
+      team.update_columns(captain_id: people.first.id, finalized: true, notified_at: Time.zone.now, assigned_team_number: number)
+    end
+
+    open_race = FactoryBot.create(:race_with_jsonform,
+      name: "Race Who Open #{short}",
+      filter_field: "racer-type,flame-effects",
+      max_teams: 10
+    )
+    fee = MockPaymentRequirement.create!(name: "Registration", race: open_race)
+    Tier.create!(requirement: fee, price: 2500, begin_at: 10.days.ago)
+
+    mine = FactoryBot.create(:team, name: "Test Team Who Mine #{short}", race: open_race, user: racer,
+                             jsonform: answers_json.call("Racer", "No"))
+    finalize.call(mine, 7)
+    other = FactoryBot.create(:team, name: "Test Team Who Other #{short}", race: open_race, user: owners[0],
+                              jsonform: answers_json.call("Art Cart", "Yes"))
+    finalize.call(other, 12)
+
+    # Unfinished and unpaid: the racer's own team, which they can delete. It has no racers, so no new-team flag.
+    draft = FactoryBot.create(:team, name: "Test Team Who Draft #{short}", race: open_race, user: racer,
+                              jsonform: answers_json.call("Racer", "No"))
+    # Paid, so nobody can delete it. Its racers have no experience, so staff see the new-team flag.
+    paid = FactoryBot.create(:team, name: "Test Team Who Paid #{short}", race: open_race, user: owners[1],
+                             jsonform: answers_json.call("Art Cart", "Yes"))
+    FactoryBot.create_list(:person, open_race.people_per_team, team: paid, experience: 0)
+    CompletedRequirement.create!(
+      team: paid, requirement: fee, user: owners[1],
+      charge_id: "mock_ch_#{short}_who", amount_cents: 2500,
+      metadata: { "charge_id" => "mock_ch_#{short}_who", "amount" => 2500 }
+    )
+
+    # One spot, taken, so the other two teams are on the waitlist (oldest first).
+    full_race = FactoryBot.create(:race, name: "Race Who Full #{short}", max_teams: 1)
+    finalize.call(FactoryBot.create(:team, name: "Test Team Who Seated #{short}", race: full_race, user: owners[2]), 1)
+    first_wait = FactoryBot.create(:team, name: "Test Team Who Wait First #{short}", race: full_race, user: owners[3])
+    second_wait = FactoryBot.create(:team, name: "Test Team Who Wait Second #{short}", race: full_race, user: racer)
+    first_wait.update_columns(created_at: 2.minutes.ago)
+    second_wait.update_columns(created_at: 1.minute.ago)
+
+    write_test_credentials(unique_id,
+      racer_email: racer.email,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      open_race_id: open_race.id,
+      open_race_name: open_race.name,
+      full_race_id: full_race.id,
+      mine_name: mine.name,
+      other_name: other.name,
+      draft_name: draft.name,
+      paid_name: paid.name,
+      first_wait_name: first_wait.name,
+      second_wait_name: second_wait.name,
+      registered_owner_emails: [racer.email, owners[0].email],
+      registering_owner_emails: [racer.email, owners[1].email]
+    )
+    puts "✅ Seeded #{open_race.name} (ID: #{open_race.id}) and #{full_race.name} (ID: #{full_race.id})"
   end
 
   desc "Clean up all test data"
