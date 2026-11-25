@@ -225,6 +225,8 @@ end
 
 Specs run in Sidekiq fake mode; use `Sidekiq::Testing.inline!` blocks for chains.
 
+The Sidekiq dashboard (`/sidekiq`, every sub-path) is admin-only: `config/routes.rb` wraps the mount in `AdminConstraint` (`app/constraints/admin_constraint.rb`), which reads the Authlogic session (cookie or remember-me) with `last_request_update_allowed?` off so a visit never saves the user, and anyone else (logged out, racer, refunder, operator) gets the catch-all 404. `SIDEKIQ_USER`/`SIDEKIQ_PASS` remain an optional extra basic-auth prompt (`config/initializers/sidekiq.rb`). In request specs Authlogic's credentials cookie is `secure`, so call `https!` before `api_login` when a spec needs `user_credentials`.
+
 Cron jobs live in `config/schedule.yml`; sidekiq-cron auto-loads it on Sidekiq server startup (no initializer needed). `Workers::RegistrationReminders` runs daily; idempotency comes from `SentEmail` dedupe keys (`ReminderSelector`). Dedupe keys embed the deadline timestamp (e.g. `close-7d-<epoch>`) so a moved deadline or tier start sends a fresh reminder. Cron lines may carry a zone (`"0 9 * * * America/Chicago"`) to follow DST.
 
 ### Event-Driven Architecture

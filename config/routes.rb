@@ -41,7 +41,9 @@ Rails.application.routes.draw do
   resources :password_resets, :only => [:new, :create, :edit, :update]
 
   # sidekiq
-  mount Sidekiq::Web => '/sidekiq'
+  constraints(AdminConstraint.new) do
+    mount Sidekiq::Web => '/sidekiq'
+  end
 
   resources :sent_emails, only: [:index]
 
