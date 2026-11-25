@@ -206,9 +206,24 @@ describe UsersController do
           let(:valid_user) { FactoryBot.create :user }
 
           it 'ignores roles' do
-            patch :update, params: { id: valid_user.id, user: { first_name: 'X', roles: ['admin'] } }
+            patch :update, params: { id: valid_user.id, current_password: '12345678', user: { first_name: 'X', roles: ['admin'] } }
             expect(valid_user.reload.is?(:admin)).to be(false)
             expect(valid_user.first_name).to eq('X')
+          end
+
+          it 'refuses a self-edit without the current password' do
+            original = valid_user.first_name
+            patch :update, params: { id: valid_user.id, user: { first_name: 'X' } }
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(flash[:error]).to eq(I18n.t('users.update.current_password_wrong'))
+            expect(valid_user.reload.first_name).to eq(original)
+          end
+
+          it 'refuses a self-edit with a wrong current password' do
+            original = valid_user.first_name
+            patch :update, params: { id: valid_user.id, current_password: 'nope-nope', user: { first_name: 'X' } }
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(valid_user.reload.first_name).to eq(original)
           end
         end
       end

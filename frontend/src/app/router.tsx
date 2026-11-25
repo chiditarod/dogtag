@@ -7,8 +7,11 @@ import {
 } from 'react-router-dom';
 import { StaffLayout } from '@/components/layouts/staff-layout';
 import { RegisterLayout } from '@/components/layouts/register-layout';
+import { AccountRoute } from '@/app/routes/account';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
+import { ResetPasswordRoute } from '@/app/routes/reset-password';
 import { NewTeamRoute } from '@/app/routes/new-team';
+import { RaceRegistrationsRoute } from '@/app/routes/race-registrations';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
@@ -39,10 +42,11 @@ export const routes: RouteObject[] = [
   {
     element: <RegisterLayout />,
     children: [
-      { path: '/', element: <RacesRoute /> },
+      { path: '/', element: <RacesRoute />, handle: { wide: 'lg' } },
       { path: '/login', element: <LoginRoute /> },
       { path: '/signup', element: <SignupRoute /> },
       { path: '/forgot-password', element: <ForgotPasswordRoute /> },
+      { path: '/reset-password/:token', element: <ResetPasswordRoute /> },
       {
         element: (
           <RequireAuth>
@@ -53,6 +57,15 @@ export const routes: RouteObject[] = [
           {
             path: '/races/:raceId/teams/new',
             element: <NewTeamRoute />,
+          },
+          {
+            path: '/races/:raceId/registrations',
+            element: <RaceRegistrationsRoute />,
+            handle: { wide: true },
+          },
+          {
+            path: '/account',
+            element: <AccountRoute />,
           },
           {
             path: '/teams',

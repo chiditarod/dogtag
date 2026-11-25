@@ -67,15 +67,21 @@ describe('router', () => {
     ).toBeInTheDocument();
   });
 
-  it('widens only the team page', async () => {
+  it('widens the team page and, from lg, the landing', async () => {
     const { unmount } = renderAt('/register/teams/5');
     await screen.findByRole('heading', { level: 1, name: 'Cart Pushers' });
     expect(screen.getByRole('main')).toHaveClass('max-w-5xl');
     unmount();
 
-    renderAt('/register/');
+    const login = renderAt('/register/login');
     expect(screen.getByRole('main')).toHaveClass('max-w-xl');
     expect(screen.getByRole('main')).not.toHaveClass('max-w-5xl');
+    login.unmount();
+
+    renderAt('/register/');
+    const main = screen.getByRole('main');
+    expect(main).toHaveClass('max-w-xl', 'lg:max-w-5xl');
+    expect(main).not.toHaveClass('max-w-5xl');
   });
 
   it('shows not found for unknown paths', () => {

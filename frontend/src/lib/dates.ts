@@ -1,7 +1,7 @@
 /** Used only when the API response has no `time_zone` (or an unknown one). */
 export const DEFAULT_TIME_ZONE = 'America/Chicago';
 
-type TimeZone = string | null | undefined;
+export type TimeZone = string | null | undefined;
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
@@ -38,6 +38,23 @@ const CLOCK_OPTIONS: Intl.DateTimeFormatOptions = {
 /** e.g. "Sat, Mar 6, 2027", in the race's time zone. Use for openings and start times. */
 export function formatDate(iso: string, timeZone: TimeZone): string {
   return formatter('date', DATE_OPTIONS, timeZone).format(new Date(iso));
+}
+
+/** e.g. "Dec 8", in the passed zone. */
+export function formatShortDay(iso: string, timeZone: TimeZone): string {
+  return formatter('short-day', { month: 'short', day: 'numeric' }, timeZone).format(new Date(iso));
+}
+
+const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
+/** "just now", "3 hours ago", or from a day on the short day (e.g. "Dec 8"). */
+export function formatSince(iso: string, timeZone: TimeZone, now: Date = new Date()): string {
+  const elapsed = now.getTime() - new Date(iso).getTime();
+  const minutes = Math.floor(elapsed / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return relative.format(-minutes, 'minute');
+  if (elapsed < 24 * 3_600_000) return relative.format(-Math.floor(minutes / 60), 'hour');
+  return formatShortDay(iso, timeZone);
 }
 
 function isLocalMidnight(date: Date, timeZone: TimeZone): boolean {
