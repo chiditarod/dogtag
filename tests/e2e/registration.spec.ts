@@ -15,9 +15,9 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { deleteFundraisingTeam, findFundraisingTeamsByName } from './classy';
 import { clearInbox, waitForEmail } from './inbox';
-import { fillSecret } from './fill-secret';
 import { assertTestKey, payFee } from './payments';
 import { readRaceState, runId, target } from './run';
+import { addRacers, signUp, startTeam } from './team-steps';
 
 interface JsonformProperty {
   title?: string;
@@ -105,16 +105,7 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
   if (target.checkEmail) await test.step('Clear the inbox', () => clearInbox());
 
   await test.step('Sign up', async () => {
-    await page.goto('/register/signup');
-    await page.getByLabel('First name').fill('Captain');
-    await page.getByLabel('Last name').fill(`E2E ${id}`);
-    // The address is a private mailbox on staging, so it never goes in a step title.
-    await fillSecret(page.getByLabel('Email', { exact: true }), email);
-    await page.getByLabel('Phone').pressSequentially('3125550100');
-    await fillSecret(page.getByLabel('Password', { exact: true }), password);
-    await fillSecret(page.getByLabel('Confirm password'), password);
-    await page.getByRole('button', { name: 'Create account' }).click();
-    await expect(page.getByRole('heading', { name: 'Choose your race' })).toBeVisible();
+    await signUp(page, { id, email, password });
 
     if (target.checkEmail) {
       const welcome = await waitForEmail({ to: email, subjectIncludes: 'Welcome to dogTag' });
@@ -123,33 +114,9 @@ test('B: a new captain registers a team through "You\'re in!"', async ({ page, r
     }
   });
 
-  await test.step('Start a team in the race', async () => {
-    const raceCard = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name: raceName }) });
-    await raceCard.getByRole('link', { name: 'Start a team' }).click();
+  await test.step('Start a team in the race', () => startTeam(page, raceName, teamName));
 
-    await expect(page.getByRole('heading', { name: 'Create your team' })).toBeVisible();
-    await page.getByLabel('Team name').fill(teamName);
-    await page.getByLabel('Description').fill('Pushing carts for charity');
-    await page.getByLabel('Team years racing', { exact: true }).selectOption({ index: 1 });
-    await page.getByRole('button', { name: 'Create team' }).click();
-    await expect(page).toHaveURL(/\/register\/teams\/\d+$/);
-  });
-
-  await test.step('Add 5 racers', async () => {
-    const racers = page.getByRole('group', { name: 'Racers' });
-    for (let i = 1; i <= 5; i += 1) {
-      await racers.getByRole('button', { name: '+ Add someone new' }).first().click();
-      const form = page.getByRole('form', { name: 'Add a racer' });
-      await form.getByLabel('First name').fill(`Racer${i}`);
-      await form.getByLabel('Last name').fill('Pusher');
-      await form.getByLabel('Email', { exact: true }).fill(`racer${i}-${id}@example.com`);
-      await form.getByLabel('Phone').pressSequentially('3125550144');
-      await form.getByLabel('Years racing', { exact: true }).fill('2');
-      await form.getByRole('button', { name: 'Save' }).click();
-      await expect(racers.getByText(`Racer${i} Pusher`, { exact: true })).toBeVisible();
-    }
-    await expect(racers.getByText('5 of 5')).toBeVisible();
-  });
+  await test.step('Add 5 racers', () => addRacers(page, { id, label: 'Racer' }));
 
   // The account holder is not one of the racers, so nobody is captain until one is chosen,
   // and the team cannot finalize without one.

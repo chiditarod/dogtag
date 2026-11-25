@@ -94,7 +94,8 @@ The suite never logs in as an admin, so admin credentials do not belong in `.env
 ```bash
 npm run e2e                  # local: mock payments, Mailpit (unit + registration projects)
 npm run e2e:stripe           # local: real Stripe test-card payment
-E2E_CHECK_EMAIL=1 npm run e2e:staging   # staging: Stripe test card, IMAP email check when E2E_CHECK_EMAIL=1
+E2E_CHECK_EMAIL=1 npm run e2e:staging   # staging: Stripe test card, IMAP email check when E2E_CHECK_EMAIL=1 (unit + registration + refunds)
+npx playwright test --project=refunds   # local: just the staff refund spec, with mock payments (stop other test servers first)
 E2E_CHECK_CLASSY=1 npm run e2e          # any target: also check (then delete) the Classy fundraising team
 E2E_TARGET=staging npx playwright test --project=live   # live IMAP and Classy specs
 ```
@@ -108,7 +109,17 @@ What the guard refuses (`tests/e2e/target.ts`; the lists are hard-coded and no e
 - A Classy campaign other than the allowlisted one; only teams named `Test Team E2E *` are ever deleted.
 - A missing required variable (the error names the variable, never its value).
 
-The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race. The next run retires it first once it is two hours old (the UTC start time is in the name), so two runs at the same time leave each other's races alone. On staging, the registration project (like race setup and teardown) keeps no trace or video, because they would hold the test mailbox address and the racer's password; a failure screenshot can still show the address and stays in the local, gitignored `test-results/`. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
+The race is retired, not deleted: its dates move into the past and ` [retired]` is appended to its name. A run that was interrupted leaves an open `Race E2E *` race. The next run retires it first once it is two hours old (the UTC start time is in the name), so two runs at the same time leave each other's races alone. On staging, the registration and refunds projects (like race setup and teardown) keeps no trace or video, because they would hold the test mailbox address and the racer's password; a failure screenshot can still show the address and stays in the local, gitignored `test-results/`. Teardown also deletes `playwright/.auth/staff.json`. The suite never calls Heroku (no CLI, API or `heroku run`). The legacy specs and the seed-based `tests/spa` specs are local only (the `local-suite` project is omitted on staging), because they need `test_seeds:*` Rails tasks.
+
+#### Staff refunds (`refunds` project, #347)
+
+`tests/e2e/refunds.spec.ts` runs in `npm run e2e:staging` (not in the local `npm run e2e`). In the run's own race, one captain starts two teams with full rosters (Pay unlocks only on a full roster): `Solo` pays the Cart Deposit, `Pair` pays the deposit and the Race Registration fee, so three real test-card charges exist. The operator (the saved `admin-auth` session in a second browser context, never an admin) opens `/register/staff/payments`, refunds Solo's payment alone (`REFUND 1`), then Pair's two as a batch (`REFUND 2`), and the spec checks the results dialog, the Refunded rows, that a refunded payment has no tick box in Refund mode, and the racer's fee card (`Refunded` badge, `Cart Deposit: refunded` lines). With `E2E_CHECK_EMAIL=1` it also reads the refund emails over IMAP (one for Solo, two for Pair, no duplicates). The teams never finalize, so no Classy team is created.
+
+- The staff list is searched by this run's team names (`q=Test Team E2E <runId>-refund`): on staging the `registration` project pays into the same race, so the unfiltered list and progress line would count its payments too.
+- Entering Refund mode sets the status filter to Paid and leaving keeps it, so a refunded row only shows again after choosing All.
+- The charge is not read back from Stripe (the suite holds no Stripe secret key); "refunded" is what the app reports, which comes from Stripe's own refund response.
+- Locally, `npx playwright test --project=refunds` also works with mock payments (a mock charge refunds outside production). The same recording rules as `registration` apply on staging (no trace or video).
+- Needs the SPA build to be current (`npm --prefix frontend run build`); a stale `public/register` fails earlier, at the racer form.
 
 ### Seed tasks and deployed environments
 
