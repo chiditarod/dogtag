@@ -56,7 +56,10 @@ export interface FeeItem {
   paid_cents: number;
   /** Upcoming price change; null once paid. */
   next_tier: ChecklistNextTier | null;
-  /** Paid, then refunded by staff. The requirement stays complete; only this row's label changes. */
+  /**
+   * Paid, then refunded by staff. The requirement stays complete and this row keeps its paid_cents
+   * (shown with a Refunded badge), but the fee's paid_cents total leaves it out.
+   */
   refunded: boolean;
 }
 
@@ -67,6 +70,7 @@ export interface Checklist {
   fee: {
     done: boolean;
     amount_due_cents: number | null;
+    /** Net of refunds (Team#money_paid_in_cents). */
     paid_cents: number;
     next_tier: ChecklistNextTier | null;
     requirement_id: number | null;

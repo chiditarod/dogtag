@@ -486,6 +486,13 @@ describe Team do
       FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { 'amount' => '2500' }
       expect(team.money_paid_in_cents).to eq(7500)
     end
+
+    it "leaves out refunded payments" do
+      FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { "amount" => "5000" }
+      FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { "amount" => "2500" }, refunded_at: Time.current
+
+      expect(team.money_paid_in_cents).to eq(5000)
+    end
   end
 
   describe '#library_name' do
