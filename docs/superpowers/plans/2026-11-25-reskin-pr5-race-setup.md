@@ -27,7 +27,7 @@
 
 ## Calls made in this plan (not in the spec)
 
-- **Money collected** is net of refunds: `money_collected_cents` sums `completed_requirements.amount_cents` where `refunded_at` is nil, and `money_refunded_cents` is shown beside it ("$X refunded"). This matches #358, which drops refunded payments from team and race totals; the mockup's "before refunds" caption is replaced by "After refunds".
+- **Money (owner, 2026-11-25): show gross, refunded and net.** `money_gross_cents` sums every `completed_requirements.amount_cents` for the race (before refunds), `money_refunded_cents` sums those with `refunded_at` set, and `money_collected_cents` is gross minus refunded (after refunds, matching #358). The Money card shows Net as the headline ("After refunds") with "Gross $X · Refunded $Y" under it.
 - **Fees on the overview are read-only in this PR**: name, "Racers can pay"/"Action required", current price, tier count, each linking to the legacy `/races/:race_id/requirements/:id/edit`, plus "Add fee" to legacy `/races/:race_id/requirements/new`. PR 6 replaces these links.
 - **"Who's registered"** links to legacy `/races/:id/registrations` (a plain `<a>`). Racer cleanup redirects that URL to the SPA page, so the link keeps working.
 - **Changing the time zone requires every date in the same PATCH**; otherwise 422 `errors.time_zone`. The SPA always sends all four dates when the zone changed, which keeps their wall-clock values as legacy does.
@@ -73,8 +73,7 @@
     - Per payment requirement with no tiers: `"#{name} has no price"`.
     - Per payment requirement whose earliest tier `begin_at` is after `registration_open`: `"#{name} has no price when registration opens"`.
     - `"Questions (JSONForm) don't parse"` when `jsonform` is present and `JSON.parse` raises.
-  - `Race#money_collected_cents -> Integer`: one query, sum of `amount_cents` over completed requirements of the race's teams with `refunded_at` nil.
-  - `Race#money_refunded_cents -> Integer`: the same sum where `refunded_at` is not nil.
+  - `Race#money_totals -> { gross_cents:, refunded_cents:, net_cents: }`: one query (a single `SELECT SUM(amount_cents), SUM(amount_cents) FILTER (WHERE refunded_at IS NOT NULL)` over completed requirements of the race's teams); nil amounts count as 0; `net_cents = gross_cents - refunded_cents`.
   - `RaceExport.call(race_id, finalized: false) -> { data: String, filename: "race_#{race_id}_export.csv", type: "text/csv; charset=utf-8; header=present" }`: `CSV.generate` over `Team.export(race_id)` or `Team.export(race_id, finalized: true)`, exactly as the legacy action does today.
 
 - [ ] **Step 1:** Write the failing examples:
@@ -84,7 +83,7 @@
     - a tier starting a day after `registration_open` → includes `"Registration has no price when registration opens"`;
     - `jsonform: "{"` → includes `"Questions (JSONForm) don't parse"`;
     - a ready race (`:payment_requirement_with_tier` starting before opening, valid or nil jsonform) → `[]`.
-  - money: two paid completed requirements of 5000 and 3000 cents on two teams, one with `refunded_at: Time.current` → `money_collected_cents == 5000`, `money_refunded_cents == 3000`.
+  - money: two paid completed requirements of 5000 and 3000 cents on two teams, the 3000 one with `refunded_at: Time.current` → `money_totals == { gross_cents: 8000, refunded_cents: 3000, net_cents: 5000 }`; a race with no payments → all 0.
   - `RaceExport`: with one finalized and one unfinalized team, `CSV.parse(result[:data]).size` is 3 without `finalized` and 2 with `finalized: true`; check the filename and type.
 - [ ] **Step 2:** Run `bundle exec rspec spec/models/race_spec.rb spec/services/race_export_spec.rb` — FAIL.
 - [ ] **Step 3:** Implement the three methods and `RaceExport`. Legacy `RacesController#export` becomes `send_data result[:data], type: result[:type], disposition: "attachment; filename=#{result[:filename]}"`. Keep its 400 for a blank `race_id`.
@@ -139,7 +138,7 @@
     - `max_teams, people_per_team, full`
     - `jsonform` (raw text, not parsed), `filter_field` (array, from `filter_field_array`), `experience_labels_text`
     - `classy_campaign_id, classy_default_goal, confirmation_text, confirmation_text_max_length`
-    - `money_collected_cents, money_refunded_cents`
+    - `money: { gross_cents, refunded_cents, net_cents }` (from `Race#money_totals`)
     - `teams: { finalized, total, registering }`
     - `racer_emails` (finalized teams' racers, unique, sorted)
     - `payment_requirements: [{ id, name, type, enabled, current_price_cents, tier_count }]`
@@ -149,7 +148,7 @@
   - logged out → 401;
   - `:user` and `:refunder_user` → 403 on index and show;
   - `:operator_user` → index 200 with races ordered by `race_datetime` desc, `teams` counts right for a race with one finalized and one unfinalized team, `setup_problems` `["No fee set up"]` for a bare race;
-  - show 200 with `jsonform` returned as the stored string, `money_collected_cents` from Task 2's fixture, `can_destroy` false for the operator and true for `:admin_user`;
+  - show 200 with `jsonform` returned as the stored string, `money` from Task 2's fixture, `can_destroy` false for the operator and true for `:admin_user`;
   - unknown id → 404.
   - In `query_count_spec.rb` add the index (one race vs three races, each with a tiered requirement and a team: equal counts).
 - [ ] **Step 2:** Run `bundle exec rspec spec/requests/api/v1/staff/races_spec.rb spec/requests/api/v1/query_count_spec.rb` — FAIL.
@@ -310,7 +309,7 @@
   - Actions: "Who's registered" (`<a href="/races/:id/registrations">`), "Start a team" (`Link` to `/races/:id/teams/new`), "Edit race".
   - Cards:
     - Teams: "finalized / max", and "N still registering" or "N on waitlist" when `full`.
-    - Money collected: net, caption "After refunds", plus "$X refunded" when non-zero.
+    - Money collected: net as the headline, caption "After refunds", and the line "Gross $X · Refunded $Y" under it (always shown, $0 included).
     - Export (CSV): links "Registered teams" (`?finalized=true`) and "All teams" to `/api/v1/staff/races/:id/export.csv`, plus `InfoTip` 'Names are written "Secret Gentlemen, The"'.
     - Dates: four rows. Deadlines use `formatDeadline`, the others `formatDate`, all in the race zone.
     - Fees: read-only rows linking to legacy pages, plus "Add fee"; see Calls.
@@ -450,7 +449,7 @@
   - a zone change needs every date;
   - `zoned-time.ts`;
   - `setup_problems` rules;
-  - money is net of refunds;
+  - the Money card's gross/refunded/net definitions (`Race#money_totals`);
   - fees still link to legacy until PR 6;
   - `STAFF_NAV` is the one place nav roles live;
   - the test seed and spec names.
