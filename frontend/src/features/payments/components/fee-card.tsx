@@ -46,9 +46,11 @@ export function FeeCard({ team }: { team: Team }) {
   // gets a line of its own. A fee whose payments were all refunded shows only those lines.
   const refunded = fee.items.filter((line) => line.refunded);
   if (checklist.finalized || (fee.done && (fee.paid_cents > 0 || refunded.length > 0))) {
+    // Only an all-refunded fee drops the total line; its refunded lines say it all.
+    const showTotal = fee.paid_cents > 0 || refunded.length === 0;
     return (
       <div className="space-y-1">
-        {(fee.paid_cents > 0 || refunded.length === 0) && (
+        {showTotal && (
           <p
             tabIndex={-1}
             ref={(element) => {
