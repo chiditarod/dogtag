@@ -33,14 +33,14 @@ test.describe('SPA homepage intro', () => {
 
     await expect(page.getByText('add 3 racers', { exact: false })).toBeVisible();
     await expect(page.getByText(tagline)).toBeHidden();
-    await expect(page.getByText('Add all 3 racers.')).toBeHidden();
+    await expect(page.getByText('Add all 3 racers and choose a team captain.')).toBeHidden();
     await noSidewaysScroll(page, 320);
 
     const toggle = page.getByRole('button', { name: toggleName });
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByText('Add all 3 racers.')).toBeVisible();
+    await expect(page.getByText('Add all 3 racers and choose a team captain.')).toBeVisible();
     await expect(page.getByText(/teams that haven't finished go on the waitlist/)).toBeVisible();
     await noSidewaysScroll(page, 320);
   });
@@ -52,7 +52,7 @@ test.describe('SPA homepage intro', () => {
 
     await expect(page.getByText(tagline)).toBeVisible();
     await expect(page.getByRole('button', { name: toggleName })).toBeHidden();
-    const step = page.getByText('Add all 3 racers.');
+    const step = page.getByText('Add all 3 racers and choose a team captain.');
     await expect(step).toBeVisible();
 
     const intro = page.getByRole('region', { name: 'Register for CHIditarod' });
