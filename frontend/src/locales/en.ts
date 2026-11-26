@@ -735,6 +735,10 @@ export const en = {
   'staff.fees.firstPrice': 'First price',
   'staff.fees.firstStartHelp': 'Prefilled with registration opening. You can add more prices after saving.',
   'staff.fees.addFee': 'Add fee',
+  'staff.team.readOnlyNote':
+    "Staff details didn't load, so this team is read-only for now. Reload to try again.",
+  'staff.team.closedNote':
+    'Registration is closed. The racers can no longer change this team; you can, as staff.',
 } as const;
 
 /** Looks up a string; `{name}` placeholders are filled from `vars`. */

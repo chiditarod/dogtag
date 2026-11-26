@@ -1,6 +1,7 @@
 import { FeeCard } from '@/features/payments/components/fee-card';
 import { QuestionsCard } from '@/features/questions/components/questions-card';
 import { RosterCard } from '@/features/roster/components/roster-card';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import type { Team } from '@/types/api';
 
 /**
@@ -13,14 +14,16 @@ import type { Team } from '@/types/api';
  */
 interface SlotProps {
   team: Team;
+  /** Computed once by `TeamChecklist`; defaults to a racer's rules. */
+  permissions?: TeamPermissions;
 }
 
-export function RosterCardSlot({ team }: SlotProps) {
-  return <RosterCard team={team} />;
+export function RosterCardSlot({ team, permissions = racerPermissions(team) }: SlotProps) {
+  return <RosterCard team={team} permissions={permissions} />;
 }
 
-export function QuestionsCardSlot({ team }: SlotProps) {
-  return <QuestionsCard team={team} />;
+export function QuestionsCardSlot({ team, permissions = racerPermissions(team) }: SlotProps) {
+  return <QuestionsCard team={team} permissions={permissions} />;
 }
 
 export function FeeCardSlot({ team }: SlotProps) {
