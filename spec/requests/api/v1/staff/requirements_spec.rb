@@ -51,6 +51,19 @@ describe "API v1 staff requirements", type: :request do
     end
   end
 
+  describe "a refunder" do
+    before { api_login(FactoryBot.create(:refunder_user)) }
+
+    it "gets 403, not 400 or 404, for a malformed body or an unknown race" do
+      post "/api/v1/staff/races/#{race.id}/requirements", params: { requirement: { name: "x" } }, as: :json
+      expect(response).to have_http_status(:forbidden)
+      post "/api/v1/staff/races/0/requirements", params: create_params, as: :json
+      expect(response).to have_http_status(:forbidden)
+      get "/api/v1/staff/races/0/requirements"
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
   describe "GET /api/v1/staff/races/:race_id/requirements" do
     before { api_login(operator) }
 
@@ -123,6 +136,18 @@ describe "API v1 staff requirements", type: :request do
       expect(tier["can_destroy"]).to be false
     end
 
+    it "tells a paid fee's only dated price it cannot be deleted even with an undated one beside it" do
+      only = FactoryBot.create(:payment_requirement, race: race)
+      FactoryBot.create(:tier, requirement: only, price: 4000)
+      Tier.new(requirement: only, price: 5000, begin_at: nil).save(validate: false)
+      pay(only)
+      get "/api/v1/staff/requirements/#{only.id}"
+
+      tiers = json["requirement"]["tiers"]
+      expect(tiers.size).to eq(1)
+      expect(tiers.first["destroy_blocked_reason"]).to eq("Can't delete the only price of a fee teams have paid.")
+    end
+
     it "is 404 for a requirement that is not a payment" do
       other = Requirement.new(name: "Other", race: race)
       other.save!(validate: false)
@@ -157,6 +182,19 @@ describe "API v1 staff requirements", type: :request do
         expect(json["errors"]["tier.price"]).to eq(["Whole dollars only, $1 or more."])
       end
       expect(Tier.count).to eq(2)
+    end
+
+    it "refuses a price over $100,000 instead of failing on the integer column" do
+      [10_000_100, 3_000_000_000_000].each do |price|
+        expect do
+          post "/api/v1/staff/races/#{race.id}/requirements", params: create_params(tier: { price: price }), as: :json
+        end.not_to change(Requirement, :count)
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["errors"]["tier.price"]).to eq(["Must be $100,000 or less."])
+      end
+
+      post "/api/v1/staff/races/#{race.id}/requirements", params: create_params(tier: { price: 10_000_000 }), as: :json
+      expect(response).to have_http_status(:created)
     end
 
     it "refuses a blank name and creates no price" do

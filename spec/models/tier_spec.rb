@@ -106,6 +106,17 @@ describe Tier do
       expect(Tier.exists?(tier.id)).to be false
     end
 
+    it 'ignores a legacy price without a start when counting a paid fee\'s prices' do
+      pay(req)
+      undated = Tier.new(requirement: req, price: 1234, begin_at: nil)
+      undated.save(validate: false)
+
+      expect(tier.destroy_blocked_reason).to eq("Can't delete the only price of a fee teams have paid.")
+      expect(tier.destroy).to be false
+      expect(undated.destroy_blocked_reason).to be_nil
+      expect(undated.destroy).to be_truthy
+    end
+
     it 'destroys the only price of an unpaid fee' do
       expect(tier.destroy).to be_truthy
       expect(Tier.exists?(tier.id)).to be false

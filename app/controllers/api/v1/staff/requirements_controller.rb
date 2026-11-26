@@ -6,13 +6,16 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
 
   TYPE_CHANGE_ERROR = "can't be changed after the fee is created".freeze
 
+  # Staff-level access is checked before anything that can answer 400 or 404, so a refunder
+  # learns nothing about which races exist or what a body should look like.
+  before_action -> { authorize!(:index, PaymentRequirement) }, only: [:index]
+  before_action -> { authorize!(:create, PaymentRequirement) }, only: [:create]
   before_action :load_race, only: [:index, :create]
   before_action :load_requirement, only: [:show, :update, :destroy]
   # The start time is a wall clock in the race's own zone.
   around_action :use_race_time_zone, only: [:create]
 
   def index
-    authorize!(:index, PaymentRequirement)
     @requirements = fees.where(race_id: @race.id).includes(:tiers).order(:id).to_a
     @types = types
     @payment_counts = payment_counts(@requirements)

@@ -23,7 +23,7 @@ json.tiers dated do |tier|
   json.begin_at tier.begin_at
   json.status status
   json.can_destroy can?(:destroy, tier)
-  json.destroy_blocked_reason tier.destroy_blocked_reason(paid: counts[:total].positive?, tier_count: requirement.tiers.size)
+  json.destroy_blocked_reason tier.destroy_blocked_reason(paid: counts[:total].positive?, tier_count: dated.size)
 end
 json.can_destroy can?(:destroy, requirement)
 json.destroy_blocked_reason requirement.destroy_blocked_reason(counts)
