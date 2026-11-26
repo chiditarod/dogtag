@@ -13,7 +13,7 @@
  * so the helpers never navigate away from a form they have not saved; a
  * successful save navigates without asking.
  */
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import type { Target } from './target';
 /** Same path as STAFF_STATE in playwright.config.ts. */
 export const STAFF_STATE = 'playwright/.auth/staff.json';
@@ -154,6 +154,25 @@ async function savedTo(page: Page, done: RegExp, what: string): Promise<RegExpMa
   throw new Error(`${what}: still on ${new URL(page.url()).pathname} after 30 s`);
 }
 
+/**
+ * Waits for an inline form to close (its save went through). Throws with the page's error text when the
+ * form instead shows errors and stays open.
+ */
+async function savedToClosed(page: Page, form: Locator, what: string): Promise<void> {
+  const problem = form.locator('[role="alert"], [aria-invalid="true"]');
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    if ((await form.count()) === 0) return;
+    if ((await problem.count()) > 0) {
+      await page.waitForTimeout(250);
+      if ((await form.count()) === 0) return;
+      throw new Error(`${what} failed: ${await formErrors(page)}`);
+    }
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`${what}: the form was still open after 30 s`);
+}
+
 /** The race form's date labels, in form order (the SPA's DATE_LABELS). */
 const DATE_LABELS = {
   registrationOpen: 'Registration opens',
@@ -238,16 +257,17 @@ export async function addPrice(
   await form.getByLabel('Price', { exact: true }).fill(String(price.priceDollars));
   await form.getByLabel('Starts', { exact: true }).fill(wallClockInput(price.beginAt, timeZone));
   await form.getByRole('button', { name: 'Add price', exact: true }).click();
-  // The form closes and the new price is a row of the table.
+  // The form closes and the new price is a row of the table. A failed save keeps the form open with its
+  // errors, so surface them instead of timing out on the missing row.
   const table = page.getByRole('table', { name: 'Prices by date' });
-  await expect(form).toHaveCount(0);
+  await savedToClosed(page, form, `Adding a ${price.priceDollars} price to fee ${feeId}`);
   await expect(table.getByRole('cell', { name: `$${price.priceDollars}`, exact: true }).first()).toBeVisible();
 }
 
 /**
  * Moves every window and the race date into the past (open -4 d, close -3 d,
  * final edits -2 d, race -1 d) and appends " [retired]" to the name, so the
- * race leaves /api/v1/races and the current races on the staff list.
+ * race leaves /api/v1/races and the staff list's non-retired E2E races.
  */
 export async function retireRace(page: Page, raceId: number): Promise<void> {
   await visit(page, `/register/staff/races/${raceId}/edit`);
@@ -291,9 +311,9 @@ export async function currentE2ERaceIds(page: Page): Promise<number[]> {
 }
 
 /**
- * Retires the open E2E races that isSweepable allows (this run's, and other
- * runs' older than SWEEP_MIN_AGE_MS) and returns their ids. A concurrent run's
- * fresh race is left alone.
+ * Retires every non-retired `Race E2E ` race that isSweepable allows (this
+ * run's, and other runs' older than SWEEP_MIN_AGE_MS) and returns their ids.
+ * A concurrent run's fresh race is left alone.
  */
 export async function sweepLeftoverRaces(page: Page, runId: string): Promise<number[]> {
   const now = Date.now();
