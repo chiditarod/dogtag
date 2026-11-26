@@ -111,3 +111,21 @@ describe "Legacy navbar Users and Emails links", type: :request do
     end
   end
 end
+
+describe "Public sign-up links", type: :request do
+  # Owner decision: public sign-up is unchanged; staff no longer create users, racers still sign themselves up.
+  it "keeps the logged-out Register link on the new user page" do
+    get "/races"
+
+    links = Nokogiri::HTML(response.body).css(%(.navbar a[href="#{new_user_path}"]))
+    expect(links.map { |a| a.text.strip }).to eq(["Register"])
+  end
+
+  it "keeps the login page's sign up link on the new user page" do
+    get new_user_session_path
+
+    expect(response).to have_http_status(:ok)
+    links = Nokogiri::HTML(response.body).css(%(a[href="#{new_user_path}"]))
+    expect(links.map { |a| a.text.strip }).to include("or Create an account")
+  end
+end

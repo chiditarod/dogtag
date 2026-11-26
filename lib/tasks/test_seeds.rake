@@ -21,6 +21,7 @@
 #   rails test_seeds:staff_races              (an operator, an admin and a refunder; a Busy race with a fee, a finalized team with a payment and an unfinalized team; an Empty race)
 #   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
 #   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
+#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -1144,6 +1145,98 @@ namespace :test_seeds do
       registering_owner_emails: [racer.email, owners[1].email]
     )
     puts "✅ Seeded #{open_race.name} (ID: #{open_race.id}) and #{full_race.name} (ID: #{full_race.id})"
+  end
+
+  desc "An admin, an operator and a refunder; Ada (owns Doge Sled, one payment, three emails) and Zed (deletable) for staff users and emails"
+  task staff_users_emails: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff users and emails test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    staff = lambda do |role|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Users",
+        email: "staff-users-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: [role]
+      )
+    end
+    admin = staff.call(:admin)
+    operator = staff.call(:operator)
+    refunder = staff.call(:refunder)
+
+    ada = FactoryBot.create(:user,
+      first_name: "Ada#{short}",
+      last_name: "Racer",
+      email: "staff-users-ada-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    # A racer who signed themselves up and has no team or payment, so an admin may delete them.
+    zed = FactoryBot.create(:user,
+      first_name: "Zed#{short}",
+      last_name: "Deletable",
+      email: "staff-users-zed-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    other_owner = FactoryBot.create(:user,
+      first_name: "Other",
+      last_name: "Owner",
+      email: "staff-users-other-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    # Open now, years out, so racers can still be added (a person needs an open race).
+    race = FactoryBot.create(:race, name: "Race StaffUsers #{short}", race_datetime: 5.years.from_now,
+      registration_open: 3.weeks.ago, registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week,
+      max_teams: 50, people_per_team: 2)
+    team = FactoryBot.create(:team, name: "Doge Sled #{short}", race: race, user: ada)
+    FactoryBot.create(:person, team: team)
+    other_team = FactoryBot.create(:team, name: "Test Team Users Other #{short}", race: race, user: other_owner)
+
+    fee = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    Tier.create!(requirement: fee, price: 5000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: team, requirement: fee, user: ada,
+      charge_id: "mock_ch_#{short}_users", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_users", "amount" => 5000 }
+    )
+
+    mail = lambda do |attrs|
+      SentEmail.create!({ mailer: "UserMailer", recipient: ada.email, user_id: ada.id, team_id: team.id, race_id: race.id }.merge(attrs))
+    end
+    mail.call(action: "team_finalized_email", kind: "team_finalized", subject: "Doge Sled is registered", status: "sent",
+              created_at: 1.hour.ago, status_changed_at: 1.hour.ago)
+    mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "failed",
+              error: "Net::SMTPAuthenticationError: 535 Incorrect authentication data",
+              created_at: 30.minutes.ago, status_changed_at: 30.minutes.ago)
+    mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "queued",
+              created_at: 2.minutes.ago, status_changed_at: 2.minutes.ago)
+    SentEmail.create!(mailer: "UserMailer", action: "registration_reminder_email", kind: "registration_reminder",
+                      recipient: other_owner.email, user_id: other_owner.id, team_id: other_team.id, race_id: race.id,
+                      subject: "Registration closes soon", status: "sent",
+                      created_at: 3.hours.ago, status_changed_at: 3.hours.ago)
+
+    write_test_credentials(unique_id,
+      admin_email: admin.email,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      ada_email: ada.email,
+      zed_email: zed.email,
+      password: "password123",
+      short: short,
+      team_id: team.id,
+      team_name: team.name
+    )
+    puts "✅ Seeded #{team.name} (ID: #{team.id}) for Ada (#{ada.email}) and Zed (#{zed.email})"
   end
 
   desc "Clean up all test data"
