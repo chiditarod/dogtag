@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { StaffRaceSummary } from '../api/types';
 import { useStaffRaces } from '../api/use-staff-races';
+import { StatusBadge } from './status-badge';
 
 const headCell = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-navy/70';
 const cell = 'block min-w-0 px-3 py-0.5 sm:table-cell sm:py-2 sm:align-top';
@@ -12,19 +12,6 @@ const cell = 'block min-w-0 px-3 py-0.5 sm:table-cell sm:py-2 sm:align-top';
 /** Shown only below `sm`, where each row is a card with no column header (kept in the accessibility tree). */
 function Label({ children }: { children: string }) {
   return <span className="mr-1 text-xs font-semibold uppercase text-navy/60 sm:hidden">{children} </span>;
-}
-
-function StatusBadge({ status }: { status: StaffRaceSummary['registration_status'] }) {
-  switch (status) {
-    case 'open':
-      return <Badge tone="success">{t('races.open')}</Badge>;
-    case 'waitlist':
-      return <Badge tone="warning">{t('races.waitlist')}</Badge>;
-    case 'closed':
-      return <Badge>{t('races.closed')}</Badge>;
-    case 'not_yet_open':
-      return <Badge>{t('staff.races.notYetOpen')}</Badge>;
-  }
 }
 
 function RegistrationCell({ race }: { race: StaffRaceSummary }) {

@@ -3,7 +3,8 @@ import { apiFetch } from '@/lib/api-client';
 import type { RacePayload, StaffRace, StaffRaceSummary } from './types';
 
 export const staffRacesKey = ['staff', 'races'] as const;
-export const staffRaceKey = (id: number | string) => [...staffRacesKey, id] as const;
+/** The id is a string so `7` (from the list) and `"7"` (from the URL) share one cache entry. */
+export const staffRaceKey = (id: number | string) => [...staffRacesKey, String(id)] as const;
 
 /** The race list, newest race day first. */
 export function useStaffRaces() {
@@ -47,9 +48,14 @@ export function useUpdateRace(id: number | string) {
 
 /** A 422 with `code: "race_has_teams"` means the race still has teams. */
 export function useDeleteRace(id: number | string) {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidateRaces();
   return useMutation({
     mutationFn: () => apiFetch<void>(`/staff/races/${id}`, { method: 'DELETE' }),
-    onSuccess: invalidate,
+    onSuccess: () => {
+      // Drop the deleted race first so the open page does not refetch it (a 404) while it navigates away.
+      queryClient.removeQueries({ queryKey: staffRaceKey(id) });
+      return invalidate();
+    },
   });
 }
