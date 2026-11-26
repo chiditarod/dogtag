@@ -707,6 +707,13 @@ describe Race do
       expect(Race.find(race.id).setup_problems).to eq(["Questions (JSONForm) don't parse"])
     end
 
+    it "flags a fee whose only tier has no start instead of raising" do
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id).update_columns(begin_at: nil)
+
+      expect(Race.find(race.id).setup_problems).to eq(["Registration has no price when registration opens"])
+    end
+
     it "is empty for a ready race, with or without questions" do
       req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
       FactoryBot.create(:tier, requirement_id: req.id, begin_at: race.registration_open - 1.day)
@@ -741,14 +748,13 @@ describe Race do
 
     it "sums paid and refunded payments for the race only" do
       req = FactoryBot.create(:payment_requirement, race: race)
-      other = FactoryBot.create(:completed_requirement, amount_cents: 9999)
-      paid = FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: 5000)
+      FactoryBot.create(:completed_requirement, amount_cents: 9999)
+      FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: 5000)
       refunded = FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: 3000)
       refunded.update_columns(refunded_at: Time.current)
       FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: nil)
 
       expect(race.money_totals).to eq(gross_cents: 8000, refunded_cents: 3000, net_cents: 5000)
-      expect([paid, other]).to all(be_persisted)
     end
 
     it "runs one query" do

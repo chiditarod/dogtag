@@ -142,7 +142,7 @@ class Race < ApplicationRecord
       tiers = fee.tiers.to_a
       if tiers.empty?
         problems << "#{fee.name} has no price"
-      elsif tiers.map(&:begin_at).min > registration_open
+      elsif (begins = tiers.filter_map(&:begin_at)).empty? || begins.min > registration_open
         problems << "#{fee.name} has no price when registration opens"
       end
     end

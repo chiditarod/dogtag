@@ -21,6 +21,7 @@ export function useConfirmationPreview(text: string) {
       apiFetch<{ html: string | null }>('/staff/confirmation_preview', { method: 'POST', json: { text: settled } }),
     enabled: settled.trim() !== '',
     placeholderData: keepPreviousData,
+    retry: false,
   });
   // Cleared text shows nothing at once, not the previous preview until the delay passes.
   return text.trim() === '' ? null : (query.data?.html ?? null);
