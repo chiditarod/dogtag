@@ -502,6 +502,17 @@ export const en = {
   'tour.done': 'Done',
   'tour.end': 'End tour',
   'tour.replay': 'Take the tour',
+  'staff.fees.typeCard': 'Card payment',
+  'staff.fees.typeMock': 'Test payment (no card)',
+  'staff.fees.priceWhole': 'Whole dollars only, $1 or more.',
+  'staff.fees.priceTooBig': 'Must be $100,000 or less.',
+  'staff.fees.priceDuplicate': 'This fee already has a {price} price.',
+  'staff.fees.startDuplicate': 'A price already starts at this time.',
+  'staff.fees.startPast': 'This is in the past.',
+  'staff.fees.firstPriceGap':
+    "The first price starts {start}, after registration opens ({open}). Teams can't pay this fee from {open} to {start}.",
+  'staff.fees.racersPay': 'Racers pay {price} from {date}, {time} {zone}',
+  'staff.fees.discardBody': "Your changes to this fee haven't been saved.",
 } as const;
 
 /** Looks up a string; `{name}` placeholders are filled from `vars`. */
