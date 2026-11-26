@@ -32,10 +32,12 @@
               %b.caret
             %ul.dropdown-menu
               %li.dropdown-header= t '.admin_functions'
-              %li= link_to t('search'), users_path
-              %li= link_to t('new'), new_user_path
+              - if can?(:index, User)
+                %li= link_to t('.users'), "/register/staff/users"
               - if can?(:update, Race)
                 %li= link_to t('.races'), "/register/staff/races"
+              - if can?(:index, SentEmail)
+                %li= link_to t('.emails'), "/register/staff/emails"
               - if can?(:refund, :charges)
                 %li= link_to t('.payments'), "/register/staff/payments"
               %li.divider

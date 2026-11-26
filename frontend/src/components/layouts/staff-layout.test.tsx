@@ -30,7 +30,7 @@ describe('StaffLayout', () => {
     expect(screen.queryByRole('link', { name: t('layout.staff') })).not.toBeInTheDocument();
   });
 
-  it('shows Races and Payments to an operator', async () => {
+  it('shows Races, Users, Emails and Payments to an operator', async () => {
     server.use(
       http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['operator'] } })),
     );
@@ -40,6 +40,8 @@ describe('StaffLayout', () => {
     const links = within(nav).getAllByRole('link');
     expect(links.map((a) => a.textContent)).toEqual([
       t('staff.nav.races'),
+      t('staff.nav.users'),
+      t('staff.nav.emails'),
       t('staff.nav.payments'),
       t('staff.nav.legacy'),
     ]);

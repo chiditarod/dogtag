@@ -69,3 +69,45 @@ describe "Legacy navbar Races link", type: :request do
     expect(races_links).to be_empty
   end
 end
+
+describe "Legacy navbar Users and Emails links", type: :request do
+  def links_to(path)
+    Nokogiri::HTML(response.body).css(%(.navbar a[href="#{path}"]))
+  end
+
+  it "links Users but not Emails for a refunder" do
+    api_login(FactoryBot.create(:refunder_user))
+    get "/races"
+
+    expect(response).to have_http_status(:ok)
+    expect(links_to("/register/staff/users").map { |a| a.text.strip }).to eq(["Users"])
+    expect(links_to("/register/staff/emails")).to be_empty
+  end
+
+  %i[admin_user operator_user].each do |factory|
+    it "links Users and Emails for #{factory}" do
+      api_login(FactoryBot.create(factory))
+      get "/races"
+
+      expect(links_to("/register/staff/users").map { |a| a.text.strip }).to eq(["Users"])
+      expect(links_to("/register/staff/emails").map { |a| a.text.strip }).to eq(["Emails"])
+    end
+  end
+
+  it "shows neither to a racer" do
+    api_login(FactoryBot.create(:user))
+    get "/races"
+
+    expect(links_to("/register/staff/users")).to be_empty
+    expect(links_to("/register/staff/emails")).to be_empty
+  end
+
+  %i[admin_user operator_user refunder_user].each do |factory|
+    it "no longer links new user creation for #{factory}" do
+      api_login(FactoryBot.create(factory))
+      get "/races"
+
+      expect(links_to("/users/new")).to be_empty
+    end
+  end
+end

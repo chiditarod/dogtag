@@ -23,6 +23,8 @@ export const en = {
   'account.checkFields': 'Check the highlighted field.',
   'staff.nav': 'Staff',
   'staff.nav.races': 'Races',
+  'staff.nav.users': 'Users',
+  'staff.nav.emails': 'Emails',
   'staff.nav.payments': 'Payments',
   'staff.nav.legacy': 'Legacy admin',
   'staff.races.heading': 'Races',

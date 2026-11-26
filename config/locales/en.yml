@@ -97,6 +97,7 @@ en:
     navbar:
       races: Races
       users: Users
+      emails: Emails
       my_teams: My Teams
       register: Register
       login: Login
