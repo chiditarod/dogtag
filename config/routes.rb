@@ -124,7 +124,7 @@ Rails.application.routes.draw do
       end
       namespace :staff do
         resources :payments, only: [:index]
-        resources :races, only: [:index, :show]
+        resources :races, only: [:index, :show, :create, :update, :destroy]
         resources :refund_batches, only: [:create, :show] do
           # `retry` is a Ruby keyword, so the action is retry_failed.
           post :retry, on: :member, action: :retry_failed
