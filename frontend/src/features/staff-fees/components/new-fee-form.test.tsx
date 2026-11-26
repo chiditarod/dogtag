@@ -123,6 +123,21 @@ describe('staff add-a-fee page', () => {
     expect(screen.getByText(/Race is closed/)).toBeInTheDocument();
   });
 
+  it('drops the error banner once the only errored field is edited', async () => {
+    await open({
+      post: () => HttpResponse.json({ error: 'Invalid', errors: { 'tier.price': ['is too low'] } }, { status: 422 }),
+    });
+    await userEvent.type(nameInput(), 'Cart Deposit');
+    await userEvent.type(priceInput(), '50');
+    await userEvent.click(screen.getByRole('button', { name: 'Add fee' }));
+    expect(await screen.findByText('is too low')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    await userEvent.type(priceInput(), '0');
+    expect(screen.queryByText('is too low')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('shows the generic error for a failure with no field errors', async () => {
     await open({ post: () => HttpResponse.json({ error: 'Boom', errors: {} }, { status: 500 }) });
     await userEvent.type(nameInput(), 'Cart Deposit');

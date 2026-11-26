@@ -49,6 +49,8 @@ export function NewFeeForm({ race, types }: NewFeeFormProps) {
 
   /** Editing a field answers the server's complaint about its old value. */
   function edited(...keys: string[]) {
+    // The banner was about the failed save, which this edit answers. A save in flight keeps its callbacks.
+    if (create.isError) create.reset();
     setServerErrors((current) => {
       if (!keys.some((key) => key in current)) return current;
       return Object.fromEntries(Object.entries(current).filter(([key]) => !keys.includes(key)));
