@@ -11,6 +11,8 @@ import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
+import { StaffRaceEditRoute } from '@/features/staff-races/routes/staff-race-edit-route';
+import { StaffRaceNewRoute } from '@/features/staff-races/routes/staff-race-new-route';
 import { StaffRaceRoute } from '@/features/staff-races/routes/staff-race-route';
 import { StaffRacesRoute } from '@/features/staff-races/routes/staff-races-route';
 import { SignupRoute } from '@/app/routes/signup';
@@ -85,7 +87,9 @@ export const routes: RouteObject[] = [
         children: [
           { index: true, element: <StaffIndexRedirect /> },
           { path: 'races', element: <StaffRacesRoute /> },
+          { path: 'races/new', element: <StaffRaceNewRoute /> },
           { path: 'races/:raceId', element: <StaffRaceRoute /> },
+          { path: 'races/:raceId/edit', element: <StaffRaceEditRoute /> },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],
