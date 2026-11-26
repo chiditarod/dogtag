@@ -18,11 +18,12 @@ const LABELS = {
   phone: 'staff.users.field.phone',
 } as const;
 
+/** Trimmed, so a stored value with stray spaces does not look edited on load (drafts are compared trimmed). */
 const valuesOf = (user: Pick<StaffUser, FieldName>): Values => ({
-  first_name: user.first_name,
-  last_name: user.last_name,
-  email: user.email,
-  phone: user.phone ?? '',
+  first_name: user.first_name.trim(),
+  last_name: user.last_name.trim(),
+  email: user.email.trim(),
+  phone: (user.phone ?? '').trim(),
 });
 
 /** A form for admins (`can_edit`), plain text for everyone else. */
@@ -31,10 +32,13 @@ export function UserDetailsCard({ user, onDirtyChange }: { user: StaffUser; onDi
   const update = useUpdateStaffUser(user.id);
   // What the server last said, so a save clears the dirty state before the refetch lands.
   const [saved, setSaved] = useState<Values>(() => valuesOf(user));
+  // The draft starts as the raw stored value, so it is trimmed on both sides when compared.
   const [draft, setDraft] = useState<Values>(saved);
   const [done, setDone] = useState(false);
   const changed = FIELDS.filter((field) => draft[field].trim() !== saved[field]);
   const dirty = changed.length > 0;
+  // The read-only view follows the live user, not the mount-time state.
+  const current = valuesOf(user);
 
   useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
 
@@ -104,7 +108,7 @@ export function UserDetailsCard({ user, onDirtyChange }: { user: StaffUser; onDi
           {FIELDS.map((field) => (
             <div key={field} className="min-w-0">
               <dt className="text-xs font-semibold uppercase text-navy/60">{t(LABELS[field])}</dt>
-              <dd className="[overflow-wrap:anywhere]">{saved[field] || '—'}</dd>
+              <dd className="[overflow-wrap:anywhere]">{current[field] || '—'}</dd>
             </div>
           ))}
         </dl>

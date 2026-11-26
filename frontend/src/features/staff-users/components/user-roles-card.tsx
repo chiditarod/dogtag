@@ -41,6 +41,7 @@ function fieldProblems(errors: Record<string, string[]>): string[] {
 export function UserRolesCard({ user, onDirtyChange }: { user: StaffUser; onDirtyChange: (dirty: boolean) => void }) {
   const titleId = useId();
   const helpId = useId();
+  const selfId = useId();
   const update = useUpdateStaffUser(user.id);
   // What the server last said, so a save clears the dirty state before the refetch lands.
   const [saved, setSaved] = useState<Role[]>(() => known(user.roles));
@@ -95,6 +96,7 @@ export function UserRolesCard({ user, onDirtyChange }: { user: StaffUser; onDirt
                   className="h-4 w-4"
                   checked={locked || ticked.includes(role)}
                   disabled={locked}
+                  aria-describedby={locked ? selfId : undefined}
                   onChange={(event) => toggle(role, event.target.checked)}
                 />
                 {t(LABELS[role])}
@@ -105,7 +107,10 @@ export function UserRolesCard({ user, onDirtyChange }: { user: StaffUser; onDirt
         <p id={helpId} className="text-sm text-navy/80">
           {t('staff.users.rolesHelp')}
         </p>
-        {user.is_self && <p className="text-sm text-navy/80">{t('staff.users.selfAdmin')}</p>}
+        {user.is_self && (
+          <p id={selfId} className="text-sm text-navy/80">{t('staff.users.selfAdmin')}
+          </p>
+        )}
         {roleErrors.length > 0 && (
           <ul role="alert" className="space-y-0.5 text-sm font-semibold text-starText">
             {roleErrors.map((message) => (

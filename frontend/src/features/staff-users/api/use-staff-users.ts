@@ -40,6 +40,10 @@ export function useDeleteStaffUser(id: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => apiFetch<void>(`/staff/users/${id}`, { method: 'DELETE' }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: staffUsersKey }),
+    onSuccess: () => {
+      // Drop the deleted user first so the open page does not refetch it (a 404) while it navigates away.
+      queryClient.removeQueries({ queryKey: [...staffUsersKey, id] });
+      return queryClient.invalidateQueries({ queryKey: staffUsersKey });
+    },
   });
 }

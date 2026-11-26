@@ -37,6 +37,7 @@ describe('UserRolesCard', () => {
     const admin = screen.getByRole('checkbox', { name: 'Admin' });
     expect(admin).toBeChecked();
     expect(admin).toBeDisabled();
+    expect(admin).toHaveAccessibleDescription("You can't remove your own Admin role.");
     expect(screen.getByText("You can't remove your own Admin role.")).toBeInTheDocument();
     expect(screen.getByText(/Admin: everything\. Operator: races/)).toBeInTheDocument();
 

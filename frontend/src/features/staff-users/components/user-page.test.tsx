@@ -13,12 +13,15 @@ const here = (router: { state: { location: { pathname: string; search: string } 
 
 function serve(initial: StaffUser, viewerRoles = ['admin']) {
   let current = initial;
+  let deleted = false;
   const requests: { method: string; body: unknown }[] = [];
   server.use(
     http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })),
     http.get('/api/v1/me', () => HttpResponse.json({ user: { ...me, roles: viewerRoles } })),
     http.get('/api/v1/staff/users', () => HttpResponse.json(emptyUsers)),
-    http.get(`/api/v1/staff/users/${initial.id}`, () => HttpResponse.json({ user: current })),
+    http.get(`/api/v1/staff/users/${initial.id}`, () =>
+      deleted ? HttpResponse.json({ error: 'Not found', errors: {} }, { status: 404 }) : HttpResponse.json({ user: current }),
+    ),
     http.patch(`/api/v1/staff/users/${initial.id}`, async ({ request }) => {
       const body = (await request.json()) as { user: Partial<StaffUser> };
       requests.push({ method: 'PATCH', body });
@@ -27,6 +30,7 @@ function serve(initial: StaffUser, viewerRoles = ['admin']) {
     }),
     http.delete(`/api/v1/staff/users/${initial.id}`, () => {
       requests.push({ method: 'DELETE', body: null });
+      deleted = true;
       return new HttpResponse(null, { status: 204 });
     }),
   );
@@ -153,6 +157,17 @@ describe('staff user page delete', () => {
     await waitFor(() => expect(here(router)).toBe('/register/staff/users'));
     expect(requests).toEqual([{ method: 'DELETE', body: null }]);
     expect(dialog()).not.toBeInTheDocument();
+    // The deleted user is not refetched (a 404 would strand the page on "Page not found").
+    expect(screen.queryByRole('heading', { name: 'Page not found' })).not.toBeInTheDocument();
+  });
+
+  it('lands on the list after deleting a bare user with nothing edited', async () => {
+    const { router } = await open(staffUser());
+    await userEvent.click(screen.getByRole('button', { name: 'Delete user' }));
+    const confirm = await screen.findByRole('dialog', { name: "Delete Ada Racer? This can't be undone." });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete user' }));
+    await waitFor(() => expect(here(router)).toBe('/register/staff/users'));
+    expect(dialog()).not.toBeInTheDocument();
   });
 
   it("keeps the user and shows the server's reason on a 422", async () => {
@@ -199,6 +214,13 @@ describe('staff user page leave guard', () => {
     await userEvent.type(phone(), '9');
     await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
     await screen.findByText('Saved.');
+    await userEvent.click(back());
+    await waitFor(() => expect(here(router)).toBe('/register/staff/users'));
+    expect(dialog()).not.toBeInTheDocument();
+  });
+
+  it('does not treat stored surrounding whitespace as an edit', async () => {
+    const { router } = await open(staffUser({ first_name: 'Ada ', phone: ' (312) 555-0142' }));
     await userEvent.click(back());
     await waitFor(() => expect(here(router)).toBe('/register/staff/users'));
     expect(dialog()).not.toBeInTheDocument();
