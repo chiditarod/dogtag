@@ -4,9 +4,9 @@ import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
 import { useUpdateTeam } from '@/features/teams/api/use-update-team';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import type { Team } from '@/types/api';
 
 const controlClass =

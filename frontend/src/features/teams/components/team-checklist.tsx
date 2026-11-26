@@ -36,7 +36,7 @@ interface TeamPageBodyProps {
 
 /** The header and cards. Permissions are computed here once, so one staff request serves the page. */
 function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBodyProps) {
-  const { permissions, staffState } = useTeamPermissions(team, { teamUpdatedAt });
+  const { permissions, staffTeam, staffState } = useTeamPermissions(team, { teamUpdatedAt });
   const { checklist } = team;
   // Card statuses come from the checklist, not stepStates: a finalized team's
   // flag is forced full, but a regressed step's card should still read "to do".
@@ -95,7 +95,7 @@ function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBo
             status={status(feeDone)}
             pill={feePill(checklist.fee, team.race.time_zone)}
           >
-            <FeeCardSlot team={team} />
+            <FeeCardSlot team={team} permissions={permissions} staffTeam={staffTeam} />
           </ChecklistCard>
           <YoureInCard checklist={checklist} />
         </div>

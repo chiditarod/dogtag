@@ -5,10 +5,10 @@ import { DeleteTeam } from '@/features/teams/components/delete-team';
 import { FundraisingStatus } from '@/features/teams/components/fundraising-status';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
-import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import type { StaffState } from '@/features/teams/use-team-permissions';
 import { isFeeOpensLater, stepStates } from '@/features/teams/utils';
 

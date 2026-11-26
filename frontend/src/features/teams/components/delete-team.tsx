@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { useDeleteTeam } from '@/features/teams/api/use-delete-team';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
-import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import type { Team } from '@/types/api';
 
 interface DeleteTeamDialogProps {

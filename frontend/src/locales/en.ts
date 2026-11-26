@@ -739,6 +739,13 @@ export const en = {
     "Staff details didn't load, so this team is read-only for now. Reload to try again.",
   'staff.team.closedNote':
     'Registration is closed. The racers can no longer change this team; you can, as staff.',
+  'staff.fee.payAsStaff': 'Pay {amount} as staff',
+  'staff.fee.gapRoster':
+    "The roster isn't full ({filled} of {total}). Racers can't pay yet; staff can take payment anyway.",
+  'staff.fee.gapClosed': "Registration is closed, so racers can't pay; staff can take payment anyway.",
+  'staff.fee.gapWaitlist':
+    'The race is full and this team is on the waitlist. Paying as staff puts the race over its team limit.',
+  'staff.fee.refundLink': 'Refund on Payments',
 } as const;
 
 /** Looks up a string; `{name}` placeholders are filled from `vars`. */
