@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stepStates } from '@/features/teams/utils';
+import { cardSteps, feePill, isFeeOpensLater, stepStates } from '@/features/teams/utils';
 import { buildChecklist, buildTeam } from '@/test/fixtures';
 
 const team = (overrides: Parameters<typeof buildChecklist>[0] = {}) =>
@@ -32,6 +32,30 @@ describe('stepStates', () => {
       items: [],
     };
     expect(stepStates(team({ fee: opensLater }))[3]).toBe(false);
+  });
+
+  it('keeps the fee star lit when every payment was refunded and a later tier is coming', () => {
+    const refundedItem = {
+      requirement_id: 7,
+      name: 'Registration',
+      done: true,
+      amount_due_cents: null,
+      paid_cents: 10000,
+      next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+      refunded: true,
+    };
+    const allRefunded = {
+      done: true,
+      amount_due_cents: null,
+      paid_cents: 0,
+      next_tier: { price_cents: 15000, begins_at: '2026-12-01T06:00:00.000Z' },
+      requirement_id: 7,
+      items: [refundedItem],
+    };
+    expect(isFeeOpensLater(allRefunded)).toBe(false);
+    expect(stepStates(team({ fee: allRefunded }))[3]).toBe(true);
+    expect(cardSteps(buildChecklist({ fee: allRefunded }))[2]).toBe(true);
+    expect(feePill(allRefunded, 'America/Chicago')).toBe('Paid');
   });
 
   it('fills all four stars once finalized, even if a step regressed', () => {
