@@ -2,17 +2,17 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> **Provisional — refresh against the merged PR 5 (and PRs below it) before building.** This plan was written on a branch cut from `feature/reskin-5-race-setup` while PRs 6 and 7 were planned in parallel. It depends on PR 6 and PR 7 only through spec-named routes (`/staff/users/:userId`, `/staff/emails?team_id=`). If PR 2 (#351, shared list parts) is below this branch when you build, Task 5 edits the PR 2 versions of the same two files (see Task 5).
+> Refreshed on 2026-11-26 against PR 7 (`de8843e`, which carries PRs 1, 2, 5, 6); PR 8 is stacked on #362.
 
-**Goal:** Staff open the normal SPA team page and get everything they use the legacy team page for: a Staff card (team number, new-team setting, collaborating, racing with, captain contact, account holder, emails count, links), edit controls whenever the server lets staff edit, "Pay $X as staff" on an incomplete roster, and "Refund on Payments" links that open Payments filtered to the team.
+**Goal:** Staff open the normal SPA team page and get everything they use the legacy team page for: a Staff card (team number, new-team setting, collaborating, racing with, captain contact, account holder, emails count, links), edit controls whenever the server lets staff edit, "Pay $X as staff" on an incomplete roster, and "Refund on Payments" links that open Payments filtered to the team. Every staff link to a team (Who's registered, Users, the user page, Emails) opens the SPA team page instead of the legacy `/teams/:id`.
 
-**Architecture:** One new read endpoint, `GET /api/v1/staff/teams/:id`, built from the existing models, plus a `can` block computed by a new `StaffTeamPermissions` service from `Ability`, the race windows and the two existing staff rules (`Payments::ChargeTeam`'s staff payer, the legacy `team_params` new-team rule), which this PR names once and shares. The racer team payload is untouched. `PUT /api/v1/teams/:id` gains `new_team_setting` for admins and operators (it does not permit it today). `Payments::PaymentSearch` gains `team_id`. In the SPA a `useTeamPermissions(team)` hook replaces every `race.open_for_registration` gate on the team page: non-staff get exactly today's rules, staff get the server's `can`. A `StaffTeamPanel` in `features/staff-teams` renders under `TeamHeader`.
+**Architecture:** One new read endpoint, `GET /api/v1/staff/teams/:id`, built from the existing models, plus a `can` block computed by a new `StaffTeamPermissions` service from `Ability`, the race windows and the two existing staff rules (`Payments::ChargeTeam`'s staff payer, the legacy `team_params` new-team rule), which this PR names once and shares. The racer team payload is untouched. `PUT /api/v1/teams/:id` gains `new_team_setting` for admins and operators (it does not permit it today). `Payments::PaymentSearch` gains `team_id`. In the SPA a `useTeamPermissions(team)` hook replaces every `race.open_for_registration` gate on the team page: non-staff get exactly today's rules, staff get the server's `can`. A `StaffTeamPanel` in `features/staff-teams` renders under `TeamHeader`. Once the team page is safe for staff (no owner-only Delete, no tour), the four staff team links switch from the legacy page to the SPA (Task 10).
 
 **Tech Stack:** Rails 8, jbuilder, CanCanCan, RSpec request/service specs, StripeMock; React 19 + TypeScript, react-router-dom 7, TanStack Query 5, Tailwind, Vitest + MSW; Playwright.
 
 **Spec:** `docs/superpowers/specs/2026-11-24-reskin-design.md`, area 5 ("Staff view of the team page"), plus "Constraints", "Testing", "PR plan". Mockup: `docs/superpowers/specs/2026-11-24-reskin-mockups/team-staff-v1.html`. Roadmap: `docs/superpowers/plans/2026-11-24-reskin-roadmap.md`.
 
-**Branch:** `feature/reskin-8-staff-team`, stacked on PR 7 (`feature/reskin-7-users-emails`). Build: Sonnet high. Review: Opus high. Registration is live while this ships: no migration, no legacy page removed.
+**Branch:** `feature/reskin-8-staff-team`, stacked on PR 7 (`feature/reskin-7-users-emails`, #362, tip `de8843e`). Build: Sonnet high. Review: Opus high. Registration is live while this ships: no migration, no legacy page removed.
 
 ## Global Constraints
 
@@ -21,8 +21,10 @@
 - Racer behavior is unchanged: for a non-staff viewer every gate on the team page and the racer team JSON stay exactly as today.
 - Authorization through `Ability`. The staff endpoint: refunder, operator, admin (`Api::V1::Staff::BaseController`) plus `authorize!(:show, team)`. Refunders get the card and links read-only: every `can` flag false except `view_payments`.
 - API errors are `{ error, errors }` through `render_errors`; strong params use `params.expect`.
+- New staff endpoints check the class-level permission in a `before_action` before loading the record (as `Api::V1::Staff::UsersController` does), so a role that may not look learns nothing about which ids exist.
 - Staff copy is untranslated English through `t()` with flat `staff.team.*` keys in `frontend/src/locales/en.ts`. Racer copy changes none.
-- 320px with no horizontal scroll; Chicago Flag tokens; existing `Card`, `Button`, `ButtonLink`, `Badge`, `InfoTip`, `QueryError`.
+- 320px with no horizontal scroll; Chicago Flag tokens; existing `Card`, `Button`, `ButtonLink`, `Badge`, `InfoTip`, `QueryError`, and the shared list parts in `components/list/` (PR 2).
+- This PR adds no staff edit form with unsaved state (`NewTeamSelect` saves on change). Any staff form that holds a draft uses the shared `useLeaveGuard` + `DiscardDialog` (`components/ui/`).
 - No new npm or gem dependencies; no Gemfile, initializer, environment or `spec_helper.rb` changes; no migration.
 - Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; the PR body ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)` and states whether the e2e spec was run.
 
@@ -30,6 +32,7 @@
 
 - **Staff edit question answers after registration closes.** Operators and admins may save a team's answers after close. The API `QuestionsController#update` and the legacy `QuestionsController#create` both change their after-close refusal to allow them (Task 2). Racer owners are still refused after close.
 - **Staff Pay stays available for a waitlisted team in a full race.** The warning says the race is full and that paying puts the team over the limit (Task 8).
+- **2026-11-26:** the owner accepted every item under "Calls made in this plan" as written.
 
 ## Calls made in this plan (not in the spec)
 
@@ -133,7 +136,7 @@
 
 **Interfaces:**
 - Consumes: `StaffTeamPermissions`, `CompletedRequirement.payment_status_sql`, `Team#racing_with_names`, `#computed_new_team`, `#new_team_setting`, `#person_experience`.
-- Produces: `GET /api/v1/staff/teams/:id`. The controller inherits `Api::V1::Staff::BaseController` (401/403 as for payments) and adds `authorize!(:show, team)`. Unknown id → 404. Body:
+- Produces: `GET /api/v1/staff/teams/:id`. The controller inherits `Api::V1::Staff::BaseController` (401/403 as for payments), runs `before_action -> { authorize!(:show, Team) }, only: [:show]` before loading (class-level authorize-before-load, as `Staff::UsersController`), then `authorize!(:show, team)`. Unknown id → 404. Body:
   ```
   { staff_team: {
       id, race_id, finalized: Boolean, team_number: Integer|null,
@@ -186,7 +189,7 @@
     - `scope.none` when `team_id` was given and no team was found;
     - else `where(team_id: team.id)`.
     - The summary uses the same filter.
-  - `filters` gains `team: { id, name, race_id } | nil` (nil when absent or unknown) and `team_id: Integer|nil` (the requested id, so the SPA can say "not found").
+  - `filters` gains `team: { id, name, race_id } | nil` (nil when absent or unknown) and `team_id: Integer|nil` (the requested id, so the SPA can say "not found"). (The emails endpoint's `filters.team` is `{ id, name|null }`; Payments keeps the plan's shape because it also needs `race_id`.)
   - The controller passes `team_id: params[:team_id]`.
 
 - [ ] **Step 1:** Write failing examples (two teams in race A, one in race B; default race is B):
@@ -203,25 +206,24 @@
 ### Task 5: Team chip on the Payments page
 
 **Files:**
-- Modify: `frontend/src/features/staff-payments/types.ts`, `use-payment-filters.ts`, `components/filter-chips.tsx`, `components/payments-page.tsx` (chip removal handler), `frontend/src/locales/en.ts`
+- Modify: `frontend/src/features/staff-payments/types.ts`, `use-payment-filters.ts`, `components/filter-chips.tsx` (the Payments wrapper over `components/list/filter-chips`), `components/payments-page.tsx` (chip removal handler), `api/use-payments.ts`, `frontend/src/locales/en.ts`
 - Test: `frontend/src/features/staff-payments/use-payment-filters.test.tsx`, `components/payments-page.test.tsx`
 
 **Interfaces:**
 - Consumes: Task 4 `filters.team`, `filters.team_id`.
 - Produces:
-  - `PaymentFilterValues.teamId?: number` (URL `team_id`, `positiveInt`).
+  - `PaymentFilterValues.teamId?: number` (URL `team_id`, `positiveInt`; `NAMES` gains `teamId: 'team_id'`, as `staff-emails/use-email-filters.ts` does).
   - `PaymentsFilterOptions.team: { id: number; name: string; race_id: number } | null` and `team_id: number | null`.
-  - `setFilter('raceId', …)` also deletes `team_id`.
+  - `setFilter('raceId', …)` also sets `changes.team_id = undefined` (next to `changes.payment_type`).
   - `clearAll` drops `team_id` (it keeps only the race, and the status in Refund mode, as now).
-  - `ChipKey` gains `'teamId'`, label `t('staff.payments.filters.teamChip', { name })` = "Team: {name}", or `t('staff.payments.filters.teamNotFound')` = "Team not found" when `team` is null. The team chip comes first.
+  - `ChipKey` in `components/filter-chips.tsx` gains `'teamId'`, label `t('staff.payments.filters.teamChip', { name })` = "Team: {name}", or `t('staff.payments.filters.teamNotFound')` = "Team not found" when `team` is null. The team chip comes first.
   - Refund mode: a race change still clears the selection. Removing the team chip does not, because the selection spans filters.
-  - **If PR 2 is below this branch:** `use-payment-filters.ts` maps keys through `NAMES` and `useUrlFilters().setParams`; add `teamId: 'team_id'` and `changes.team_id = undefined` on a race change. `filter-chips.tsx` is a wrapper over `components/list/filter-chips`; add the chip there. The behavior is the same.
 - [ ] **Step 1:** Write failing tests:
   - the hook reads `?team_id=7` as `teamId: 7` and ignores `team_id=x`;
   - changing the race removes `team_id` and `payment_type`;
   - `clearAll()` removes `team_id`;
   - page (MSW): `?team_id=7` sends `team_id=7` to `/api/v1/staff/payments`;
-  - page (MSW): a response with `filters.team` shows the chip "Team: Ada's Second Try", and removing it drops `team_id` from the next request;
+  - page (MSW): a response with `filters.team` shows the chip "Team: Ada's Second Try", and removing it ("Remove filter Team: Ada's Second Try") drops `team_id` from the next request;
   - page (MSW): `filters.team: null, team_id: 7` shows "Team not found".
 - [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/staff-payments` — FAIL.
 - [ ] **Step 3:** Implement; `paymentsPath` (`api/use-payments.ts`, used by `usePayments`) adds `team_id` to the query string; the query key already carries the values.
@@ -235,7 +237,7 @@
 - Test: `frontend/src/features/teams/permissions.test.ts`, `frontend/src/features/staff-teams/api/use-staff-team.test.tsx`
 
 **Interfaces:**
-- Consumes: Task 3 JSON; `isStaff` (`features/staff/utils`); `useMe`; `teamQueryKey`.
+- Consumes: Task 3 JSON; `isStaff` (`features/staff/utils.ts`); `useMe` (`features/auth/api/use-me.ts`); `teamQueryKey` (`features/teams/api/use-team.ts`).
 - Produces:
   - `StaffTeam` and `StaffTeamCan` types matching Task 3.
   - `staffTeamQueryKey(id) = ['staff', 'team', String(id)]`.
@@ -288,13 +290,13 @@
     - `open` is replaced per use: `showActions` uses `addRacers`, `usePastRacers` is enabled by `pastRacers && hasEmptySlot`, `canAddMe` needs `addYourself`, `onMakeCaptain` uses `setCaptain`, `canEdit` uses `editRacers`, `canRemove` uses `removeRacers`;
     - `OpenSpotsItem open={addRacers}`.
   - **`QuestionsCard`:** `open` → `editQuestions`.
-  - **`DeleteTeam`:** renders when `deleteTeam`.
+  - **`DeleteTeam`:** renders when `deleteTeam` (replaces `if (!team.deletable || !team.race.open_for_registration) return null`).
   - **`EditTeamBasics`:** renders its Edit button only when `editTeam` (always true for racers).
   - **`TeamHeader`:** when `closedForRacersNote`, a note under the race lines: "Registration is closed. The racers can no longer change this team; you can, as staff." (`staff.team.closedNote`).
   - **`TeamChecklist`:**
     - computes `useTeamPermissions` once and passes `permissions` down; the cards take a `permissions` prop instead of each calling the hook, so one staff query serves the page;
     - no tour auto-start when `isStaff(me)`;
-    - the rail wrapper drops `lg:sticky` when the Staff card is shown.
+    - the rail wrapper (`lg:sticky lg:top-6 lg:has-[form]:static`) drops `lg:sticky` when the Staff card is shown.
 - [ ] **Step 1:** Write failing tests:
   - racer fixtures on a closed race: no Add, no Make captain, no Remove, no Delete, Questions shows "closed" (the existing assertions keep passing unchanged);
   - staff (operator `can` all true, closed race): "+ Add a racer", "Make captain", "Remove" on an incomplete unfinalized team, the questions Edit button (and the form saves through the normal PUT), Delete when `can.delete_team`, and the closed note;
@@ -362,14 +364,14 @@
     - Collaborating: Yes / No / "Not answered".
     - Racing with: names joined with "; ", or "None".
     - Captain: name, `mailto:` email and `tel:` phone, or "No captain yet".
-    - Account holder: the name is a `Link` to `/staff/users/{id}`, plus a `mailto:` email.
+    - Account holder: the name is a `Link` to `/staff/users/{id}` (PR 7's user page; every staff role may open it), plus a `mailto:` email.
   - **Links row:**
-    - "Emails ({n})" → `/staff/emails?team_id={id}`, only with `can.view_emails`;
+    - "Emails ({n})" → `/staff/emails?team_id={id}` (PR 7's page, which shows its "Team: {name}" chip), only with `can.view_emails` (the same roles as `rolesFor('/staff/emails')`);
     - "Payments" → `/staff/payments?team_id={id}`;
-    - "Who's registered" → `/races/{race_id}/registrations`.
+    - "Who's registered" → `/races/{race_id}/registrations` (the SPA page from PR 2, a router `Link`).
   - **`NewTeamSelect`:**
     - options "Automatic (now {Yes|No|No racers yet}{: N years raced})" / "Yes" / "No", values `auto|yes|no`;
-    - saves on change and is disabled while pending;
+    - saves on change and is disabled while pending (no draft, so no leave guard);
     - a `role=status` "Saved" line; a server error shows under the select and the value reverts.
   - **Phone (below `lg`):**
     - collapsed by default: a button "Staff details" (`aria-expanded`) plus a one-line summary "Captain {name} · Emails ({n}) · Payments" (Emails only with `can.view_emails`);
@@ -387,7 +389,29 @@
 - [ ] **Step 4:** Run the whole suite and `npm --prefix frontend run build` — PASS.
 - [ ] **Step 5:** Commit — `Add the Staff card to the team page`
 
-### Task 10: Seeds, Playwright, docs, PR
+### Task 10: Staff team links open the SPA team page
+
+PRs 2 and 7 sent staff to the legacy `/teams/:id` for someone else's team, because the SPA team page assumed its owner (Delete from `team.deletable` alone, tour auto-start). Tasks 7 and 9 remove both reasons, so these switch to the SPA.
+
+**Files:**
+- Modify (each `<a href={`/teams/${id}`}>` with its "legacy team page" comment becomes a router `<Link to={`/teams/${id}`}>`, comment removed):
+  - `frontend/src/features/registrations/components/registrations-list.tsx` (`TeamCell`: `row.mine || row.can_show` both link to the SPA; the `mine` badge stays);
+  - `frontend/src/features/staff-users/components/users-table.tsx`;
+  - `frontend/src/features/staff-users/components/user-teams-card.tsx`;
+  - `frontend/src/features/staff-emails/components/emails-table.tsx`.
+- Test (update the existing assertions):
+  - `frontend/src/features/registrations/components/registrations-page.test.tsx` (the staff `Doge Sled` link: `/teams/1` → `/register/teams/1`; drop the "legacy admin page" comment);
+  - `frontend/src/features/staff-users/components/users-page.test.tsx` (`/teams/1`, `/teams/2` → `/register/teams/1`, `/register/teams/2`);
+  - `frontend/src/features/staff-users/components/user-page.test.tsx` (`/teams/4` → `/register/teams/4`);
+  - `frontend/src/features/staff-emails/components/emails-page.test.tsx` (`/teams/7` → `/register/teams/7`).
+
+- [ ] **Step 1:** Change the four assertions above.
+- [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/registrations src/features/staff-users src/features/staff-emails` — FAIL.
+- [ ] **Step 3:** Implement. A racer (non-staff) who is not the owner still gets plain text (`can_show` is false for them).
+- [ ] **Step 4:** Re-run the whole suite — PASS.
+- [ ] **Step 5:** Commit — `Open staff team links on the SPA team page`
+
+### Task 11: Seeds, Playwright, docs, PR
 
 **Files:**
 - Modify: `lib/tasks/test_seeds.rake` (`staff_team_panel`; check that `cleanup` already sweeps its races, users and `@example.com` sent emails), `CLAUDE.md`
@@ -413,15 +437,16 @@
   3. **Operator, closed race:**
      - the closed note is shown;
      - the Staff card shows the team number placeholder, Collaborating Yes, the racing-with names, the captain contact and the account holder;
-     - Emails (2) links to `/register/staff/emails?team_id=…` (assert the `href` only; PR 7 owns the page);
+     - Emails (2) links to `/register/staff/emails?team_id=…`; following it shows the chip "Team: Test Team StaffPanel <short>" and 2 rows;
      - setting New team to "Yes" shows "Saved" and survives a reload;
      - "+ Add a racer" adds a fourth racer;
      - Questions has Edit; changing an answer and saving shows it as saved after a reload (owner decision).
   4. **Owner, closed race:** no Add, no Make captain, no team-details Edit button, and Questions shows the closed message. Edit on a racer stays (final-edits window).
   5. **Refunder, closed race:** the Staff card has no select, no Emails link, no Pay and no edit controls. "Refund on Payments" on Cart Deposit opens Payments with the chip "Team: Test Team StaffPanel <short>" and exactly one row. Removing the chip lists the race's other payments, or none.
   6. **320px, operator, closed race:** "Staff details" is collapsed with its summary line, expands on tap, and `document.documentElement.scrollWidth <= 320`.
-- [ ] **Step 2:** Add the seed. Rebuild the SPA (`npm --prefix frontend run build`), then run the spec against a separate database as in CLAUDE.md "E2E Learnings": `DATABASE_URL=postgres://postgres@localhost/dogtag_test_2 TEST_PORT=3199 PIDFILE=tmp/pids/e2e-3199.pid npx playwright test tests/spa/staff-team-panel.spec.ts`. It must PASS.
-- [ ] **Step 3:** Run `bin/check`, then the neighbours the same way: `tests/spa/team-captain.spec.ts`, `guided-tour.spec.ts`, `payments-admin.spec.ts`, `staff-shell.spec.ts`, `buddy-picker.spec.ts`, and `tests/e2e/registration.spec.ts` (mock mode, see the fake-keys note). All must PASS.
+  7. **Operator, links:** "See who's registered" on the closed race's tile, the Still registering tab, then the team name, lands on `/register/teams/<id>` with the Staff card (not the legacy page); the same team's link on `/register/staff/users/<owner id>` also points at `/register/teams/<id>`.
+- [ ] **Step 2:** Add the seed. Rebuild the SPA (`npm --prefix frontend run build`), then run the spec against a separate database as in CLAUDE.md "E2E Learnings": `DATABASE_URL=postgres://postgres@localhost/dogtag_reskin5_e2e TEST_PORT=3199 PIDFILE=tmp/pids/e2e-3199.pid npx playwright test tests/spa/staff-team-panel.spec.ts`. It must PASS. Staging e2e (`npm run e2e:staging`) is never run by Claude; the owner runs it.
+- [ ] **Step 3:** Run `bin/check`, then the neighbours the same way: `tests/spa/team-captain.spec.ts`, `guided-tour.spec.ts`, `payments-admin.spec.ts`, `staff-shell.spec.ts`, `buddy-picker.spec.ts`, `whos-registered.spec.ts`, `staff-users-emails.spec.ts`, and `tests/e2e/registration.spec.ts` (mock mode, see the fake-keys note). All must PASS.
 - [ ] **Step 4:** Add a CLAUDE.md "Registration SPA" bullet "Staff team view (reskin PR 8)" covering:
   - the staff endpoint and its `can` flags (`StaffTeamPermissions`; operators and admins may save answers after close (`questions_open?`, owner decision), racers may not; people until `final_edits_close`);
   - `useTeamPermissions` as the one place team-page gates live (racer rules unchanged);
@@ -429,13 +454,15 @@
   - `new_team_setting` through the teams API (`StaffTeamPermissions.new_team_setter?`, shared with legacy);
   - `PaymentSearch` `team_id` (team's race when no `race_id`; unknown lists nothing);
   - no tour auto-start for staff;
+  - staff team links (Who's registered, Users, user page, Emails) open the SPA team page;
   - the seed and spec names.
-  - Also fix CLAUDE.md Known Quirk 6's "the SPA has no staff flag, so staff take payment for an incomplete team in the legacy view".
+  - Also fix the Who's registered bullet ("staff (`can_show`) open anyone else's team on the legacy `/teams/:id` admin page, because ...") and Known Quirk 6's "the SPA has no staff flag, so staff take payment for an incomplete team in the legacy view".
 - [ ] **Step 5:** Commit — `Add staff team panel e2e spec and seed; document the staff team view`
 - [ ] **Step 6:** Push and open the PR against `chiditarod/dogtag` (`gh pr create --repo chiditarod/dogtag`, base `feature/reskin-7-users-emails`). The body lists:
   - the "Calls made in this plan", especially the API now permitting `new_team_setting`;
   - the owner decisions: staff save answers after close (API and legacy), and staff Pay on a waitlisted team with the over-the-limit warning;
   - that it is money-touching, with the Review Focus;
-  - whether the e2e spec was run;
+  - whether the e2e spec was run (local only; staging e2e is left to the owner);
+  - staff team links now open the SPA team page;
   - no migrations and no Gemfile/config changes;
   - the legacy Refund button stays until staff cleanup.
