@@ -36,7 +36,10 @@ class Api::V1::TeamsController < Api::V1::BaseController
     authorize_update!(@team, @team)
     @team.subscribe(TeamAuditor.new)
 
-    if @team.update(params.expect(team: [:name, :description, :experience]))
+    fields = [:name, :description, :experience]
+    fields << :new_team_setting if StaffTeamPermissions.new_team_setter?(current_user)
+
+    if @team.update(params.expect(team: fields))
       render :show
     else
       render_errors(@team)

@@ -60,6 +60,16 @@ describe StaffTeamPermissions do
     end
   end
 
+  context "the racer who owns the team, inside the final-edits window" do
+    before { team && close_registration }
+
+    it "can edit racers but not add them" do
+      result = permissions(team.user)
+
+      expect(result).to include(add_racers: false, edit_racers: true)
+    end
+  end
+
   context "a refunder on an open race" do
     it "can only view payments" do
       result = permissions(refunder)

@@ -43,7 +43,7 @@ class QuestionsController < ApplicationController
     authorize! :edit, @team
 
     # todo: move this validation logic into model
-    unless @team.race.open_for_registration?
+    unless StaffTeamPermissions.questions_open?(@team, current_user)
       flash[:error] = I18n.t('questions.cannot_modify')
       return redirect_to team_path(@team)
     end

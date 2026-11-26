@@ -94,10 +94,26 @@ describe QuestionsController do
       context 'when race is not open for registration' do
         let(:race) { FactoryBot.create :race_with_jsonform, :registration_closed }
 
-        it 'sets a flash info and redirects to team path' do
-          post :create, params: { team_id: team.id }
-          expect(flash[:error]).to eq(I18n.t('questions.cannot_modify'))
-          expect(response.status).to redirect_to(team_path(team))
+        context 'as the racer who owns the team' do
+          let(:valid_user) { team.user }
+
+          it 'sets a flash error, redirects to the team and saves nothing' do
+            post :create, params: { team_id: team.id, 'racer-type' => 'Racer' }
+            expect(flash[:error]).to eq(I18n.t('questions.cannot_modify'))
+            expect(response).to redirect_to(team_path(team))
+            expect(team.reload.jsonform).to be_nil
+          end
+        end
+
+        context 'as an operator' do
+          let(:valid_user) { FactoryBot.create :operator_user }
+
+          it 'saves the answers' do
+            post :create, params: { team_id: team.id, 'racer-type' => 'Racer' }
+            expect(flash[:error]).to be_nil
+            expect(response).to redirect_to(team_path(team))
+            expect(team.reload.jsonform).to include('Racer')
+          end
         end
       end
 
