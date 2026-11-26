@@ -6,9 +6,10 @@
 import { test as teardown } from '@playwright/test';
 import { rmSync } from 'fs';
 import { readRaceState } from './run';
-import { retireRace, STAFF_STATE } from './admin-forms';
+import { forbidLegacyPages, retireRace, STAFF_STATE } from './admin-forms';
 
 teardown('retire the race and forget the staff session', async ({ page }) => {
+  forbidLegacyPages(page);
   try {
     const { raceId, raceName } = readRaceState();
     await retireRace(page, raceId);
