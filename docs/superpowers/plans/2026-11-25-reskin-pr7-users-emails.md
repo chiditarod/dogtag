@@ -45,7 +45,7 @@
 - **"Payments by this user"** links to `/staff/payments?race_id=all&q=<email>`; without `race_id=all`, Payments shows only the default race. **"Emails to this user"** links to `/staff/emails?recipient=<email>`. Each team row on the user page also has an "Emails" link to `/staff/emails?team_id=<id>`, which is how a Team chip comes from the user page.
 - **Refunders still land on Payments at `/staff`.** The nav order follows the spec (Races, Users, Emails, Payments), but the index redirect uses `staffLandingPath`: Races if visible, else Payments. That keeps `tests/spa/staff-shell.spec.ts` unchanged.
 - **`RequireStaff` gains an optional `roles` prop**, so a refunder who opens `/staff/emails` sees `NotAllowed` instead of a generic 403 error.
-- **The legacy navbar's "Search" item becomes "Users"** (→ `/register/staff/users`), and "Emails" (→ `/register/staff/emails`, `can?(:index, SentEmail)`) is added. **"New" (`new_user_path`) stays legacy**: the spec has no create-user page.
+- **The legacy navbar's "Search" item becomes "Users"** (→ `/register/staff/users`), and "Emails" (→ `/register/staff/emails`, `can?(:index, SentEmail)`) is added. **"New" (`new_user_path`) is removed from the admin dropdown** (owner decision, 2026-11-25): staff never create accounts. Users always sign up themselves (`/register/signup`); to give someone elevated privileges, they sign up first and an admin grants roles on their user page (Task 8 `UserRolesCard`). The public sign-up links (logged-out "Register", the login page's "Sign up") are unchanged, and no create-user page is built now or in the staff cleanup PR.
 - **The emails list shows a Changed column** (`status_changed_at`), as the spec lists, although the mockup omits it. A queued row reads "Queued for N min" from `status_changed_at || created_at`.
 - **Staff edits save with `save_without_session_maintenance`**, so an admin editing another user never touches their own session. An email change still sends PR 1's `email_changed` notice to the old address, because it is an `after_update_commit` on `User`.
 
@@ -233,15 +233,15 @@
   - Legacy navbar admin dropdown:
     - replace `link_to t('search'), users_path` with `t('.users')` → `/register/staff/users` when `can?(:index, User)`;
     - add `t('.emails')` → `/register/staff/emails` when `can?(:index, SentEmail)`;
-    - keep `New` → `new_user_path`.
-    - The order is Users, New, Races, Emails, Payments.
+    - remove `New` → `new_user_path` (owner decision: no staff account creation);
+    - The order is Users, Races, Emails, Payments.
 
 - [ ] **Step 1:** Write failing tests:
   - `staffNavItems(['refunder'])` → Users, Payments;
   - `['operator']` → Races, Users, Emails, Payments;
   - `staffLandingPath(['refunder']) === '/staff/payments'`;
   - `RequireStaff roles={['admin','operator']}` shows `NotAllowed` for a refunder and the children for an operator;
-  - `staff_navbar_spec.rb`: a refunder's legacy page links `/register/staff/users` and not `/register/staff/emails`; an operator's links both; a racer sees neither.
+  - `staff_navbar_spec.rb`: a refunder's legacy page links `/register/staff/users` and not `/register/staff/emails`; an operator's links both; a racer sees neither; no admin, operator or refunder dropdown links `/users/new`.
 - [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/staff` and `bundle exec rspec spec/requests/staff_navbar_spec.rb` — FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Re-run — PASS.
@@ -428,7 +428,7 @@
      - change Ada's phone and save, and the reload shows it;
      - Delete is disabled on Ada with "Owns 1 team";
      - on their own page the Admin box is disabled;
-     - give Zed the Operator role and see the tag on the list;
+     - give Zed (a plain racer account that signed itself up) the Operator role and see the tag on the list, then log in as Zed and see the staff nav with Races (the promote-after-signup path);
      - delete Zed and land on the list without Zed.
   4. **320px:**
      - on the users list, Ada's page and the emails page, `document.documentElement.scrollWidth <= 320`;
@@ -449,6 +449,6 @@
 - [ ] **Step 5:** Commit — `Add staff users and emails e2e spec and seed; document them`
 - [ ] **Step 6:** Push and open the PR against `chiditarod/dogtag`, stacked on its parent. The body lists:
   - the "Calls made in this plan";
-  - the legacy `users#destroy` guard and the navbar changes;
+  - the legacy `users#destroy` guard and the navbar changes (including removing the staff "New" user item: users sign up themselves and admins grant roles afterwards);
   - whether the e2e spec ran.
   - It notes no migrations and no Gemfile or config changes.
