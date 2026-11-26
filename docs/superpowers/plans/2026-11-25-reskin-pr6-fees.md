@@ -47,6 +47,8 @@
 - **Name help text** uses the mockup line; the legacy `requirements.form.name_instructions` key does not exist (legacy shows a missing-translation label), so there is no legacy text to carry over.
 - Tier create/update/delete respond with the whole fee (`{ requirement, race }`) so statuses and counts refresh from one response.
 
+- **Ruling (controller, 2026-11-25): a price needs a start date.** `tiers.begin_at` is nullable and unvalidated, and `PaymentRequirement` sorts by it, so a nil row raises in `active_tier`. Task 1 adds a presence validation (new and legacy forms both refuse it) and makes the ordering skip nil rows, so any old data can't break the overview or fee statuses. No migration: a NOT NULL constraint would fail on any existing nil row.
+
 ## Review Focus
 
 1. Deleting a fee with any completed requirement (refunded included) is refused through the API (422 `fee_has_payments`) and the legacy action, and the fee, its prices and its payments survive. Owner: Task 1 model spec, Task 2 request spec.
@@ -60,7 +62,7 @@
 ### Task 1: Model groundwork — date parsing for any field, readable duplicate messages, delete guards, paid counts
 
 **Files:**
-- Modify: `app/services/race_date_params.rb`, `app/validators/tier_validator.rb`, `app/models/requirement.rb`, `app/models/tier.rb`
+- Modify: `app/services/race_date_params.rb`, `app/validators/tier_validator.rb`, `app/models/requirement.rb`, `app/models/tier.rb`, `app/models/payment_requirement.rb`
 - Test: `spec/services/race_date_params_spec.rb`, `spec/models/tier_spec.rb`, `spec/models/requirement_spec.rb` (the guard and counts live on `Requirement`; `payment_requirement_spec.rb` also exists and is untouched), `spec/controllers/requirements_controller_spec.rb`, `spec/controllers/tiers_controller_spec.rb`
 
 **Interfaces:**
@@ -72,12 +74,15 @@
   - `Requirement#destroy_blocked_reason -> String | nil`: `"Can't delete: #{n} teams have paid it."` (n = unrefunded count, singular "1 team has") when `payments?`, or `"Can't delete: it has refunded payments."` when every payment is refunded; nil otherwise.
   - `Tier#destroy_blocked_reason -> String | nil`: `"Can't delete the only price of a fee teams have paid."` when the requirement has exactly one tier and `payments?`.
   - Both models `before_destroy` add the reason to `errors[:base]` and `throw :abort`.
+  - `Tier` validates `begin_at` presence (`errors[:begin_at] == ["can't be blank"]`); the column stays nullable (no migration).
+  - `PaymentRequirement#chronological_tiers` skips tiers with a nil `begin_at` (`tiers.select(&:begin_at).sort_by(&:begin_at)`), so a legacy row without a start never applies and `active_tier` / `next_tiers` never raise.
 
 - [ ] **Step 1:** Write the failing examples:
   - `RaceDateParams.call({ "begin_at" => "2027-02-01T00:00" }, zone: chicago, fields: %w[begin_at])` parses to `chicago.parse("2027-02-01 00:00")`; `"2027-03-14T02:30"` gives the gap error; `"2027-02-30T00:00"` gives `"must be a date and time"` on `begin_at`; a `registration_open` key passed with `fields: %w[begin_at]` is copied through unparsed.
   - Tier: a second tier with the same price → `errors[:price] == ["is already used by another price on this fee"]`; same `begin_at` → the same on `begin_at`.
   - Requirement: with one completed requirement, `destroy` returns false, the record and its tiers still exist, `destroy_blocked_reason` reads "1 team has paid it"; with only a refunded one (`refunded_at: Time.current`) it is still blocked with the refunded wording and `paid_team_count == 0`; without any it is destroyed.
   - Tier: the only tier of a paid requirement is not destroyed; with two tiers one is destroyed; the only tier of an unpaid requirement is destroyed.
+  - Tier with `begin_at: nil` is invalid. A `PaymentRequirement` holding a dated past tier plus a nil-`begin_at` tier (saved with `save(validate: false)`) returns the dated tier from `active_tier` and `[]` from `next_tiers` without raising.
   - Legacy controllers: an admin `DELETE` of a paid requirement (and of its only tier) leaves the row and sets the `destroy_failed` flash.
 - [ ] **Step 2:** Run `bundle exec rspec spec/services/race_date_params_spec.rb spec/models spec/controllers/requirements_controller_spec.rb spec/controllers/tiers_controller_spec.rb` — FAIL.
 - [ ] **Step 3:** Implement. Update any existing spec asserting `must be unique per payment requirement`.
