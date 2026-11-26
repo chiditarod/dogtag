@@ -4,7 +4,7 @@ import { delay, http, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import { meQueryKey } from '@/features/auth/api/use-me';
-import { teamQueryKey } from './api/use-team';
+import { teamQueryKey, useTeam } from './api/use-team';
 import { queryConfig } from '@/lib/react-query';
 import { buildRace, buildTeam, user } from '@/test/fixtures';
 import { server } from '@/test/server';
@@ -35,7 +35,7 @@ describe('useTeamPermissions', () => {
         return HttpResponse.json(staffTeamBody());
       }),
     );
-    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
     await waitFor(() => expect(client.getQueryData(meQueryKey)).toBeDefined());
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(result.current.staffState).toBe('none');
@@ -53,7 +53,7 @@ describe('useTeamPermissions', () => {
         return HttpResponse.json({ staff_team: staffTeam });
       }),
     );
-    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('loading'));
     expect(result.current.permissions).toEqual(READ_ONLY_PERMISSIONS);
     expect(result.current.permissions.pay).toBe(false);
@@ -74,7 +74,7 @@ describe('useTeamPermissions', () => {
         HttpResponse.json({ error: 'boom', errors: {} }, { status: 500 }),
       ),
     );
-    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('error'));
     expect(result.current.permissions).toEqual(READ_ONLY_PERMISSIONS);
     expect(result.current.permissions.pay).toBe(false);
@@ -89,7 +89,7 @@ describe('useTeamPermissions', () => {
         HttpResponse.json(staffTeamBody({ update_team: true, add_racers: true })),
       ),
     );
-    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('ready'));
     expect(result.current.permissions.pastRacers).toBe(true);
     expect(result.current.permissions.addYourself).toBe(true);
@@ -103,14 +103,51 @@ describe('useTeamPermissions', () => {
         staffRequests += 1;
         return HttpResponse.json(staffTeamBody({ update_team: true }));
       }),
+      http.get('/api/v1/teams/:id', () => HttpResponse.json({ team })),
     );
-    client.setQueryData(teamQueryKey(team.id), team);
-    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
+    const { result } = renderHook(
+      () => {
+        const teamQuery = useTeam(team.id);
+        return useTeamPermissions(team, { teamUpdatedAt: teamQuery.dataUpdatedAt });
+      },
+      { wrapper },
+    );
     await waitFor(() => expect(result.current.staffState).toBe('ready'));
     await new Promise((resolve) => setTimeout(resolve, 5));
     act(() => {
       client.setQueryData(teamQueryKey(team.id), { ...team, name: 'Renamed' });
     });
     await waitFor(() => expect(staffRequests).toBe(2));
+  });
+
+  it('leaves the shared team query able to refetch', async () => {
+    const { client, wrapper } = setup({ roles: ['operator'] });
+    let teamRequests = 0;
+    server.use(
+      http.get('/api/v1/staff/teams/:id', () => HttpResponse.json(staffTeamBody({ update_team: true }))),
+      http.get('/api/v1/teams/:id', () => {
+        teamRequests += 1;
+        return HttpResponse.json({ team });
+      }),
+    );
+    const { result, rerender } = renderHook(
+      () => {
+        const teamQuery = useTeam(team.id);
+        return {
+          permissions: useTeamPermissions(team, { teamUpdatedAt: teamQuery.dataUpdatedAt }),
+          teamQuery,
+        };
+      },
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.permissions.staffState).toBe('ready'));
+    expect(teamRequests).toBe(1);
+    rerender();
+    await act(async () => {
+      await client.invalidateQueries({ queryKey: teamQueryKey(team.id) });
+    });
+    await waitFor(() => expect(teamRequests).toBe(2));
+    expect(client.getQueryState(teamQueryKey(team.id))?.status).toBe('success');
+    expect(result.current.teamQuery.isError).toBe(false);
   });
 });

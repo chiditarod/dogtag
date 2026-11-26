@@ -16,6 +16,8 @@ export function useSetNewTeam(teamId: number) {
       }),
     onSuccess: ({ team }) => {
       queryClient.setQueryData(teamQueryKey(teamId), team);
+      // The permissions hook also refetches when the team query is rewritten, but this keeps the
+      // staff team fresh when the mutation is used without it.
       void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
     },
   });

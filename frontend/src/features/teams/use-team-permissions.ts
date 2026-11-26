@@ -3,14 +3,12 @@ import { useStaffTeam } from '@/features/staff-teams/api/use-staff-team';
 import type { StaffTeam } from '@/features/staff-teams/types';
 import { isStaff } from '@/features/staff/utils';
 import type { Team } from '@/types/api';
-import { skipToken, useQuery } from '@tanstack/react-query';
 import {
   READ_ONLY_PERMISSIONS,
   racerPermissions,
   staffPermissions,
   type TeamPermissions,
 } from './permissions';
-import { teamQueryKey } from './api/use-team';
 
 export type StaffState = 'none' | 'loading' | 'ready' | 'error';
 
@@ -20,8 +18,15 @@ export type StaffState = 'none' | 'loading' | 'ready' | 'error';
  * A racer gets today's rules and never calls the staff endpoint. A staff viewer gets no controls
  * (and no Pay of any kind) until `GET /staff/teams/:id` answers, and stays read-only if it
  * fails, even on their own team: the server's `can` flags are the only source of staff rules.
+ *
+ * `teamUpdatedAt` is the `dataUpdatedAt` of the page's own `useTeam` query. It is passed in, not read
+ * here, because a second observer on the shared team query with another `queryFn` would replace
+ * the query's fetcher and break its later refetches.
  */
-export function useTeamPermissions(team: Team): {
+export function useTeamPermissions(
+  team: Team,
+  { teamUpdatedAt }: { teamUpdatedAt: number },
+): {
   permissions: TeamPermissions;
   staffTeam: StaffTeam | undefined;
   staffQuery: ReturnType<typeof useStaffTeam>;
@@ -29,15 +34,9 @@ export function useTeamPermissions(team: Team): {
 } {
   const me = useMe().data;
   const staff = isStaff(me);
-  // Watches the racer team query without fetching it, so a refetch or a mutation that rewrites
-  // it re-renders here and the staff team (its `can` flags and payments) is refreshed too.
-  const { dataUpdatedAt } = useQuery<Team>({
-    queryKey: teamQueryKey(team.id),
-    queryFn: skipToken,
-  });
   const staffQuery = useStaffTeam(team.id, {
     enabled: staff,
-    teamUpdatedAt: dataUpdatedAt,
+    teamUpdatedAt,
   });
 
   if (!staff || !me) {
