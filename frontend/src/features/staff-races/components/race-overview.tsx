@@ -262,10 +262,11 @@ function EmailRacers({ emails }: { emails: string[] }) {
 }
 
 export function RaceOverview({ raceId }: { raceId: string | undefined }) {
-  const { data: race, isPending, isError, refetch } = useStaffRace(raceId);
+  const { data, isPending, isError, refetch } = useStaffRace(raceId);
 
   if (isPending) return <QueryLoading />;
   if (isError) return <QueryError onRetry={() => void refetch()} />;
+  const { race } = data;
 
   return (
     <div className="space-y-4">

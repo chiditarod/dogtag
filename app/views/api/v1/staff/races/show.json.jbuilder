@@ -22,3 +22,4 @@ json.race do
   json.can_destroy can?(:destroy, @race)
   json.has_teams counts[:total].positive?
 end
+json.time_zones Race.selectable_time_zones.sort

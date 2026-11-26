@@ -75,3 +75,19 @@ describe('isInPast', () => {
     expect(isInPast('2027-03-14T02:30', 'America/Chicago', now)).toBe(false);
   });
 });
+
+describe('a blank or unknown zone', () => {
+  it.each(['', 'Not/AZone'])('never throws for %j', (zone) => {
+    expect(toWallClock('2026-12-07T18:00:00Z', zone)).toBe('');
+    expect(fromWallClock('2026-12-07T12:00', zone)).toBeNull();
+    expect(zoneAbbreviation('2026-12-07T12:00', zone)).toBe('');
+    expect(isInPast('2026-12-07T12:00', zone, new Date('2030-01-01T00:00:00Z'))).toBe(false);
+  });
+});
+
+describe('a wall clock that is not a real date or time', () => {
+  it('returns null for a day that does not exist or an hour past 23', () => {
+    expect(fromWallClock('2027-02-31T10:00', 'America/Chicago')).toBeNull();
+    expect(fromWallClock('2027-03-01T25:00', 'America/Chicago')).toBeNull();
+  });
+});

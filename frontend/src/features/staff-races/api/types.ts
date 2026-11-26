@@ -56,6 +56,39 @@ export interface StaffRace extends Omit<StaffRaceSummary, 'teams'> {
   has_teams: boolean;
 }
 
+/** `GET /staff/races/:id`, and the body of create and update. */
+export interface StaffRaceResponse {
+  race: StaffRace;
+  /** The IANA zones the time zone select offers. */
+  time_zones: string[];
+}
+
+/** The blank form's starting values (`GET /staff/races/new`); dates and most fields are empty. */
+export type StaffRaceDefaults = Pick<
+  StaffRace,
+  | 'time_zone'
+  | 'people_per_team'
+  | 'experience_labels_text'
+  | 'jsonform'
+  | 'filter_field'
+  | 'classy_campaign_id'
+  | 'classy_default_goal'
+  | 'confirmation_text'
+  | 'confirmation_text_max_length'
+  | 'max_teams'
+> & {
+  name: string | null;
+  registration_open: string | null;
+  registration_close: string | null;
+  final_edits_close: string | null;
+  race_datetime: string | null;
+};
+
+export interface NewStaffRaceResponse {
+  race: StaffRaceDefaults;
+  time_zones: string[];
+}
+
 /**
  * The body of `POST /staff/races` and `PUT /staff/races/:id` (sent as `{ race }`). Dates are wall-clock
  * strings (`2026-12-07T12:00`) read in `time_zone`; when the zone of a saved race changes, send every date.

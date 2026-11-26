@@ -5,6 +5,23 @@
 const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const zoneChecks = new Map<string, boolean>();
+
+/** False for a blank or unknown zone (e.g. while the select is empty), so nothing here throws. */
+function usableZone(timeZone: string): boolean {
+  let usable = zoneChecks.get(timeZone);
+  if (usable === undefined) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone });
+      usable = timeZone !== '';
+    } catch {
+      usable = false;
+    }
+    zoneChecks.set(timeZone, usable);
+  }
+  return usable;
+}
+
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 function formatter(timeZone: string, name: 'parts' | 'abbreviation') {
@@ -76,9 +93,9 @@ function parseWallClock(wall: string): number | null {
   return ms;
 }
 
-/** The `datetime-local` value for an instant in the zone; '' for null or an invalid instant. */
+/** The `datetime-local` value for an instant in the zone; '' for null, an invalid instant or a blank or unknown zone. */
 export function toWallClock(iso: string | null, timeZone: string): string {
-  if (!iso) return '';
+  if (!iso || !usableZone(timeZone)) return '';
   const ms = new Date(iso).getTime();
   if (Number.isNaN(ms)) return '';
   const local = new Date(wallClockAsUtc(ms, timeZone));
@@ -90,12 +107,12 @@ export function toWallClock(iso: string | null, timeZone: string): string {
 
 /**
  * The ISO instant for a wall clock in the zone. Null when the string is not a wall clock or the
- * time does not exist there (a spring-forward gap). An ambiguous fall-back time gives the earlier
+ * time does not exist there (a spring-forward gap), or the zone is blank or unknown. An ambiguous fall-back time gives the earlier
  * instant.
  */
 export function fromWallClock(wall: string, timeZone: string): string | null {
   const guess = parseWallClock(wall);
-  if (guess === null) return null;
+  if (guess === null || !usableZone(timeZone)) return null;
 
   // The zone's offset before and after the guess; a clock change within a day of it shows up in
   // one of the two. Whatever candidate reads back as the same wall clock is a real instant.
@@ -114,7 +131,7 @@ export function fromWallClock(wall: string, timeZone: string): string | null {
 /** e.g. `CST` or `CDT`; zones without a short English name give something like `GMT+1`. */
 export function zoneAbbreviation(wall: string, timeZone: string): string {
   const guess = parseWallClock(wall);
-  if (guess === null) return '';
+  if (guess === null || !usableZone(timeZone)) return '';
   // A wall clock that does not exist is read as UTC.
   const instant = fromWallClock(wall, timeZone);
   const ms = instant ? new Date(instant).getTime() : guess;

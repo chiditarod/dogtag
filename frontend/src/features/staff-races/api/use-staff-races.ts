@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api-client';
-import type { RacePayload, StaffRace, StaffRaceSummary } from './types';
+import type { NewStaffRaceResponse, RacePayload, StaffRaceResponse, StaffRaceSummary } from './types';
 
 export const staffRacesKey = ['staff', 'races'] as const;
 /** The id is a string so `7` (from the list) and `"7"` (from the URL) share one cache entry. */
@@ -14,11 +14,20 @@ export function useStaffRaces() {
   });
 }
 
+/** The race and the zones the time zone select offers. */
 export function useStaffRace(id: number | string | undefined) {
   return useQuery({
     queryKey: staffRaceKey(id ?? ''),
-    queryFn: async () => (await apiFetch<{ race: StaffRace }>(`/staff/races/${id}`)).race,
+    queryFn: () => apiFetch<StaffRaceResponse>(`/staff/races/${id}`),
     enabled: id !== undefined,
+  });
+}
+
+/** Defaults for a new race, and the selectable zones. */
+export function useNewStaffRace() {
+  return useQuery({
+    queryKey: [...staffRacesKey, 'new'] as const,
+    queryFn: () => apiFetch<NewStaffRaceResponse>('/staff/races/new'),
   });
 }
 
@@ -31,8 +40,8 @@ function useInvalidateRaces() {
 export function useCreateRace() {
   const invalidate = useInvalidateRaces();
   return useMutation({
-    mutationFn: async (race: RacePayload) =>
-      (await apiFetch<{ race: StaffRace }>('/staff/races', { method: 'POST', json: { race } })).race,
+    mutationFn: (race: RacePayload) =>
+      apiFetch<StaffRaceResponse>('/staff/races', { method: 'POST', json: { race } }),
     onSuccess: invalidate,
   });
 }
@@ -40,8 +49,8 @@ export function useCreateRace() {
 export function useUpdateRace(id: number | string) {
   const invalidate = useInvalidateRaces();
   return useMutation({
-    mutationFn: async (race: RacePayload) =>
-      (await apiFetch<{ race: StaffRace }>(`/staff/races/${id}`, { method: 'PUT', json: { race } })).race,
+    mutationFn: (race: RacePayload) =>
+      apiFetch<StaffRaceResponse>(`/staff/races/${id}`, { method: 'PUT', json: { race } }),
     onSuccess: invalidate,
   });
 }

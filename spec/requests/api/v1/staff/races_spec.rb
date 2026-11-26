@@ -46,6 +46,37 @@ describe "API v1 staff races", type: :request do
     end
   end
 
+  describe "GET /api/v1/staff/races/new" do
+    it "gives operators and admins the form defaults and the selectable zones" do
+      %i[operator_user admin_user].each do |factory|
+        api_login(FactoryBot.create(factory))
+        get "/api/v1/staff/races/new"
+
+        expect(response).to have_http_status(:ok)
+        expect(json["race"]).to eq(
+          "time_zone" => "America/Chicago", "people_per_team" => 5,
+          "experience_labels_text" => Race::DEFAULT_EXPERIENCE_LABELS.join("\n"),
+          "name" => nil, "max_teams" => nil, "registration_open" => nil, "registration_close" => nil,
+          "final_edits_close" => nil, "race_datetime" => nil, "jsonform" => nil, "filter_field" => [],
+          "classy_campaign_id" => nil, "classy_default_goal" => nil, "confirmation_text" => nil,
+          "confirmation_text_max_length" => Race::CONFIRMATION_TEXT_MAX_LENGTH
+        )
+        expect(json["time_zones"]).to include("America/Chicago", "Europe/London")
+        expect(json["time_zones"]).to eq(Race.selectable_time_zones.to_a.sort)
+      end
+    end
+
+    it "is 403 for a refunder and 401 when logged out" do
+      get "/api/v1/staff/races/new"
+      expect(response).to have_http_status(:unauthorized)
+
+      api_login(FactoryBot.create(:refunder_user))
+      get "/api/v1/staff/races/new"
+      expect(response).to have_http_status(:forbidden)
+      expect(json["race"]).to be_nil
+    end
+  end
+
   describe "GET /api/v1/staff/races/:id" do
     let(:jsonform) { File.read(Rails.root.join("spec/fixtures/files/valid_jsonform.json")) }
     let!(:race) do
@@ -70,6 +101,7 @@ describe "API v1 staff races", type: :request do
       expect(response).to have_http_status(:ok)
       body = json["race"]
       expect(body["jsonform"]).to eq(jsonform)
+      expect(json["time_zones"]).to include("America/Chicago")
       expect(body).to include("max_teams" => 4, "people_per_team" => 2, "full" => false, "filter_field" => %w[a b],
         "experience_labels_text" => "Newbie\nVet", "classy_campaign_id" => 12_345, "classy_default_goal" => 2000,
         "confirmation_text" => "# Hi", "confirmation_text_max_length" => Race::CONFIRMATION_TEXT_MAX_LENGTH,

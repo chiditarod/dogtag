@@ -1,5 +1,8 @@
 import type { StaffRace, StaffRaceSummary } from './api/types';
 
+/** A short stand-in for the zone list the API sends. */
+export const TIME_ZONES = ['America/Chicago', 'America/New_York', 'Europe/London'];
+
 export function staffRaceSummary(overrides: Partial<StaffRaceSummary> = {}): StaffRaceSummary {
   return {
     id: 1,

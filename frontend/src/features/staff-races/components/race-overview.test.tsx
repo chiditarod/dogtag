@@ -8,12 +8,12 @@ import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
 import type { StaffRace } from '../api/types';
 import { staffRaceKey } from '../api/use-staff-races';
-import { staffRace } from '../test-fixtures';
+import { TIME_ZONES, staffRace } from '../test-fixtures';
 
 function serve(race: StaffRace, roles = ['operator']) {
   server.use(
     http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles } })),
-    http.get(`/api/v1/staff/races/${race.id}`, () => HttpResponse.json({ race })),
+    http.get(`/api/v1/staff/races/${race.id}`, () => HttpResponse.json({ race, time_zones: TIME_ZONES })),
     http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })),
   );
 }

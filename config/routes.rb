@@ -124,7 +124,7 @@ Rails.application.routes.draw do
       end
       namespace :staff do
         resources :payments, only: [:index]
-        resources :races, only: [:index, :show, :create, :update, :destroy] do
+        resources :races, only: [:index, :new, :show, :create, :update, :destroy] do
           get :export, on: :member, defaults: { format: :csv }
         end
         post :confirmation_preview, to: "confirmation_previews#create"
