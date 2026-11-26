@@ -123,6 +123,12 @@ describe "API v1 teams", type: :request do
 
       let!(:team) { FactoryBot.create(:team, :with_people, user: user, race: race) }
 
+      it "keeps the racer payload to exactly these team keys" do
+        get "/api/v1/teams/#{team.id}"
+
+        expect(json["team"].keys).to match_array(%w[id name description experience captain_id deletable race people checklist])
+      end
+
       it "returns the team with race, people and checklist" do
         get "/api/v1/teams/#{team.id}"
 

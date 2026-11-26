@@ -150,4 +150,26 @@ describe "API v1 index query counts", type: :request do
     expect(query_count { get "/api/v1/teams/#{mine.id}/buddy_options" }).to eq(one)
     expect(json["teams"].size).to eq(4)
   end
+
+  it "GET /api/v1/staff/teams/:id does not add queries per racer or payment" do
+    api_login(FactoryBot.create(:operator_user))
+    race = FactoryBot.create(:race_with_jsonform, people_per_team: 6)
+    add_payment = lambda do |team|
+      requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: "ch_#{requirement.id}", amount_cents: 5000)
+    end
+    small = FactoryBot.create(:team, race: race)
+    FactoryBot.create(:person, team: small)
+    add_payment.call(small)
+    FactoryBot.create(:team_buddy, team: small, buddy_team: FactoryBot.create(:team, race: race))
+    large = FactoryBot.create(:team, race: race)
+    FactoryBot.create_list(:person, 5, team: large)
+    FactoryBot.create_list(:team, 2, race: race).each { |buddy| FactoryBot.create(:team_buddy, team: large, buddy_team: buddy) }
+    3.times { add_payment.call(large) }
+    get "/api/v1/staff/teams/#{small.id}" # warm up
+    one = query_count { get "/api/v1/staff/teams/#{small.id}" }
+
+    expect(query_count { get "/api/v1/staff/teams/#{large.id}" }).to eq(one)
+    expect(json["staff_team"]["payments"].size).to eq(3)
+  end
 end
