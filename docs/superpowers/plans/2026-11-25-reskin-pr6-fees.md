@@ -28,15 +28,21 @@
 - e2e safety rules unchanged: the staging suite logs in as an operator (never admin), touches only `Race E2E ` races, and `tests/e2e/target.ts` is not edited.
 - Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; the PR body ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)` and states whether each e2e spec was run.
 
+## Owner decisions (2026-11-25)
+
+1. **A fee is never deletable once anyone paid it, refunded or not.** "Has payments" counts refunded completed requirements too (Task 1 `Requirement#payments?`).
+2. **The e2e staff login moves off the legacy page as part of the port** (approved): `admin-auth.setup.ts` logs in at `/register/login`, since the staff cleanup cannot land while any e2e touches a legacy page.
+3. **The "Teams paid" link keeps `status=paid`**: `/staff/payments?race_id=<race>&payment_type=<requirement id>&status=paid`, so the list matches the unrefunded count.
+
 ## Calls made in this plan (not in the spec)
 
-- **The e2e port covers race creation, retiring, the sweep and the staff login too**, not only fees: the spec says the staff cleanup cannot land while the e2e touches legacy pages, and PR 5 did not port the race form. `createRace`/`retireRace` drive the SPA race form, the sweep reads `GET /api/v1/staff/races`, roles come from `GET /api/v1/me`, and `admin-auth.setup.ts` logs in at `/register/login`. A navigation guard fails the run on any non-`/register` page load.
-- **Delete guards live on the models** (`before_destroy` + `throw :abort`), so the legacy destroy actions are protected as well. "Has payments" counts refunded completed requirements too (deleting would still orphan them).
+- **The e2e port covers race creation, retiring and the sweep too**, not only fees: the spec says the staff cleanup cannot land while the e2e touches legacy pages, and PR 5 did not port the race form. `createRace`/`retireRace` drive the SPA race form, the sweep reads `GET /api/v1/staff/races`, and roles come from `GET /api/v1/me` (the login move is owner decision 2). A navigation guard fails the run on any non-`/register` page load.
+- **Delete guards live on the models** (`before_destroy` + `throw :abort`), so the legacy destroy actions are protected as well. What counts as paid is owner decision 1.
 - **Duplicate price and start-time messages** become readable on the server (`"is already used by another price on this fee"` for both `price` and `begin_at`); the SPA pre-checks against the loaded prices with the mockup wording ("This fee already has a $120 price.", "A price already starts at this time.").
 - **Whole dollars, $1 or more, is an API rule, not a model rule**: the staff tier endpoints refuse a `price` that is not a multiple of 100 or is below 100 (`errors.price`); legacy forms and existing odd-cent tiers are untouched.
 - **Type is refused, not ignored, on PATCH**: a `type` key gives 422 `errors.type`.
 - **Type labels**: `PaymentRequirement` is "Card payment" and `MockPaymentRequirement` "Test payment (no card)" in the SPA (mockup wording); the API sends class names from `Requirement.allowed_types`.
-- **"Teams paid" counts unrefunded payments**, and its "see payments" link is `/staff/payments?race_id=<race>&payment_type=<requirement id>&status=paid` (`payment_type` is the Payments filter's requirement id; `status=paid` makes the list match the count).
+- **"Teams paid" counts unrefunded payments**; its link (owner decision 3) uses `payment_type`, the Payments filter's requirement id.
 - **Price statuses**: Current (the active tier), Next (the first future one), Later (further future ones), Past (earlier than Current).
 - **Fee status line**: "Racers can pay" when a price is in effect now; "Racers can pay from {date}" when every price starts later; "No price: racers can't pay" with no prices.
 - **Name help text** uses the mockup line; the legacy `requirements.form.name_instructions` key does not exist (legacy shows a missing-translation label), so there is no legacy text to carry over.
