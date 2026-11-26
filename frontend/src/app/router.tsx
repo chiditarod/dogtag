@@ -20,6 +20,7 @@ import { StaffRaceEditRoute } from '@/features/staff-races/routes/staff-race-edi
 import { StaffRaceNewRoute } from '@/features/staff-races/routes/staff-race-new-route';
 import { StaffRaceRoute } from '@/features/staff-races/routes/staff-race-route';
 import { StaffRacesRoute } from '@/features/staff-races/routes/staff-races-route';
+import { StaffUserRoute } from '@/features/staff-users/routes/staff-user-route';
 import { StaffUsersRoute } from '@/features/staff-users/routes/staff-users-route';
 import { SignupRoute } from '@/app/routes/signup';
 import { TeamRoute } from '@/app/routes/team';
@@ -104,6 +105,7 @@ export const routes: RouteObject[] = [
             ],
           },
           { path: 'users', element: <StaffUsersRoute /> },
+          { path: 'users/:userId', element: <StaffUserRoute /> },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],

@@ -45,6 +45,11 @@ export function formatShortDay(iso: string, timeZone: TimeZone): string {
   return formatter('short-day', { month: 'short', day: 'numeric' }, timeZone).format(new Date(iso));
 }
 
+/** e.g. "Mar 2019", in the passed zone. */
+export function formatMonthYear(iso: string, timeZone: TimeZone): string {
+  return formatter('month-year', { month: 'short', year: 'numeric' }, timeZone).format(new Date(iso));
+}
+
 const relative = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
 /** "just now", "3 hours ago", or from a day on the short day (e.g. "Dec 8"). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_TIME_ZONE, formatDate, formatDeadline, formatShortDay, formatSince } from '@/lib/dates';
+import { DEFAULT_TIME_ZONE, formatDate, formatDeadline, formatShortDay, formatMonthYear, formatSince } from '@/lib/dates';
 
 describe('formatDate', () => {
   it('formats in the passed zone', () => {
@@ -66,5 +66,16 @@ describe('formatSince', () => {
 
   it('shows the short day from a day on', () => {
     expect(formatSince('2026-12-08T12:00:00Z', 'America/Chicago', now)).toBe('Dec 8');
+  });
+});
+
+describe('formatMonthYear', () => {
+  it('shows the short month and the year in the passed zone', () => {
+    expect(formatMonthYear('2019-03-15T12:00:00Z', 'America/Chicago')).toBe('Mar 2019');
+  });
+
+  it('uses the zone at a month boundary and falls back to the default zone', () => {
+    expect(formatMonthYear('2019-04-01T03:00:00Z', 'America/Chicago')).toBe('Mar 2019');
+    expect(formatMonthYear('2019-04-01T03:00:00Z', undefined)).toBe('Mar 2019');
   });
 });
