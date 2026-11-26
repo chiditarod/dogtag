@@ -95,6 +95,26 @@ describe "API v1 index query counts", type: :request do
     expect(json["requirements"].size).to eq(3)
   end
 
+  it "GET /api/v1/races/:id/registrations does not add queries per team" do
+    api_login(FactoryBot.create(:admin_user))
+    race = FactoryBot.create(:race_with_jsonform_and_filter_field, max_teams: 50)
+    requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+    add_team = lambda do |finalized|
+      team = FactoryBot.create(:team, :with_people, race: race)
+      requirement.complete(team.id, team.user, "amount" => 5000, "charge_id" => "ch_#{team.id}")
+      team.update_column(:finalized, true) if finalized
+    end
+    add_team.call(true)
+    add_team.call(false)
+    one = query_count { get "/api/v1/races/#{race.id}/registrations" }
+    2.times { add_team.call(true) }
+    2.times { add_team.call(false) }
+
+    expect(query_count { get "/api/v1/races/#{race.id}/registrations" }).to eq(one)
+    expect(json["finalized"].size).to eq(3)
+    expect(json["registering"].size).to eq(3)
+  end
+
   it "GET /api/v1/teams/:id/buddy_options does not add queries per team" do
     api_login(user)
     race = FactoryBot.create(:race)

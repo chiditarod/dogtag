@@ -32,6 +32,15 @@ describe RegistrationUi do
     end
   end
 
+  context "password_reset_url with the SPA on" do
+    before { ENV["REGISTRATION_UI"] = "spa" }
+
+    it "links the SPA reset page on the given host, keeping the protocol" do
+      expect(RegistrationUi.password_reset_url("abc123", host: "mail.example.org"))
+        .to eq("https://mail.example.org/register/reset-password/abc123")
+    end
+  end
+
   context "when REGISTRATION_UI is spa but the SPA is not built" do
     let(:built) { false }
 
@@ -50,6 +59,11 @@ describe RegistrationUi do
 
   context "when REGISTRATION_UI is not spa" do
     before { ENV.delete("REGISTRATION_UI") }
+
+    it "builds the legacy password reset url on the given host" do
+      expect(RegistrationUi.password_reset_url("abc123", host: "mail.example.org"))
+        .to eq("https://mail.example.org/password_resets/abc123/edit")
+    end
 
     it "is not spa and builds the legacy team url from mailer default_url_options" do
       expect(RegistrationUi.spa?).to eq(false)

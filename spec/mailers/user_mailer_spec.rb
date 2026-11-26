@@ -163,6 +163,10 @@ describe UserMailer do
     it 'sets the subject' do
       expect(deliveries.first.subject).to eq('dogTag Password Reset Instructions')
     end
+    it "links the reset page through RegistrationUi" do
+      expect(deliveries.first.body.encoded).to include(RegistrationUi.password_reset_url(user.perishable_token, host: "80"))
+    end
+
     include_examples "common tests"
   end
 
@@ -265,6 +269,24 @@ describe UserMailer do
 
     it "does not expose formatting helpers as mailer actions" do
       expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
+    end
+  end
+
+  describe "#email_changed_email" do
+    let(:user) { FactoryBot.create(:user, email: "after@example.com") }
+
+    it "goes to the old address and names both addresses" do
+      mail = UserMailer.email_changed_email(user, "before@example.com")
+      body = mail.body.encoded
+
+      expect(mail.to).to eq(["before@example.com"])
+      expect(mail.subject).to eq("Your dogtag email address was changed")
+      expect(body).to include("before@example.com", "after@example.com", user.fullname, "dogtag@chiditarod.org")
+    end
+
+    it "tracks kind email_changed" do
+      UserMailer.email_changed_email(user, "before@example.com").deliver_now
+      expect(SentEmail.last).to have_attributes(kind: "email_changed", user_id: user.id)
     end
   end
 
