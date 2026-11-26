@@ -32,7 +32,7 @@ export function UserDetailsCard({ user, onDirtyChange }: { user: StaffUser; onDi
   const update = useUpdateStaffUser(user.id);
   // What the server last said, so a save clears the dirty state before the refetch lands.
   const [saved, setSaved] = useState<Values>(() => valuesOf(user));
-  // The draft starts as the raw stored value, so it is trimmed on both sides when compared.
+  // The draft starts from the trimmed saved values; what is typed is trimmed before comparing, as on save.
   const [draft, setDraft] = useState<Values>(saved);
   const [done, setDone] = useState(false);
   const changed = FIELDS.filter((field) => draft[field].trim() !== saved[field]);

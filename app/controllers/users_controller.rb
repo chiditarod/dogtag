@@ -81,7 +81,8 @@ class UsersController < ApplicationController
     end
 
     try_to_delete(@user, users_path)
-    # a user the database refuses to delete (e.g. one who made refund batches) says why
+    # backstop: the guard above catches the known cases, so this only speaks for a delete the database
+    # still refuses (a foreign key the guard does not know about)
     flash[:error] = @user.errors.full_messages.to_sentence if flash[:error] && @user.errors.any?
   end
 

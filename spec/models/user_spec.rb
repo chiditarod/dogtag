@@ -183,6 +183,13 @@ describe User do
       expect(refunder.deletion_blocker(by: admin)).to eq("Made refunds, which are kept as a record.")
     end
 
+    it 'names a single refund made with no batch, since deleting them would blank the record' do
+      refunder = FactoryBot.create(:refunder_user)
+      FactoryBot.create(:completed_requirement, refunded_by: refunder, refunded_at: Time.current)
+      expect(refunder.refund_batches).to be_empty
+      expect(refunder.deletion_blocker(by: admin)).to eq("Made refunds, which are kept as a record.")
+    end
+
     it 'is nil for a bare user' do
       expect(FactoryBot.create(:user).deletion_blocker(by: admin)).to be_nil
     end

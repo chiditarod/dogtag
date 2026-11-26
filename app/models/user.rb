@@ -76,7 +76,8 @@ class User < ApplicationRecord
   end
 
   # Why this user cannot be deleted by `by`, or nil when they can. Teams and payments belong to the
-  # race record, and refund batches are the audit trail, so staff must not erase the people behind them.
+  # race record, and refunds (batches or single refunds) are the audit trail: `refunded_by_id` nullifies on
+  # delete, which would rewrite their refunds as "Done at Stripe". Staff must not erase the people behind them.
   def deletion_blocker(by:)
     return "You can't delete your own account." if by.id == id
 
@@ -84,7 +85,7 @@ class User < ApplicationRecord
       "Owns #{count} #{"team".pluralize(count)}. Delete or reassign them first."
     elsif (count = completed_requirements.count).positive?
       "Has #{count} #{"payment".pluralize(count)}."
-    elsif refund_batches.exists?
+    elsif refund_batches.exists? || CompletedRequirement.exists?(refunded_by_id: id)
       "Made refunds, which are kept as a record."
     end
   end

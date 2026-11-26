@@ -106,6 +106,20 @@ describe('staff user page', () => {
     expect(screen.queryByRole('link', { name: 'Emails to this user' })).not.toBeInTheDocument();
   });
 
+  it('hides the per-team Emails link from a refunder, who cannot open the emails page', async () => {
+    const race = { id: 9, name: 'CHIditarod 2027', year: 2027 };
+    await open(
+      staffUser({
+        can_edit: false,
+        can_destroy: false,
+        teams: [{ id: 4, name: 'Doge Sled', race, assigned_team_number: 7, finalized: true, percent_complete: 100 }],
+      }),
+      ['refunder'],
+    );
+    expect(screen.getByRole('link', { name: 'Doge Sled' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Emails for Doge Sled' })).not.toBeInTheDocument();
+  });
+
   it('shows a 404 as page not found', async () => {
     server.use(
       http.get('/api/v1/me', () => HttpResponse.json({ user: { ...me, roles: ['admin'] } })),
@@ -182,6 +196,32 @@ describe('staff user page delete', () => {
     await userEvent.click(within(confirm).getByRole('button', { name: 'Delete user' }));
     expect(await within(confirm).findByRole('alert')).toHaveTextContent('Owns 1 team.');
     expect(here(router)).toBe('/register/staff/users/1');
+  });
+});
+
+describe('staff user page delete refusal', () => {
+  it('refetches the user after a refused delete so the button shows the new reason', async () => {
+    let blocker: string | null = null;
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })),
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...me, roles: ['admin'] } })),
+      http.get('/api/v1/staff/users', () => HttpResponse.json(emptyUsers)),
+      http.get('/api/v1/staff/users/1', () => HttpResponse.json({ user: staffUser({ delete_blocker: blocker }) })),
+      http.delete('/api/v1/staff/users/1', () => {
+        blocker = 'Made refunds, which are kept as a record.';
+        return HttpResponse.json({ error: blocker, errors: {}, code: 'user_not_deletable' }, { status: 422 });
+      }),
+    );
+    renderApp('/staff/users/1');
+    await screen.findByRole('heading', { name: 'Ada Racer', level: 1 });
+    await userEvent.click(screen.getByRole('button', { name: 'Delete user' }));
+    const confirm = await screen.findByRole('dialog', { name: "Delete Ada Racer? This can't be undone." });
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete user' }));
+    await within(confirm).findByRole('alert');
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+
+    expect(await screen.findByText('Made refunds, which are kept as a record.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete user' })).toBeDisabled();
   });
 });
 

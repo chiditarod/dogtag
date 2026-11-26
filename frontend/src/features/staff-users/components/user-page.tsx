@@ -59,7 +59,7 @@ export function UserPage({ userId }: { userId: number }) {
         <UserDetailsCard user={user} onDirtyChange={setDetailsDirty} />
         <div className="min-w-0 space-y-4">
           {user.can_edit && <UserRolesCard user={user} onDirtyChange={setRolesDirty} />}
-          <UserTeamsCard teams={user.teams} />
+          <UserTeamsCard teams={user.teams} canSeeEmails={canSeeEmails} />
         </div>
       </div>
 

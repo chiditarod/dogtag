@@ -283,6 +283,18 @@ describe "API v1 staff users", type: :request do
       expect(User.exists?(ada.id)).to be(true)
     end
 
+    it "refuses deleting a refunder who made a single refund outside any batch" do
+      refunder = FactoryBot.create(:refunder_user)
+      payment = FactoryBot.create(:completed_requirement, refunded_by: refunder, refunded_at: Time.current)
+      api_login(admin)
+      delete "/api/v1/staff/users/#{refunder.id}"
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json["code"]).to eq("user_not_deletable")
+      expect(json["error"]).to eq("Made refunds, which are kept as a record.")
+      expect(User.exists?(refunder.id)).to be(true)
+      expect(payment.reload.refunded_by_id).to eq(refunder.id)
+    end
+
     it "is 404 for an unknown id as an admin" do
       api_login(admin)
       delete "/api/v1/staff/users/0"

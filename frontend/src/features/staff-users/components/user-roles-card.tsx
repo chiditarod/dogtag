@@ -108,7 +108,8 @@ export function UserRolesCard({ user, onDirtyChange }: { user: StaffUser; onDirt
           {t('staff.users.rolesHelp')}
         </p>
         {user.is_self && (
-          <p id={selfId} className="text-sm text-navy/80">{t('staff.users.selfAdmin')}
+          <p id={selfId} className="text-sm text-navy/80">
+            {t('staff.users.selfAdmin')}
           </p>
         )}
         {roleErrors.length > 0 && (

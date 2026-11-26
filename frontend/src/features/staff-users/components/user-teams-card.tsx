@@ -19,7 +19,8 @@ function status(team: StaffUserTeam) {
 
 const link = 'text-link underline';
 
-export function UserTeamsCard({ teams }: { teams: StaffUserTeam[] }) {
+/** `canSeeEmails`: only admins and operators may open the emails page, so refunders get no per-team link. */
+export function UserTeamsCard({ teams, canSeeEmails }: { teams: StaffUserTeam[]; canSeeEmails: boolean }) {
   const titleId = useId();
   return (
     <Card role="region" aria-labelledby={titleId} className="min-w-0 space-y-3">
@@ -35,7 +36,9 @@ export function UserTeamsCard({ teams }: { teams: StaffUserTeam[] }) {
             { key: 'team', label: t('staff.users.col.team') },
             { key: 'race', label: t('staff.users.col.race') },
             { key: 'status', label: t('staff.users.col.status') },
-            { key: 'actions', label: <span className="sr-only">{t('staff.users.col.actions')}</span> },
+            ...(canSeeEmails
+              ? [{ key: 'actions', label: <span className="sr-only">{t('staff.users.col.actions')}</span> }]
+              : []),
           ]}
         >
           {teams.map((team) => (
@@ -48,15 +51,17 @@ export function UserTeamsCard({ teams }: { teams: StaffUserTeam[] }) {
               </ListCell>
               <ListCell className="text-sm [overflow-wrap:anywhere]">{team.race.name}</ListCell>
               <ListCell className="text-sm">{status(team)}</ListCell>
-              <ListCell className="text-sm">
-                <Link
-                  to={`/staff/emails?team_id=${team.id}`}
-                  aria-label={t('staff.users.teamEmailsFor', { name: team.name })}
-                  className={link}
-                >
-                  {t('staff.users.teamEmails')}
-                </Link>
-              </ListCell>
+              {canSeeEmails && (
+                <ListCell className="text-sm">
+                  <Link
+                    to={`/staff/emails?team_id=${team.id}`}
+                    aria-label={t('staff.users.teamEmailsFor', { name: team.name })}
+                    className={link}
+                  >
+                    {t('staff.users.teamEmails')}
+                  </Link>
+                </ListCell>
+              )}
             </ListRow>
           ))}
         </ListTable>

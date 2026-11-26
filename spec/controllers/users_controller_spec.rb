@@ -266,6 +266,16 @@ describe UsersController do
         expect(response).to redirect_to users_path
       end
 
+      it 'refuses to delete a staff user who made a single refund outside any batch' do
+        staff = FactoryBot.create :refunder_user
+        FactoryBot.create :completed_requirement, refunded_by: staff, refunded_at: Time.current
+
+        expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
       it 'refuses to delete a user who owns a team' do
         owner = FactoryBot.create(:team).user
 

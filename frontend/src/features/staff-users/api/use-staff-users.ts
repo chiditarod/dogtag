@@ -45,5 +45,7 @@ export function useDeleteStaffUser(id: number) {
       queryClient.removeQueries({ queryKey: [...staffUsersKey, id] });
       return queryClient.invalidateQueries({ queryKey: staffUsersKey });
     },
+    // A refused delete usually means the user's state changed (the page's `delete_blocker` is stale).
+    onError: () => queryClient.invalidateQueries({ queryKey: [...staffUsersKey, id] }),
   });
 }
