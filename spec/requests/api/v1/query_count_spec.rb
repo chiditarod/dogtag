@@ -92,6 +92,16 @@ describe "API v1 index query counts", type: :request do
     expect(json["users"].sum { |user| user["teams"].size }).to eq(8)
   end
 
+  it "GET /api/v1/staff/sent_emails does not add queries per row" do
+    api_login(FactoryBot.create(:operator_user))
+    FactoryBot.create(:sent_email, team: FactoryBot.create(:team))
+    one = query_count { get "/api/v1/staff/sent_emails" }
+    4.times { FactoryBot.create(:sent_email, team: FactoryBot.create(:team)) }
+
+    expect(query_count { get "/api/v1/staff/sent_emails" }).to eq(one)
+    expect(json["sent_emails"].size).to eq(5)
+  end
+
   it "GET /api/v1/staff/races/:id/requirements does not add queries per fee" do
     api_login(FactoryBot.create(:operator_user))
     race = FactoryBot.create(:race)

@@ -128,6 +128,7 @@ Rails.application.routes.draw do
       namespace :staff do
         resources :payments, only: [:index]
         resources :users, only: [:index, :show, :update, :destroy]
+        resources :sent_emails, only: [:index]
         resources :races, only: [:index, :new, :show, :create, :update, :destroy] do
           get :export, on: :member, defaults: { format: :csv }
           resources :requirements, only: [:index, :create]
