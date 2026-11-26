@@ -9,7 +9,7 @@ class Api::V1::Staff::RacesController < Api::V1::Staff::BaseController
 
   before_action { authorize!(:update, Race) }
   # Before the around_action, which reads the stored zone through @race.
-  before_action :load_race, only: [:update, :destroy]
+  before_action :load_race, only: [:update, :destroy, :export]
   around_action :use_race_time_zone, only: [:create, :update]
 
   def index
@@ -44,6 +44,13 @@ class Api::V1::Staff::RacesController < Api::V1::Staff::BaseController
       @race.destroy!
     end
     head :no_content
+  end
+
+  # A plain same-origin download link, so it answers with the file, not JSON.
+  def export
+    authorize!(:export, @race)
+    result = RaceExport.call(@race.id, finalized: params[:finalized] == "true")
+    send_data result[:data], filename: result[:filename], type: result[:type]
   end
 
   private

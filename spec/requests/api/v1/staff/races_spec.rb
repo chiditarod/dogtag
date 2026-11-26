@@ -309,3 +309,54 @@ describe "API v1 staff races", type: :request do
     end
   end
 end
+
+describe "API v1 staff race export", type: :request do
+  let(:race) { FactoryBot.create(:race) }
+
+  before do
+    FactoryBot.create(:finalized_team, race:)
+    FactoryBot.create(:team, race:)
+  end
+
+  it "is 401 when logged out" do
+    get "/api/v1/staff/races/#{race.id}/export.csv"
+    expect(response).to have_http_status(:unauthorized)
+  end
+
+  %i[user refunder_user].each do |factory|
+    it "is 403 JSON for #{factory}" do
+      api_login(FactoryBot.create(factory))
+      get "/api/v1/staff/races/#{race.id}/export.csv"
+      expect(response).to have_http_status(:forbidden)
+      expect(json["error"]).to be_present
+    end
+  end
+
+  %i[operator_user admin_user].each do |factory|
+    context "as #{factory}" do
+      before { api_login(FactoryBot.create(factory)) }
+
+      it "downloads every team as CSV" do
+        get "/api/v1/staff/races/#{race.id}/export.csv"
+        expect(response).to have_http_status(:ok)
+        expect(response.content_type).to start_with("text/csv")
+        expect(response.headers["Content-Disposition"]).to include("race_#{race.id}_export.csv")
+        expect(CSV.parse(response.body).size).to eq(3)
+      end
+
+      it "limits to finalized teams only for finalized=true" do
+        get "/api/v1/staff/races/#{race.id}/export.csv", params: { finalized: "true" }
+        expect(CSV.parse(response.body).size).to eq(2)
+
+        get "/api/v1/staff/races/#{race.id}/export.csv", params: { finalized: "1" }
+        expect(CSV.parse(response.body).size).to eq(3)
+      end
+
+      it "is 404 JSON for an unknown race" do
+        get "/api/v1/staff/races/0/export.csv"
+        expect(response).to have_http_status(:not_found)
+        expect(json["error"]).to eq("not_found")
+      end
+    end
+  end
+end
