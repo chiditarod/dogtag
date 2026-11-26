@@ -47,6 +47,7 @@ function ConfirmDelete({ race, onClose }: { race: StaffRace; onClose: () => void
 /** Admins only (`can_destroy`). A race that has teams cannot be deleted, so the button is disabled with the reason. */
 export function DeleteRace({ race }: { race: StaffRace }) {
   const [open, setOpen] = useState(false);
+  const blockedId = useId();
   if (!race.can_destroy) return null;
 
   return (
@@ -54,13 +55,13 @@ export function DeleteRace({ race }: { race: StaffRace }) {
       <Button
         variant="secondary"
         disabled={race.has_teams}
-        aria-describedby={race.has_teams ? 'delete-race-blocked' : undefined}
+        aria-describedby={race.has_teams ? blockedId : undefined}
         onClick={() => setOpen(true)}
       >
         {t('staff.race.delete')}
       </Button>
       {race.has_teams && (
-        <p id="delete-race-blocked" className="text-sm text-navy/70">
+        <p id={blockedId} className="text-sm text-navy/70">
           {t('staff.race.deleteBlocked')}
         </p>
       )}

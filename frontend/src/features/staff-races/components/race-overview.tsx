@@ -1,5 +1,6 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ButtonLink } from '@/components/ui/button-link';
 import { InfoTip } from '@/components/ui/info-tip';
@@ -221,6 +222,45 @@ function FundraisingCard({ race }: { race: StaffRace }) {
   );
 }
 
+/** `@` stays readable; `&`, `#`, `?`, `%` and `,` in an address must not end it or start another header. */
+export function bccMailto(emails: string[]): string {
+  const bcc = emails.map((email) => encodeURIComponent(email).replace(/%40/g, '@')).join(',');
+  return `mailto:${STAFF_EMAIL}?bcc=${bcc}`;
+}
+
+/** A full race makes a mailto too long for many mail apps, so the plain list can be copied as well. */
+function EmailRacers({ emails }: { emails: string[] }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(emails.join(', '));
+      setCopied(true);
+    } catch {
+      // Clipboard blocked: the mailto link above still works.
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <a href={bccMailto(emails)} className={link}>
+        {t('staff.race.emailRacers')}
+      </a>
+      <Button variant="secondary" onClick={() => void copy()}>
+        {t('staff.race.copyEmails')}
+      </Button>
+      <span role="status" className="text-sm font-semibold text-navy/70">
+        {copied ? t('staff.race.copied') : ''}
+      </span>
+    </div>
+  );
+}
+
 export function RaceOverview({ raceId }: { raceId: string | undefined }) {
   const { data: race, isPending, isError, refetch } = useStaffRace(raceId);
 
@@ -262,13 +302,7 @@ export function RaceOverview({ raceId }: { raceId: string | undefined }) {
         <FundraisingCard race={race} />
       </div>
 
-      {race.racer_emails.length > 0 && (
-        <p>
-          <a href={`mailto:${STAFF_EMAIL}?bcc=${race.racer_emails.join(',')}`} className={link}>
-            {t('staff.race.emailRacers')}
-          </a>
-        </p>
-      )}
+      {race.racer_emails.length > 0 && <EmailRacers emails={race.racer_emails} />}
       <DeleteRace race={race} />
     </div>
   );

@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -160,6 +160,31 @@ describe('staff race overview', () => {
     unmount();
     await open(staffRace({ racer_emails: [] }));
     expect(screen.queryByRole('link', { name: t('staff.race.emailRacers') })).not.toBeInTheDocument();
+  });
+
+  it('encodes each address in the mailto so odd characters cannot cut the list or add headers', async () => {
+    await open(staffRace({ racer_emails: ['a&b#c@example.com', 'x?subject=hi@example.com', 'ok@example.com'] }));
+    const href = screen.getByRole('link', { name: t('staff.race.emailRacers') }).getAttribute('href') ?? '';
+    const [base, query] = href.split('?');
+    expect(base).toBe('mailto:dogtag@chiditarod.org');
+    expect(query).toBe('bcc=a%26b%23c@example.com,x%3Fsubject%3Dhi@example.com,ok@example.com');
+    expect(query).not.toMatch(/[&#]/);
+    expect(new URLSearchParams(query).keys().next().value).toBe('bcc');
+  });
+
+  it('copies the emails to the clipboard and says so briefly', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    await open(staffRace());
+    await userEvent.click(screen.getByRole('button', { name: t('staff.race.copyEmails') }));
+    expect(writeText).toHaveBeenCalledWith('ada@example.com, bo@example.com');
+    expect(await screen.findByRole('status')).toHaveTextContent(t('staff.race.copied'));
+    Reflect.deleteProperty(navigator, 'clipboard');
+  });
+
+  it('hides the copy button when there are no racer emails', async () => {
+    await open(staffRace({ racer_emails: [] }));
+    expect(screen.queryByRole('button', { name: t('staff.race.copyEmails') })).not.toBeInTheDocument();
   });
 
   it('shows no Delete to an operator', async () => {
