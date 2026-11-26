@@ -26,11 +26,16 @@
 - No new npm or gem dependencies; no Gemfile, initializer, environment or `spec_helper.rb` changes; no migration.
 - Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`; the PR body ends with `🤖 Generated with [Claude Code](https://claude.com/claude-code)` and states whether the e2e spec was run.
 
+## Owner decisions (2026-11-25)
+
+- **Staff edit question answers after registration closes.** Operators and admins may save a team's answers after close. The API `QuestionsController#update` and the legacy `QuestionsController#create` both change their after-close refusal to allow them (Task 2). Racer owners are still refused after close.
+- **Staff Pay stays available for a waitlisted team in a full race.** The warning says the race is full and that paying puts the team over the limit (Task 8).
+
 ## Calls made in this plan (not in the spec)
 
 - **`PUT /api/v1/teams/:id` does not permit `new_team_setting` today** (the spec says it does; only the legacy `TeamsController#team_params` does). This PR adds it for admins and operators, through one shared rule.
-- **Staff edit controls come from the server**, not from SPA role checks: the staff payload carries `can` flags computed from `Ability` plus the existing windows (people only until `final_edits_close`, per `PersonValidator`; questions only while registration is open, per `QuestionsController`). So after registration closes staff can edit team details, the captain and racers (until final edits close) and remove racers, but **not the questions**: the server refuses everyone there today, as the legacy page does. Changing that is an owner decision, not part of this PR.
-- **Staff Pay is also offered on a closed race and to a waitlisted team**, because `ChargeTeam` lets admins and operators pay in both cases (legacy parity). Each gap gets its own warning line. When there is no gap, staff see the ordinary Pay button.
+- **Staff edit controls come from the server**, not from SPA role checks: the staff payload carries `can` flags computed from `Ability` plus the existing windows (people only until `final_edits_close`, per `PersonValidator`; questions while registration is open, or any time for operators and admins, per the owner decision above). So after registration closes staff can edit team details, the captain, the questions and racers (until final edits close), and remove racers.
+- **Staff Pay is also offered on a closed race**, because `ChargeTeam` lets admins and operators pay after close (legacy parity; the waitlisted case is an owner decision above). Each gap gets its own warning line. When there is no gap, staff see the ordinary Pay button.
 - **Staff paying for someone else's team open Stripe Checkout without an email prefill** (legacy parity; the receipt goes to the address staff type), instead of the staff member's own email.
 - **Per-payment link** is `/staff/payments?team_id=<team>&payment_type=<requirement>`; the panel's Payments link is `/staff/payments?team_id=<team>`. With no `race_id`, `PaymentSearch` uses the team's race, so the race select, the type select and the chip agree. An unknown `team_id` lists nothing. Changing the race drops `team_id`, like `payment_type`.
 - **Emails link shown only when `can.view_emails`** (`can?(:index, SentEmail)`: operator, admin), since refunders cannot open `/staff/emails`. The count is shown to every staff role.
@@ -44,7 +49,7 @@
 1. **Racers can't pay early.** A team owner (not staff) still sees no Pay button on an incomplete roster, a closed race or a full race. A refunder sees no staff Pay. The server still answers `roster_incomplete` to an owner and 403 to a refunder. Owner: Task 8 Vitest ("racer view unchanged" cases), Task 1 spec (`take_payment` false for refunder and owner), Task 3 spec.
 2. **Staff Pay uses the normal payment path.** "Pay $X as staff" sends the same `POST /teams/:id/payments` body as a racer's Pay (`requirement_id`, `stripe_token`, `expected_amount_cents` after the same price recheck). It never shows when `can.take_payment` is false, and it never shows while the staff data is still loading. Owner: Task 8 Vitest.
 3. **Live racer page unharmed.** For a non-staff viewer `useTeamPermissions` returns exactly the old gates. The staff endpoint is never called for them and 403s if called. The racer `GET /api/v1/teams/:id` JSON has the same keys as before. A failing staff request leaves the page on racer rules. Owner: Task 6 Vitest table, Task 3 spec.
-4. **Only admins and operators change the new-team flag.** A racer's or refunder's `new_team_setting` leaves `new_team` and `new_team_overridden` unchanged, through both the API and the legacy form. Owner: Task 2 spec.
+4. **Only admins and operators get the staff-only writes.** A racer's or refunder's `new_team_setting` leaves `new_team` and `new_team_overridden` unchanged, through both the API and the legacy form. After close, the racer owner is still refused when saving answers (API 403, legacy redirect with the error) and the answers are unchanged. Owner: Task 2 specs.
 5. **`team_id` never widens a refund list.** An unknown or junk `team_id` lists no payments. `team_id` with a different `race_id` lists none. With no `race_id` the list is only that team's payments in the team's race. Owner: Task 4 spec, Task 5 Vitest.
 
 ---
@@ -60,13 +65,14 @@
 - Produces:
   - `Payments::ChargeTeam.staff_payer?(user) -> Boolean`: `user.is_any_of?(:admin, :operator)`. The instance `staff?` calls it, so `payable_now?`, `waitlisted?` and `roster_incomplete?` are unchanged.
   - `StaffTeamPermissions.new_team_setter?(user) -> Boolean`: `user.is_any_of?(:admin, :operator)`.
+  - `StaffTeamPermissions.questions_open?(team, user) -> Boolean`: `team.race.open_for_registration? || user.is_any_of?(:admin, :operator)` (owner decision 2026-11-25). Task 2 makes both questions controllers use it.
   - `StaffTeamPermissions.new(team, user).to_h -> Hash` (symbol keys, all booleans). `ability = Ability.new(user)`, `race = team.race`, `people_window = race.open_for_registration? || race.in_final_edits_window?`:
     - `update_team`: `ability.can?(:update, team)`
     - `set_captain`: same as `update_team` (`CaptainsController` uses `authorize_update!(team, team)`)
     - `add_racers`: `people_window && ability.can?(:create, Person) && ability.can?(:update, team)`
     - `edit_racers`: `people_window && ability.can?(:update, Person.new(team: team))`
     - `remove_racers`: `ability.can?(:update, team)` (the "team complete" guard stays in the SPA and the server)
-    - `edit_questions`: `race.jsonform.present? && race.open_for_registration? && ability.can?(:edit, team)`
+    - `edit_questions`: `race.jsonform.present? && self.class.questions_open?(team, user) && ability.can?(:edit, team)`
     - `delete_team`: `ability.can?(:destroy, team) && team.completed_requirements.none?`
     - `take_payment`: `Payments::ChargeTeam.staff_payer?(user) && ability.can?(:edit, team)`
     - `set_new_team`: `self.class.new_team_setter?(user)`
@@ -76,7 +82,8 @@
 - [ ] **Step 1:** Write failing examples in `spec/services/staff_team_permissions_spec.rb`, each with its own race (`FactoryBot.create(:race)`, dates moved with `update_columns`):
   - **operator, registration closed, inside the final-edits window:**
     - `update_team`, `set_captain`, `add_racers`, `edit_racers`, `remove_racers`, `take_payment`, `set_new_team`, `view_emails`, `view_payments` are true;
-    - `edit_questions` is false (race has jsonform).
+    - `edit_questions` is true (race has jsonform).
+  - **refunder or racer owner, closed race:** `edit_questions` false; `questions_open?` false.
   - **operator, after `final_edits_close`:**
     - `add_racers` and `edit_racers` are false;
     - `update_team` and `take_payment` are true.
@@ -90,14 +97,16 @@
 - [ ] **Step 4:** Run the new spec, `spec/services/payments/` and `spec/requests/api/v1/payments_spec.rb` — PASS.
 - [ ] **Step 5:** Commit — `Name the staff payer and new-team rules once; compute staff team permissions`
 
-### Task 2: `new_team_setting` through `PUT /api/v1/teams/:id`
+### Task 2: Staff-only writes: `new_team_setting` through `PUT /api/v1/teams/:id`, answers after close
 
 **Files:**
-- Modify: `app/controllers/api/v1/teams_controller.rb` (`update`), `app/controllers/teams_controller.rb` (`team_params` uses `StaffTeamPermissions.new_team_setter?`)
-- Test: `spec/requests/api/v1/teams_spec.rb`, `spec/controllers/teams_controller_spec.rb` (existing legacy coverage must still pass)
+- Modify:
+  - `app/controllers/api/v1/teams_controller.rb` (`update`), `app/controllers/teams_controller.rb` (`team_params` uses `StaffTeamPermissions.new_team_setter?`);
+  - `app/controllers/api/v1/questions_controller.rb` (`update`: `unless StaffTeamPermissions.questions_open?(@team, current_user)` replaces `unless @team.race.open_for_registration?`), `app/controllers/questions_controller.rb` (`create`: the same swap; it is the only window check there).
+- Test: `spec/requests/api/v1/teams_spec.rb`, `spec/requests/api/v1/questions_spec.rb`, `spec/controllers/teams_controller_spec.rb`, `spec/controllers/questions_controller_spec.rb` (existing legacy coverage must still pass)
 
 **Interfaces:**
-- Consumes: `StaffTeamPermissions.new_team_setter?`.
+- Consumes: `StaffTeamPermissions.new_team_setter?`, `StaffTeamPermissions.questions_open?`.
 - Produces: `PATCH|PUT /api/v1/teams/:id` with `{ team: { new_team_setting: "auto"|"yes"|"no" } }` from an admin or operator: 200 with the usual `teams/show` body. The permitted list is `[:name, :description, :experience]` plus `:new_team_setting` only for setters. It is still `authorize!(:show)` then `authorize_update!` and `TeamAuditor`.
 
 - [ ] **Step 1:** Write failing request examples:
@@ -105,10 +114,15 @@
   - an admin sets `"no"` → 200 and the change is stored;
   - the owner (racer, open race) sends `new_team_setting: "yes"` alone → the flag and `new_team_overridden` are unchanged. Assert the status Rails gives (expected 400: `params.expect` drops the unpermitted key and the empty hash is missing); with `name` as well → 200, name changed, flag unchanged;
   - a refunder → 403 and unchanged.
-- [ ] **Step 2:** Run `bundle exec rspec spec/requests/api/v1/teams_spec.rb` — FAIL on the operator/admin examples.
-- [ ] **Step 3:** Implement; the legacy `team_params` swaps `current_user.is_any_of?(:admin, :operator)` for the shared method.
-- [ ] **Step 4:** Run the request spec and `bundle exec rspec spec/controllers/teams_controller_spec.rb` — PASS.
-- [ ] **Step 5:** Commit — `Let admins and operators set the new-team flag through the teams API`
+  - **answers after close** (`PUT /api/v1/teams/:team_id/questions`, race with a jsonform, registration closed):
+    - the racer owner → 403 with `api.errors.registration_closed`, and `team.reload.jsonform` is unchanged;
+    - an operator and an admin → 200, the answers are saved, and the response checklist has `questions.done` true;
+    - a refunder → 403 (no `:edit` on the team) and unchanged.
+  - **legacy** (`spec/controllers/questions_controller_spec.rb`, `POST create` after close): the owner is redirected with `questions.cannot_modify` and nothing is saved; an operator's answers are saved.
+- [ ] **Step 2:** Run `bundle exec rspec spec/requests/api/v1/teams_spec.rb spec/requests/api/v1/questions_spec.rb spec/controllers/questions_controller_spec.rb` — FAIL on the operator/admin examples.
+- [ ] **Step 3:** Implement. The legacy `team_params` swaps `current_user.is_any_of?(:admin, :operator)` for the shared method, and both questions controllers use `questions_open?`.
+- [ ] **Step 4:** Run those specs and `bundle exec rspec spec/controllers/teams_controller_spec.rb` — PASS.
+- [ ] **Step 5:** Commit — `Let admins and operators set the new-team flag and save answers after registration closes`
 
 ### Task 3: `GET /api/v1/staff/teams/:id`
 
@@ -283,7 +297,7 @@
     - the rail wrapper drops `lg:sticky` when the Staff card is shown.
 - [ ] **Step 1:** Write failing tests:
   - racer fixtures on a closed race: no Add, no Make captain, no Remove, no Delete, Questions shows "closed" (the existing assertions keep passing unchanged);
-  - staff (operator `can` all true, closed race): "+ Add a racer", "Make captain", "Remove" on an incomplete unfinalized team, Delete when `can.delete_team`, and the closed note;
+  - staff (operator `can` all true, closed race): "+ Add a racer", "Make captain", "Remove" on an incomplete unfinalized team, the questions Edit button (and the form saves through the normal PUT), Delete when `can.delete_team`, and the closed note;
   - staff non-owner: no "Pick racers from past teams" and no "Add yourself";
   - refunder (`can` all false): no Edit on team details, no Add, no Remove, no Make captain, no Delete;
   - `TeamChecklist`: a staff `me` with tour storage unset does not open the tour.
@@ -311,7 +325,7 @@
       - when gaps exist, one warning line per gap (with the ⚠ glyph `aria-hidden`):
         - roster: "The roster isn't full ({filled} of {total}). Racers can't pay yet; staff can take payment anyway.";
         - closed: "Registration is closed, so racers can't pay; staff can take payment anyway.";
-        - waitlist: "The race is full and this team is on the waitlist; staff can take payment anyway.";
+        - waitlist: "The race is full and this team is on the waitlist. Paying as staff puts the race over its team limit." (owner decision 2026-11-25);
       - with gaps, each Pay button is `variant="secondary"` (outlined) and reads "Pay {amount} as staff";
       - without gaps, the normal button.
     - **Without `staffPay`:** today's code path, byte-for-byte the same output.
@@ -323,6 +337,7 @@
   - **racer view unchanged:** an incomplete roster shows `fee.rosterFirst` and no Pay; a closed race shows `fee.closed`; a full race shows `fee.waitlist`; no "Refund on Payments".
   - **staff, `take_payment` true, 3 of 5, closed race:** the roster and closed warnings, one outlined "Pay $120 as staff". Clicking it (mock requirement) POSTs `/teams/:id/mock_payments` with the same body a racer's mock Pay sends.
   - **staff, Stripe requirement:** the price recheck runs (a changed price shows `fee.changed` and opens no Checkout). The POST body has `requirement_id`, `stripe_token`, `expected_amount_cents`. Checkout gets `email: ''` for a non-owner.
+  - **staff, full race:** the over-the-limit warning shows above "Pay $X as staff".
   - **refunder (`take_payment` false):** no Pay on an incomplete roster, and "Refund on Payments" links are present.
   - **staff data still loading** (racer permissions): no staff Pay.
   - **a paid row's link:** the `href` ends `/staff/payments?team_id=12&payment_type=34`.
@@ -401,14 +416,14 @@
      - Emails (2) links to `/register/staff/emails?team_id=…` (assert the `href` only; PR 7 owns the page);
      - setting New team to "Yes" shows "Saved" and survives a reload;
      - "+ Add a racer" adds a fourth racer;
-     - Questions shows the closed message (server rule).
-  4. **Owner, closed race:** no Add, no Make captain, no team-details Edit button. Edit on a racer stays (final-edits window).
+     - Questions has Edit; changing an answer and saving shows it as saved after a reload (owner decision).
+  4. **Owner, closed race:** no Add, no Make captain, no team-details Edit button, and Questions shows the closed message. Edit on a racer stays (final-edits window).
   5. **Refunder, closed race:** the Staff card has no select, no Emails link, no Pay and no edit controls. "Refund on Payments" on Cart Deposit opens Payments with the chip "Team: Test Team StaffPanel <short>" and exactly one row. Removing the chip lists the race's other payments, or none.
   6. **320px, operator, closed race:** "Staff details" is collapsed with its summary line, expands on tap, and `document.documentElement.scrollWidth <= 320`.
 - [ ] **Step 2:** Add the seed. Rebuild the SPA (`npm --prefix frontend run build`), then run the spec against a separate database as in CLAUDE.md "E2E Learnings": `DATABASE_URL=postgres://postgres@localhost/dogtag_test_2 TEST_PORT=3199 PIDFILE=tmp/pids/e2e-3199.pid npx playwright test tests/spa/staff-team-panel.spec.ts`. It must PASS.
 - [ ] **Step 3:** Run `bin/check`, then the neighbours the same way: `tests/spa/team-captain.spec.ts`, `guided-tour.spec.ts`, `payments-admin.spec.ts`, `staff-shell.spec.ts`, `buddy-picker.spec.ts`, and `tests/e2e/registration.spec.ts` (mock mode, see the fake-keys note). All must PASS.
 - [ ] **Step 4:** Add a CLAUDE.md "Registration SPA" bullet "Staff team view (reskin PR 8)" covering:
-  - the staff endpoint and its `can` flags (`StaffTeamPermissions`; questions stay closed after registration closes for everyone; people until `final_edits_close`);
+  - the staff endpoint and its `can` flags (`StaffTeamPermissions`; operators and admins may save answers after close (`questions_open?`, owner decision), racers may not; people until `final_edits_close`);
   - `useTeamPermissions` as the one place team-page gates live (racer rules unchanged);
   - staff Pay gaps and the no-prefill Checkout;
   - `new_team_setting` through the teams API (`StaffTeamPermissions.new_team_setter?`, shared with legacy);
@@ -418,7 +433,8 @@
   - Also fix CLAUDE.md Known Quirk 6's "the SPA has no staff flag, so staff take payment for an incomplete team in the legacy view".
 - [ ] **Step 5:** Commit — `Add staff team panel e2e spec and seed; document the staff team view`
 - [ ] **Step 6:** Push and open the PR against `chiditarod/dogtag` (`gh pr create --repo chiditarod/dogtag`, base `feature/reskin-7-users-emails`). The body lists:
-  - the "Calls made in this plan", especially the API now permitting `new_team_setting` and questions staying closed for staff;
+  - the "Calls made in this plan", especially the API now permitting `new_team_setting`;
+  - the owner decisions: staff save answers after close (API and legacy), and staff Pay on a waitlisted team with the over-the-limit warning;
   - that it is money-touching, with the Review Focus;
   - whether the e2e spec was run;
   - no migrations and no Gemfile/config changes;
