@@ -120,6 +120,14 @@ describe('EmailsPage', () => {
     expect(within(row).getByText('for 2 min')).toBeInTheDocument();
   });
 
+  it('times a queued row from its last status change, not its creation', async () => {
+    const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString();
+    serve(emailsResponse([sentEmail({ id: 5, status: 'queued', created_at: ago(300), status_changed_at: ago(3) })]));
+    renderApp('/staff/emails');
+    await screen.findByRole('table');
+    expect(within(dataRows()[0]).getByText('for 3 min')).toBeInTheDocument();
+  });
+
   it('searches by recipient once after the debounce', async () => {
     serve(emailsResponse([sentEmail()]));
     renderApp('/staff/emails?page=2');

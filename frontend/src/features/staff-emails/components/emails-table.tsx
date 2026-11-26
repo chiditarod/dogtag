@@ -26,7 +26,7 @@ function StatusCell({ email }: { email: SentEmail }) {
       {email.status === 'failed' && email.error && (
         <div className="mt-1 text-xs text-starText [overflow-wrap:anywhere]">{email.error}</div>
       )}
-      {email.status === 'queued' && <div className="mt-1 text-xs text-navy/70">{queuedFor(email.created_at)}</div>}
+      {email.status === 'queued' && <div className="mt-1 text-xs text-navy/70">{queuedFor(email.status_changed_at ?? email.created_at)}</div>}
     </>
   );
 }
@@ -42,9 +42,9 @@ export function EmailsTable({ emails }: { emails: SentEmail[] }) {
         <ListRow key={email.id} data-email-id={email.id} className="bg-white">
           <ListCell className="text-sm">{formatDate(email.created_at, DEFAULT_TIME_ZONE)}</ListCell>
           <ListCell className="text-sm font-semibold">{kindLabel(email.kind)}</ListCell>
-          <ListCell className="text-sm [overflow-wrap:anywhere]">{email.recipient}</ListCell>
-          <ListCell className="break-words text-sm">{email.subject}</ListCell>
-          <ListCell className="break-words text-sm">
+          <ListCell label={t('staff.emails.col.to')} className="text-sm [overflow-wrap:anywhere]">{email.recipient}</ListCell>
+          <ListCell label={t('staff.emails.col.subject')} className="break-words text-sm">{email.subject}</ListCell>
+          <ListCell label={email.team ? t('staff.emails.col.team') : undefined} className="break-words text-sm">
             {email.team && (
               // The legacy team page is Rails, outside the SPA router, so a plain anchor.
               <a href={`/teams/${email.team.id}`} className="text-link underline">
@@ -55,7 +55,10 @@ export function EmailsTable({ emails }: { emails: SentEmail[] }) {
           <ListCell>
             <StatusCell email={email} />
           </ListCell>
-          <ListCell className="text-sm text-navy/70">
+          <ListCell
+            label={email.status_changed_at ? t('staff.emails.col.changed') : undefined}
+            className="text-sm text-navy/70"
+          >
             {email.status_changed_at ? formatSince(email.status_changed_at, DEFAULT_TIME_ZONE) : ''}
           </ListCell>
         </ListRow>
