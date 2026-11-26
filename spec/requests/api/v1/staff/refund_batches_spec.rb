@@ -43,6 +43,24 @@ describe "API v1 staff refund batches", type: :request do
     before { api_login(refunder) }
 
     describe "POST /staff/refund_batches" do
+      it "records reopen on the batch and reports it, with each item's reopened flag" do
+        cr = paid
+
+        post "/api/v1/staff/refund_batches", params: { completed_requirement_ids: [cr.id], confirmation: "REFUND 1", expected_total_cents: 5000, reopen: true }, as: :json
+
+        expect(response).to have_http_status(:created)
+        expect(RefundBatch.last.reopen).to be(true)
+        expect(json["batch"]).to include("reopen" => true)
+        expect(json["batch"]["items"].first).to include("reopened" => false)
+      end
+
+      it "refunds only when reopen is absent" do
+        create_batch([paid.id])
+
+        expect(RefundBatch.last.reopen).to be_blank
+        expect(json["batch"]).to include("reopen" => false)
+      end
+
       it "201 queues the batch and enqueues the job" do
         crs = [paid, paid]
 

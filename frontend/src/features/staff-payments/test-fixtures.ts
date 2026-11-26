@@ -13,12 +13,15 @@ export function payment(overrides: Partial<StaffPayment> = {}): StaffPayment {
     status: 'paid',
     refunded_at: null,
     refunded_by: null,
+    reopened_at: null,
+    reopened_by: null,
     ...overrides,
   };
 }
 
 export const emptyPayments: PaymentsResponse = {
   payments: [],
+  can_reopen: false,
   meta: {
     page: 1,
     per_page: 25,
@@ -48,6 +51,7 @@ export function batchItem(overrides: Partial<RefundBatchItem> = {}): RefundBatch
     payment_type: 'Cart Deposit',
     amount_cents: 5000,
     status: 'queued',
+    reopened: false,
     error_code: null,
     message: null,
     finished_at: null,
@@ -61,6 +65,7 @@ export function refundBatch(overrides: Partial<RefundBatch> = {}): RefundBatch {
     created_at: '2026-11-24T18:00:00Z',
     finished_at: null,
     retry_of_id: null,
+    reopen: false,
     items: [batchItem()],
     ...overrides,
   };

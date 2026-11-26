@@ -7,7 +7,8 @@ class Api::V1::Staff::RefundBatchesController < Api::V1::Staff::BaseController
       user: current_user,
       completed_requirement_ids: ids,
       confirmation: params[:confirmation].to_s,
-      expected_total_cents: params[:expected_total_cents]
+      expected_total_cents: params[:expected_total_cents],
+      reopen: ActiveModel::Type::Boolean.new.cast(params[:reopen]) || false
     )
     render_batch(result, ids.size)
   end

@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { t } from '@/locales/en';
 import type { StaffPayment } from '../types';
 import { formatMoney, formatPaidDate, formatShortDate } from '../utils';
@@ -12,6 +13,22 @@ function StatusBadge({ payment }: { payment: StaffPayment }) {
         : t(`staff.payments.status.${payment.status}` as 'staff.payments.status.paid');
   const tone = payment.status === 'paid' ? 'success' : payment.status === 'refunding' ? 'warning' : 'neutral';
   return <Badge tone={tone}>{label}</Badge>;
+}
+
+/** A reopened payment stays `refunded` (history); the badge and the who/when line say it can be paid again. */
+function ReopenedNote({ payment }: { payment: StaffPayment }) {
+  if (!payment.reopened_at) return null;
+  const date = formatShortDate(payment.reopened_at);
+  return (
+    <div className="mt-1 space-y-0.5">
+      <Badge tone="warning">{t('staff.payments.reopened')}</Badge>
+      <p className="text-xs text-navy/70 [overflow-wrap:anywhere]">
+        {payment.reopened_by
+          ? t('staff.payments.reopenedBy', { date, name: payment.reopened_by.name })
+          : t('staff.payments.reopenedByUnknown', { date })}
+      </p>
+    </div>
+  );
 }
 
 const headCell = 'px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-navy/70';
@@ -61,7 +78,16 @@ function SelectBox({ payment, refund }: { payment: StaffPayment; refund: RefundS
 }
 
 /** One markup: a table from `sm`, stacked cards below it. Pass `refund` to show tick boxes (Refund mode). */
-export function PaymentsTable({ payments, refund }: { payments: StaffPayment[]; refund?: RefundSelection }) {
+export function PaymentsTable({
+  payments,
+  refund,
+  onReopen,
+}: {
+  payments: StaffPayment[];
+  refund?: RefundSelection;
+  /** Given only to staff who may reopen (operators and admins): shows "Reopen payment" on refunded rows. */
+  onReopen?: (payment: StaffPayment) => void;
+}) {
   return (
     <div role="table" aria-label={t('staff.payments.list')} className="block w-full sm:table">
       <div role="rowgroup" className="hidden sm:table-header-group">
@@ -117,6 +143,17 @@ export function PaymentsTable({ payments, refund }: { payments: StaffPayment[]; 
             </div>
             <div role="cell" className={cell}>
               <StatusBadge payment={payment} />
+              <ReopenedNote payment={payment} />
+              {onReopen && payment.status === 'refunded' && !payment.reopened_at && (
+                <Button
+                  variant="secondary"
+                  className="mt-1"
+                  aria-label={t('staff.reopen.actionFor', { team: payment.team.name })}
+                  onClick={() => onReopen(payment)}
+                >
+                  {t('staff.reopen.action')}
+                </Button>
+              )}
             </div>
           </div>
         ))}

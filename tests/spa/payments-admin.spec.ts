@@ -172,6 +172,9 @@ test.describe('SPA staff payments (Refund mode, batch of 5)', () => {
     await typed.fill('REFUND 4');
     await expect(confirm).toBeDisabled();
     await typed.fill('REFUND 5');
+    // Nothing is preselected: the typed phrase is not enough until staff choose what happens to the teams.
+    await expect(confirm).toBeDisabled();
+    await dialog.getByText('Refund only', { exact: true }).click();
     await confirm.click();
 
     const results = page.getByRole('dialog', { name: 'Refunds finished' });
@@ -236,6 +239,7 @@ test.describe('SPA staff payments (Refund mode, single refund at 320px)', () => 
     await noSidewaysScroll(page);
     await expect(confirm).toBeDisabled();
     await dialog.getByLabel('Type REFUND 1 to confirm').fill('refund 1');
+    await dialog.getByText('Refund only', { exact: true }).click();
     await confirm.click();
 
     const results = page.getByRole('dialog', { name: 'Refunds finished' });
@@ -276,6 +280,7 @@ test.describe('SPA staff payments (Refund mode, partial failure at 320px)', () =
     await page.getByRole('button', { name: 'Review and refund 3…' }).click();
     const dialog = page.getByRole('dialog', { name: 'Refund 3 payments?' });
     await dialog.getByLabel('Type REFUND 3 to confirm').fill('REFUND 3');
+    await dialog.getByText('Refund only', { exact: true }).click();
     await dialog.getByRole('button', { name: 'Refund 3 payments' }).click();
 
     const results = page.getByRole('dialog', { name: 'Refunds finished' });

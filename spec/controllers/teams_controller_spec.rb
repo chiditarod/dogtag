@@ -595,21 +595,21 @@ describe TeamsController do
             expect(refund_buttons).to be_empty
           end
 
-          [:operator_user, :refunder_user].each do |role|
-            context "when #{role.to_s.delete_suffix("_user")} views the team" do
-              let(:the_user) { FactoryBot.create role }
+          context "when a refunder views the team" do
+            let(:the_user) { FactoryBot.create :refunder_user }
 
-              it "shows one Refund button" do
-                expect(refund_buttons.size).to eq(1)
-              end
+            it "shows one Refund button and no way to reopen" do
+              expect(refund_buttons.size).to eq(1)
             end
           end
 
-          context "when an admin views the team" do
-            let(:the_user) { FactoryBot.create :admin_user }
+          [:operator_user, :admin_user].each do |role|
+            context "when #{role.to_s.delete_suffix("_user")} views the team" do
+              let(:the_user) { FactoryBot.create role }
 
-            it "also shows refund and invalidate" do
-              expect(refund_buttons.size).to eq(2)
+              it "shows Refund and Refund & Reopen payment" do
+                expect(refund_buttons.map { |form| form.css("input[type=hidden][name=reopen]").any? }).to contain_exactly(true, false)
+              end
             end
           end
 
@@ -621,8 +621,10 @@ describe TeamsController do
               get :show, params: { :id => team.id }
             end
 
-            it "shows Refunded and no buttons" do
+            it "shows Refunded and a Reopen payment button, but no refund buttons" do
               expect(refund_buttons).to be_empty
+              cr = CompletedRequirement.find_by!(charge_id: "ch_paid")
+              expect(Nokogiri::HTML(response.body).css("form[action$='/completed_requirements/#{cr.id}/reopen']").size).to eq(1)
               expect(Nokogiri::HTML(response.body).css("span.label-primary").map { |node| node.text.strip }).to include("Refunded")
             end
           end

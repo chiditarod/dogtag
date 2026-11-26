@@ -943,4 +943,19 @@ describe Team do
       expect(@reg.completed_all_requirements?).to eq(true)
     end
   end
+
+  describe "#deletable?" do
+    let(:team) { FactoryBot.create(:team) }
+
+    it "is true for an unfinalized team with no payments" do
+      expect(team).to be_deletable
+    end
+
+    it "is false once anything was paid, even if the payment was refunded and reopened" do
+      FactoryBot.create(:completed_requirement, team: team, charge_id: "ch_1", amount_cents: 5000, refunded_at: 2.days.ago, reopened_at: 1.day.ago)
+
+      expect(team.reload.completed_requirements).to be_empty
+      expect(team).not_to be_deletable
+    end
+  end
 end

@@ -81,7 +81,9 @@ en:
   back: Back
   refund: Refund
   refunded: Refunded
-  refund_and_invalidate: Refund & Remove
+  refund_and_reopen: Refund & Reopen payment
+  reopen_payment: Reopen payment
+  reopened: Reopened
   at: at
   or: or
   of: of

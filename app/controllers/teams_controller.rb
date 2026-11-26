@@ -116,7 +116,7 @@ class TeamsController < ApplicationController
     @team = Team.find params[:id]
     @team.subscribe(TeamAuditor.new)
 
-    if @team.completed_requirements.any?
+    if @team.all_completed_requirements.any?
       flash[:error] = I18n.t("teams.destroy.has_payments")
       return redirect_to teams_path
     end

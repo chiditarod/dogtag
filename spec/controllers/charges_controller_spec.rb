@@ -527,46 +527,81 @@ describe ChargesController do
         end
       end
 
-      context 'when delete_completed_requirement is passed' do
+      context 'when reopen is passed' do
+        context 'and the user is an operator' do
+          let(:the_user) { FactoryBot.create :operator_user }
 
-        context 'and the user is an admin' do
-          let(:the_user) { FactoryBot.create :admin_user }
+          it 'refunds, reopens the payment and keeps the row as history' do
+            post :refund, params: { charge_id: charge.id, reopen: true }
 
-          it 'deletes the completed requirement after refunding, sets flash notice, and redirects to prior url' do
-            post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
-
-            expect(flash[:notice]).to eq("The refund has processed successfully, and the completed requirement was deleted")
+            expect(flash[:notice]).to eq("The refund has processed successfully, and the payment was reopened")
             expect(response).to redirect_to('/prior_url/')
-            expect(CompletedRequirement.where(id: cr.id)).to be_empty
-            expect(Stripe::Charge.retrieve(charge.id).refunded).to eq(true)
-            expect(Workers::PaymentRefundedEmail.jobs.size).to eq(1)
+            cr.reload
+            expect(cr).to be_refunded
+            expect(cr).to be_reopened
+            expect(cr.reopened_by).to eq(the_user)
+            expect(cr.team.completed_requirements).to be_empty
           end
 
-          it 'keeps the row when delete_completed_requirement is "false"' do
-            post :refund, params: { charge_id: charge.id, delete_completed_requirement: 'false' }
+          it 'only refunds when reopen is "false"' do
+            post :refund, params: { charge_id: charge.id, reopen: 'false' }
 
             expect(flash[:notice]).to eq("The refund has processed successfully")
             expect(cr.reload).to be_refunded
+            expect(cr).not_to be_reopened
           end
 
-          it 'keeps the row when the refund fails' do
+          it 'does not reopen when the refund fails' do
             cr.update_columns(charge_id: 'ch_seed_1')
 
-            post :refund, params: { charge_id: 'ch_seed_1', delete_completed_requirement: true }
+            post :refund, params: { charge_id: 'ch_seed_1', reopen: true }
 
             expect(flash[:error]).to be_present
-            expect(CompletedRequirement.where(id: cr.id)).to be_present
+            expect(cr.reload).not_to be_reopened
           end
         end
 
-        context 'when the user is not an admin' do
-          it 'refunds but keeps the completed requirement, sets flash notice, and redirects to prior url' do
-            post :refund, params: { charge_id: charge.id, delete_completed_requirement: true }
+        context 'when the user is a refunder' do
+          it 'refunds but does not reopen, and says why' do
+            post :refund, params: { charge_id: charge.id, reopen: true }
 
-            expect(flash[:notice]).to eq("The refund has processed successfully, but the completed requirement was not deleted because you do not have the appropriate permissions")
-            expect(response).to redirect_to('/prior_url/')
+            expect(flash[:notice]).to eq("The refund has processed successfully, but the payment was not reopened because you do not have the appropriate permissions")
             expect(cr.reload).to be_refunded
+            expect(cr).not_to be_reopened
           end
+        end
+      end
+    end
+
+    describe '#reopen' do
+      let(:valid_user) { FactoryBot.create :operator_user }
+      let(:cr) { FactoryBot.create :completed_requirement, charge_id: 'ch_1', amount_cents: 7000, refunded_at: Time.current }
+
+      before { session[:prior_url] = '/prior_url/' }
+
+      it 'reopens a refunded payment' do
+        post :reopen, params: { id: cr.id }
+
+        expect(flash[:notice]).to eq("The payment was reopened. The team can pay again.")
+        expect(response).to redirect_to('/prior_url/')
+        expect(cr.reload).to be_reopened
+      end
+
+      it 'refuses a payment that was not refunded' do
+        cr.update_columns(refunded_at: nil)
+
+        post :reopen, params: { id: cr.id }
+
+        expect(flash[:error]).to eq("Only a refunded payment can be reopened.")
+        expect(cr.reload).not_to be_reopened
+      end
+
+      context 'when a refunder asks' do
+        let(:valid_user) { FactoryBot.create :refunder_user }
+
+        it 'is denied and reopens nothing' do
+          expect { post :reopen, params: { id: cr.id } }.to raise_error(CanCan::AccessDenied)
+          expect(cr.reload).not_to be_reopened
         end
       end
     end

@@ -17,7 +17,9 @@ interface BatchResultsProps {
   onBatchChange?: (batchId: number) => void;
 }
 
-const needsAttention = (item: RefundBatchItem) => item.status === 'failed' || item.status === 'stalled';
+/** Failed, stalled, and refunded-but-not-reopened items are the ones "Retry failed" re-queues. */
+const needsAttention = (item: RefundBatchItem) =>
+  item.status === 'failed' || item.status === 'stalled' || item.status === 'reopen_failed';
 
 function itemLabel(item: RefundBatchItem): string {
   switch (item.status) {
@@ -25,6 +27,12 @@ function itemLabel(item: RefundBatchItem): string {
       return t('staff.refund.queued');
     case 'failed':
       return item.message ? t('staff.refund.item.failed', { message: item.message }) : t('staff.refund.item.failedPlain');
+    case 'reopen_failed':
+      return item.message
+        ? t('staff.refund.item.reopen_failed', { message: item.message })
+        : t('staff.refund.item.reopen_failedPlain');
+    case 'refunded':
+      return item.reopened ? t('staff.refund.item.refundedReopened') : t('staff.refund.item.refunded');
     default:
       return t(`staff.refund.item.${item.status}`);
   }
@@ -32,7 +40,7 @@ function itemLabel(item: RefundBatchItem): string {
 
 /**
  * The results view of a refund batch, in its own dialog. It polls the batch and cannot be closed while the
- * job runs. A retry is per batch: it re-queues every failed and stalled item as a new batch, and the lines
+ * job runs. A retry is per batch: it re-queues every failed, stalled and reopen_failed item as a new batch, and the lines
  * already finished in earlier batches stay on screen.
  */
 export function BatchResults({ batchId, onFinished, onBatchChange }: BatchResultsProps) {

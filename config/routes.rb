@@ -28,6 +28,8 @@ Rails.application.routes.draw do
   resources :charges, :only => [:create] do
     post :refund
   end
+  # A refunded payment is reopened by completed requirement id: a mock payment has no charge id.
+  post "completed_requirements/:id/reopen", to: "charges#reopen", as: :reopen_completed_requirement
 
   # mock payments for testing
   post 'mock_payment', to: 'mock_payments#create', as: :mock_payment
@@ -123,7 +125,9 @@ Rails.application.routes.draw do
         resources :mock_payments, only: [:create] if Rails.env.development? || Rails.env.test?
       end
       namespace :staff do
-        resources :payments, only: [:index]
+        resources :payments, only: [:index] do
+          post :reopen, on: :member
+        end
         resources :refund_batches, only: [:create, :show] do
           # `retry` is a Ruby keyword, so the action is retry_failed.
           post :retry, on: :member, action: :retry_failed

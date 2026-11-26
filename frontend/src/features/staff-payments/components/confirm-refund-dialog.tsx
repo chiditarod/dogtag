@@ -56,24 +56,39 @@ function errorMessage(error: unknown, snapshot: StaffPayment[]): string {
   }
 }
 
+type Choice = 'only' | 'reopen';
+
+const choices: { value: Choice; label: 'staff.refund.choice.only' | 'staff.refund.choice.reopen'; hint: 'staff.refund.choice.onlyHint' | 'staff.refund.choice.reopenHint' }[] = [
+  { value: 'only', label: 'staff.refund.choice.only', hint: 'staff.refund.choice.onlyHint' },
+  { value: 'reopen', label: 'staff.refund.choice.reopen', hint: 'staff.refund.choice.reopenHint' },
+];
+
 export function ConfirmRefundDialog({ snapshot, current, latestRows, onConfirmed, onClose }: ConfirmRefundDialogProps) {
   const titleId = useId();
   const inputId = useId();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [typed, setTyped] = useState('');
+  // No default: staff must say what happens to the teams.
+  const [choice, setChoice] = useState<Choice | null>(null);
+  const choiceName = useId();
   const create = useCreateRefundBatch();
   const submitting = create.isPending;
   const count = snapshot.length;
   const totalCents = snapshot.reduce((sum, row) => sum + row.amount_cents, 0);
   const changed = snapshotChanged(snapshot, current, latestRows);
-  const canConfirm = !changed && !submitting && matchesConfirmation(typed, count);
+  const canConfirm = !changed && !submitting && choice !== null && matchesConfirmation(typed, count);
 
   useEffect(() => titleRef.current?.focus(), []);
 
   function confirm() {
     if (!canConfirm) return;
     create.mutate(
-      { ids: snapshot.map((row) => row.id), confirmation: `REFUND ${count}`, expectedTotalCents: totalCents },
+      {
+        ids: snapshot.map((row) => row.id),
+        confirmation: `REFUND ${count}`,
+        expectedTotalCents: totalCents,
+        reopen: choice === 'reopen',
+      },
       { onSuccess: onConfirmed },
     );
   }
@@ -99,6 +114,34 @@ export function ConfirmRefundDialog({ snapshot, current, latestRows, onConfirmed
           ))}
         </ul>
         <p className="text-sm text-navy">{t('staff.refund.emailNote')}</p>
+        <fieldset disabled={submitting} className="min-w-0 space-y-2">
+          <legend className="text-sm font-semibold">{t('staff.refund.choice.legend')}</legend>
+          {choices.map(({ value, label, hint }) => (
+            <label
+              key={value}
+              className="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border border-flag bg-white p-3 has-[:checked]:border-link"
+            >
+              <input
+                type="radio"
+                name={choiceName}
+                value={value}
+                checked={choice === value}
+                onChange={() => setChoice(value)}
+                className="mt-0.5 size-5 shrink-0 accent-star"
+              />
+              <span className="min-w-0 text-sm">
+                <span className="block font-semibold">{t(label)}</span>
+                <span className="block text-navy/80">{t(hint)}</span>
+              </span>
+            </label>
+          ))}
+          {choice === null && <p className="text-sm text-navy/70">{t('staff.refund.choice.required')}</p>}
+          {choice === 'reopen' && (
+            <p role="note" className="text-sm font-semibold text-starText">
+              {t('staff.refund.choice.warning')}
+            </p>
+          )}
+        </fieldset>
       </div>
       <div className="space-y-2 border-t border-flag px-4 py-3">
         <p className="text-base font-bold">{t('staff.refund.total', { total: formatMoney(totalCents) })}</p>
@@ -134,7 +177,16 @@ export function ConfirmRefundDialog({ snapshot, current, latestRows, onConfirmed
             {t('staff.refund.cancel')}
           </Button>
           <Button disabled={!canConfirm} loading={submitting} onClick={confirm}>
-            {t(count === 1 ? 'staff.refund.confirm_one' : 'staff.refund.confirm_other', { n: count })}
+            {t(
+            choice === 'reopen'
+              ? count === 1
+                ? 'staff.refund.confirmReopen_one'
+                : 'staff.refund.confirmReopen_other'
+              : count === 1
+                ? 'staff.refund.confirm_one'
+                : 'staff.refund.confirm_other',
+            { n: count },
+          )}
           </Button>
         </div>
       </div>

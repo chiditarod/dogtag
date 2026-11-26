@@ -178,4 +178,105 @@ describe "API v1 staff payments", type: :request do
       expect(json["meta"]["refund_batch_limit"]).to eq(10)
     end
   end
+
+  describe "reopening a refunded payment" do
+    before { payment.update_columns(refunded_at: 1.day.ago, refunded_by_id: FactoryBot.create(:refunder_user).id) }
+
+    it "lists reopened_at and reopened_by, and keeps a reopened payment in the list as refunded" do
+      operator = FactoryBot.create(:operator_user, first_name: "Opie", last_name: "Rator")
+      api_login(operator)
+
+      get "/api/v1/staff/payments"
+      expect(json["payments"].first).to include("reopened_at" => nil, "reopened_by" => nil)
+
+      payment.update_columns(reopened_at: Time.current, reopened_by_id: operator.id)
+      get "/api/v1/staff/payments", params: { status: "refunded" }
+
+      expect(json["payments"].size).to eq(1)
+      expect(json["payments"].first).to include("status" => "refunded", "reopened_by" => { "name" => "Opie Rator" })
+      expect(json["payments"].first["reopened_at"]).to be_present
+    end
+
+    it "says whether the viewer may reopen" do
+      api_login(FactoryBot.create(:refunder_user))
+      get "/api/v1/staff/payments"
+      expect(json["can_reopen"]).to be(false)
+
+      api_login(FactoryBot.create(:operator_user))
+      get "/api/v1/staff/payments"
+      expect(json["can_reopen"]).to be(true)
+    end
+
+    %i[operator_user admin_user].each do |factory|
+      it "lets #{factory.to_s.delete_suffix("_user")} reopen it" do
+        user = FactoryBot.create(factory, first_name: "Sam", last_name: "Staff")
+        api_login(user)
+
+        post "/api/v1/staff/payments/#{payment.id}/reopen"
+
+        expect(response).to have_http_status(:ok)
+        expect(json).to include("id" => payment.id, "reopened_by" => { "name" => "Sam Staff" })
+        expect(json["reopened_at"]).to be_present
+        payment.reload
+        expect(payment.reopened_by).to eq(user)
+        expect(payment.refunded_at).to be_present
+      end
+    end
+
+    it "is 403 for a refunder and changes nothing" do
+      api_login(FactoryBot.create(:refunder_user))
+
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+
+      expect(response).to have_http_status(:forbidden)
+      expect(payment.reload).not_to be_reopened
+    end
+
+    it "is 401 logged out, 403 for a racer and 404 for an unknown id" do
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+      expect(response).to have_http_status(:unauthorized)
+
+      api_login(FactoryBot.create(:user))
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+      expect(response).to have_http_status(:forbidden)
+
+      api_login(FactoryBot.create(:operator_user))
+      post "/api/v1/staff/payments/0/reopen"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "is 422 not_refunded for a payment that is still paid" do
+      payment.update_columns(refunded_at: nil, refunded_by_id: nil)
+      api_login(FactoryBot.create(:operator_user))
+
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(json).to include("error" => "Only a refunded payment can be reopened.", "code" => "not_refunded", "errors" => {})
+      expect(payment.reload).not_to be_reopened
+    end
+
+    it "is 409 in_progress while the payment is locked" do
+      allow(Payments::AdvisoryLock).to receive(:with_lock).and_return(Payments::AdvisoryLock::HELD)
+      api_login(FactoryBot.create(:operator_user))
+
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+
+      expect(response).to have_http_status(:conflict)
+      expect(json["code"]).to eq("in_progress")
+    end
+
+    it "answers 200 again for a payment that is already reopened, and keeps the first reopen" do
+      operator = FactoryBot.create(:operator_user)
+      api_login(operator)
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+      first = payment.reload.reopened_at
+
+      post "/api/v1/staff/payments/#{payment.id}/reopen"
+
+      expect(response).to have_http_status(:ok)
+      expect(json["message"]).to eq("This payment was already reopened.")
+      expect(payment.reload.reopened_at).to eq(first)
+    end
+  end
 end

@@ -21,7 +21,7 @@ class Requirement < ApplicationRecord
   validates :race, presence: true
   validates :type, inclusion: { in: ->(_) { Requirement.allowed_types.map(&:last) } }, allow_nil: true
 
-  has_many :completed_requirements
+  has_many :completed_requirements, -> { active }
   has_many :teams, :through => :completed_requirements
 
   ALLOWED_TYPES = [['Payment', 'PaymentRequirement']]
@@ -39,12 +39,12 @@ class Requirement < ApplicationRecord
   end
 
   def cr_for(team)
-    record = CompletedRequirement.where(:team_id => team.id, :requirement_id => id).first
+    record = CompletedRequirement.active.where(:team_id => team.id, :requirement_id => id).first
     record.presence
   end
 
   def completed?(team)
-    CompletedRequirement.where(:team_id => team.id, :requirement_id => id).present?
+    CompletedRequirement.active.where(:team_id => team.id, :requirement_id => id).present?
   end
 
   # todo: figure out how to allow only child classes to call this method.

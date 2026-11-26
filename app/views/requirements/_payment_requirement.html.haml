@@ -4,6 +4,8 @@
   - if cr.refunded?
     %span.label.label-primary
       = t('refunded')
+    - if can? :reopen, :charges
+      = button_to t("reopen_payment"), reopen_completed_requirement_path(cr), :method=>:post, :data => { :confirm => "Reopen this payment so the team can pay again?" }, :class=> %w(btn btn-default)
   - else
     %i.fa.fa-check-circle-o.fa-5x.pull-left
     .lead
@@ -13,8 +15,8 @@
 
     - if can? :refund, :charges
       = button_to t("refund"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger)
-    - if current_user.is? :admin
-      = button_to t("refund_and_invalidate"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Are you sure?" }, :class=> %w(btn btn-danger), :params => {:delete_completed_requirement => true}
+    - if can? :reopen, :charges
+      = button_to t("refund_and_reopen"), charge_refund_url(cr.charge_id), :method=>:post, :data => { :confirm => "Refund this payment and reopen it so the team can pay again?" }, :class=> %w(btn btn-danger), :params => {:reopen => true}
 
 - else
 

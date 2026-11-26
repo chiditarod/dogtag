@@ -4,7 +4,7 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def index
     authorize!(:index, Team)
     @teams = Team.where(user: current_user).order(created_at: :desc)
-      .includes(:people, :completed_requirements, :requirements, race: :requirements).to_a
+      .includes(:people, :completed_requirements, :all_completed_requirements, :requirements, race: :requirements).to_a
     Race.preload_registration_data(@teams.map(&:race))
   end
 
@@ -46,7 +46,7 @@ class Api::V1::TeamsController < Api::V1::BaseController
   def destroy
     team = Team.find(params[:id])
     authorize!(:destroy, team)
-    return render_errors(I18n.t("teams.destroy.has_payments"), status: :conflict, code: :has_payments) if team.completed_requirements.any?
+    return render_errors(I18n.t("teams.destroy.has_payments"), status: :conflict, code: :has_payments) if team.all_completed_requirements.any?
 
     team.destroy!
     head :no_content

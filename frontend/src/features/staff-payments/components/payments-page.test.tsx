@@ -458,6 +458,7 @@ describe('PaymentsPage Refund mode', () => {
     await userEvent.click(boxes()[0]);
     await userEvent.click(screen.getByRole('button', { name: 'Review and refund 1…' }));
     await userEvent.type(await screen.findByLabelText('Type REFUND 1 to confirm'), 'REFUND 1');
+    await userEvent.click(screen.getByRole('radio', { name: /^Refund only/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Refund 1 payment' }));
     const results = await screen.findByRole('dialog', { name: t('staff.refund.finished') });
     expect(within(results).getByText('Refunded')).toBeInTheDocument();

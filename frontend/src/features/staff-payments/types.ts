@@ -19,6 +19,9 @@ export interface StaffPayment {
   status: PaymentStatus;
   refunded_at: string | null;
   refunded_by: { name: string } | null;
+  /** A reopened payment stays `refunded` (it is history); the team can pay again. */
+  reopened_at: string | null;
+  reopened_by: { name: string } | null;
 }
 
 export interface PaymentsSummary {
@@ -46,6 +49,8 @@ export interface PaymentsFilterOptions {
 
 export interface PaymentsResponse {
   payments: StaffPayment[];
+  /** True for operators and admins; refunders may only refund. */
+  can_reopen: boolean;
   meta: PaymentsMeta;
   filters: PaymentsFilterOptions;
 }
@@ -62,7 +67,14 @@ export interface PaymentFilterValues {
   page: number;
 }
 
-export type RefundItemStatus = 'queued' | 'refunded' | 'already_refunded' | 'failed' | 'stalled';
+export type RefundItemStatus =
+  | 'queued'
+  | 'refunded'
+  | 'already_refunded'
+  | 'failed'
+  | 'stalled'
+  /** Refunded at Stripe, but reopening the payment failed. */
+  | 'reopen_failed';
 
 export interface RefundBatchItem {
   id: number;
@@ -71,6 +83,7 @@ export interface RefundBatchItem {
   payment_type: string;
   amount_cents: number | null;
   status: RefundItemStatus;
+  reopened: boolean;
   error_code: string | null;
   message: string | null;
   finished_at: string | null;
@@ -81,6 +94,7 @@ export interface RefundBatch {
   created_at: string;
   finished_at: string | null;
   retry_of_id: number | null;
+  reopen: boolean;
   items: RefundBatchItem[];
 }
 
@@ -88,4 +102,13 @@ export interface CreateRefundBatchVariables {
   ids: number[];
   confirmation: string;
   expectedTotalCents: number;
+  /** Refund and reopen the payments so the teams can pay again. */
+  reopen: boolean;
+}
+
+export interface ReopenPaymentResult {
+  id: number;
+  message: string;
+  reopened_at: string;
+  reopened_by: { name: string };
 }
