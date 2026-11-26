@@ -14,6 +14,7 @@ import { RaceRegistrationsRoute } from '@/app/routes/race-registrations';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
+import { StaffEmailsRoute } from '@/features/staff-emails/routes/staff-emails-route';
 import { StaffFeeNewRoute } from '@/features/staff-fees/routes/staff-fee-new-route';
 import { StaffFeeRoute } from '@/features/staff-fees/routes/staff-fee-route';
 import { StaffRaceEditRoute } from '@/features/staff-races/routes/staff-race-edit-route';
@@ -106,6 +107,14 @@ export const routes: RouteObject[] = [
           },
           { path: 'users', element: <StaffUsersRoute /> },
           { path: 'users/:userId', element: <StaffUserRoute /> },
+          {
+            element: (
+              <RequireStaff roles={rolesFor('/staff/emails')}>
+                <Outlet />
+              </RequireStaff>
+            ),
+            children: [{ path: 'emails', element: <StaffEmailsRoute /> }],
+          },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],
