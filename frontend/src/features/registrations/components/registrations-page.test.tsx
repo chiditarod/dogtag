@@ -215,8 +215,7 @@ describe('RegistrationsPage', () => {
     expect(screen.getByText('1 of 2 paid')).toBeInTheDocument();
     expect(screen.getAllByText('Jan 8')).toHaveLength(2);
     expect(screen.getByText('New team', { selector: 'span.rounded-full' })).toBeInTheDocument();
-    // Staff open someone else's team on the legacy admin page, not the owner's SPA page.
-    expect(screen.getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/teams/1');
+    expect(screen.getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/register/teams/1');
 
     expect(screen.getByRole('link', { name: t('registrations.emailOwners') })).toHaveAttribute(
       'href',

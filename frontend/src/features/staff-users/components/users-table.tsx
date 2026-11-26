@@ -33,10 +33,9 @@ export function UsersTable({ users }: { users: StaffUserRow[] }) {
             ) : (
               user.teams.map((team) => (
                 <div key={team.id} className="break-words">
-                  {/* The legacy team page is Rails, outside the SPA router, so a plain anchor. */}
-                  <a href={`/teams/${team.id}`} className="text-link underline">
+                  <Link to={`/teams/${team.id}`} className="text-link underline">
                     {team.name} <span className="text-navy/60 no-underline">{team.race.year}</span>
-                  </a>
+                  </Link>
                 </div>
               ))
             )}

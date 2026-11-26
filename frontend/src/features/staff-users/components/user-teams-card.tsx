@@ -44,10 +44,9 @@ export function UserTeamsCard({ teams, canSeeEmails }: { teams: StaffUserTeam[];
           {teams.map((team) => (
             <ListRow key={team.id} data-team-id={team.id}>
               <ListCell className="break-words font-semibold">
-                {/* The legacy team page is Rails, outside the SPA router, so a plain anchor. */}
-                <a href={`/teams/${team.id}`} className={link}>
+                <Link to={`/teams/${team.id}`} className={link}>
                   {team.name}
-                </a>
+                </Link>
               </ListCell>
               <ListCell className="text-sm [overflow-wrap:anywhere]">{team.race.name}</ListCell>
               <ListCell className="text-sm">{status(team)}</ListCell>

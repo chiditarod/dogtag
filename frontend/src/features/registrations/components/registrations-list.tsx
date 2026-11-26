@@ -20,16 +20,10 @@ function TeamCell({ row, waitlist, timeZone }: { row: RegistrationRow; waitlist:
   return (
     <ListCell className="[overflow-wrap:anywhere]">
       <div>
-        {row.mine ? (
+        {row.mine || row.can_show ? (
           <Link to={`/teams/${row.id}`} className="font-semibold text-link hover:underline">
             {row.name}
           </Link>
-        ) : row.can_show ? (
-          // The SPA team page is built for the team's owner (Delete, guided tour), so staff
-          // looking at someone else's team go to the legacy admin page.
-          <a href={`/teams/${row.id}`} className="font-semibold text-link hover:underline">
-            {row.name}
-          </a>
         ) : (
           <span className="font-semibold">{row.name}</span>
         )}

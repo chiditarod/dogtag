@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ListCell, ListRow, ListTable } from '@/components/list/list-table';
 import { Badge } from '@/components/ui/badge';
 import { DEFAULT_TIME_ZONE, formatDate, formatSince } from '@/lib/dates';
@@ -46,10 +47,9 @@ export function EmailsTable({ emails }: { emails: SentEmail[] }) {
           <ListCell label={t('staff.emails.col.subject')} className="break-words text-sm">{email.subject}</ListCell>
           <ListCell label={email.team ? t('staff.emails.col.team') : undefined} className="break-words text-sm">
             {email.team && (
-              // The legacy team page is Rails, outside the SPA router, so a plain anchor.
-              <a href={`/teams/${email.team.id}`} className="text-link underline">
+              <Link to={`/teams/${email.team.id}`} className="text-link underline">
                 {email.team.name}
-              </a>
+              </Link>
             )}
           </ListCell>
           <ListCell>

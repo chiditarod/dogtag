@@ -52,8 +52,8 @@ describe('UsersPage', () => {
 
     const rows = screen.getAllByRole('row').filter((row) => within(row).queryAllByRole('cell').length > 0);
     expect(rows).toHaveLength(2);
-    expect(within(rows[0]).getByRole('link', { name: 'Doge Sled 2027' })).toHaveAttribute('href', '/teams/1');
-    expect(within(rows[0]).getByRole('link', { name: "Ada's Second Try 2027" })).toHaveAttribute('href', '/teams/2');
+    expect(within(rows[0]).getByRole('link', { name: 'Doge Sled 2027' })).toHaveAttribute('href', '/register/teams/1');
+    expect(within(rows[0]).getByRole('link', { name: "Ada's Second Try 2027" })).toHaveAttribute('href', '/register/teams/2');
     expect(within(rows[1]).getByText('none')).toBeInTheDocument();
     expect(within(rows[1]).getByText('Operator')).toBeInTheDocument();
     expect(within(rows[1]).getByText('Refunder')).toBeInTheDocument();

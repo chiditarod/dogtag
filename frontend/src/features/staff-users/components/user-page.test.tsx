@@ -67,7 +67,7 @@ describe('staff user page', () => {
     expect(screen.getByText('Operator')).toBeInTheDocument();
   });
 
-  it('lists the teams with status, a legacy team link and an Emails link, or says there are none', async () => {
+  it('lists the teams with status, a team link and an Emails link, or says there are none', async () => {
     const race = { id: 9, name: 'CHIditarod 2027', year: 2027 };
     const { unmount } = await open(
       staffUser({
@@ -78,7 +78,7 @@ describe('staff user page', () => {
         ],
       }),
     );
-    expect(screen.getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/teams/4');
+    expect(screen.getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/register/teams/4');
     expect(screen.getByText('Registered #7')).toBeInTheDocument();
     expect(screen.getByText('Registered')).toBeInTheDocument();
     expect(screen.getByText('60% done')).toBeInTheDocument();

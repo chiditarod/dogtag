@@ -34,7 +34,7 @@ describe('EmailsPage', () => {
     const rows = dataRows();
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByText('Team finalized')).toBeInTheDocument();
-    expect(within(rows[0]).getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/teams/7');
+    expect(within(rows[0]).getByRole('link', { name: 'Doge Sled' })).toHaveAttribute('href', '/register/teams/7');
     expect(within(rows[0]).getByText('Sent')).toBeInTheDocument();
     expect(within(rows[1]).getByText('New thing')).toBeInTheDocument();
     expect(within(rows[1]).queryByRole('link')).toBeNull();
