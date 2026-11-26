@@ -10,6 +10,9 @@ module Payments
 
     def self.call(**) = new(**).call
 
+    # Admins and operators may take payment when a racer could not (closed, waitlisted, short roster).
+    def self.staff_payer?(user) = user.is_any_of?(:admin, :operator)
+
     def initialize(user:, team:, requirement:, stripe_token:, stripe_email:, expected_amount_cents: nil)
       @user = user
       @expected_amount_cents = expected_amount_cents
@@ -66,7 +69,7 @@ module Payments
       team.needs_people? && !staff?
     end
 
-    def staff? = user.is_any_of?(:admin, :operator)
+    def staff? = self.class.staff_payer?(user)
 
     # Checked inside the lock, right before charging, so a tier change cannot slip in between.
     def price_changed?(amount)
