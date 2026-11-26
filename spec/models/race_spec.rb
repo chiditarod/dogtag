@@ -36,6 +36,13 @@ describe Race do
       end
     end
 
+    it "rejects an unparseable final_edits_close" do
+      race = FactoryBot.build(:race)
+      race.final_edits_close = "not a date"
+      expect(race).to be_invalid
+      expect(race.errors[:final_edits_close]).to be_present
+    end
+
     context 'registration_open is after registration_close' do
       let(:race) do
         FactoryBot.build :race, race_datetime: today + 4.weeks,
@@ -44,7 +51,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
+        expect(race.errors.messages[:registration_open]).to include 'must be before Registration closes'
       end
     end
 
@@ -56,7 +63,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:final_edits_close]).to include 'must come before race_datetime'
+        expect(race.errors.messages[:final_edits_close]).to include 'must be before Race day'
       end
     end
 
@@ -68,7 +75,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:registration_close]).to include 'must come before final_edits_close'
+        expect(race.errors.messages[:registration_close]).to include 'must be before Final edits close'
       end
     end
 
