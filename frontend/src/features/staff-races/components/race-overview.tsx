@@ -131,8 +131,8 @@ function DatesCard({ race }: { race: StaffRace }) {
 function FeeRow({ raceId, fee }: { raceId: number; fee: StaffRacePaymentRequirement }) {
   return (
     <li>
-      <a
-        href={`/races/${raceId}/requirements/${fee.id}/edit`}
+      <Link
+        to={`/staff/races/${raceId}/requirements/${fee.id}`}
         className="block rounded-md border border-flag p-3 text-sm hover:bg-page focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
       >
         <span className="block font-semibold text-link [overflow-wrap:anywhere]">{fee.name}</span>
@@ -144,7 +144,7 @@ function FeeRow({ raceId, fee }: { raceId: number; fee: StaffRacePaymentRequirem
           {' · '}
           {t(fee.tier_count === 1 ? 'staff.race.tiers_one' : 'staff.race.tiers_other', { n: fee.tier_count })}
         </span>
-      </a>
+      </Link>
     </li>
   );
 }
@@ -154,9 +154,9 @@ function FeesCard({ race }: { race: StaffRace }) {
     <OverviewCard
       title={t('staff.race.fees')}
       action={
-        <a href={`/races/${race.id}/requirements/new`} className={`text-sm ${link}`}>
+        <Link to={`/staff/races/${race.id}/requirements/new`} className={`text-sm ${link}`}>
           {t('staff.race.addFee')}
-        </a>
+        </Link>
       }
     >
       {race.payment_requirements.length === 0 ? (

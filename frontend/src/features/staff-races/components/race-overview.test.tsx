@@ -102,30 +102,30 @@ describe('staff race overview', () => {
     );
   });
 
-  it('lists fees read-only with plain links to the legacy pages', async () => {
+  it('lists fees as links to the SPA fee pages', async () => {
     await open(
       staffRace({
-        id: 4,
+        id: 7,
         payment_requirements: [
-          { id: 9, name: 'Registration Fee', type: 'PaymentRequirement', enabled: true, current_price_cents: 11500, tier_count: 3 },
+          { id: 3, name: 'Registration Fee', type: 'PaymentRequirement', enabled: true, current_price_cents: 11500, tier_count: 2 },
           { id: 10, name: 'Cart Deposit', type: 'PaymentRequirement', enabled: false, current_price_cents: null, tier_count: 1 },
         ],
       }),
     );
     const fees = card(t('staff.race.fees'));
     const registration = within(fees).getByRole('link', { name: /Registration Fee/ });
-    expect(registration).toHaveAttribute('href', '/races/4/requirements/9/edit');
+    expect(registration).toHaveAttribute('href', '/register/staff/races/7/requirements/3');
     expect(registration).toHaveTextContent(t('staff.race.feeEnabled'));
     expect(registration).toHaveTextContent('$115');
-    expect(registration).toHaveTextContent('3 tiers');
+    expect(registration).toHaveTextContent('2 prices');
     const deposit = within(fees).getByRole('link', { name: /Cart Deposit/ });
-    expect(deposit).toHaveAttribute('href', '/races/4/requirements/10/edit');
+    expect(deposit).toHaveAttribute('href', '/register/staff/races/7/requirements/10');
     expect(deposit).toHaveTextContent(t('staff.race.feeDisabled'));
     expect(deposit).toHaveTextContent(t('staff.race.feeNoPrice'));
-    expect(deposit).toHaveTextContent('1 tier');
+    expect(deposit).toHaveTextContent('1 price');
     expect(within(fees).getByRole('link', { name: t('staff.race.addFee') })).toHaveAttribute(
       'href',
-      '/races/4/requirements/new',
+      '/register/staff/races/7/requirements/new',
     );
   });
 
