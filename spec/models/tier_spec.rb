@@ -76,8 +76,6 @@ describe Tier do
   end
 
   describe 'destroy' do
-    let(:team) { FactoryBot.create :team }
-
     def pay(requirement, refunded_at: nil)
       CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: requirement,
         user: FactoryBot.create(:user), refunded_at: refunded_at)

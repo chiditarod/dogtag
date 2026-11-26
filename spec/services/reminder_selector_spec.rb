@@ -46,6 +46,13 @@ describe ReminderSelector do
       expect(due.map(&:kind)).to eq(["closing_day"])
     end
 
+    it "ignores a legacy tier with no start" do
+      Tier.new(requirement: payment, price: 9000, begin_at: nil).save(validate: false)
+      upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 47.hours)
+
+      expect(due.select { |r| r.kind == "tier_change" }.map(&:dedupe_key)).to eq(["tier-#{upcoming.id}-#{upcoming.begin_at.to_i}"])
+    end
+
     it "reminds again when the tier start moves" do
       upcoming = FactoryBot.create(:tier, requirement: payment, price: 7000, begin_at: now + 47.hours)
       SentEmail.create!(team_id: team.id, kind: "registration_reminder", dedupe_key: due.first.dedupe_key, status: "sent")

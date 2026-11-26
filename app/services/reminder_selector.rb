@@ -59,9 +59,9 @@ class ReminderSelector
     paid_ids = team.completed_requirements.map(&:requirement_id)
     close = team.race.registration_close
     team.race.requirements.grep(PaymentRequirement).filter_map do |requirement|
-      next if paid_ids.include?(requirement.id) || requirement.tiers.none? { |tier| tier.begin_at < now }
+      next if paid_ids.include?(requirement.id) || requirement.tiers.none? { |tier| tier.begin_at && tier.begin_at < now }
 
-      requirement.tiers.select { |tier| tier.begin_at > now && tier.begin_at <= now + TIER_WINDOW && tier.begin_at < close }.min_by(&:begin_at)
+      requirement.tiers.select { |tier| tier.begin_at && tier.begin_at > now && tier.begin_at <= now + TIER_WINDOW && tier.begin_at < close }.min_by(&:begin_at)
     end.min_by(&:begin_at)
   end
 
