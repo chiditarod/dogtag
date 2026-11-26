@@ -52,6 +52,26 @@ async function open(path = '/staff/payments') {
 describe('PaymentsPage', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('sends team_id from the URL', async () => {
+    serve();
+    await open('/staff/payments?team_id=7');
+    expect(requests[0].searchParams.get('team_id')).toBe('7');
+  });
+
+  it('shows a Team chip, and removing it drops team_id from the next request', async () => {
+    const team = { id: 7, name: "Ada's Second Try", race_id: 4 };
+    serve({ ...page, filters: { ...page.filters, team, team_id: 7 } });
+    await open('/staff/payments?team_id=7');
+    await userEvent.click(await screen.findByRole('button', { name: "Remove filter Team: Ada's Second Try" }));
+    await waitFor(() => expect(requests.some((url) => !url.searchParams.has('team_id'))).toBe(true));
+  });
+
+  it('says so when the team in the URL is not found', async () => {
+    serve({ ...page, filters: { ...page.filters, team: null, team_id: 7 } });
+    await open('/staff/payments?team_id=7');
+    expect(await screen.findByRole('button', { name: 'Remove filter Team not found' })).toBeInTheDocument();
+  });
+
   it('shows the progress line from summary', async () => {
     serve();
     await open();

@@ -37,6 +37,8 @@ export const emptyPayments: PaymentsResponse = {
       { id: 7, name: 'Cart Deposit' },
       { id: 8, name: 'Registration' },
     ],
+    team: null,
+    team_id: null,
   },
 };
 

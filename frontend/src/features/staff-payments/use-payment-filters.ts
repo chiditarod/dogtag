@@ -15,6 +15,7 @@ type Key = keyof PaymentFilterValues;
 const NAMES: Record<Key, string> = {
   raceId: 'race_id',
   paymentType: 'payment_type',
+  teamId: 'team_id',
   status: 'status',
   q: 'q',
   page: 'page',
@@ -30,6 +31,7 @@ export function usePaymentFilters() {
     return {
       raceId: race === 'all' ? 'all' : positiveInt(race),
       paymentType: positiveInt(params.get('payment_type')),
+      teamId: positiveInt(params.get('team_id')),
       status: STATUSES.includes(status as BrowseStatus) ? (status as BrowseStatus) : 'all',
       q: params.get('q') ?? '',
       page: positiveInt(params.get('page')) ?? 1,
@@ -42,8 +44,11 @@ export function usePaymentFilters() {
       const changes: UrlChanges = {
         [NAMES[key]]: empty || (key === 'page' && value === 1) ? undefined : String(value),
       };
-      // Another race has other payment types.
-      if (key === 'raceId') changes.payment_type = undefined;
+      // Another race has other payment types and other teams.
+      if (key === 'raceId') {
+        changes.payment_type = undefined;
+        changes.team_id = undefined;
+      }
       setParams(changes);
     },
     [setParams],

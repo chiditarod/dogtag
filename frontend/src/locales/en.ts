@@ -271,6 +271,8 @@ export const en = {
   'staff.payments.filters.active': 'Active filters',
   'staff.payments.filters.remove': 'Remove filter {label}',
   'staff.payments.filters.searchChip': 'Search: {q}',
+  'staff.payments.filters.teamChip': 'Team: {name}',
+  'staff.payments.filters.teamNotFound': 'Team not found',
   'staff.payments.raceStatus.open': 'open',
   'staff.payments.raceStatus.waitlist': 'waitlist',
   'staff.payments.raceStatus.closed': 'closed',

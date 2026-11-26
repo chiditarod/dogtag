@@ -30,5 +30,5 @@ export function raceStatusLabel(status: RegistrationStatus): string {
 }
 
 export function hasActiveFilters(values: PaymentFilterValues): boolean {
-  return values.paymentType !== undefined || values.status !== 'all' || values.q !== '';
+  return values.paymentType !== undefined || values.teamId !== undefined || values.status !== 'all' || values.q !== '';
 }
