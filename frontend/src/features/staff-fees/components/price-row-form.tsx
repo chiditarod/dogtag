@@ -172,7 +172,8 @@ export function PriceRowForm({ initial, others, race, onSave, onCancel, onDirtyC
       </div>
       <div role="cell" className="hidden px-3 py-2 sm:table-cell" />
       <div role="cell" className={`${cell} sm:whitespace-nowrap sm:text-right`}>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        {/* Stacked until `lg`: side by side they push the table past the card at 640px. */}
+        <div className="flex flex-col-reverse gap-2 lg:flex-row lg:justify-end">
           <Button variant="secondary" disabled={pending} onClick={onCancel}>
             {t('staff.fees.cancelPrice')}
           </Button>

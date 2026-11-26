@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Locator, type Page } from '@playwright/test';
 import { seed, type Seed } from '../helpers/seed';
 
 /** SPA end-to-end: the staff fee pages (overview link, prices, add a fee, delete) and who may use them. */
@@ -167,22 +167,39 @@ test.describe('SPA staff fees', () => {
     await expect(region(page, 'Fees').getByText('Cart Deposit')).toHaveCount(0);
   });
 
-  for (const width of [640, 320]) {
-    test(`an open price row keeps its inputs inside the row at ${width}px`, async ({ page }) => {
+  for (const width of [320, 640, 768, 1024]) {
+    test(`an open price row keeps its inputs inside the row and the page at ${width}px`, async ({ page }) => {
       const c = seeded.credentials;
       await page.setViewportSize({ width, height: 800 });
       await login(page, c.operator_email, c.password);
       await page.goto(feeUrl(c, c.registration_id));
       await expect(page.getByRole('heading', { name: 'Registration Fee', level: 1 })).toBeVisible();
 
+      // The controls of an open row are fully on screen, not clipped by the page edge.
+      const onScreen = async (locator: Locator) => {
+        await expect(locator).toBeVisible();
+        const box = (await locator.boundingBox())!;
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(width);
+      };
+
       await page.getByRole('button', { name: 'Edit $100 price' }).click();
       const edit = page.getByRole('row').filter({ has: page.getByLabel('Price', { exact: true }) });
       await expect(edit).toHaveCount(1);
       await expect(edit.getByLabel('Starts', { exact: true })).toBeVisible();
-      await expect(edit.getByRole('button', { name: 'Save price', exact: true })).toBeVisible();
-      // Known gap: at 640px the table layout starts and the open edit row is wider than the card
-      // (scrollWidth 713), so only the stacked layout is held to the no-scroll rule here.
-      if (width === 320) await fits(page, width);
+      await onScreen(edit.getByLabel('Price', { exact: true }));
+      await onScreen(edit.getByRole('button', { name: 'Save price', exact: true }));
+      await onScreen(edit.getByRole('button', { name: 'Cancel', exact: true }));
+      await fits(page, width);
+
+      // The same for the add row.
+      await edit.getByRole('button', { name: 'Cancel', exact: true }).click();
+      await page.getByRole('button', { name: '+ Add a price', exact: true }).click();
+      const add = page.getByRole('row').filter({ has: page.getByLabel('Price', { exact: true }) });
+      await expect(add).toHaveCount(1);
+      await onScreen(add.getByLabel('Price', { exact: true }));
+      await onScreen(add.getByRole('button', { name: 'Add price', exact: true }));
+      await fits(page, width);
     });
   }
 
