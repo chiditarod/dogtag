@@ -128,7 +128,10 @@ Rails.application.routes.draw do
           get :export, on: :member, defaults: { format: :csv }
           resources :requirements, only: [:index, :create]
         end
-        resources :requirements, only: [:show, :update, :destroy]
+        resources :requirements, only: [:show, :update, :destroy] do
+          resources :tiers, only: [:create]
+        end
+        resources :tiers, only: [:update, :destroy]
         post :confirmation_preview, to: "confirmation_previews#create"
         resources :refund_batches, only: [:create, :show] do
           # `retry` is a Ruby keyword, so the action is retry_failed.

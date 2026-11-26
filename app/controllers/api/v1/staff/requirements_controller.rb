@@ -3,6 +3,7 @@
 class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
   include RaceTimeZone
   include StaffFeeParams
+  include StaffFees
 
   TYPE_CHANGE_ERROR = "can't be changed after the fee is created".freeze
 
@@ -23,7 +24,7 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
 
   def show
     authorize!(:show, @requirement)
-    prepare_show
+    render_fee
   end
 
   def create
@@ -46,9 +47,7 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
       @requirement.save!
       tier.save!
     end
-    @requirement.tiers.reset
-    prepare_show
-    render :show, status: :created
+    render_fee(status: :created, reload: true)
   end
 
   def update
@@ -61,8 +60,7 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
 
     return render_errors(@requirement) unless @requirement.update(attrs.slice(:name))
 
-    prepare_show
-    render :show
+    render_fee
   end
 
   def destroy
@@ -73,16 +71,6 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
   end
 
   private
-
-  # Only the payment types are fees; the type list rather than PaymentRequirement.where, whose
-  # subclasses are not all known while classes load lazily.
-  def fees
-    Requirement.where(type: types)
-  end
-
-  def types
-    Requirement.allowed_types.map(&:last)
-  end
 
   def load_race
     @race = Race.find(params[:race_id])
@@ -96,18 +84,6 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
   # Used by the around_action: the race being added to, else the one the fee belongs to.
   def race_time_zone
     @race&.time_zone
-  end
-
-  def prepare_show
-    @payment_counts = payment_counts([@requirement])
-  end
-
-  # { requirement_id => { total:, unrefunded: } } in one grouped query.
-  def payment_counts(requirements)
-    rows = CompletedRequirement.where(requirement_id: requirements.map(&:id)).group(:requirement_id)
-      .pluck(:requirement_id, Arel.sql("COUNT(*)"), Arel.sql("COUNT(*) FILTER (WHERE refunded_at IS NULL)"))
-    rows.to_h { |id, total, unrefunded| [id, { total:, unrefunded: }] }
-      .tap { |counts| counts.default = { total: 0, unrefunded: 0 } }
   end
 
   # The first price, with the start time read in Time.zone (the race's, set by the around_action).
