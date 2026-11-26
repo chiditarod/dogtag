@@ -11,6 +11,7 @@ import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
+import { StaffRacesRoute } from '@/features/staff-races/routes/staff-races-route';
 import { SignupRoute } from '@/app/routes/signup';
 import { TeamRoute } from '@/app/routes/team';
 import { TeamsRoute } from '@/app/routes/teams';
@@ -82,6 +83,7 @@ export const routes: RouteObject[] = [
         ),
         children: [
           { index: true, element: <StaffIndexRedirect /> },
+          { path: 'races', element: <StaffRacesRoute /> },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],

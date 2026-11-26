@@ -1,6 +1,6 @@
 json.race do
   json.partial! "api/v1/staff/races/staff_race", race: @race
-  json.extract! @race, :max_teams, :people_per_team, :jsonform, :classy_campaign_id, :classy_default_goal, :confirmation_text
+  json.extract! @race, :people_per_team, :jsonform, :classy_campaign_id, :classy_default_goal, :confirmation_text
   json.full @race.full?
   json.filter_field @race.filter_field_array
   json.experience_labels_text @race.experience_labels_text

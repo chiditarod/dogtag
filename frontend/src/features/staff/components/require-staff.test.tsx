@@ -65,7 +65,9 @@ describe('staff routes', () => {
 
   it('/staff redirects an admin to the first nav item, /staff/races', async () => {
     asUser(['admin']);
+    server.use(http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })));
     const { router } = renderApp('/staff');
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/register/staff/races'));
   });
 });

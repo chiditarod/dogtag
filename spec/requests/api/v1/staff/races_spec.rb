@@ -36,13 +36,13 @@ describe "API v1 staff races", type: :request do
       expect(response).to have_http_status(:ok)
       expect(json["races"].map { |race| race["name"] }).to eq(["Newer Race", "Older Race"])
       first, second = json["races"]
-      expect(first).to include("id" => newer.id, "time_zone" => "America/Chicago", "registration_status" => "open",
-        "teams" => { "finalized" => 1, "total" => 2 })
+      expect(first).to include("id" => newer.id, "time_zone" => "America/Chicago", "max_teams" => newer.max_teams,
+        "registration_status" => "open", "teams" => { "finalized" => 1, "total" => 2 })
       expect(Time.zone.parse(first["race_datetime"])).to be_within(1.second).of(newer.race_datetime)
       expect(first["setup_problems"]).to eq(["No fee set up"])
       expect(second["teams"]).to eq("finalized" => 0, "total" => 0)
       expect(first.keys).to match_array(%w[id name race_datetime registration_open registration_close final_edits_close
-        time_zone registration_status teams setup_problems])
+        time_zone max_teams registration_status teams setup_problems])
     end
   end
 

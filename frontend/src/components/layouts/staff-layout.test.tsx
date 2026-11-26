@@ -71,9 +71,10 @@ describe('StaffLayout', () => {
   it('sends an operator from /staff to the first nav item (Races)', async () => {
     server.use(
       http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['operator'] } })),
+      http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })),
     );
     const { router } = renderApp('/staff');
-    await screen.findByRole('navigation', { name: t('staff.nav') });
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
     await vi.waitFor(() => expect(router.state.location.pathname).toBe('/register/staff/races'));
   });
 });
