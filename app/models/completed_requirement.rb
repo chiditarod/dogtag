@@ -87,6 +87,11 @@ class CompletedRequirement < ApplicationRecord
 
   def refundable? = payment_status == "paid"
 
+  # The amount this payment still counts for in totals: its metadata amount, or 0 once refunded.
+  def net_paid_cents
+    refunded? ? 0 : metadata.fetch("amount").to_i
+  end
+
   private
 
   def legacy_metadata

@@ -78,7 +78,7 @@ describe TeamChecklist do
       expect(TeamChecklist.new(team.reload).to_h[:fee]).to include(done: true, paid_cents: 5000)
     end
 
-    it "fee item is refunded after a refund, and still done and counted in paid_cents" do
+    it "fee item is refunded after a refund: still done, the line keeps its amount, the total drops it" do
       cr = requirement.complete(team.id, team.user, "amount" => 5000, "charge_id" => "ch_1")
       item = -> { TeamChecklist.new(team.reload).to_h[:fee][:items].first }
       expect(item.call).to include(done: true, refunded: false)
@@ -86,7 +86,7 @@ describe TeamChecklist do
       cr.update!(refunded_at: Time.current)
 
       expect(item.call).to include(done: true, refunded: true, paid_cents: 5000)
-      expect(TeamChecklist.new(team.reload).to_h[:fee]).to include(done: true, paid_cents: 5000)
+      expect(TeamChecklist.new(team.reload).to_h[:fee]).to include(done: true, paid_cents: 0, amount_due_cents: nil)
     end
   end
 
@@ -135,6 +135,17 @@ describe TeamChecklist do
       expect(fee).to include(done: true, amount_due_cents: nil, paid_cents: 18000, next_tier: nil, requirement_id: nil)
       expect(fee[:items].map { |item| item[:done] }).to eq([true, true])
       expect(checklist[:remaining]).to eq(2)
+    end
+
+    it "leaves a refunded payment out of paid_cents but keeps the requirement done" do
+      registration.complete(team.id, team.user, "amount" => 13000)
+      deposit_cr = deposit.complete(team.id, team.user, "amount" => 5000, "charge_id" => "ch_deposit")
+      deposit_cr.update!(refunded_at: Time.current)
+      fee = fee_for(team)
+
+      expect(fee).to include(done: true, amount_due_cents: nil, paid_cents: 13000, requirement_id: nil)
+      expect(fee[:items].first).to include(name: "Cart Deposit", done: true, refunded: true, paid_cents: 5000)
+      expect(fee[:items].second).to include(name: "Race Registration", done: true, refunded: false, paid_cents: 13000)
     end
 
     it "lists a requirement that has not opened yet, but not one with no tiers" do

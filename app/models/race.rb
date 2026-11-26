@@ -224,9 +224,8 @@ class Race < ApplicationRecord
   end
 
   def stats
-    money_raised = teams.reduce(0) do |memo, team|
-      memo + team.money_paid_in_cents
-    end
+    # One query for every team's payments, net of refunds (same rule as Team#money_paid_in_cents).
+    money_raised = CompletedRequirement.where(team_id: teams.select(:id)).sum(&:net_paid_cents)
 
     {
       'money_raised' => money_raised
