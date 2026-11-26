@@ -97,4 +97,27 @@ describe('UsersPage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('0 users');
   });
+
+  it('does not claim "No users match" when the page is empty but users exist (a stale past-end page)', async () => {
+    serve({ users: [], meta: { page: 3, per_page: 35, total_count: 40, total_pages: 2 } });
+    renderApp('/staff/users?page=3');
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
+    await waitFor(() => expect(requests.some((url) => url.searchParams.get('page') === '2')).toBe(true));
+    expect(screen.queryByText('No users match this search.')).not.toBeInTheDocument();
+  });
+
+  it('links a nameless user by email, and shows a dash for a missing phone', async () => {
+    serve({
+      users: [
+        staffUserRow({ id: 5, first_name: '', last_name: '', email: 'ghost@example.com', phone: '   ' }),
+        staffUserRow({ id: 6, first_name: 'Sam', last_name: 'Staffer', email: 'sam@example.com', phone: null }),
+      ],
+      meta: { page: 1, per_page: 35, total_count: 2, total_pages: 1 },
+    });
+    renderApp('/staff/users');
+    expect(await screen.findByRole('link', { name: 'ghost@example.com' })).toHaveAttribute('href', '/register/staff/users/5');
+    const rows = screen.getAllByRole('row').filter((row) => within(row).queryAllByRole('cell').length > 0);
+    expect(within(rows[0]).getByText('—')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('—')).toBeInTheDocument();
+  });
 });

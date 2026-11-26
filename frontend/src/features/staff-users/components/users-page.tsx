@@ -49,10 +49,11 @@ export function UsersPage() {
       {data && (
         // While a new search loads, the previous results stay on screen, dimmed and marked busy.
         <div aria-busy={isPlaceholderData} className={`space-y-4 transition-opacity ${isPlaceholderData ? 'opacity-60' : ''}`}>
-          {data.users.length === 0 ? (
+          {/* Keyed on the total, not the rows: a stale page past the end has no rows but is not "no users". */}
+          {data.meta.total_count === 0 ? (
             <p className="rounded-lg bg-white p-4 text-navy">{t('staff.users.empty')}</p>
           ) : (
-            <UsersTable users={data.users} />
+            data.users.length > 0 && <UsersTable users={data.users} />
           )}
           <Pagination
             labels={{

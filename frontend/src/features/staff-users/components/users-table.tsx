@@ -4,6 +4,11 @@ import { t } from '@/locales/en';
 import type { StaffUserRow } from '../api/types';
 import { RoleTags } from './role-tags';
 
+/** The full name, or the email for an account with no name, so the link is never empty. */
+export function userName(user: Pick<StaffUserRow, 'first_name' | 'last_name' | 'email'>): string {
+  return `${user.first_name} ${user.last_name}`.trim() || user.email;
+}
+
 const COLUMNS = ['name', 'email', 'phone', 'teams', 'roles'] as const;
 
 /** One markup: a table from `sm`, stacked cards below it. */
@@ -17,11 +22,11 @@ export function UsersTable({ users }: { users: StaffUserRow[] }) {
         <ListRow key={user.id} data-user-id={user.id} className="bg-white">
           <ListCell className="break-words font-semibold">
             <Link to={`/staff/users/${user.id}`} className="text-link underline">
-              {`${user.first_name} ${user.last_name}`.trim()}
+              {userName(user)}
             </Link>
           </ListCell>
           <ListCell className="text-sm text-navy/70 [overflow-wrap:anywhere]">{user.email}</ListCell>
-          <ListCell className="text-sm">{user.phone}</ListCell>
+          <ListCell className="text-sm">{user.phone?.trim() || '—'}</ListCell>
           <ListCell className="space-y-0.5 text-sm">
             {user.teams.length === 0 ? (
               <span className="text-navy/60">{t('staff.users.noTeams')}</span>
