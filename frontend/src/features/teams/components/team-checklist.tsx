@@ -18,6 +18,7 @@ import {
 } from '@/features/teams/components/team-page-error';
 import { YoureInCard } from '@/features/teams/components/youre-in-card';
 import { useTeamPermissions } from '@/features/teams/use-team-permissions';
+import { StaffTeamPanel } from '@/features/staff-teams/components/staff-team-panel';
 import { isStaff } from '@/features/staff/utils';
 import type { Team } from '@/types/api';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
@@ -36,7 +37,7 @@ interface TeamPageBodyProps {
 
 /** The header and cards. Permissions are computed here once, so one staff request serves the page. */
 function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBodyProps) {
-  const { permissions, staffTeam, staffState } = useTeamPermissions(team, { teamUpdatedAt });
+  const { permissions, staffTeam, staffQuery, staffState } = useTeamPermissions(team, { teamUpdatedAt });
   const { checklist } = team;
   // Card statuses come from the checklist, not stepStates: a finalized team's
   // flag is forced full, but a regressed step's card should still read "to do".
@@ -47,13 +48,14 @@ function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBo
       <TeamErrorBanner />
       <div className="space-y-6 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0">
         {/* Not sticky while the edit form is open: a sticky rail taller than
-            the viewport could never show its Save button. Nor when the staff
-            card is in it, which can be taller than the viewport too. */}
+            the viewport could never show its Save button. Nor while the Staff
+            card is in the rail (any state but 'none'), which makes it taller than
+            the viewport too. */}
         <div
           className={
-            staffState === 'ready'
-              ? 'lg:has-[form]:static'
-              : 'lg:sticky lg:top-6 lg:has-[form]:static'
+            staffState === 'none'
+              ? 'lg:sticky lg:top-6 lg:has-[form]:static'
+              : 'lg:has-[form]:static'
           }
         >
           <TeamHeader
@@ -63,6 +65,9 @@ function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBo
             permissions={permissions}
             staffState={staffState}
           />
+          {staffState !== 'none' && (
+            <StaffTeamPanel team={team} staffTeam={staffTeam} query={staffQuery} />
+          )}
         </div>
         <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
           <ChecklistCard

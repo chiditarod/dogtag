@@ -14,11 +14,12 @@ export function useSetNewTeam(teamId: number) {
         method: 'PATCH',
         json: { team: { new_team_setting: newTeamSetting } },
       }),
-    onSuccess: ({ team }) => {
+    onSuccess: async ({ team }) => {
       queryClient.setQueryData(teamQueryKey(teamId), team);
-      // The permissions hook also refetches when the team query is rewritten, but this keeps the
-      // staff team fresh when the mutation is used without it.
-      void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
+      // The permissions hook also refetches when the team query is rewritten. Waiting here keeps the
+      // mutation pending until the staff team shows the new setting, so a select reading it
+      // does not flash the old value.
+      await queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
     },
   });
 }

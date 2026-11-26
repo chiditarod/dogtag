@@ -250,4 +250,29 @@ describe('team page controls follow the permissions', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Take the tour' }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
+
+  it('shows a racer no Staff card', async () => {
+    serve({ roles: [] });
+    await settled();
+    expect(screen.queryByRole('region', { name: t('staff.team.heading') })).toBeNull();
+  });
+
+  it('shows the Staff card to an operator', async () => {
+    serve({ roles: ['operator'], can: allCan });
+    const card = await screen.findByRole('region', { name: t('staff.team.heading') });
+    expect(await within(card).findByLabelText(t('staff.team.newTeam'))).toBeInTheDocument();
+    expect(within(card).getByText(t('staff.team.teamNumberNone'))).toBeInTheDocument();
+  });
+
+  it('shows a loading line in the Staff card while the staff request is pending', async () => {
+    serve({ roles: ['admin'], can: 'pending' });
+    const card = await screen.findByRole('region', { name: t('staff.team.heading') });
+    expect(within(card).getByText(t('staff.team.loading'))).toBeInTheDocument();
+  });
+
+  it('offers a retry in the Staff card when the staff request fails', async () => {
+    serve({ roles: ['admin'], can: 'error' });
+    const card = await screen.findByRole('region', { name: t('staff.team.heading') });
+    expect(await within(card).findByRole('button', { name: t('common.retry') })).toBeInTheDocument();
+  });
 });
