@@ -21,7 +21,7 @@ class RaceDateParams
 
   def self.parse(value, zone)
     return [nil, "Enter a date and time"] if value.blank?
-    return [nil, "must be a date and time"] unless FORMAT.match?(value) && real_time?(value)
+    return [nil, "must be a date and time"] unless value.is_a?(String) && FORMAT.match?(value) && real_time?(value)
 
     time = zone.parse(value)
     return [time, nil] if time.strftime("%Y-%m-%dT%H:%M") == value[0, 16]

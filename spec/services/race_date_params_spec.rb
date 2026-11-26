@@ -54,6 +54,15 @@ RSpec.describe RaceDateParams do
     end
   end
 
+  it "rejects a non-string value without raising" do
+    [5, ["a"], { "a" => 1 }, true].each do |value|
+      parsed, errors = call("race_datetime" => value)
+
+      expect(parsed).not_to have_key("race_datetime"), value.inspect
+      expect(errors["race_datetime"]).to eq(["must be a date and time"]), value.inspect
+    end
+  end
+
   it "asks for a value when blank" do
     parsed, errors = call("race_datetime" => "", "registration_open" => nil)
 
