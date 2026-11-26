@@ -30,6 +30,7 @@ import {
   type PersonDraft,
 } from '@/features/roster/utils';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { completeButCaptain } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Person, Team } from '@/types/api';
@@ -216,9 +217,7 @@ export function RosterCard({ team }: { team: Team }) {
 
   const { fieldErrors, formErrors } = splitPersonErrors(save.error);
   // The server refuses to remove a racer from a team that is complete apart from its captain.
-  const completeButCaptain =
-    checklist.racers.filled >= checklist.racers.total && checklist.questions.done && checklist.fee.done;
-  const canRemove = open && !checklist.finalized && !completeButCaptain;
+  const canRemove = open && !checklist.finalized && !completeButCaptain(team);
 
   const formFor = (title: string, initial: PersonDraft) => (
     <PersonForm

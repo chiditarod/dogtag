@@ -1,0 +1,22 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { teamQueryKey } from '@/features/teams/api/use-team';
+import { apiFetch } from '@/lib/api-client';
+import type { Team } from '@/types/api';
+import type { NewTeamSetting } from '../types';
+import { staffTeamQueryKey } from './use-staff-team';
+
+/** Admins and operators set the "new team" flag (`auto`, `yes` or `no`) through the team update. */
+export function useSetNewTeam(teamId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (newTeamSetting: NewTeamSetting) =>
+      apiFetch<{ team: Team }>(`/teams/${teamId}`, {
+        method: 'PATCH',
+        json: { team: { new_team_setting: newTeamSetting } },
+      }),
+    onSuccess: ({ team }) => {
+      queryClient.setQueryData(teamQueryKey(teamId), team);
+      void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
+    },
+  });
+}
