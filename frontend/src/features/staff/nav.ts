@@ -12,3 +12,8 @@ export const STAFF_NAV: StaffNavItem[] = [
 export function staffNavItems(roles: string[]): StaffNavItem[] {
   return STAFF_NAV.filter((item) => item.roles.some((role) => roles.includes(role)));
 }
+
+/** The roles allowed at a staff page, from its nav item, so a deep link is guarded by the same list the nav uses. */
+export function rolesFor(to: string): string[] {
+  return STAFF_NAV.find((item) => item.to === to)?.roles ?? [];
+}

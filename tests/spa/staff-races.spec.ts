@@ -54,10 +54,7 @@ test.describe('SPA staff races', () => {
     await expect(staffNav(page).getByRole('link', { name: 'Races' })).toHaveCount(0);
   });
 
-  // Known gap: the races routes sit under RequireStaff, which lets every staff role in, so a refunder who
-  // types the URL gets "Something went wrong" (the API answers 403) instead of Not allowed. Drop `fixme`
-  // once the races routes are limited to the STAFF_NAV roles.
-  test.fixme('a refunder who types the Races URL sees Not allowed', async ({ page }) => {
+  test('a refunder who types the Races URL sees Not allowed', async ({ page }) => {
     const c = seeded.credentials;
     await login(page, c.refunder_email, c.password);
     await page.goto('/register/staff/races');

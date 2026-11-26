@@ -20,6 +20,7 @@ import { TeamRoute } from '@/app/routes/team';
 import { TeamsRoute } from '@/app/routes/teams';
 import { RequireAuth } from '@/features/auth/components/require-auth';
 import { RequireStaff } from '@/features/staff/components/require-staff';
+import { rolesFor } from '@/features/staff/nav';
 import { StaffIndexRedirect } from '@/features/staff/components/staff-index-redirect';
 import { t } from '@/locales/en';
 
@@ -86,10 +87,19 @@ export const routes: RouteObject[] = [
         ),
         children: [
           { index: true, element: <StaffIndexRedirect /> },
-          { path: 'races', element: <StaffRacesRoute /> },
-          { path: 'races/new', element: <StaffRaceNewRoute /> },
-          { path: 'races/:raceId', element: <StaffRaceRoute /> },
-          { path: 'races/:raceId/edit', element: <StaffRaceEditRoute /> },
+          {
+            element: (
+              <RequireStaff roles={rolesFor('/staff/races')}>
+                <Outlet />
+              </RequireStaff>
+            ),
+            children: [
+              { path: 'races', element: <StaffRacesRoute /> },
+              { path: 'races/new', element: <StaffRaceNewRoute /> },
+              { path: 'races/:raceId', element: <StaffRaceRoute /> },
+              { path: 'races/:raceId/edit', element: <StaffRaceEditRoute /> },
+            ],
+          },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],

@@ -56,6 +56,27 @@ describe('staff routes', () => {
     expect(screen.queryByRole('heading', { name: t('notFound.heading') })).not.toBeInTheDocument();
   });
 
+  it('refunder typing /staff/races sees not allowed, with the staff nav still there', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('staff.races.heading') })).not.toBeInTheDocument();
+  });
+
+  it('refunder typing a race edit path sees not allowed', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races/new');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+  });
+
+  it('operator sees the races page', async () => {
+    asUser(['operator']);
+    server.use(http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })));
+    renderApp('/staff/races');
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('staff.notAllowed.heading') })).not.toBeInTheDocument();
+  });
+
   it('/staff redirects a refunder to /staff/payments', async () => {
     asUser(['refunder']);
     const { router } = renderApp('/staff');

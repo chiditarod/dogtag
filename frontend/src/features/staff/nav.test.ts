@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { STAFF_NAV, staffNavItems } from '@/features/staff/nav';
+import { STAFF_NAV, rolesFor, staffNavItems } from '@/features/staff/nav';
 
 describe('staffNavItems', () => {
   it('gives refunders only Payments', () => {
@@ -21,5 +21,11 @@ describe('staffNavItems', () => {
   it('gives racers, and a user with no roles, nothing', () => {
     expect(staffNavItems(['racer'])).toEqual([]);
     expect(staffNavItems([])).toEqual([]);
+  });
+
+  it('rolesFor reads the roles of a nav item, and none for an unknown path', () => {
+    expect(rolesFor('/staff/races')).toEqual(['admin', 'operator']);
+    expect(rolesFor('/staff/payments')).toContain('refunder');
+    expect(rolesFor('/staff/nope')).toEqual([]);
   });
 });
