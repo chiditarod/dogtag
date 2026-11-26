@@ -18,6 +18,7 @@
 #   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:payments_partial_failure (a refunder and three mock Cart Deposit payments, the second fails its first refund)
 #   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
+#   rails test_seeds:staff_races              (an operator, an admin and a refunder; a Busy race with a fee, a finalized team with a payment and an unfinalized team; an Empty race)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -922,6 +923,68 @@ namespace :test_seeds do
       team_name: team.name
     )
     puts "✅ Seeded unfinalized team #{team.name} (ID: #{team.id}) in race closing in 23h"
+  end
+
+  desc "An operator, an admin and a refunder; a Busy race (fee, finalized team with a payment, unfinalized team) and an Empty race (staff races)"
+  task staff_races: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff races test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    staff = lambda do |role|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Races",
+        email: "staff-races-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: [role]
+      )
+    end
+    operator = staff.call(:operator)
+    admin = staff.call(:admin)
+    refunder = staff.call(:refunder)
+
+    # Open now, years out, so both races list as open and the overview has dates to show.
+    busy = FactoryBot.create(:race, name: "Race Staff #{short} Busy", race_datetime: 5.years.from_now,
+      registration_open: 3.weeks.ago, registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week,
+      max_teams: 50, people_per_team: 2)
+    FactoryBot.create(:race, name: "Race Staff #{short} Empty", race_datetime: 5.years.from_now,
+      registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week)
+
+    owner = FactoryBot.create(:user,
+      first_name: "Owner",
+      last_name: "Races",
+      email: "staff-races-owner-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    # Finalize before the fee exists (it would otherwise need paying first), then record the payment.
+    finalized = FactoryBot.create(:finalized_team, name: "Test Team Races Done #{short}", race: busy, user: owner)
+    fee = MockPaymentRequirement.create!(name: "Cart Deposit", race: busy)
+    Tier.create!(requirement: fee, price: 5000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: finalized, requirement: fee, user: owner,
+      charge_id: "mock_ch_#{short}_races", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_races", "amount" => 5000 }
+    )
+    FactoryBot.create(:team, name: "Test Team Races Pending #{short}", race: busy, user: owner)
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      admin_email: admin.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      busy_name: busy.name,
+      busy_id: busy.id,
+      empty_name: "Race Staff #{short} Empty",
+      new_name: "Race Staff #{short} New"
+    )
+    puts "✅ Seeded #{busy.name} (ID: #{busy.id}) and Race Staff #{short} Empty"
   end
 
   desc "Clean up all test data"

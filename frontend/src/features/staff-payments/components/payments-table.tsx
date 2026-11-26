@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge';
 import { t } from '@/locales/en';
 import type { StaffPayment } from '../types';
-import { formatMoney, formatPaidDate, formatShortDate } from '../utils';
+import { formatPaidDate, formatShortDate } from '../utils';
+import { formatMoney } from '@/lib/money';
 
 function StatusBadge({ payment }: { payment: StaffPayment }) {
   const label =
