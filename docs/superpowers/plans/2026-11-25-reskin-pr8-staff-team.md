@@ -33,6 +33,7 @@
 - **Staff edit question answers after registration closes.** Operators and admins may save a team's answers after close. The API `QuestionsController#update` and the legacy `QuestionsController#create` both change their after-close refusal to allow them (Task 2). Racer owners are still refused after close.
 - **Staff Pay stays available for a waitlisted team in a full race.** The warning says the race is full and that paying puts the team over the limit (Task 8).
 - **2026-11-26:** the owner accepted every item under "Calls made in this plan" as written.
+- **2026-11-26: staff see the team read-only until the staff details load.** A staff viewer gets no edit controls (no Delete, past-racer picker, Add yourself, Add, Make captain, Remove, racer or team-details or questions Edit, staff Pay) until `GET /api/v1/staff/teams/:id` answers, and the page stays read-only with a visible note if it fails. A staff member's own team is read-only during that moment too (Tasks 6 and 7).
 
 ## Calls made in this plan (not in the spec)
 
@@ -51,7 +52,7 @@
 
 1. **Racers can't pay early.** A team owner (not staff) still sees no Pay button on an incomplete roster, a closed race or a full race. A refunder sees no staff Pay. The server still answers `roster_incomplete` to an owner and 403 to a refunder. Owner: Task 8 Vitest ("racer view unchanged" cases), Task 1 spec (`take_payment` false for refunder and owner), Task 3 spec.
 2. **Staff Pay uses the normal payment path.** "Pay $X as staff" sends the same `POST /teams/:id/payments` body as a racer's Pay (`requirement_id`, `stripe_token`, `expected_amount_cents` after the same price recheck). It never shows when `can.take_payment` is false, and it never shows while the staff data is still loading. Owner: Task 8 Vitest.
-3. **Live racer page unharmed.** For a non-staff viewer `useTeamPermissions` returns exactly the old gates. The staff endpoint is never called for them and 403s if called. The racer `GET /api/v1/teams/:id` JSON has the same keys as before. A failing staff request leaves the page on racer rules. Owner: Task 6 Vitest table, Task 3 spec.
+3. **Live racer page unharmed.** For a non-staff viewer `useTeamPermissions` returns exactly the old gates. The staff endpoint is never called for them and 403s if called. The racer `GET /api/v1/teams/:id` JSON has the same keys as before. For a staff viewer, a loading or failed staff request leaves the page read-only, never on racer rules (owner decision 2026-11-26). Owner: Task 6 Vitest table, Task 7 Vitest, Task 3 spec.
 4. **Only admins and operators get the staff-only writes.** A racer's or refunder's `new_team_setting` leaves `new_team` and `new_team_overridden` unchanged, through both the API and the legacy form. After close, the racer owner is still refused when saving answers (API 403, legacy redirect with the error) and the answers are unchanged. Owner: Task 2 specs.
 5. **`team_id` never widens a refund list.** An unknown or junk `team_id` lists no payments. `team_id` with a different `race_id` lists none. With no `race_id` the list is only that team's payments in the team's race. Owner: Task 4 spec, Task 5 Vitest.
 
@@ -255,18 +256,20 @@
     - `pastRacers` and `addYourself` = racer rule && `staffTeam.account_holder.id === meId`;
     - `staffPay = can.take_payment`, `staffLinks = true`;
     - `closedForRacersNote = race.registration_status === 'closed' && can.update_team`.
-  - `useTeamPermissions(team): { permissions: TeamPermissions; staffTeam: StaffTeam | undefined; staffQuery }`:
-    - racer rules unless `isStaff(me)` and the staff query has data;
-    - staff rules once it loads;
-    - racer rules while it loads or after it fails.
+  - `READ_ONLY_PERMISSIONS: TeamPermissions`: every flag false.
+  - `useTeamPermissions(team): { permissions: TeamPermissions; staffTeam: StaffTeam | undefined; staffQuery; staffState: 'none' | 'loading' | 'ready' | 'error' }`:
+    - not `isStaff(me)`: racer rules, `staffState: 'none'` (unchanged for racers);
+    - `isStaff(me)` and the staff query is pending: `READ_ONLY_PERMISSIONS`, `'loading'`;
+    - staff data present: staff rules, `'ready'`;
+    - the staff query failed: `READ_ONLY_PERMISSIONS`, `'error'` (owner decision 2026-11-26; this includes a staff member's own team).
 - [ ] **Step 1:** Write failing tests:
   - a table test over open / closed / final-edits / finalized / complete-but-captain fixtures: `racerPermissions` equals the old inline gates. Name the old expressions in the test, so a reviewer can compare;
   - `staffPermissions` copies `can`;
   - a non-owner staff gets no `pastRacers` or `addYourself`;
   - the closed note appears only for `closed` with `update_team`;
   - hook (MSW): a racer `me` never requests `/staff/teams/*` and gets racer rules;
-  - hook (MSW): a staff `me` gets racer rules before the response and staff rules after it;
-  - hook (MSW): a 500 leaves racer rules;
+  - hook (MSW): a staff `me` gets `READ_ONLY_PERMISSIONS` and `'loading'` before the response, staff rules and `'ready'` after it;
+  - hook (MSW): a 500 gives `READ_ONLY_PERMISSIONS` and `'error'`, for a non-owner and for a staff member who owns the team;
   - a changed `teamUpdatedAt` refetches the staff team.
 - [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/teams src/features/staff-teams` — FAIL.
 - [ ] **Step 3:** Implement.
@@ -292,7 +295,7 @@
   - **`QuestionsCard`:** `open` → `editQuestions`.
   - **`DeleteTeam`:** renders when `deleteTeam` (replaces `if (!team.deletable || !team.race.open_for_registration) return null`).
   - **`EditTeamBasics`:** renders its Edit button only when `editTeam` (always true for racers).
-  - **`TeamHeader`:** when `closedForRacersNote`, a note under the race lines: "Registration is closed. The racers can no longer change this team; you can, as staff." (`staff.team.closedNote`).
+  - **`TeamHeader`:** when `staffState === 'error'`, a `role=status` note under the race lines: "Staff details didn't load, so this team is read-only for now. Reload to try again." (`staff.team.readOnlyNote`). When `closedForRacersNote`, a note under the race lines: "Registration is closed. The racers can no longer change this team; you can, as staff." (`staff.team.closedNote`).
   - **`TeamChecklist`:**
     - computes `useTeamPermissions` once and passes `permissions` down; the cards take a `permissions` prop instead of each calling the hook, so one staff query serves the page;
     - no tour auto-start when `isStaff(me)`;
@@ -302,7 +305,9 @@
   - staff (operator `can` all true, closed race): "+ Add a racer", "Make captain", "Remove" on an incomplete unfinalized team, the questions Edit button (and the form saves through the normal PUT), Delete when `can.delete_team`, and the closed note;
   - staff non-owner: no "Pick racers from past teams" and no "Add yourself";
   - refunder (`can` all false): no Edit on team details, no Add, no Remove, no Make captain, no Delete;
-  - `TeamChecklist`: a staff `me` with tour storage unset does not open the tour.
+  - `TeamChecklist`: a staff `me` with tour storage unset does not open the tour;
+  - `TeamChecklist`, staff `me`, open race, deletable team with an empty slot, staff request held pending (MSW never resolves): no Delete, no "Pick racers from past teams", no "Add yourself", no "+ Add a racer", no Make captain, no Remove, no racer Edit, no team-details Edit, no questions Edit, and `/teams/:id/past_racers` is not requested;
+  - `TeamChecklist`, staff `me` (also when `me` owns the team), staff request answers 500: the same controls are absent and `t('staff.team.readOnlyNote')` is shown.
 - [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/roster src/features/questions src/features/teams` — FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Re-run the whole suite (`npm --prefix frontend test -- --run`) — PASS.
@@ -341,7 +346,7 @@
   - **staff, Stripe requirement:** the price recheck runs (a changed price shows `fee.changed` and opens no Checkout). The POST body has `requirement_id`, `stripe_token`, `expected_amount_cents`. Checkout gets `email: ''` for a non-owner.
   - **staff, full race:** the over-the-limit warning shows above "Pay $X as staff".
   - **refunder (`take_payment` false):** no Pay on an incomplete roster, and "Refund on Payments" links are present.
-  - **staff data still loading** (racer permissions): no staff Pay.
+  - **staff data still loading or failed** (`READ_ONLY_PERMISSIONS`): no staff Pay and no racer Pay button on an incomplete roster.
   - **a paid row's link:** the `href` ends `/staff/payments?team_id=12&payment_type=34`.
 - [ ] **Step 2:** Run `npm --prefix frontend test -- --run src/features/payments` — FAIL.
 - [ ] **Step 3:** Implement.
@@ -449,7 +454,7 @@ PRs 2 and 7 sent staff to the legacy `/teams/:id` for someone else's team, becau
 - [ ] **Step 3:** Run `bin/check`, then the neighbours the same way: `tests/spa/team-captain.spec.ts`, `guided-tour.spec.ts`, `payments-admin.spec.ts`, `staff-shell.spec.ts`, `buddy-picker.spec.ts`, `whos-registered.spec.ts`, `staff-users-emails.spec.ts`, and `tests/e2e/registration.spec.ts` (mock mode, see the fake-keys note). All must PASS.
 - [ ] **Step 4:** Add a CLAUDE.md "Registration SPA" bullet "Staff team view (reskin PR 8)" covering:
   - the staff endpoint and its `can` flags (`StaffTeamPermissions`; operators and admins may save answers after close (`questions_open?`, owner decision), racers may not; people until `final_edits_close`);
-  - `useTeamPermissions` as the one place team-page gates live (racer rules unchanged);
+  - `useTeamPermissions` as the one place team-page gates live (racer rules unchanged; staff are read-only until the staff payload loads, and stay read-only with a note if it fails);
   - staff Pay gaps and the no-prefill Checkout;
   - `new_team_setting` through the teams API (`StaffTeamPermissions.new_team_setter?`, shared with legacy);
   - `PaymentSearch` `team_id` (team's race when no `race_id`; unknown lists nothing);
