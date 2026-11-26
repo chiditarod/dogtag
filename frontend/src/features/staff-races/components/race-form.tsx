@@ -1,10 +1,11 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link, useBlocker, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ButtonLink } from '@/components/ui/button-link';
 import { Card } from '@/components/ui/card';
-import { DialogSheet } from '@/components/ui/dialog-sheet';
+import { DiscardDialog } from '@/components/ui/discard-dialog';
 import { Field, Input } from '@/components/ui/field';
+import { useLeaveGuard } from '@/components/ui/use-leave-guard';
 import { ApiError, type FieldErrors } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import { useCreateRace, useUpdateRace } from '../api/use-staff-races';
@@ -58,29 +59,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-/** Asked before an in-app navigation drops unsaved changes. Keep editing is focused and is what Escape does. */
-function DiscardDialog({ onKeep, onDiscard }: { onKeep: () => void; onDiscard: () => void }) {
-  const titleId = useId();
-  return (
-    <DialogSheet labelledBy={titleId} onClose={onKeep}>
-      <div className="space-y-3 px-4 py-4">
-        <h2 id={titleId} className="font-display text-xl font-semibold">
-          {t('staff.races.form.discardTitle')}
-        </h2>
-        <p className="text-sm">{t('staff.races.form.discardBody')}</p>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onDiscard}>
-            {t('staff.races.form.discard')}
-          </Button>
-          <Button autoFocus onClick={onKeep}>
-            {t('staff.races.form.keepEditing')}
-          </Button>
-        </div>
-      </div>
-    </DialogSheet>
-  );
-}
-
 const listed = (...messages: (string | undefined)[]) => messages.filter((m): m is string => !!m);
 
 export function RaceForm({ initial: initialProp, raceId, raceName, timeZones, confirmationMaxLength, now }: RaceFormProps) {
@@ -98,29 +76,9 @@ export function RaceForm({ initial: initialProp, raceId, raceName, timeZones, co
   const mutation = isNew ? create : update;
 
   const dirty = !saved && JSON.stringify(values) !== JSON.stringify(initial);
-  // Read by the blocker when a navigation starts. A save sets `leaving` first so its own navigation is not asked about.
-  const dirtyRef = useRef(dirty);
-  dirtyRef.current = dirty;
-  const leaving = useRef(false);
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      dirtyRef.current &&
-      !leaving.current &&
-      (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search),
-  );
+  const { blocker, allowLeave } = useLeaveGuard(dirty);
   const checks = checkRaceForm(values, confirmationMaxLength, now);
   const shown = (message: string | undefined) => (attempted ? message : undefined);
-
-  useEffect(() => {
-    if (!dirty) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      // Older browsers need a return value to show the prompt.
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty]);
 
   // After a failed save, scroll to and focus the first field showing a problem (in page order).
   useEffect(() => {
@@ -150,7 +108,7 @@ export function RaceForm({ initial: initialProp, raceId, raceName, timeZones, co
     }
     mutation.mutate(buildRacePayload(initial, values, isNew), {
       onSuccess: ({ race }) => {
-        leaving.current = true;
+        allowLeave();
         setSaved(true);
         navigate(`/staff/races/${race.id}`);
       },
@@ -325,7 +283,13 @@ export function RaceForm({ initial: initialProp, raceId, raceName, timeZones, co
           </span>
         </div>
       </div>
-      {blocker.state === 'blocked' && <DiscardDialog onKeep={() => blocker.reset()} onDiscard={() => blocker.proceed()} />}
+      {blocker.state === 'blocked' && (
+        <DiscardDialog
+          body={t('staff.races.form.discardBody')}
+          onKeep={() => blocker.reset()}
+          onDiscard={() => blocker.proceed()}
+        />
+      )}
     </form>
   );
 }

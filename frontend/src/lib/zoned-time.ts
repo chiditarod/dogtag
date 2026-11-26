@@ -2,6 +2,8 @@
 // IANA zone, using only Intl. Race dates are entered and shown in the race's own zone, not the
 // browser's.
 
+import { t } from '@/locales/en';
+
 const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -146,4 +148,40 @@ export function zoneAbbreviation(wall: string, timeZone: string): string {
 export function isInPast(wall: string, timeZone: string, now: Date = new Date()): boolean {
   const iso = fromWallClock(wall, timeZone);
   return iso !== null && new Date(iso).getTime() < now.getTime();
+}
+
+/** The wall clock as a UTC date, so formatting it needs no time zone. */
+function wallAsDate(wall: string): Date | null {
+  const match = WALL_CLOCK.exec(wall);
+  if (!match) return null;
+  const [year, month, day, hour, minute] = match.slice(1).map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hour, minute));
+}
+
+function formatWall(wall: string, options: Intl.DateTimeFormatOptions): string {
+  const date = wallAsDate(wall);
+  return date ? new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(date) : '';
+}
+
+/** `Mar 14` */
+export const wallDay = (wall: string) => formatWall(wall, { month: 'short', day: 'numeric' });
+
+/** `2:30 AM` */
+export const wallTime = (wall: string) => formatWall(wall, { hour: 'numeric', minute: '2-digit', hour12: true });
+
+/** `Sat, Mar 6, 10:00 AM` */
+export const wallWhen = (wall: string) =>
+  formatWall(wall, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+
+/**
+ * What is wrong with a wall clock entered in the zone on its own: empty, or a time the zone skips
+ * (a spring-forward gap). Null when it is fine, and for a blank zone, which has no gap to describe
+ * (the zone field reports that).
+ */
+export function wallClockProblem(wall: string, timeZone: string): string | null {
+  if (!wall) return t('staff.races.dates.required');
+  if (fromWallClock(wall, timeZone) === null && timeZone && wallAsDate(wall)) {
+    return t('staff.races.dates.gap', { time: wallTime(wall), day: wallDay(wall), zone: timeZone });
+  }
+  return null;
 }

@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Field, Input } from '@/components/ui/field';
+import { ZonedDateTimeInput } from '@/components/inputs/zoned-datetime-input';
+import { Field } from '@/components/ui/field';
 import { formatDate, formatDeadline } from '@/lib/dates';
-import { fromWallClock, toWallClock, zoneAbbreviation } from '@/lib/zoned-time';
+import { fromWallClock, toWallClock, wallDay, zoneAbbreviation } from '@/lib/zoned-time';
 import { t } from '@/locales/en';
-import { DATE_FIELDS, DATE_LABELS, checkDates, wallDay, type DateField } from '../date-checks';
+import { DATE_FIELDS, DATE_LABELS, checkDates, type DateField } from '../date-checks';
 
 interface RaceDatesCardProps {
   /** The zone the dates are read in (a `datetime-local` wall clock each). */
@@ -121,18 +122,13 @@ export function RaceDatesCard({
             <Field key={name} label={DATE_LABELS[name]} name={name} error={messages}>
               {(control) => (
                 <>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      {...control}
-                      type="datetime-local"
-                      step={60}
-                      className="min-w-0 flex-1"
-                      value={wall}
-                      onChange={(event) => onChange(name, event.target.value)}
-                      onBlur={() => setTouched((current) => new Set(current).add(name))}
-                    />
-                    <span className="min-w-10 shrink-0 whitespace-nowrap text-sm text-navy/70">{zoneAbbreviation(wall, timeZone)}</span>
-                  </div>
+                  <ZonedDateTimeInput
+                    {...control}
+                    value={wall}
+                    timeZone={timeZone}
+                    onValueChange={(value) => onChange(name, value)}
+                    onBlur={() => setTouched((current) => new Set(current).add(name))}
+                  />
                   {iso !== null && !problem && (
                     <p className="text-sm text-green-800">
                       {t('staff.races.dates.racersSee', { text: racersSee(name, wall, iso, timeZone) })}

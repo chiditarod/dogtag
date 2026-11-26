@@ -274,7 +274,7 @@ describe('RaceForm (edit)', () => {
 });
 
 describe('RaceForm leaving with changes', () => {
-  const discardDialog = () => screen.queryByRole('dialog', { name: t('staff.races.form.discardTitle') });
+  const discardDialog = () => screen.queryByRole('dialog', { name: t('staff.discard.title') });
   const cancel = () => screen.getByRole('link', { name: t('staff.races.form.cancel') });
   const here = (router: { state: { location: { pathname: string } } }) => router.state.location.pathname;
 

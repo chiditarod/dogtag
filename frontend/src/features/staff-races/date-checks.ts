@@ -1,5 +1,5 @@
 import { t } from '@/locales/en';
-import { fromWallClock, isInPast } from '@/lib/zoned-time';
+import { fromWallClock, isInPast, wallClockProblem, wallWhen } from '@/lib/zoned-time';
 
 export type DateField = 'registration_open' | 'registration_close' | 'final_edits_close' | 'race_datetime';
 
@@ -23,32 +23,6 @@ export interface DateChecks {
   warnings: Partial<Record<DateField, string>>;
 }
 
-const WALL = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
-
-/** The wall clock as a UTC date, so formatting it needs no time zone. */
-function wallAsDate(wall: string): Date | null {
-  const match = WALL.exec(wall);
-  if (!match) return null;
-  const [year, month, day, hour, minute] = match.slice(1).map(Number);
-  return new Date(Date.UTC(year, month - 1, day, hour, minute));
-}
-
-function formatWall(wall: string, options: Intl.DateTimeFormatOptions): string {
-  const date = wallAsDate(wall);
-  return date ? new Intl.DateTimeFormat('en-US', { ...options, timeZone: 'UTC' }).format(date) : '';
-}
-
-/** `Mar 14` */
-export const wallDay = (wall: string) => formatWall(wall, { month: 'short', day: 'numeric' });
-
-/** `2:30 AM` */
-export const wallTime = (wall: string) =>
-  formatWall(wall, { hour: 'numeric', minute: '2-digit', hour12: true });
-
-/** `Sat, Mar 6, 10:00 AM` */
-const wallWhen = (wall: string) =>
-  formatWall(wall, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
-
 /**
  * Checks the four race dates (`datetime-local` wall clocks read in `timeZone`). An error blocks a
  * save; a warning does not. Order is checked on adjacent pairs only, and the first failing pair is
@@ -61,18 +35,13 @@ export function checkDates(values: Record<DateField, string>, timeZone: string, 
 
   for (const field of DATE_FIELDS) {
     const wall = values[field];
-    if (!wall) {
-      errors[field] = t('staff.races.dates.required');
+    const problem = wallClockProblem(wall, timeZone);
+    if (problem) {
+      errors[field] = problem;
       continue;
     }
     const iso = fromWallClock(wall, timeZone);
-    if (iso === null) {
-      // A blank zone also gives null; it has no gap to describe, and the zone field reports it.
-      if (timeZone && wallAsDate(wall)) {
-        errors[field] = t('staff.races.dates.gap', { time: wallTime(wall), day: wallDay(wall), zone: timeZone });
-      }
-      continue;
-    }
+    if (iso === null) continue;
     instants[field] = new Date(iso).getTime();
   }
 

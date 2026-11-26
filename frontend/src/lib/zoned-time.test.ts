@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { fromWallClock, isInPast, toWallClock, zoneAbbreviation } from './zoned-time';
+import { t } from '@/locales/en';
+import { fromWallClock, isInPast, toWallClock, wallClockProblem, wallDay, wallTime, wallWhen, zoneAbbreviation } from './zoned-time';
 
 describe('toWallClock', () => {
   it('formats an instant as the wall clock in the zone', () => {
@@ -89,5 +90,31 @@ describe('a wall clock that is not a real date or time', () => {
   it('returns null for a day that does not exist or an hour past 23', () => {
     expect(fromWallClock('2027-02-31T10:00', 'America/Chicago')).toBeNull();
     expect(fromWallClock('2027-03-01T25:00', 'America/Chicago')).toBeNull();
+  });
+});
+
+describe('wall clock labels', () => {
+  it('formats the wall clock without a time zone', () => {
+    expect(wallDay('2027-03-14T02:30')).toBe('Mar 14');
+    expect(wallTime('2027-03-14T02:30')).toBe('2:30 AM');
+    expect(wallWhen('2027-03-06T10:00')).toBe('Sat, Mar 6, 10:00 AM');
+    expect(wallDay('')).toBe('');
+  });
+});
+
+describe('wallClockProblem', () => {
+  it('asks for a value when empty', () => {
+    expect(wallClockProblem('', 'America/Chicago')).toBe(t('staff.races.dates.required'));
+  });
+
+  it('describes a time that does not exist in the zone', () => {
+    expect(wallClockProblem('2027-03-14T02:30', 'America/Chicago')).toBe(
+      t('staff.races.dates.gap', { time: '2:30 AM', day: 'Mar 14', zone: 'America/Chicago' }),
+    );
+  });
+
+  it('is null for a real time, and for a blank zone (the zone field reports that)', () => {
+    expect(wallClockProblem('2027-03-14T12:00', 'America/Chicago')).toBeNull();
+    expect(wallClockProblem('2027-03-14T02:30', '')).toBeNull();
   });
 });
