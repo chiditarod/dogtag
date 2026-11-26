@@ -22,6 +22,7 @@
 #   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
 #   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
 #   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
+#   rails test_seeds:staff_team_panel         (an operator, a refunder and an owner; a closed race (inside final edits) with a 3-of-5 team, a payment and two emails, and an open race with a 2-of-3 team and a $50 fee)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -1237,6 +1238,98 @@ namespace :test_seeds do
       team_name: team.name
     )
     puts "✅ Seeded #{team.name} (ID: #{team.id}) for Ada (#{ada.email}) and Zed (#{zed.email})"
+  end
+
+  desc "An operator, a refunder and an owner racer; a closed race (final-edits window) with a 3-of-5 team, and an open race with a 2-of-3 team and a $50 fee (staff team panel)"
+  task staff_team_panel: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff team panel test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+    answers = File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json"))
+
+    make_user = lambda do |role, roles = []|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Panel",
+        email: "staff-panel-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: roles
+      )
+    end
+    operator = make_user.call(:operator, [:operator])
+    refunder = make_user.call(:refunder, [:refunder])
+    owner = make_user.call(:owner)
+    buddy_owner = make_user.call(:buddy)
+
+    # Racers can only be added while a race is open, so both races start open; the closed one is moved afterwards.
+    closed_race = FactoryBot.create(:race_with_jsonform, name: "Race StaffTeam #{short} Closed",
+      people_per_team: 5, max_teams: 100)
+    team = FactoryBot.create(:team, name: "Test Team StaffPanel #{short}", race: closed_race, user: owner,
+      jsonform: answers, collaborating: true, other_buddies: "Pals at the docks")
+    racers = [["Ada", "Captain"], ["Bo", "Pilot"], ["Cy", "Rider"]].map.with_index do |(first, last), index|
+      FactoryBot.create(:person, team: team, first_name: first, last_name: last,
+        email: "staff-panel-racer#{index + 1}-#{unique_id}@example.com", phone: "312-555-01#{index}0")
+    end
+    team.update_columns(captain_id: racers.first.id)
+    buddy = FactoryBot.create(:team, name: "Test Team StaffBuddy #{short}", race: closed_race, user: buddy_owner, jsonform: answers)
+    team.buddy_teams << buddy
+
+    cart = MockPaymentRequirement.create!(name: "Cart Deposit", race: closed_race)
+    Tier.create!(requirement: cart, price: 5000, begin_at: 4.weeks.ago)
+    fee = MockPaymentRequirement.create!(name: "Registration", race: closed_race)
+    Tier.create!(requirement: fee, price: 12000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: team, requirement: cart, user: owner,
+      charge_id: "mock_ch_#{short}_panel", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_panel", "amount" => 5000 }
+    )
+    [["team_finalized_email", "team_finalized", "Test Team StaffPanel is registered"],
+     ["welcome_email", "welcome", "Welcome to CHIditarod"]].each_with_index do |(action, kind, subject), index|
+      SentEmail.create!(mailer: "UserMailer", action: action, kind: kind, recipient: owner.email, user_id: owner.id,
+        team_id: team.id, race_id: closed_race.id, subject: subject, status: "sent",
+        created_at: (index + 1).hours.ago, status_changed_at: (index + 1).hours.ago)
+    end
+    # Closed for racers but inside the final-edits window, so staff and owners can still edit people.
+    closed_race.update_columns(registration_open: 4.weeks.ago, registration_close: 1.day.ago,
+      final_edits_close: 1.week.from_now, race_datetime: 2.weeks.from_now)
+
+    open_race = FactoryBot.create(:race, name: "Race StaffTeam #{short} Open", people_per_team: 3, max_teams: 100)
+    open_fee = MockPaymentRequirement.create!(name: "Registration", race: open_race)
+    Tier.create!(requirement: open_fee, price: 5000, begin_at: 4.weeks.ago)
+    open_team = FactoryBot.create(:team, name: "Test Team StaffPay #{short}", race: open_race, user: owner)
+    open_racers = [["Di", "Short"], ["Ed", "Roster"]].map.with_index do |(first, last), index|
+      FactoryBot.create(:person, team: open_team, first_name: first, last_name: last,
+        email: "staff-panel-open#{index + 1}-#{unique_id}@example.com")
+    end
+    open_team.update_columns(captain_id: open_racers.first.id)
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      owner_email: owner.email,
+      owner_id: owner.id,
+      owner_name: "#{owner.first_name} #{owner.last_name}",
+      password: "password123",
+      short: short,
+      closed_race_id: closed_race.id,
+      closed_race_name: closed_race.name,
+      closed_team_id: team.id,
+      closed_team_name: team.name,
+      buddy_team_name: buddy.name,
+      captain_name: "Ada Captain",
+      captain_email: racers.first.email,
+      open_race_id: open_race.id,
+      open_race_name: open_race.name,
+      open_team_id: open_team.id,
+      open_team_name: open_team.name,
+      theme_answer: "Have to wait and see!"
+    )
+    puts "✅ Seeded #{team.name} (ID: #{team.id}, closed) and #{open_team.name} (ID: #{open_team.id}, open)"
   end
 
   desc "Clean up all test data"

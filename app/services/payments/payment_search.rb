@@ -1,11 +1,12 @@
 # The staff payments list: every completed payment, filtered and paged on the server. The page, the
 # filters and the progress summary all come from this one object, so they always agree.
 #
-# - race_id: absent means the most recent race that has already run (refunds follow a race), else the
-#   newest open race, else the newest race; "all" means every race.
+# - race_id: absent means the newest open race, else the most recent race that has already run, else the
+#   newest race; "all" means every race.
 # - payment_type: a requirement id (within the chosen race).
 # - team_id: one team's payments. Without a race_id the list is the team's race (not the default race); an
 #   unknown or unparseable id, or a race other than the team's, lists nothing, so it never widens the list.
+#   race_id=all with a team_id still lists only that team's payments.
 # - status: paid, refunding, refunded, not_refundable or all (absent is all); see CompletedRequirement.payment_status_sql.
 # - q: case-insensitive text matched against the team name, the account holder, the payer and the racers
 #   (name or email).

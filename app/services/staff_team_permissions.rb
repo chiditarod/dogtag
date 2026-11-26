@@ -1,7 +1,8 @@
 # What a viewer may do on a team page, computed once on the server so the SPA never guesses from
 # roles. Built on the existing Ability and the same rules the controllers enforce.
 class StaffTeamPermissions
-  # Admins and operators may set the "new team" flag (TeamsController#team_params).
+  # Admins and operators may set the "new team" flag. This one rule governs both the legacy
+  # TeamsController#team_params and the API team update (Api::V1::TeamsController).
   def self.new_team_setter?(user) = user.is_any_of?(:admin, :operator)
 
   # Racers answer the questions while registration is open; admins and operators any time.
