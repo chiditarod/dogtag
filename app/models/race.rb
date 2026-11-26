@@ -132,6 +132,34 @@ class Race < ApplicationRecord
     races.each { |race| race.finalized_teams_count = counts.fetch(race.id, 0) }
   end
 
+  # Reads only loaded requirements and tiers, so it adds no queries after
+  # Race.preload_registration_data.
+  def setup_problems
+    fees = requirements.select { |requirement| requirement.is_a?(PaymentRequirement) }
+    problems = []
+    problems << "No fee set up" if fees.empty?
+    fees.each do |fee|
+      tiers = fee.tiers.to_a
+      if tiers.empty?
+        problems << "#{fee.name} has no price"
+      elsif tiers.map(&:begin_at).min > registration_open
+        problems << "#{fee.name} has no price when registration opens"
+      end
+    end
+    problems << "Questions (JSONForm) don't parse" if jsonform_unparseable?
+    problems
+  end
+
+  # Gross, refunded and net payment money for the race, in one query.
+  def money_totals
+    gross, refunded = CompletedRequirement
+      .joins(:team)
+      .where(teams: { race_id: id })
+      .pick(Arel.sql("COALESCE(SUM(amount_cents), 0)"),
+            Arel.sql("COALESCE(SUM(amount_cents) FILTER (WHERE refunded_at IS NOT NULL), 0)"))
+    { gross_cents: gross.to_i, refunded_cents: refunded.to_i, net_cents: gross.to_i - refunded.to_i }
+  end
+
   # Set only by preload_registration_data, for the lifetime of one request's objects.
   attr_writer :finalized_teams_count
 
@@ -234,6 +262,14 @@ class Race < ApplicationRecord
   end
 
   private
+
+  def jsonform_unparseable?
+    return false if jsonform.blank?
+    JSON.parse(jsonform)
+    false
+  rescue JSON::ParserError
+    true
+  end
 
   def time_zone_must_be_iana
     errors.add(:time_zone, "must be an IANA time zone, e.g. #{DEFAULT_TIME_ZONE}") unless Race.valid_time_zone?(time_zone)
