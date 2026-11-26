@@ -59,7 +59,7 @@ class Api::V1::Staff::TiersController < Api::V1::Staff::BaseController
     errors = assign_tier_attrs(attrs, only_sent)
     @tier.valid?
     errors = @tier.errors.to_hash.transform_keys(&:to_s).merge(errors)
-    return render_json_errors(errors) if errors.any?
+    return render_field_errors(errors) if errors.any?
 
     @tier.save!
     render_fee(status:, reload: true)
@@ -78,9 +78,5 @@ class Api::V1::Staff::TiersController < Api::V1::Staff::BaseController
       date_errors.any? ? errors.merge!(date_errors) : @tier.begin_at = parsed["begin_at"]
     end
     errors
-  end
-
-  def render_json_errors(errors)
-    render json: { error: "invalid", errors: }, status: :unprocessable_entity
   end
 end

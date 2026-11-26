@@ -62,6 +62,15 @@ describe "API v1 staff requirements", type: :request do
       get "/api/v1/staff/races/0/requirements"
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "gets 403, not 404, for an unknown fee on show, update and destroy" do
+      get "/api/v1/staff/requirements/0"
+      expect(response).to have_http_status(:forbidden)
+      patch "/api/v1/staff/requirements/0", params: { requirement: { name: "x" } }, as: :json
+      expect(response).to have_http_status(:forbidden)
+      delete "/api/v1/staff/requirements/0", as: :json
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   describe "GET /api/v1/staff/races/:race_id/requirements" do

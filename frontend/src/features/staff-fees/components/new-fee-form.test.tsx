@@ -48,6 +48,18 @@ const startsInput = () => screen.getByLabelText('Starts') as HTMLInputElement;
 const dialog = () => screen.queryByRole('dialog', { name: t('staff.discard.title') });
 
 describe('staff add-a-fee page', () => {
+  it('shows Page not found for a race the server does not know', async () => {
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 't' })),
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['admin'] } })),
+      http.get('/api/v1/staff/races/99/requirements', () =>
+        HttpResponse.json({ error: 'Not found', errors: {} }, { status: 404 }),
+      ),
+    );
+    renderApp('/staff/races/99/requirements/new');
+    expect(await screen.findByRole('heading', { name: t('notFound.heading') })).toBeInTheDocument();
+  });
+
   it('prefills Starts from registration opening in the race zone and defaults to a card payment', async () => {
     await open();
     expect(startsInput().value).toBe('2026-12-07T12:00');

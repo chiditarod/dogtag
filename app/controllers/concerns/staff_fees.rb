@@ -23,6 +23,12 @@ module StaffFees
       .tap { |counts| counts.default = { total: 0, unrefunded: 0 } }
   end
 
+  # 422 { error: "invalid", errors: { "field" => [messages] } } for errors built by hand (the model's
+  # own go through `render_errors`).
+  def render_field_errors(errors)
+    render json: { error: "invalid", errors: }, status: :unprocessable_entity
+  end
+
   # Renders { requirement:, race: } for @requirement and @race; `reload: true` rereads its prices
   # first (after one was added or removed).
   def render_fee(status: :ok, reload: false)

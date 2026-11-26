@@ -6,7 +6,7 @@ import { ApiError } from '@/lib/api-client';
 import { fromWallClock, toWallClock } from '@/lib/zoned-time';
 import { t } from '@/locales/en';
 import type { FeeRace, FeeTier, TierPayload } from '../api/types';
-import { checkPrice, firstPriceGap, parseDollars, racersPayLine } from '../price-checks';
+import { checkPrice, firstPriceGap, parseDollars, type PriceChecks, racersPayLine } from '../price-checks';
 
 export interface PriceRowFormProps {
   /** The price being edited; leave out to add one. */
@@ -52,7 +52,10 @@ export function PriceRowForm({ initial, others, race, onSave, onCancel, onDirtyC
   const [pending, setPending] = useState(false);
   const [serverError, setServerError] = useState<ApiError | Error | null>(null);
 
-  const priceChanged = initial ? parseDollars(dollars) !== initial.price_cents : dollars.trim() !== '';
+  // The price as shown ("50.5", "0") counts as unchanged even where `parseDollars` would refuse it.
+  const priceChanged = initial
+    ? parseDollars(dollars) !== initial.price_cents && dollars.trim() !== String(initial.price_cents / 100)
+    : dollars.trim() !== '';
   const beginChanged = begin !== initialWall;
   const dirty = priceChanged || beginChanged;
 
@@ -64,7 +67,13 @@ export function PriceRowForm({ initial, others, race, onSave, onCancel, onDirtyC
   }, [dirty]);
   useEffect(() => () => report.current(false), []);
 
-  const checks = checkPrice({ price: dollars, begin }, others, race.time_zone);
+  // An edit that leaves the price alone is not held to the whole-dollar rule (a legacy tier may be
+  // at odd cents or $0), and a start it did not touch is not warned about being in the past.
+  const priceUntouched = Boolean(initial) && !priceChanged;
+  const checked = checkPrice({ price: dollars, begin }, others, race.time_zone);
+  const errors = { ...checked.errors };
+  if (priceUntouched) delete errors.price;
+  const checks: PriceChecks = { errors, warning: !initial || beginChanged ? checked.warning : undefined };
   const apiErrors = serverError instanceof ApiError ? serverError.errors : {};
   const shown = (field: Field): string[] => [
     ...(touched[field] && checks.errors[field] ? [checks.errors[field]] : []),
@@ -83,7 +92,7 @@ export function PriceRowForm({ initial, others, race, onSave, onCancel, onDirtyC
   // The prices as they would be after the save, for the registration-opening gap.
   const draftStart = fromWallClock(begin, race.time_zone) ?? initial?.begin_at ?? null;
   const gap = firstPriceGap([...others.map((other) => other.begin_at), draftStart], race.registration_open, race.time_zone);
-  const cents = parseDollars(dollars);
+  const cents = priceUntouched && initial ? initial.price_cents : parseDollars(dollars);
   const valid = Object.keys(checks.errors).length === 0 && cents !== null;
 
   /** Typing clears the server's message, which was about the old value. */

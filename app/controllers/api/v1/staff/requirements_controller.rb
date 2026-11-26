@@ -11,6 +11,9 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
   # learns nothing about which races exist or what a body should look like.
   before_action -> { authorize!(:index, PaymentRequirement) }, only: [:index]
   before_action -> { authorize!(:create, PaymentRequirement) }, only: [:create]
+  before_action -> { authorize!(:show, PaymentRequirement) }, only: [:show]
+  before_action -> { authorize!(:update, PaymentRequirement) }, only: [:update]
+  before_action -> { authorize!(:destroy, PaymentRequirement) }, only: [:destroy]
   before_action :load_race, only: [:index, :create]
   before_action :load_requirement, only: [:show, :update, :destroy]
   # The start time is a wall clock in the race's own zone.
@@ -41,7 +44,7 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
     @requirement.errors.each { |error| (errors[error.attribute.to_s] ||= []) << error.message }
     errors["type"] = ["Choose a type"] unless types.include?(type)
     errors.merge!(tier_errors(tier, tier_attrs[:price], date_errors))
-    return render_errors_hash(errors) if errors.any?
+    return render_field_errors(errors) if errors.any?
 
     Requirement.transaction do
       @requirement.save!
@@ -104,9 +107,5 @@ class Api::V1::Staff::RequirementsController < Api::V1::Staff::BaseController
     price_error = whole_dollar_error(price)
     messages["price"] = [price_error] if price_error
     messages.transform_keys { |field| "tier.#{field}" }
-  end
-
-  def render_errors_hash(errors)
-    render json: { error: "invalid", errors: }, status: :unprocessable_entity
   end
 end

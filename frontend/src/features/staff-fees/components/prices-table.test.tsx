@@ -233,6 +233,36 @@ describe('editing a price', () => {
     );
   });
 
+  it('lets a legacy price at odd cents or $0 have only its start moved, sending only the start', async () => {
+    const odd = fee({ tiers: [feeTier({ id: 1, price_cents: 5050 }), feeTier({ id: 2, price_cents: 0, begin_at: '2027-02-01T06:00:00Z', status: 'next' })] });
+    const { sent } = await open(odd);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit $50.50 price' }));
+    expect(priceInput()).toHaveValue('50.5');
+    startAt('2026-12-08T12:00');
+    await userEvent.click(screen.getByRole('button', { name: 'Save price' }));
+    expect(screen.queryByText(t('staff.fees.priceWhole'))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(sent).toEqual([{ method: 'PATCH', url: '/api/v1/staff/tiers/1', body: { tier: { begin_at: '2026-12-08T12:00' } } }]),
+    );
+  });
+
+  it('still asks for whole dollars once the price of an odd-cents tier is edited', async () => {
+    const { sent } = await open(fee({ tiers: [feeTier({ id: 1, price_cents: 5050 })] }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit $50.50 price' }));
+    await typePrice('50.25');
+    await userEvent.click(screen.getByRole('button', { name: 'Save price' }));
+    expect(await screen.findByText(t('staff.fees.priceWhole'))).toBeInTheDocument();
+    expect(sent).toEqual([]);
+  });
+
+  it('shows "in the past" for an existing past price only once its start is changed to a past time', async () => {
+    await open(fee({ tiers: [feeTier({ id: 1, begin_at: '2020-01-01T06:00:00Z', status: 'past' })] }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit $120 price' }));
+    expect(screen.queryByText(t('staff.fees.startPast'))).not.toBeInTheDocument();
+    startAt('2020-02-01T12:00');
+    expect(await screen.findByText(t('staff.fees.startPast'))).toBeInTheDocument();
+  });
+
   it("does not report the edited price's own price or start as duplicates, but another's", async () => {
     await open(fee());
     await userEvent.click(screen.getByRole('button', { name: 'Edit $120 price' }));
