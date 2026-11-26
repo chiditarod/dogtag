@@ -110,6 +110,27 @@ describe('RaceDatesCard', () => {
     expect(screen.queryByText(/Must be before Race day/)).not.toBeInTheDocument();
   });
 
+  it('shows an order error under the earlier field once either field of the pair is touched', async () => {
+    render(<Harness values={{ ...VALUES, race_datetime: '2027-03-01T10:00' }} />);
+    expect(screen.queryByText(/Must be before Race day/)).not.toBeInTheDocument();
+
+    // Only Race day, the later field of the Final edits close / Race day pair, is blurred.
+    await userEvent.click(field('Race day'));
+    await userEvent.tab();
+
+    expect(within(group('Final edits close')).getByText(/Must be before Race day/)).toBeInTheDocument();
+    expect(field('Final edits close')).toBeInvalid();
+    expect(field('Race day')).not.toBeInvalid();
+  });
+
+  it('keeps a long zone abbreviation inside a box that can grow', () => {
+    render(<Harness timeZone="Asia/Kolkata" initialTimeZone="Asia/Kolkata" timeZones={['Asia/Kolkata']} />);
+
+    const abbreviation = within(group('Race day')).getByText('GMT+5:30');
+    expect(abbreviation.className).toContain('min-w-');
+    expect(abbreviation.className).not.toMatch(/(^|\s)w-10(\s|$)/);
+  });
+
   it('shows a warning for a past opening and the clock-change gap', async () => {
     render(<Harness values={{ ...VALUES, registration_open: '2026-11-20T12:00', race_datetime: '2027-03-14T02:30' }} />);
 

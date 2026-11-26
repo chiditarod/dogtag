@@ -18,7 +18,8 @@ class Api::V1::Staff::RacesController < Api::V1::Staff::BaseController
     @team_counts = team_counts(@races)
   end
 
-  # The blank form's starting values, so the SPA does not hardcode what the model defaults.
+  # The blank form's starting values (the time zone and racers per team the model defaults to) and the
+  # selectable zones.
   def new
     authorize!(:create, Race)
     @race = Race.new(time_zone: Race::DEFAULT_TIME_ZONE, people_per_team: 5)

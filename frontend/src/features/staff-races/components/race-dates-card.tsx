@@ -104,12 +104,16 @@ export function RaceDatesCard({
       )}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2">
-        {DATE_FIELDS.map((name) => {
+        {DATE_FIELDS.map((name, index) => {
           const wall = values[name];
-          const show = showAllErrors || touched.has(name);
+          const iso = fromWallClock(wall, timeZone);
+          // An error on a field whose own and next date are both real moments is the pair's order error,
+          // which belongs to the pair: touching either field shows it.
+          const next = DATE_FIELDS[index + 1];
+          const orderError = !!errors[name] && iso !== null && !!next && fromWallClock(values[next], timeZone) !== null;
+          const show = showAllErrors || touched.has(name) || (orderError && touched.has(next));
           const problem = show ? errors[name] : undefined;
           const warning = show && !problem ? warnings[name] : undefined;
-          const iso = fromWallClock(wall, timeZone);
           const messages = [...new Set([problem, ...(serverErrors[name] ?? [])].filter((m): m is string => !!m))];
           const midnight = DEADLINES.includes(name) && iso !== null && wall.endsWith('T00:00');
 
@@ -127,7 +131,7 @@ export function RaceDatesCard({
                       onChange={(event) => onChange(name, event.target.value)}
                       onBlur={() => setTouched((current) => new Set(current).add(name))}
                     />
-                    <span className="w-10 shrink-0 text-sm text-navy/70">{zoneAbbreviation(wall, timeZone)}</span>
+                    <span className="min-w-10 shrink-0 whitespace-nowrap text-sm text-navy/70">{zoneAbbreviation(wall, timeZone)}</span>
                   </div>
                   {iso !== null && !problem && (
                     <p className="text-sm text-green-800">
