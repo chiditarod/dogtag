@@ -100,6 +100,20 @@ describe "API v1 staff payments", type: :request do
       expect(json["meta"]["summary"]["count"]).to eq(2)
     end
 
+    it "filters by team_id, and an unknown team lists nothing" do
+      other_team = FactoryBot.create(:team, race: race)
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: other_team, charge_id: "ch_other", amount_cents: 100)
+
+      get "/api/v1/staff/payments", params: { team_id: payment.team_id }
+      expect(json["payments"].map { |row| row["id"] }).to eq([payment.id])
+      expect(json["meta"]["summary"]["count"]).to eq(1)
+      expect(json["filters"]["team"]).to eq("id" => payment.team_id, "name" => "Wheelie Good", "race_id" => race.id)
+
+      get "/api/v1/staff/payments", params: { team_id: "999999" }
+      expect(json["payments"]).to eq([])
+      expect(json["filters"]).to include("team" => nil, "team_id" => 999_999)
+    end
+
     it "filters by payment_type and status" do
       other = FactoryBot.create(:payment_requirement, name: "Registration", race: race)
       team = FactoryBot.create(:team, race: race)
