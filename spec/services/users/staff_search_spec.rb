@@ -25,8 +25,17 @@ describe Users::StaffSearch do
   end
 
   it "escapes LIKE wildcards" do
-    expect(described_class.new(q: "100%").users).to eq([])
+    pct = FactoryBot.create(:user, email: "a%b@example.com")
+    FactoryBot.create(:user, email: "axb@example.com")
+
+    expect(ids(described_class.new(q: "a%b"))).to eq([pct.id])
+    expect(ids(described_class.new(q: "%"))).to eq([pct.id])
     expect(described_class.new(q: "a_a").users).to eq([])
+  end
+
+  it "uses only the first 10 words" do
+    words = Array.new(10, "ada") + %w[nomatch]
+    expect(ids(described_class.new(q: words.join(" ")))).to eq([ada.id])
   end
 
   it "pages 35 at a time" do

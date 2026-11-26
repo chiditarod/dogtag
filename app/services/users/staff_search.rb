@@ -1,10 +1,12 @@
 # The staff users list: every user, searched and paged on the server.
 #
 # - q: case-insensitive words, each of which must match a user's first name, last name or email, or the
-#   name of one of their teams. A blank q lists everyone.
+#   name of one of their teams (the first 10 words count). A blank q lists everyone.
 module Users
   class StaffSearch
     PER_PAGE = 35
+    # Words past this are ignored, so a pasted paragraph cannot build a huge query.
+    MAX_WORDS = 10
     # A page past this is clamped, so a huge page number cannot overflow the OFFSET.
     MAX_PAGE = 10_000
 
@@ -14,7 +16,7 @@ module Users
     SQL
 
     def initialize(q: nil, page: nil)
-      @words = q.to_s.split
+      @words = q.to_s.split.first(MAX_WORDS)
       @page = (Integer(page.to_s, 10, exception: false) || 1).clamp(1, MAX_PAGE)
     end
 
