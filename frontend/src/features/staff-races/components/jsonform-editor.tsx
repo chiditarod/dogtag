@@ -60,9 +60,7 @@ export function JsonformEditor({ value, onChange, filterField, onFilterFieldChan
     ? undefined
     : parsed.location
       ? t('staff.races.form.parseError', { ...parsed.location, message: parsed.message })
-      : parsed.message === t('staff.races.form.noSchema')
-        ? parsed.message
-        : t('staff.races.form.parseErrorPlain', { message: parsed.message });
+      : t('staff.races.form.parseErrorPlain', { message: parsed.message });
   const messages = [parseMessage, ...error].filter((message): message is string => !!message);
 
   const keys = good?.keys ?? [];
@@ -100,6 +98,9 @@ export function JsonformEditor({ value, onChange, filterField, onFilterFieldChan
             />
           )}
         </Field>
+        {parsed.ok && !jsonform && (
+          <p className="text-sm text-navy/80 lg:col-start-1">{t('staff.races.form.noQuestions')}</p>
+        )}
         {!parsed.ok && jsonform && (
           <p className="text-sm text-navy/80 lg:col-start-1">{t('staff.races.form.previewStale')}</p>
         )}

@@ -82,11 +82,9 @@ describe('parseJsonform', () => {
     }
   });
 
-  it('rejects JSON that has no schema with properties', () => {
-    for (const text of ['[]', '{}', '{"schema": {}}', '"x"', 'null']) {
-      const result = parseJsonform(text);
-      expect(result.ok).toBe(false);
-      expect(!result.ok && result.message).toMatch(/schema/i);
+  it('treats valid JSON without schema properties as no questions', () => {
+    for (const text of ['[]', '{}', '{"schema": {}}', '{"schema": {"properties": {}}}', '"x"', 'null']) {
+      expect(parseJsonform(text), text).toEqual({ ok: true, jsonform: null, keys: [], titles: {} });
     }
   });
 });

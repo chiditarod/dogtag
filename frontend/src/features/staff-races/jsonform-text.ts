@@ -1,5 +1,4 @@
 import type { Jsonform } from '@/features/questions/types';
-import { t } from '@/locales/en';
 
 export interface JsonLocation {
   line: number;
@@ -126,7 +125,7 @@ export type ParsedJsonform =
   | { ok: true; jsonform: Jsonform | null; keys: string[]; titles: Record<string, string> }
   | { ok: false; message: string; location: JsonLocation | null };
 
-/** What the editor needs from the text: the parsed questions, or why they cannot be read. Blank is "no questions". */
+/** What the editor needs from the text: the parsed questions, or why they cannot be read. Blank, or JSON with no questions, is "no questions". */
 export function parseJsonform(text: string): ParsedJsonform {
   if (text.trim() === '') return { ok: true, jsonform: null, keys: [], titles: {} };
 
@@ -139,12 +138,14 @@ export function parseJsonform(text: string): ParsedJsonform {
     return { ok: false, message: bareMessage(error), location };
   }
 
+  // Questions are optional: valid JSON with no `schema.properties` is a race with no questions.
   const properties = (value as { schema?: { properties?: unknown } } | null)?.schema?.properties;
-  if (typeof properties !== 'object' || properties === null || Array.isArray(properties)) {
-    return { ok: false, message: t('staff.races.form.noSchema'), location: null };
-  }
+  const entries =
+    typeof properties === 'object' && properties !== null && !Array.isArray(properties)
+      ? Object.entries(properties as Record<string, { title?: unknown } | null>)
+      : [];
+  if (entries.length === 0) return { ok: true, jsonform: null, keys: [], titles: {} };
 
-  const entries = Object.entries(properties as Record<string, { title?: unknown } | null>);
   return {
     ok: true,
     jsonform: value as Jsonform,

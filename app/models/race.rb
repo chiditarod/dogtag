@@ -105,7 +105,7 @@ class Race < ApplicationRecord
 
   def question_fields
     return [] unless jsonform.present?
-    JSON.parse(jsonform)['schema']['properties'].keys
+    JSON.parse(jsonform).dig('schema', 'properties')&.keys || []
   rescue => e
     Rails.logger.error "Could not retrieve possible jsonschema filter fields: #{e}"
     []

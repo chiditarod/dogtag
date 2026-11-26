@@ -65,13 +65,15 @@ describe('JsonformEditor', () => {
     expect(preview().getByText('What type of team are you?')).toBeInTheDocument();
   });
 
-  it('says what is missing when the JSON has no schema', () => {
+  it('says the race has no questions when the JSON has no schema, and drops the preview', () => {
     render(<Harness />);
 
     edit('{"form": []}');
 
-    expect(screen.getByText(/needs a "schema" with "properties"/i)).toBeInTheDocument();
-    expect(screen.getByText('Preview shows the last version that parsed.')).toBeInTheDocument();
+    expect(screen.getByText('This race has no questions.')).toBeInTheDocument();
+    expect(textarea()).toBeValid();
+    expect(screen.queryByRole('region', { name: 'Preview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   it('shows the server error under the editor', () => {

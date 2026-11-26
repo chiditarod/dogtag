@@ -210,6 +210,14 @@ describe Race do
       end
     end
 
+    context 'when the json has no schema' do
+      let(:race) { FactoryBot.build :race_with_jsonform, json_data: '{}' }
+
+      it 'returns empty array' do
+        expect(race.question_fields).to eq([])
+      end
+    end
+
     context 'when json is malformed' do
       let(:race) { FactoryBot.build :race_with_jsonform, json_data: '{' }
 

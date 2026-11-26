@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -185,6 +185,27 @@ describe('RaceForm (edit)', () => {
     expect(sent.body).toBeNull();
   });
 
+  it('saves blank questions as null, since questions are optional', async () => {
+    const { sent } = await openEdit();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Questions JSON' }), { target: { value: '  \n' } });
+    expect(screen.getByText('This race has no questions.')).toBeInTheDocument();
+    await userEvent.click(save());
+
+    await waitFor(() => expect(sent.body).not.toBeNull());
+    expect(sent.body?.race).toEqual({ jsonform: null, filter_field: [] });
+  });
+
+  it('saves valid JSON that has no questions as typed', async () => {
+    const { sent } = await openEdit();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Questions JSON' }), { target: { value: '{}' } });
+    await userEvent.click(save());
+
+    await waitFor(() => expect(sent.body).not.toBeNull());
+    expect(sent.body?.race).toEqual({ jsonform: '{}', filter_field: [] });
+  });
+
   it('sends the zone with all four dates when the zone changes', async () => {
     const { sent } = await openEdit();
 
@@ -249,6 +270,93 @@ describe('RaceForm (edit)', () => {
 
     type('Confirmation text (Markdown)', '');
     expect(screen.queryByRole('region', { name: t('staff.races.form.confirmationPreview') })).not.toBeInTheDocument();
+  });
+});
+
+describe('RaceForm leaving with changes', () => {
+  const discardDialog = () => screen.queryByRole('dialog', { name: t('staff.races.form.discardTitle') });
+  const cancel = () => screen.getByRole('link', { name: t('staff.races.form.cancel') });
+  const here = (router: { state: { location: { pathname: string } } }) => router.state.location.pathname;
+
+  it('asks before Cancel drops changes, and Keep editing stays with the changes', async () => {
+    const { router } = await openEdit();
+    type('Name', 'CHIditarod 2028');
+
+    await userEvent.click(cancel());
+
+    expect(await screen.findByRole('dialog', { name: 'Discard changes?' })).toBeInTheDocument();
+    expect(screen.getByText("Your changes to this race haven't been saved.")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keep editing' })).toHaveFocus();
+    expect(here(router)).toBe('/register/staff/races/7/edit');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Keep editing' }));
+    expect(discardDialog()).not.toBeInTheDocument();
+    expect(here(router)).toBe('/register/staff/races/7/edit');
+    expect(field('Name')).toHaveValue('CHIditarod 2028');
+  });
+
+  it('treats Escape as Keep editing', async () => {
+    const { router } = await openEdit();
+    type('Name', 'CHIditarod 2028');
+    await userEvent.click(cancel());
+    await screen.findByRole('dialog', { name: 'Discard changes?' });
+
+    await userEvent.keyboard('{Escape}');
+
+    expect(discardDialog()).not.toBeInTheDocument();
+    expect(here(router)).toBe('/register/staff/races/7/edit');
+  });
+
+  it('leaves when the changes are discarded', async () => {
+    const { router } = await openEdit();
+    type('Name', 'CHIditarod 2028');
+    await userEvent.click(cancel());
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }));
+
+    await waitFor(() => expect(here(router)).toBe('/register/staff/races/7'));
+    expect(discardDialog()).not.toBeInTheDocument();
+  });
+
+  it('asks for the back link and the staff nav too', async () => {
+    const { router } = await openEdit();
+    type('Name', 'CHIditarod 2028');
+
+    await userEvent.click(screen.getByRole('link', { name: /^‹ / }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Keep editing' }));
+    await userEvent.click(screen.getByRole('link', { name: t('staff.nav.payments') }));
+
+    expect(await screen.findByRole('dialog', { name: 'Discard changes?' })).toBeInTheDocument();
+    expect(here(router)).toBe('/register/staff/races/7/edit');
+  });
+
+  it('asks on browser back within the app', async () => {
+    const { router } = await openEdit();
+    await act(() => router.navigate('/staff/races/7/edit?step=2'));
+    type('Name', 'CHIditarod 2028');
+
+    await act(() => router.navigate(-1));
+
+    expect(await screen.findByRole('dialog', { name: 'Discard changes?' })).toBeInTheDocument();
+  });
+
+  it('leaves a clean form without asking', async () => {
+    const { router } = await openEdit();
+
+    await userEvent.click(cancel());
+
+    await waitFor(() => expect(here(router)).toBe('/register/staff/races/7'));
+    expect(discardDialog()).not.toBeInTheDocument();
+  });
+
+  it('opens the overview after a save without asking', async () => {
+    const { router } = await openEdit();
+    type('Name', 'CHIditarod 2028');
+
+    await userEvent.click(save());
+
+    await waitFor(() => expect(here(router)).toBe('/register/staff/races/7'));
+    expect(discardDialog()).not.toBeInTheDocument();
   });
 });
 

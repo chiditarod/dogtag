@@ -138,6 +138,15 @@ test.describe('SPA staff races', () => {
     await expect(page.getByRole('heading', { name: 'Edit race' })).toBeVisible();
     await expect(page.getByLabel('Registration closes')).toHaveValue(CLOSE_AT_MIDNIGHT);
 
+    // Leaving with changes asks first; Keep editing stays on the form.
+    await page.getByLabel('Name', { exact: true }).fill(`${c.new_name} (edited)`);
+    await page.getByRole('link', { name: 'Cancel' }).click();
+    await expect(page.getByRole('dialog', { name: 'Discard changes?' })).toBeVisible();
+    await page.getByRole('button', { name: 'Keep editing' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByLabel('Name', { exact: true })).toHaveValue(`${c.new_name} (edited)`);
+    await page.getByLabel('Name', { exact: true }).fill(c.new_name);
+
     await page.getByLabel('Time zone').selectOption('America/New_York');
     await expect(page.getByRole('note')).toContainText('America/Chicago to America/New_York');
     await page.getByRole('button', { name: 'Save race' }).click();
