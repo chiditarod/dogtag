@@ -61,8 +61,23 @@ describe('checkPrice', () => {
     );
   });
 
-  it('ignores the tier being edited because it is not in others', () => {
-    expect(checkPrice({ ...ok, price: '120' }, [], ZONE, NOW).errors).toEqual({});
+  it('compares only with the prices it is given, so the one being edited is left out of them', () => {
+    const editing = tier({ id: 1, price_cents: 12000, begin_at: '2027-01-01T06:00:00Z' });
+    const other = tier({ id: 2, price_cents: 14000, begin_at: '2027-02-01T06:00:00Z' });
+    const mine = { price: '120', begin: '2027-01-01T00:00' };
+
+    // The caller passes the fee's other prices: the edited price's own values are not duplicates ...
+    expect(checkPrice(mine, [other], ZONE, NOW).errors).toEqual({});
+    // ... and the same values are duplicates when that price is (wrongly) among them.
+    expect(checkPrice(mine, [editing, other], ZONE, NOW).errors).toEqual({
+      price: 'This fee already has a $120 price.',
+      begin_at: 'A price already starts at this time.',
+    });
+    // Another price's values still are.
+    expect(checkPrice({ price: '140', begin: '2027-02-01T00:00' }, [other], ZONE, NOW).errors).toEqual({
+      price: 'This fee already has a $140 price.',
+      begin_at: 'A price already starts at this time.',
+    });
   });
 
   it('reports a start the zone skips', () => {

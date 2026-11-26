@@ -14,6 +14,7 @@ import { t } from '@/locales/en';
 import { FEE_TYPE_LABELS, type Fee, type FeeRace } from '../api/types';
 import { useFee, useRenameFee } from '../api/use-staff-fees';
 import { DeleteFee } from './delete-fee';
+import { PricesTable } from './prices-table';
 import { RightNowCard } from './right-now-card';
 
 const link = 'font-semibold text-link hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-link';
@@ -67,7 +68,7 @@ function NameCard({ fee, draft, onDraft }: { fee: Fee; draft: string | null; onD
             {failure}
           </p>
         )}
-        <Button type="submit" loading={rename.isPending} disabled={name.trim() === '' || name === fee.name}>
+        <Button type="submit" loading={rename.isPending} disabled={name.trim() === '' || name.trim() === fee.name}>
           {t('staff.fees.saveName')}
         </Button>
       </form>
@@ -79,9 +80,9 @@ export function FeePage({ raceId, feeId }: { raceId: string | undefined; feeId: 
   const { data, isPending, isError, error, refetch } = useFee(feeId);
   // `null` while the name is untouched; set by typing, cleared once saved.
   const [nameDraft, setNameDraft] = useState<string | null>(null);
-  // Task 7's open price form reports its unsaved changes here.
-  const [priceFormDirty] = useState(false);
-  const nameDirty = nameDraft !== null && nameDraft !== data?.requirement.name;
+  // The open price form reports its unsaved changes here.
+  const [priceFormDirty, setPriceFormDirty] = useState(false);
+  const nameDirty = nameDraft !== null && nameDraft.trim() !== data?.requirement.name;
   const { blocker, allowLeave } = useLeaveGuard(nameDirty || priceFormDirty);
 
   if (isPending) return <QueryLoading />;
@@ -115,6 +116,8 @@ export function FeePage({ raceId, feeId }: { raceId: string | undefined; feeId: 
         <NameCard fee={fee} draft={nameDraft} onDraft={setNameDraft} />
         <RightNowCard fee={fee} race={race} />
       </div>
+
+      <PricesTable fee={fee} race={race} onDirtyChange={setPriceFormDirty} />
 
       {blocker.state === 'blocked' && (
         <DiscardDialog body={t('staff.fees.discardBody')} onKeep={() => blocker.reset()} onDiscard={() => blocker.proceed()} />

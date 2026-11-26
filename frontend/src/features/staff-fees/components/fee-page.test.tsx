@@ -6,9 +6,8 @@ import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
 import { server } from '@/test/server';
-import { staffRace, TIME_ZONES } from '@/features/staff-races/test-fixtures';
 import type { Fee, FeeResponse } from '../api/types';
-import { feeResponse } from '../test-fixtures';
+import { feeResponse, raceOverview, TIME_ZONES } from '../test-fixtures';
 
 const here = (router: { state: { location: { pathname: string; search: string } } }) =>
   router.state.location.pathname;
@@ -31,7 +30,7 @@ function serve(response: FeeResponse, roles = ['admin']) {
       return new HttpResponse(null, { status: 204 });
     }),
     http.get(`/api/v1/staff/races/${response.race.id}`, () =>
-      HttpResponse.json({ race: staffRace({ id: response.race.id }), time_zones: TIME_ZONES }),
+      HttpResponse.json({ race: raceOverview(response.race.id), time_zones: TIME_ZONES }),
     ),
     http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })),
   );
@@ -158,6 +157,16 @@ describe('staff fee page name', () => {
     expect(await screen.findByRole('heading', { name: 'Cart Deposit', level: 1 })).toBeInTheDocument();
     expect(requests).toEqual([{ method: 'PATCH', body: { requirement: { name: 'Cart Deposit' } } }]);
     expect(screen.getByRole('button', { name: 'Save name' })).toBeDisabled();
+  });
+
+  it('treats a name that differs only by surrounding spaces as unchanged', async () => {
+    const { router } = await open(fee());
+    await userEvent.type(nameInput(), '  ');
+    expect(screen.getByRole('button', { name: 'Save name' })).toBeDisabled();
+
+    await userEvent.click(screen.getByRole('link', { name: '‹ CHIditarod 2027' }));
+    await waitFor(() => expect(here(router)).toBe('/register/staff/races/7'));
+    expect(dialog()).not.toBeInTheDocument();
   });
 
   it('shows the server error under the name', async () => {
