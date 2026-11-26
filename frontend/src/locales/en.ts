@@ -8,6 +8,7 @@ export const en = {
   'layout.logout': 'Log out',
   'layout.staff': 'Staff',
   'staff.nav': 'Staff',
+  'staff.nav.races': 'Races',
   'staff.nav.payments': 'Payments',
   'staff.nav.legacy': 'Legacy admin',
   'staff.payments.heading': 'Payments',

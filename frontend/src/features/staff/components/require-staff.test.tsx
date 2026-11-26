@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -56,10 +56,16 @@ describe('staff routes', () => {
     expect(screen.queryByRole('heading', { name: t('notFound.heading') })).not.toBeInTheDocument();
   });
 
-  it('/staff redirects to /staff/payments', async () => {
-    asUser(['admin']);
+  it('/staff redirects a refunder to /staff/payments', async () => {
+    asUser(['refunder']);
     const { router } = renderApp('/staff');
     expect(await screen.findByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/register/staff/payments');
+  });
+
+  it('/staff redirects an admin to the first nav item, /staff/races', async () => {
+    asUser(['admin']);
+    const { router } = renderApp('/staff');
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/register/staff/races'));
   });
 });

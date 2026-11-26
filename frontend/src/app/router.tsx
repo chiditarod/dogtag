@@ -1,7 +1,6 @@
 import {
   createBrowserRouter,
   Link,
-  Navigate,
   Outlet,
   type RouteObject,
 } from 'react-router-dom';
@@ -17,6 +16,7 @@ import { TeamRoute } from '@/app/routes/team';
 import { TeamsRoute } from '@/app/routes/teams';
 import { RequireAuth } from '@/features/auth/components/require-auth';
 import { RequireStaff } from '@/features/staff/components/require-staff';
+import { StaffIndexRedirect } from '@/features/staff/components/staff-index-redirect';
 import { t } from '@/locales/en';
 
 export const BASENAME = '/register';
@@ -81,7 +81,7 @@ export const routes: RouteObject[] = [
           </RequireAuth>
         ),
         children: [
-          { index: true, element: <Navigate to="payments" replace /> },
+          { index: true, element: <StaffIndexRedirect /> },
           { path: 'payments', element: <StaffPaymentsRoute /> },
           { path: '*', element: <NotFound /> },
         ],
