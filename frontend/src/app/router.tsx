@@ -11,6 +11,7 @@ import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
+import { StaffFeeNewRoute } from '@/features/staff-fees/routes/staff-fee-new-route';
 import { StaffFeeRoute } from '@/features/staff-fees/routes/staff-fee-route';
 import { StaffRaceEditRoute } from '@/features/staff-races/routes/staff-race-edit-route';
 import { StaffRaceNewRoute } from '@/features/staff-races/routes/staff-race-new-route';
@@ -84,6 +85,7 @@ export const routes: RouteObject[] = [
               { path: 'races/new', element: <StaffRaceNewRoute /> },
               { path: 'races/:raceId', element: <StaffRaceRoute /> },
               { path: 'races/:raceId/edit', element: <StaffRaceEditRoute /> },
+              { path: 'races/:raceId/requirements/new', element: <StaffFeeNewRoute /> },
               { path: 'races/:raceId/requirements/:requirementId', element: <StaffFeeRoute /> },
             ],
           },

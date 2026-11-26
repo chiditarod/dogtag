@@ -559,6 +559,13 @@ export const en = {
   'staff.fees.deletePriceBody':
     "Teams that haven't paid will pay whichever price applies instead. Teams that already paid are not affected.",
   'staff.fees.priceDollarsPrefix': '$',
+  'staff.fees.newTitle': 'Add a fee',
+  'staff.fees.nameBlank': 'Enter a name.',
+  'staff.fees.type': 'Type',
+  'staff.fees.typeMockHelp': '"Test payment (no card)" is offered on staging and local only.',
+  'staff.fees.firstPrice': 'First price',
+  'staff.fees.firstStartHelp': 'Prefilled with registration opening. You can add more prices after saving.',
+  'staff.fees.addFee': 'Add fee',
 } as const;
 
 /** Looks up a string; `{name}` placeholders are filled from `vars`. */
