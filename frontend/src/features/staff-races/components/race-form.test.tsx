@@ -189,21 +189,21 @@ describe('RaceForm (edit)', () => {
     const { sent } = await openEdit();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Questions JSON' }), { target: { value: '  \n' } });
-    expect(screen.getByText('This race has no questions.')).toBeInTheDocument();
+    expect(screen.getByText('No questions: this will be saved as a race without questions.')).toBeInTheDocument();
     await userEvent.click(save());
 
     await waitFor(() => expect(sent.body).not.toBeNull());
     expect(sent.body?.race).toEqual({ jsonform: null, filter_field: [] });
   });
 
-  it('saves valid JSON that has no questions as typed', async () => {
+  it('saves valid JSON that has no questions as null', async () => {
     const { sent } = await openEdit();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Questions JSON' }), { target: { value: '{}' } });
     await userEvent.click(save());
 
     await waitFor(() => expect(sent.body).not.toBeNull());
-    expect(sent.body?.race).toEqual({ jsonform: '{}', filter_field: [] });
+    expect(sent.body?.race).toEqual({ jsonform: null, filter_field: [] });
   });
 
   it('sends the zone with all four dates when the zone changes', async () => {

@@ -65,12 +65,12 @@ describe('JsonformEditor', () => {
     expect(preview().getByText('What type of team are you?')).toBeInTheDocument();
   });
 
-  it('says the race has no questions when the JSON has no schema, and drops the preview', () => {
+  it('says it will save as a race without questions when the JSON has no schema, and drops the preview', () => {
     render(<Harness />);
 
     edit('{"form": []}');
 
-    expect(screen.getByText('This race has no questions.')).toBeInTheDocument();
+    expect(screen.getByText('No questions: this will be saved as a race without questions.')).toBeInTheDocument();
     expect(textarea()).toBeValid();
     expect(screen.queryByRole('region', { name: 'Preview' })).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();

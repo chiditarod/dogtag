@@ -1,6 +1,7 @@
 import { toWallClock } from '@/lib/zoned-time';
 import type { RacePayload, StaffRace, StaffRaceDefaults } from './api/types';
 import { DATE_FIELDS, type DateField } from './date-checks';
+import { parseJsonform } from './jsonform-text';
 
 /** What the form holds. Numbers stay text while typed; dates are `datetime-local` wall clocks in `time_zone`. */
 export interface RaceFormValues extends Record<DateField, string> {
@@ -47,7 +48,11 @@ const FIELDS: { [K in Exclude<keyof RacePayload, DateField | 'time_zone'>]-?: (v
   name: (v) => v.name,
   max_teams: (v) => number(v.max_teams),
   people_per_team: (v) => number(v.people_per_team),
-  jsonform: (v) => blankToNull(v.jsonform),
+  // Blank text and JSON that defines no questions are both a race without questions, which the server stores as null.
+  jsonform: (v) => {
+    const parsed = parseJsonform(v.jsonform);
+    return parsed.ok && parsed.jsonform === null ? null : v.jsonform;
+  },
   experience_labels_text: (v) => v.experience_labels_text,
   classy_campaign_id: (v) => number(v.classy_campaign_id),
   classy_default_goal: (v) => number(v.classy_default_goal),

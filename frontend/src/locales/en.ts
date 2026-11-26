@@ -113,7 +113,7 @@ export const en = {
   'staff.races.form.questionsJson': 'Questions JSON',
   'staff.races.form.parseError': 'Line {line}, column {column}: {message}',
   'staff.races.form.parseErrorPlain': 'Not valid JSON: {message}',
-  'staff.races.form.noQuestions': 'This race has no questions.',
+  'staff.races.form.noQuestions': 'No questions: this will be saved as a race without questions.',
   'staff.races.form.previewRegion': 'Preview',
   'staff.races.form.previewCaption': 'Preview: what racers see. Answers here are not saved.',
   'staff.races.form.previewStale': 'Preview shows the last version that parsed.',
