@@ -166,7 +166,9 @@ export function FeeCard({
   }
   if (fee.done || fee.items.length === 0) {
     return (
-      <p className="text-base text-navy">{fee.done ? t('fee.noneDue') : t('fee.notAvailable')}</p>
+      <p className="text-base text-navy">
+        {fee.done ? t('fee.noneDue') : t('fee.notAvailable')}
+      </p>
     );
   }
 
@@ -180,8 +182,9 @@ export function FeeCard({
   const gaps = staffPay && payable ? staffPayGaps(team) : [];
 
   const isMock = (item: FeeItem) =>
-    race.payment_requirements.find((requirement) => requirement.id === item.requirement_id)
-      ?.type === MOCK_TYPE;
+    race.payment_requirements.find(
+      (requirement) => requirement.id === item.requirement_id,
+    )?.type === MOCK_TYPE;
 
   function handleError(item: FeeItem, error: unknown) {
     if (reportError(error)) return; // 403: page banner, which also refetches.
@@ -193,7 +196,10 @@ export function FeeCard({
     }
     setMessage({
       requirementId: item.requirement_id,
-      text: error instanceof ApiError && error.error ? error.error : t('common.genericError'),
+      text:
+        error instanceof ApiError && error.error
+          ? error.error
+          : t('common.genericError'),
     });
   }
 
@@ -251,10 +257,7 @@ export function FeeCard({
         return;
       }
       if (!race.stripe_publishable_key) {
-        setMessage({
-          requirementId: item.requirement_id,
-          text: t('fee.unavailable'),
-        });
+        setMessage({ requirementId: item.requirement_id, text: t('fee.unavailable') });
         return;
       }
       let current;
@@ -278,10 +281,7 @@ export function FeeCard({
           name: race.name,
         });
       } catch {
-        setMessage({
-          requirementId: item.requirement_id,
-          text: t('fee.unavailable'),
-        });
+        setMessage({ requirementId: item.requirement_id, text: t('fee.unavailable') });
         return;
       }
       // Popup closed without paying: quietly allow another try.
@@ -329,16 +329,16 @@ export function FeeCard({
             }
             disabled={processing}
             processing={processing && activeId === item.requirement_id}
-            message={message?.requirementId === item.requirement_id ? message.text : null}
+            message={
+              message?.requirementId === item.requirement_id ? message.text : null
+            }
             focusPaid={focusPaid}
             timeZone={race.time_zone}
             onPay={() => void handlePay(item)}
           />
         ))}
       </ul>
-      {waitingOnRoster && !staffPay && (
-        <p className="text-base text-navy">{t('fee.rosterFirst')}</p>
-      )}
+      {waitingOnRoster && !staffPay && <p className="text-base text-navy">{t('fee.rosterFirst')}</p>}
     </div>
   );
 }

@@ -100,7 +100,10 @@ describe('staffPermissions', () => {
       deleteTeam: false,
       staffPay: false,
       staffLinks: true,
+      pay: false,
     });
+    // A refunder on their own team may still pay as a racer; the server authorizes :edit for the owner.
+    expect(staffPermissions(team, buildStaffTeam(noCan), 7).pay).toBe(true);
   });
 
   it('keeps the finalized and complete-but-captain guards on remove', () => {

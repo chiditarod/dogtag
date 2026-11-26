@@ -816,6 +816,24 @@ describe('FeeCard as staff', () => {
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  it("shows a refunder no Pay on someone else's full-roster team, so Checkout never opens", async () => {
+    serve({});
+    asStaff({});
+    renderApp('/teams/9');
+    const fee = await card();
+    await fee.findByText('$300', { selector: 'p' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+    expect(checkout).not.toHaveBeenCalled();
+  });
+
+  it('shows a refunder the ordinary Pay on their own team', async () => {
+    serve({});
+    asStaff({}, { id: 7, ownerId: 7 });
+    renderApp('/teams/9');
+    expect(await (await card()).findByRole('button', { name: 'Pay $300' })).toBeEnabled();
+  });
+
   it('links each paid line of the finalized summary to Payments', async () => {
     serve({
       checklist: {

@@ -77,7 +77,8 @@ export function staffPermissions(
     deleteTeam: can.delete_team,
     pastRacers: racer.pastRacers && isAccountHolder,
     addYourself: racer.addYourself && isAccountHolder,
-    pay: true,
+    // The server authorizes :edit for a card charge: the owner, or staff who can take payment.
+    pay: isAccountHolder || can.take_payment,
     staffPay: can.take_payment,
     staffLinks: true,
     closedForRacersNote: team.race.registration_status === 'closed' && can.update_team,
