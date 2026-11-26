@@ -69,6 +69,12 @@ describe('staff routes', () => {
     expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
   });
 
+  it('refunder typing a fee path sees not allowed', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races/7/requirements/3');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+  });
+
   it('operator sees the races page', async () => {
     asUser(['operator']);
     server.use(http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })));

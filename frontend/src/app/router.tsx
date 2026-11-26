@@ -1,9 +1,9 @@
 import {
   createBrowserRouter,
-  Link,
   Outlet,
   type RouteObject,
 } from 'react-router-dom';
+import { NotFound } from '@/components/ui/not-found';
 import { StaffLayout } from '@/components/layouts/staff-layout';
 import { RegisterLayout } from '@/components/layouts/register-layout';
 import { ForgotPasswordRoute } from '@/app/routes/forgot-password';
@@ -11,6 +11,7 @@ import { NewTeamRoute } from '@/app/routes/new-team';
 import { RacesRoute } from '@/app/routes/races';
 import { LoginRoute } from '@/app/routes/login';
 import { StaffPaymentsRoute } from '@/app/routes/staff-payments';
+import { StaffFeeRoute } from '@/features/staff-fees/routes/staff-fee-route';
 import { StaffRaceEditRoute } from '@/features/staff-races/routes/staff-race-edit-route';
 import { StaffRaceNewRoute } from '@/features/staff-races/routes/staff-race-new-route';
 import { StaffRaceRoute } from '@/features/staff-races/routes/staff-race-route';
@@ -22,23 +23,8 @@ import { RequireAuth } from '@/features/auth/components/require-auth';
 import { RequireStaff } from '@/features/staff/components/require-staff';
 import { rolesFor } from '@/features/staff/nav';
 import { StaffIndexRedirect } from '@/features/staff/components/staff-index-redirect';
-import { t } from '@/locales/en';
 
 export const BASENAME = '/register';
-
-function NotFound() {
-  return (
-    <div className="space-y-2">
-      <h1 className="font-display text-2xl font-semibold">
-        {t('notFound.heading')}
-      </h1>
-      <p>{t('notFound.body')}</p>
-      <Link to="/" className="text-link underline">
-        {t('notFound.home')}
-      </Link>
-    </div>
-  );
-}
 
 export const routes: RouteObject[] = [
   {
@@ -98,6 +84,7 @@ export const routes: RouteObject[] = [
               { path: 'races/new', element: <StaffRaceNewRoute /> },
               { path: 'races/:raceId', element: <StaffRaceRoute /> },
               { path: 'races/:raceId/edit', element: <StaffRaceEditRoute /> },
+              { path: 'races/:raceId/requirements/:requirementId', element: <StaffFeeRoute /> },
             ],
           },
           { path: 'payments', element: <StaffPaymentsRoute /> },

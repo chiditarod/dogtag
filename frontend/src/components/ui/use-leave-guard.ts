@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useBlocker, type Blocker } from 'react-router-dom';
 
 /**
@@ -29,10 +29,10 @@ export function useLeaveGuard(dirty: boolean): { blocker: Blocker; allowLeave: (
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  return {
-    blocker,
-    allowLeave: () => {
-      leaving.current = true;
-    },
-  };
+  // Stable, so a caller can list it in an effect's dependencies.
+  const allowLeave = useCallback(() => {
+    leaving.current = true;
+  }, []);
+
+  return { blocker, allowLeave };
 }
