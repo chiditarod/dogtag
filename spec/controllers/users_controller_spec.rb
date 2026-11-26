@@ -262,7 +262,16 @@ describe UsersController do
 
         expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
 
-        expect(flash[:error]).to include('refund batches')
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
+      it 'refuses to delete a user who owns a team' do
+        owner = FactoryBot.create(:team).user
+
+        expect { delete :destroy, params: { :id => owner.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Owns 1 team. Delete or reassign them first.')
         expect(response).to redirect_to users_path
       end
 

@@ -75,6 +75,11 @@ class UsersController < ApplicationController
 
   def destroy
     @user = User.find params[:id]
+    if (reason = @user.deletion_blocker(by: current_user))
+      flash[:error] = reason
+      return redirect_to(users_path)
+    end
+
     try_to_delete(@user, users_path)
     # a user the database refuses to delete (e.g. one who made refund batches) says why
     flash[:error] = @user.errors.full_messages.to_sentence if flash[:error] && @user.errors.any?

@@ -158,4 +158,33 @@ describe User do
       expect(@user.fullname).to eq("#{@user.first_name} #{@user.last_name}")
     end
   end
+
+  describe '#deletion_blocker' do
+    let(:admin) { FactoryBot.create(:admin_user) }
+
+    it 'refuses to delete yourself' do
+      expect(admin.deletion_blocker(by: admin)).to eq("You can't delete your own account.")
+    end
+
+    it 'names the teams the user owns' do
+      owner = FactoryBot.create(:team).user
+      expect(owner.deletion_blocker(by: admin)).to eq("Owns 1 team. Delete or reassign them first.")
+      FactoryBot.create(:team, user: owner)
+      expect(owner.deletion_blocker(by: admin)).to eq("Owns 2 teams. Delete or reassign them first.")
+    end
+
+    it 'names the payments of a user with no team' do
+      payer = FactoryBot.create(:completed_requirement).user
+      expect(payer.deletion_blocker(by: admin)).to eq("Has 1 payment.")
+    end
+
+    it 'names refunds made' do
+      refunder = FactoryBot.create(:refund_batch).user
+      expect(refunder.deletion_blocker(by: admin)).to eq("Made refunds, which are kept as a record.")
+    end
+
+    it 'is nil for a bare user' do
+      expect(FactoryBot.create(:user).deletion_blocker(by: admin)).to be_nil
+    end
+  end
 end

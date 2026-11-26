@@ -75,6 +75,20 @@ class User < ApplicationRecord
     "#{first_name} #{last_name}"
   end
 
+  # Why this user cannot be deleted by `by`, or nil when they can. Teams and payments belong to the
+  # race record, and refund batches are the audit trail, so staff must not erase the people behind them.
+  def deletion_blocker(by:)
+    return "You can't delete your own account." if by.id == id
+
+    if (count = teams.count).positive?
+      "Owns #{count} #{"team".pluralize(count)}. Delete or reassign them first."
+    elsif (count = completed_requirements.count).positive?
+      "Has #{count} #{"payment".pluralize(count)}."
+    elsif refund_batches.exists?
+      "Made refunds, which are kept as a record."
+    end
+  end
+
   def reset_password!(host)
     reset_perishable_token!
     Workers::PasswordResetEmail.perform_async({'user_id' => self.id, 'host' => host})

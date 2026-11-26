@@ -24,4 +24,24 @@ describe SentEmail do
       expect(SentEmail.new(status: "sent")).not_to be_delivered
     end
   end
+
+  describe "KINDS" do
+    it "names every kind the mailers track" do
+      tracked = Dir[Rails.root.join("app/mailers/*.rb")].flat_map { |file| File.read(file).scan(/track\(kind: "([a-z_]+)"/).flatten }
+      expect(tracked).not_to be_empty
+      expect(SentEmail::KINDS).to include(*tracked)
+    end
+  end
+
+  describe "associations" do
+    it "reads a deleted team as nil" do
+      expect(SentEmail.new(team_id: 0).team).to be_nil
+    end
+
+    it "reads its team and user" do
+      row = FactoryBot.create(:sent_email, team: team, user: team.user)
+      expect(row.reload.team).to eq(team)
+      expect(row.user).to eq(team.user)
+    end
+  end
 end
