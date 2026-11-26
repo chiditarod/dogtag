@@ -21,12 +21,18 @@ class RaceDateParams
 
   def self.parse(value, zone)
     return [nil, "Enter a date and time"] if value.blank?
-    return [nil, "must be a date and time"] unless FORMAT.match?(value)
+    return [nil, "must be a date and time"] unless FORMAT.match?(value) && real_time?(value)
 
     time = zone.parse(value)
-    return [time, nil] if time && time.strftime("%Y-%m-%dT%H:%M") == value[0, 16]
+    return [time, nil] if time.strftime("%Y-%m-%dT%H:%M") == value[0, 16]
 
     [nil, "doesn't exist in #{zone.tzinfo.name}: the clocks jump forward that night"]
   end
-  private_class_method :parse
+
+  # The shape is right; check the parts exist (no month 13, February 30 or hour 25).
+  def self.real_time?(value)
+    year, month, day, hour, minute, second = value.scan(/\d+/).map(&:to_i)
+    Date.valid_date?(year, month, day) && hour < 24 && minute < 60 && second.to_i < 60
+  end
+  private_class_method :parse, :real_time?
 end

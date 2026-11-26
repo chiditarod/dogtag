@@ -45,6 +45,15 @@ RSpec.describe RaceDateParams do
     expect(errors["race_datetime"]).to eq(["must be a date and time"])
   end
 
+  it "rejects a shape-valid but impossible date without raising" do
+    %w[2026-13-45T00:00 2026-02-30T10:00 2026-12-07T25:00].each do |value|
+      parsed, errors = call("race_datetime" => value)
+
+      expect(parsed).not_to have_key("race_datetime"), value
+      expect(errors["race_datetime"]).to eq(["must be a date and time"]), value
+    end
+  end
+
   it "asks for a value when blank" do
     parsed, errors = call("race_datetime" => "", "registration_open" => nil)
 
