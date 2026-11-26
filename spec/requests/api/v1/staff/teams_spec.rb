@@ -87,6 +87,15 @@ describe "API v1 staff team", type: :request do
       expect(json["staff_team"]["captain"]).to be_nil
     end
 
+    it "gives a team whose owner is gone a null account holder" do
+      team.update_columns(user_id: owner.id + 100_000)
+      api_login(FactoryBot.create(:operator_user))
+      get "/api/v1/staff/teams/#{team.id}"
+
+      expect(response).to have_http_status(:ok)
+      expect(json["staff_team"]).to include("id" => team.id, "account_holder" => nil)
+    end
+
     it "gives a refunder the card read-only" do
       api_login(FactoryBot.create(:refunder_user))
       get "/api/v1/staff/teams/#{team.id}"

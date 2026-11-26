@@ -21,7 +21,12 @@ json.staff_team do
     json.captain nil
   end
   json.captain_inferred team.captain_inferred ? true : false
-  json.account_holder { person.call(json, team.user) }
+  # teams.user_id has no foreign key, so a legacy team can outlive its owner.
+  if team.user
+    json.account_holder { person.call(json, team.user) }
+  else
+    json.account_holder nil
+  end
   json.sent_emails_count @sent_emails_count
   json.payments @payments do |payment|
     json.id payment.id
