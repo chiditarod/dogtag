@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Field, Input } from '@/components/ui/field';
 import { formatDate, formatDeadline } from '@/lib/dates';
-import { fromWallClock, zoneAbbreviation } from '@/lib/zoned-time';
+import { fromWallClock, toWallClock, zoneAbbreviation } from '@/lib/zoned-time';
 import { t } from '@/locales/en';
 import { DATE_FIELDS, DATE_LABELS, checkDates, wallDay, type DateField } from '../date-checks';
 
@@ -25,21 +25,32 @@ interface RaceDatesCardProps {
 const select =
   'block min-h-11 w-full rounded-md border border-flag bg-white px-3 py-2 font-sans text-base text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-link aria-[invalid=true]:border-star';
 
-/** `opens Mon, Dec 7, 2026`: what racers read, which for a deadline at midnight is the day before. */
-function racersSee(field: DateField, iso: string, timeZone: string): string {
-  switch (field) {
-    case 'registration_open':
-      return t('staff.races.dates.seeOpens', { date: formatDate(iso, timeZone) });
-    case 'registration_close':
-      return t('staff.races.dates.seeCloses', { date: formatDeadline(iso, timeZone) });
-    case 'final_edits_close':
-      return t('staff.races.dates.seeFinalEdits', { date: formatDeadline(iso, timeZone) });
-    case 'race_datetime':
-      return t('staff.races.dates.seeRaceDay', { date: formatDate(iso, timeZone) });
-  }
+const DEADLINES: readonly DateField[] = ['registration_close', 'final_edits_close'];
+
+/** `11:59 PM CST`: the time racers are held to. A deadline at local midnight ends the minute before. */
+function racersSeeTime(field: DateField, wall: string, iso: string, timeZone: string): string {
+  const midnight = DEADLINES.includes(field) && wall.endsWith('T00:00');
+  const shownIso = midnight ? new Date(new Date(iso).getTime() - 60_000).toISOString() : iso;
+  const time = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', minute: '2-digit', hour12: true }).format(
+    new Date(shownIso),
+  );
+  return `${time} ${zoneAbbreviation(toWallClock(shownIso, timeZone), timeZone)}`.trim();
 }
 
-const DEADLINES: readonly DateField[] = ['registration_close', 'final_edits_close'];
+/** `opens Mon, Dec 7, 2026, 12:00 PM CST`: the racer-facing date (a midnight deadline shows the day before), then the time. */
+function racersSee(field: DateField, wall: string, iso: string, timeZone: string): string {
+  const time = racersSeeTime(field, wall, iso, timeZone);
+  switch (field) {
+    case 'registration_open':
+      return t('staff.races.dates.seeOpens', { date: formatDate(iso, timeZone), time });
+    case 'registration_close':
+      return t('staff.races.dates.seeCloses', { date: formatDeadline(iso, timeZone), time });
+    case 'final_edits_close':
+      return t('staff.races.dates.seeFinalEdits', { date: formatDeadline(iso, timeZone), time });
+    case 'race_datetime':
+      return t('staff.races.dates.seeRaceDay', { date: formatDate(iso, timeZone), time });
+  }
+}
 
 export function RaceDatesCard({
   timeZone,
@@ -120,7 +131,7 @@ export function RaceDatesCard({
                   </div>
                   {iso !== null && !problem && (
                     <p className="text-sm text-green-800">
-                      {t('staff.races.dates.racersSee', { text: racersSee(name, iso, timeZone) })}
+                      {t('staff.races.dates.racersSee', { text: racersSee(name, wall, iso, timeZone) })}
                     </p>
                   )}
                   {midnight && (

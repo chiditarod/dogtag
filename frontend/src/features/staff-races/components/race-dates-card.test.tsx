@@ -51,12 +51,19 @@ describe('RaceDatesCard', () => {
   it('shows what racers will see, with a midnight close shown as the day before', () => {
     render(<Harness />);
 
-    expect(screen.getByText('Racers see: opens Mon, Dec 7, 2026')).toBeInTheDocument();
-    expect(screen.getByText('Racers see: closes Sun, Feb 14, 2027')).toBeInTheDocument();
-    expect(screen.getByText('Racers see: final edits until Sun, Mar 14, 2027')).toBeInTheDocument();
-    expect(screen.getByText('Racers see: race day Sat, Mar 20, 2027')).toBeInTheDocument();
+    expect(screen.getByText('Racers see: opens Mon, Dec 7, 2026, 12:00 PM CST')).toBeInTheDocument();
+    expect(screen.getByText('Racers see: closes Sun, Feb 14, 2027, 11:59 PM CST')).toBeInTheDocument();
+    expect(screen.getByText('Racers see: final edits until Sun, Mar 14, 2027, 11:59 PM CDT')).toBeInTheDocument();
+    expect(screen.getByText('Racers see: race day Sat, Mar 20, 2027, 10:00 AM CDT')).toBeInTheDocument();
     expect(screen.getByText('Midnight Feb 15 = racers see "Sun, Feb 14, 2027".')).toBeInTheDocument();
     expect(screen.getByText('Midnight Mar 15 = racers see "Sun, Mar 14, 2027".')).toBeInTheDocument();
+  });
+
+  it('shows the entered time, not 11:59 PM, for a deadline that is not at midnight or for race day at midnight', () => {
+    render(<Harness values={{ ...VALUES, registration_close: '2027-02-15T17:30', race_datetime: '2027-03-20T00:00' }} />);
+
+    expect(screen.getByText('Racers see: closes Mon, Feb 15, 2027, 5:30 PM CST')).toBeInTheDocument();
+    expect(screen.getByText('Racers see: race day Sat, Mar 20, 2027, 12:00 AM CDT')).toBeInTheDocument();
   });
 
   it('has no midnight hint for a time that is not midnight, or for the opening and race day', () => {
