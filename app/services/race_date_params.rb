@@ -6,12 +6,13 @@ class RaceDateParams
   FORMAT = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?\z/
 
   # Returns [parsed, errors]: attrs with each date string turned into a time in
-  # `zone`, and { field => [message] } for any that could not be.
-  def self.call(attrs, zone:)
+  # `zone`, and { field => [message] } for any that could not be. `fields` names
+  # the keys to parse (the race fields by default; a tier passes %w[begin_at]).
+  def self.call(attrs, zone:, fields: FIELDS)
     parsed = {}
     errors = {}
     attrs.each do |key, value|
-      next parsed[key] = value unless FIELDS.include?(key)
+      next parsed[key] = value unless fields.include?(key)
 
       time, error = parse(value, zone)
       error ? errors[key] = [error] : parsed[key] = time

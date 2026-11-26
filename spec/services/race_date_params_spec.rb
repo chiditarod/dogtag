@@ -78,4 +78,25 @@ RSpec.describe RaceDateParams do
     expect(parsed.keys).to contain_exactly("name", "race_datetime")
     expect(errors).to eq({})
   end
+
+  describe "with fields" do
+    it "parses the named fields only, for any date field" do
+      parsed, errors = described_class.call({ "begin_at" => "2027-02-01T00:00", "registration_open" => "2027-02-01T00:00" },
+        zone: zone, fields: %w[begin_at])
+
+      expect(parsed["begin_at"]).to eq(zone.parse("2027-02-01 00:00"))
+      expect(parsed["registration_open"]).to eq("2027-02-01T00:00")
+      expect(errors).to eq({})
+    end
+
+    it "applies the same refusals to those fields" do
+      _, gap = described_class.call({ "begin_at" => "2027-03-14T02:30" }, zone: zone, fields: %w[begin_at])
+      _, impossible = described_class.call({ "begin_at" => "2027-02-30T00:00" }, zone: zone, fields: %w[begin_at])
+      _, blank = described_class.call({ "begin_at" => "" }, zone: zone, fields: %w[begin_at])
+
+      expect(gap["begin_at"]).to eq(["doesn't exist in America/Chicago: the clocks jump forward that night"])
+      expect(impossible["begin_at"]).to eq(["must be a date and time"])
+      expect(blank["begin_at"]).to eq(["Enter a date and time"])
+    end
+  end
 end

@@ -69,6 +69,21 @@ describe RequirementsController do
         end.to change(Requirement, :count).by(-1)
       end
 
+      context 'when a team has paid it' do
+        let!(:paid) { FactoryBot.create :payment_requirement_with_tier }
+
+        before do
+          CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: paid, user: FactoryBot.create(:user))
+          delete :destroy, params: { :race_id => paid.race.id, :id => paid.id }
+        end
+
+        it 'keeps the fee and sets the failure flash' do
+          expect(Requirement.exists?(paid.id)).to be true
+          expect(flash[:error]).to eq(I18n.t('destroy_failed'))
+          expect(response).to redirect_to(race_url(paid.race))
+        end
+      end
+
       context 'with valid id' do
         before do
           delete :destroy, params: { :race_id => req.race.id, :id => req.id }

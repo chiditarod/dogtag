@@ -141,4 +141,53 @@ describe Requirement do
     end
   end
 
+  describe "payment counts and destroy" do
+    let(:fee) { FactoryBot.create :payment_requirement_with_tier }
+
+    def pay(refunded_at: nil)
+      CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: fee,
+        user: FactoryBot.create(:user), refunded_at: refunded_at)
+    end
+
+    it "counts paid teams without the refunded ones" do
+      pay
+      pay(refunded_at: Time.current)
+
+      expect(fee.payments?).to be true
+      expect(fee.paid_team_count).to eq(1)
+    end
+
+    it "refuses to be destroyed once a team paid, and keeps its prices" do
+      pay
+
+      expect(fee.destroy_blocked_reason).to eq("Can't delete: 1 team has paid it.")
+      expect(fee.destroy).to be false
+      expect(fee.errors[:base]).to eq(["Can't delete: 1 team has paid it."])
+      expect(Requirement.exists?(fee.id)).to be true
+      expect(Tier.where(requirement_id: fee.id)).to exist
+    end
+
+    it "pluralises the count" do
+      2.times { pay }
+
+      expect(fee.destroy_blocked_reason).to eq("Can't delete: 2 teams have paid it.")
+    end
+
+    it "is still blocked when every payment was refunded" do
+      pay(refunded_at: Time.current)
+
+      expect(fee.paid_team_count).to eq(0)
+      expect(fee.destroy_blocked_reason).to eq("Can't delete: it has refunded payments.")
+      expect(fee.destroy).to be false
+      expect(Requirement.exists?(fee.id)).to be true
+    end
+
+    it "is destroyed with its prices when nobody paid" do
+      expect(fee.payments?).to be false
+      expect(fee.destroy_blocked_reason).to be_nil
+      expect(fee.destroy).to be_truthy
+      expect(Requirement.exists?(fee.id)).to be false
+      expect(Tier.where(requirement_id: fee.id)).not_to exist
+    end
+  end
 end

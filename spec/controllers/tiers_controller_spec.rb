@@ -75,6 +75,19 @@ describe TiersController do
         end.to change(Tier, :count).by(-1)
       end
 
+      context 'when it is the only price of a fee teams have paid' do
+        before do
+          CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: @req, user: FactoryBot.create(:user))
+          expect(@req.reload.tiers.count).to eq(1)
+          delete :destroy, params: { :id => @tier.id }
+        end
+
+        it 'keeps the price and sets the failure flash' do
+          expect(Tier.exists?(@tier.id)).to be true
+          expect(flash[:error]).to eq(I18n.t('destroy_failed'))
+        end
+      end
+
       context 'with valid id' do
         before do
           delete :destroy, params: { :id => @tier.id }

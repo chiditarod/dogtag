@@ -24,6 +24,8 @@ class Requirement < ApplicationRecord
   has_many :completed_requirements
   has_many :teams, :through => :completed_requirements
 
+  before_destroy :refuse_destroy_when_paid, prepend: true
+
   ALLOWED_TYPES = [['Payment', 'PaymentRequirement']]
   MOCK_TYPES = [["Mock payment", "MockPaymentRequirement"]]
 
@@ -32,6 +34,24 @@ class Requirement < ApplicationRecord
     def allowed_types
       Rails.env.production? ? ALLOWED_TYPES : ALLOWED_TYPES + MOCK_TYPES
     end
+  end
+
+  # A fee is never deletable once anyone paid it, refunded or not: the payment history hangs off it.
+  def payments?
+    completed_requirements.exists?
+  end
+
+  def paid_team_count
+    completed_requirements.where(refunded_at: nil).count
+  end
+
+  def destroy_blocked_reason
+    return unless payments?
+
+    count = paid_team_count
+    return "Can't delete: it has refunded payments." if count.zero?
+
+    "Can't delete: #{count} #{count == 1 ? "team has" : "teams have"} paid it."
   end
 
   def enabled?
@@ -66,5 +86,15 @@ class Requirement < ApplicationRecord
     cr.subscribe(CompletedRequirementAuditor.new)
     return cr if cr.save
     false
+  end
+
+  private
+
+  def refuse_destroy_when_paid
+    reason = destroy_blocked_reason
+    return unless reason
+
+    errors.add(:base, reason)
+    throw :abort
   end
 end

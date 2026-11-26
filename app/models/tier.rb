@@ -15,12 +15,32 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class Tier < ApplicationRecord
   validates :price, :numericality => { :only_integer => true, :greater_than_or_equal_to => 0 }
+  validates :begin_at, presence: true
   validates_with TierValidator
 
   # Single Table Inheritance: PaymentRequirement
   belongs_to :requirement
 
+  before_destroy :refuse_destroy_of_last_paid_price, prepend: true
+
+  # A paid fee keeps at least one price, or its payments would have nothing to show.
+  def destroy_blocked_reason
+    return unless requirement && requirement.payments? && Tier.where(requirement_id: requirement_id).count == 1
+
+    "Can't delete the only price of a fee teams have paid."
+  end
+
   def to_s
     "#{price}"
+  end
+
+  private
+
+  def refuse_destroy_of_last_paid_price
+    reason = destroy_blocked_reason
+    return unless reason
+
+    errors.add(:base, reason)
+    throw :abort
   end
 end

@@ -57,6 +57,6 @@ class PaymentRequirement < Requirement
   private
 
   def chronological_tiers
-    @chronological_tiers ||= tiers.sort_by(&:begin_at)
+    @chronological_tiers ||= tiers.select(&:begin_at).sort_by(&:begin_at)
   end
 end
