@@ -32,6 +32,13 @@ class Race < ApplicationRecord
   validate :time_zone_must_be_iana
   validates_with RaceValidator
 
+  # Questions are optional. Blank text, or JSON that defines no questions
+  # (no non-empty `schema.properties` object), is stored as nil so every
+  # reader (legacy questions page, API, SPA) sees "no questions". The SPA
+  # editor applies the same rule. JSON that doesn't parse is left for
+  # RaceValidator to reject.
+  before_validation :normalize_jsonform
+
   # Datetimes are stored in UTC; the race's IANA time zone is how admins
   # enter them and how racers see them.
   DEFAULT_TIME_ZONE = "America/Chicago".freeze
@@ -262,6 +269,17 @@ class Race < ApplicationRecord
   end
 
   private
+
+  def normalize_jsonform
+    return if jsonform.nil?
+    return self.jsonform = nil if jsonform.blank?
+
+    parsed = JSON.parse(jsonform)
+    properties = parsed["schema"]["properties"] if parsed.is_a?(Hash) && parsed["schema"].is_a?(Hash)
+    self.jsonform = nil unless properties.is_a?(Hash) && properties.any?
+  rescue JSON::ParserError
+    nil
+  end
 
   def jsonform_unparseable?
     return false if jsonform.blank?

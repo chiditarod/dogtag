@@ -93,6 +93,30 @@ describe Race do
       expect(FactoryBot.build(:race, time_zone: "US/Central")).not_to be_valid
     end
 
+    describe "jsonform with no questions" do
+      it "stores blank text and JSON without questions as nil" do
+        ["", "  ", "{}", "[]", "null", '{"schema":{}}', '{"schema":{"properties":{}},"form":[]}',
+         '{"schema":{"properties":[]}}'].each do |text|
+          race = FactoryBot.build(:race, jsonform: text)
+          expect(race).to be_valid, "#{text.inspect}: #{race.errors.full_messages}"
+          expect(race.jsonform).to be_nil, text.inspect
+        end
+      end
+
+      it "keeps JSON that defines questions" do
+        text = JSON.generate("schema" => { "properties" => { "q" => { "type" => "string" } } }, "form" => ["q"])
+        race = FactoryBot.create(:race, jsonform: text)
+        expect(race.reload.jsonform).to eq(text)
+      end
+
+      it "leaves JSON that doesn't parse for the validator" do
+        race = FactoryBot.build(:race, jsonform: "{nope")
+        expect(race).not_to be_valid
+        expect(race.jsonform).to eq("{nope")
+        expect(race.errors[:jsonform]).to be_present
+      end
+    end
+
     describe "jsonform showWhen" do
       def race_with_form(form, fire_details: {}, required: nil)
         schema = {
