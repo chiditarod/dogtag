@@ -45,13 +45,15 @@ class Requirement < ApplicationRecord
     completed_requirements.where(refunded_at: nil).count
   end
 
-  def destroy_blocked_reason
-    return unless payments?
+  # `counts` ({ total:, unrefunded: }) lets a list that already grouped the payments skip the queries.
+  def destroy_blocked_reason(counts = nil)
+    total = counts ? counts[:total] : (payments? ? 1 : 0)
+    return if total.zero?
 
-    count = paid_team_count
-    return "Can't delete: it has refunded payments." if count.zero?
+    unrefunded = counts ? counts[:unrefunded] : paid_team_count
+    return "Can't delete: it has refunded payments." if unrefunded.zero?
 
-    "Can't delete: #{count} #{count == 1 ? "team has" : "teams have"} paid it."
+    "Can't delete: #{unrefunded} #{unrefunded == 1 ? "team has" : "teams have"} paid it."
   end
 
   def enabled?

@@ -23,9 +23,13 @@ class Tier < ApplicationRecord
 
   before_destroy :refuse_destroy_of_last_paid_price, prepend: true
 
-  # A paid fee keeps at least one price, or its payments would have nothing to show.
-  def destroy_blocked_reason
-    return unless requirement && requirement.payments? && Tier.where(requirement_id: requirement_id).count == 1
+  # A paid fee keeps at least one price, or its payments would have nothing to show. A list that
+  # already knows whether the fee is paid and how many prices it has passes them in to skip the queries.
+  def destroy_blocked_reason(paid: nil, tier_count: nil)
+    return unless requirement
+
+    paid = requirement.payments? if paid.nil?
+    return unless paid && (tier_count || Tier.where(requirement_id: requirement_id).count) == 1
 
     "Can't delete the only price of a fee teams have paid."
   end

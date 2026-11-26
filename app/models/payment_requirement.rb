@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class PaymentRequirement < Requirement
-  has_many :tiers, :foreign_key => :requirement_id, :dependent => :delete_all
+  has_many :tiers, :foreign_key => :requirement_id, :dependent => :delete_all, :inverse_of => :requirement
 
   def stripe_params(team)
     metadata = JSON.generate(
