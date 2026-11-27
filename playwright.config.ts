@@ -107,7 +107,7 @@ export default defineConfig({
     navigationTimeout: 30 * 1000,
   },
 
-  /* Projects. local-suite is the legacy and seed-based SPA specs; it is
+  /* Projects. local-suite is the seed-based SPA specs (tests/spa); it is
      omitted on staging, where Rails commands are not available. */
   projects: [
     { name: 'unit', testMatch: /\.unit\.spec\.ts$/, use: { ...devices['Desktop Chrome'] } },
@@ -132,7 +132,6 @@ export default defineConfig({
     },
     {
       name: 'registration',
-      // Anchored: an unanchored pattern would also match user-registration.spec.ts.
       testMatch: /(^|[\\/])registration\.spec\.ts$/,
       dependencies: ['race-setup'],
       use: { ...devices['Desktop Chrome'], ...registrationRecording },
@@ -144,7 +143,7 @@ export default defineConfig({
       : [
           {
             name: 'local-suite',
-            testMatch: [/tests[\\/][^\\/]+\.spec\.ts$/, /tests[\\/]spa[\\/][^\\/]+\.spec\.ts$/],
+            testMatch: /tests[\\/]spa[\\/][^\\/]+\.spec\.ts$/,
             use: { ...devices['Desktop Chrome'] },
           },
         ]),
