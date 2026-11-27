@@ -16,7 +16,11 @@ const rows = (n: number) =>
 
 function setup(
   snapshot: StaffPayment[] = rows(5),
-  { current, latestRows }: { current?: Map<number, StaffPayment>; latestRows?: StaffPayment[] } = {},
+  {
+    current,
+    latestRows,
+    canReopen = true,
+  }: { current?: Map<number, StaffPayment>; latestRows?: StaffPayment[]; canReopen?: boolean } = {},
 ) {
   const onConfirmed = vi.fn();
   const onClose = vi.fn();
@@ -26,6 +30,7 @@ function setup(
         snapshot={snapshot}
         current={current ?? new Map(snapshot.map((row) => [row.id, row]))}
         latestRows={latestRows ?? snapshot}
+        canReopen={canReopen}
         onConfirmed={onConfirmed}
         onClose={onClose}
       />
@@ -127,6 +132,24 @@ describe('ConfirmRefundDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Refund and reopen 2 payments' }));
     await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
     expect(body).toMatchObject({ confirmation: 'REFUND 2', expected_total_cents: 10000, reopen: true });
+  });
+
+  it('a refunder gets no choice: the phrase alone enables Refund, which sends reopen false', async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.post('/api/v1/staff/refund_batches', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ batch: refundBatch({ id: 12 }) }, { status: 201 });
+      }),
+    );
+    const { onConfirmed } = setup(rows(2), { canReopen: false });
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.queryByText(t('staff.refund.choice.required'))).not.toBeInTheDocument();
+    await typeInto('REFUND 2');
+    await userEvent.click(confirmButton(2));
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
+    expect(body).toMatchObject({ confirmation: 'REFUND 2', reopen: false });
   });
 
   it('refuses when a refetch shows a selected row refunded', async () => {

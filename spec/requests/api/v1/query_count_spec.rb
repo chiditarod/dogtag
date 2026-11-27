@@ -52,9 +52,10 @@ describe "API v1 index query counts", type: :request do
       team = FactoryBot.create(:team, race: race)
       FactoryBot.create(:person, team: team)
       FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: "ch_#{n}", amount_cents: 5000,
-        refunded_at: (Time.current if n.even?), refunded_by: (FactoryBot.create(:refunder_user) if n.even?))
+        refunded_at: (Time.current if n.even?), refunded_by: (FactoryBot.create(:refunder_user) if n.even?),
+        reopened_at: (Time.current if n.even?), reopened_by: (FactoryBot.create(:operator_user) if n.even?))
     end
-    add_payment.call(2) # refunded, so the baseline already loads who refunded
+    add_payment.call(2) # refunded and reopened, so the baseline already loads who refunded and who reopened
     one = query_count { get "/api/v1/staff/payments" }
     [1, 3, 4, 5].each { |n| add_payment.call(n) }
 

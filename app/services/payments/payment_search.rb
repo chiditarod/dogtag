@@ -26,7 +26,7 @@ module Payments
     def payments
       @payments ||= filtered(with_status: true)
         .select("completed_requirements.*", "#{CompletedRequirement.payment_status_sql} AS payment_status")
-        .preload(:user, :refunded_by, requirement: :race, team: :user)
+        .preload(:user, :refunded_by, :reopened_by, requirement: :race, team: :user)
         .order("completed_requirements.created_at DESC, completed_requirements.id DESC")
         .limit(PER_PAGE).offset((page - 1) * PER_PAGE).to_a
     end

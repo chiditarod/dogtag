@@ -198,6 +198,7 @@ export function PaymentsPage() {
           snapshot={reviewing}
           current={selection.selected}
           latestRows={data?.payments ?? []}
+          canReopen={data?.can_reopen ?? false}
           onConfirmed={confirmed}
           onClose={() => setReviewing(null)}
         />
