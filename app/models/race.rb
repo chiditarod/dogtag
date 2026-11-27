@@ -32,6 +32,13 @@ class Race < ApplicationRecord
   validate :time_zone_must_be_iana
   validates_with RaceValidator
 
+  # Questions are optional. Blank text, or JSON that defines no questions
+  # (no non-empty `schema.properties` object), is stored as nil so every
+  # reader (legacy questions page, API, SPA) sees "no questions". The SPA
+  # editor applies the same rule. JSON that doesn't parse is left for
+  # RaceValidator to reject.
+  before_validation :normalize_jsonform
+
   # Datetimes are stored in UTC; the race's IANA time zone is how admins
   # enter them and how racers see them.
   DEFAULT_TIME_ZONE = "America/Chicago".freeze
@@ -105,7 +112,7 @@ class Race < ApplicationRecord
 
   def question_fields
     return [] unless jsonform.present?
-    JSON.parse(jsonform)['schema']['properties'].keys
+    JSON.parse(jsonform).dig('schema', 'properties')&.keys || []
   rescue => e
     Rails.logger.error "Could not retrieve possible jsonschema filter fields: #{e}"
     []
@@ -130,6 +137,34 @@ class Race < ApplicationRecord
 
     counts = Team.all_finalized.where(race_id: races.map(&:id)).group(:race_id).count
     races.each { |race| race.finalized_teams_count = counts.fetch(race.id, 0) }
+  end
+
+  # Reads only loaded requirements and tiers, so it adds no queries after
+  # Race.preload_registration_data.
+  def setup_problems
+    fees = requirements.select { |requirement| requirement.is_a?(PaymentRequirement) }
+    problems = []
+    problems << "No fee set up" if fees.empty?
+    fees.each do |fee|
+      tiers = fee.tiers.to_a
+      if tiers.empty?
+        problems << "#{fee.name} has no price"
+      elsif (begins = tiers.filter_map(&:begin_at)).empty? || begins.min > registration_open
+        problems << "#{fee.name} has no price when registration opens"
+      end
+    end
+    problems << "Questions (JSONForm) don't parse" if jsonform_unparseable?
+    problems
+  end
+
+  # Gross, refunded and net payment money for the race, in one query.
+  def money_totals
+    gross, refunded = CompletedRequirement
+      .joins(:team)
+      .where(teams: { race_id: id })
+      .pick(Arel.sql("COALESCE(SUM(amount_cents), 0)"),
+            Arel.sql("COALESCE(SUM(amount_cents) FILTER (WHERE refunded_at IS NOT NULL), 0)"))
+    { gross_cents: gross.to_i, refunded_cents: refunded.to_i, net_cents: gross.to_i - refunded.to_i }
   end
 
   # Set only by preload_registration_data, for the lifetime of one request's objects.
@@ -234,6 +269,25 @@ class Race < ApplicationRecord
   end
 
   private
+
+  def normalize_jsonform
+    return if jsonform.nil?
+    return self.jsonform = nil if jsonform.blank?
+
+    parsed = JSON.parse(jsonform)
+    properties = parsed["schema"]["properties"] if parsed.is_a?(Hash) && parsed["schema"].is_a?(Hash)
+    self.jsonform = nil unless properties.is_a?(Hash) && properties.any?
+  rescue JSON::ParserError
+    nil
+  end
+
+  def jsonform_unparseable?
+    return false if jsonform.blank?
+    JSON.parse(jsonform)
+    false
+  rescue JSON::ParserError
+    true
+  end
 
   def time_zone_must_be_iana
     errors.add(:time_zone, "must be an IANA time zone, e.g. #{DEFAULT_TIME_ZONE}") unless Race.valid_time_zone?(time_zone)

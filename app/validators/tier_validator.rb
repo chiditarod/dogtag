@@ -28,7 +28,7 @@ class TierValidator < ActiveModel::Validator
     # Rails 7.0: Use any? with explicit comparison instead of include?
     # to handle datetime precision issues
     if tiers.any? { |t| t.begin_at == record.begin_at }
-      record.errors.add(:begin_at, 'must be unique per payment requirement')
+      record.errors.add(:begin_at, "is already used by another price on this fee")
     end
   end
 
@@ -37,7 +37,7 @@ class TierValidator < ActiveModel::Validator
     return unless tiers.present?
     # Rails 7.0: Use any? with explicit comparison
     if tiers.any? { |t| t.price == record.price }
-      record.errors.add(:price, 'must be unique per payment requirement')
+      record.errors.add(:price, "is already used by another price on this fee")
     end
   end
 

@@ -61,6 +61,7 @@ en:
   delete: Delete
   delete_success: Deleted.
   delete_failed: Deletion failed.
+  destroy_failed: Deletion failed.
   not_found: Not found.
   create: Create
   save: Save

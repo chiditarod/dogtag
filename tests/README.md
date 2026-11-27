@@ -80,7 +80,7 @@ npm run test:ui
 
 ### Running against staging
 
-The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
+The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the SPA staff pages (`/register/staff/races/new`, then the fee pages; `forbidLegacyPages` fails the setup and teardown tests if they ever load a page outside `/register`), registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
 
 | Key | Purpose |
 |---|---|

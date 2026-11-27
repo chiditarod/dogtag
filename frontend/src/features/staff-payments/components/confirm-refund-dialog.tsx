@@ -5,7 +5,7 @@ import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import { useCreateRefundBatch } from '../api/use-create-refund-batch';
 import type { RefundBatch, StaffPayment } from '../types';
-import { formatMoney } from '../utils';
+import { formatMoney } from '@/lib/money';
 
 interface ConfirmRefundDialogProps {
   /** The rows the staff member ticked when the dialog opened. */
