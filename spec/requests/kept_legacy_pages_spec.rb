@@ -12,7 +12,12 @@ describe "Kept legacy pages", type: :request do
     doc = Nokogiri::HTML(body)
     links = doc.css("a[href]").reject { |a| a["data-method"].present? && a["data-method"] != "get" }.pluck("href")
     forms = doc.css("form[action]").select { |f| f["method"].to_s.casecmp?("get") }.pluck("action")
-    (links + forms).select { |url| url.match?(RACER_URL) || url.match?(USER_SHOW_URL) }
+    (links + forms).select do |url|
+      path = URI(url).path.to_s
+      path.match?(RACER_URL) || path.match?(USER_SHOW_URL)
+    rescue URI::InvalidURIError
+      false
+    end
   end
 
   def navbar_hrefs(body)
@@ -97,6 +102,16 @@ describe "Kept legacy pages", type: :request do
 
       expect_clean_page(:not_found)
       expect(navbar_hrefs(response.body)).to include("/register/account")
+    end
+
+    it "links the navbar of a racer who owns a team (My teams) to the SPA" do
+      owner = FactoryBot.create(:user)
+      FactoryBot.create(:team, user: owner, race: race)
+      api_login(owner)
+      get "/no-such-page"
+
+      expect_clean_page(:not_found)
+      expect(navbar_hrefs(response.body)).to include("/register/teams", "/register/account")
     end
 
     it "links an admin's navbar to the SPA account page" do

@@ -165,7 +165,11 @@ en:
   tiers:
     new:
       new_tier: New Tier
+    create:
+      new_tier: New Tier
     edit:
+      edit_tier: Edit Tier
+    update:
       edit_tier: Edit Tier
     form:
       price: Price
@@ -350,7 +354,11 @@ en:
       tiers: tiers
     new:
       new_requirement: New Requirement
+    create:
+      new_requirement: New Requirement
     edit:
+      edit_requirement: Edit Requirement
+    update:
       edit_requirement: Edit Requirement
     form:
       name: Name
