@@ -41,7 +41,7 @@ if (!staging) {
 }
 
 // The test port (default 3099, override with TEST_PORT) and the Rails server
-// environment (APP_HOST, SIDEKIQ_INLINE, REGISTRATION_UI, SMTP_*) live in
+// environment (APP_HOST, SIDEKIQ_INLINE, SMTP_*) live in
 // tests/helpers/server-env.ts, shared with the specs.
 
 /**

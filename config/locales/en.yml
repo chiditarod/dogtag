@@ -72,7 +72,6 @@ en:
   register: Register
   register_for: "Register for %{race_name}"
   global_questions: "Questions? Email <a href='mailto:%{email}'>%{email}</a>"
-  store_instructions: "All products are for <u><strong>Pickup Only</strong></u> on race day. No shipping is available. Buying these products is completely optional and unrelated to completing your team registration."
 
   login: Login
   signup: Signup
@@ -108,11 +107,6 @@ en:
       report_a_bug: Report a Bug
       payments: Payments
       having_problems: Having Problems?
-
-  homepages:
-    index:
-      chiditarod_registration_system: chiditarod registration system
-      get_started: Get Started
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.

@@ -4,8 +4,8 @@ Rails.application.routes.draw do
   get 'users/search', to: 'users#search', as: 'search_users'
   get 'teams/search', to: 'teams#search', as: 'search_teams'
   
-  # super basic static homepage text hack
-  root :controller => 'homepages', :action => "index", :as => :home
+  # The racer-facing front door is the SPA; keep the route name for home_url callers
+  root to: redirect("/register"), as: :home
 
   # Handle non-GET requests to root (malicious traffic like androxgh0st scanners)
   match "/", to: "errors#not_found", via: [:post, :put, :patch, :delete]
