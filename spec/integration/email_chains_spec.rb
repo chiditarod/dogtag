@@ -28,7 +28,7 @@ describe "email chains" do
     mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq([user.email])
     expect(mail.subject).to eq("dogTag Password Reset Instructions")
-    expect(mail.body.encoded).to include(edit_password_reset_url(user.reload.perishable_token, host: "example.org"))
+    expect(mail.body.encoded).to include(SpaUrl.for("/reset-password/#{user.reload.perishable_token}", host: "example.org"))
     expect(SentEmail.where(kind: "password_reset", user_id: user.id).count).to eq(1)
   end
 
