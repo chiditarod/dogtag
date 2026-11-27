@@ -18,35 +18,16 @@ require 'csv'
 class RacesController < ApplicationController
   include RaceTimeZone
 
-  before_action :require_user, :except => [:index, :show]
+  before_action :require_user
   around_action :use_race_time_zone, only: [:new, :create, :edit, :update]
   load_and_authorize_resource
 
-  def index
-    @past_races = Race.past.order('created_at DESC').includes(:teams)
-    @current_races = Race.current.order('created_at DESC').includes(:teams)
-  end
-
-  def show
+  def edit
     @race = Race.find params[:id]
-    if current_user
-      @my_race_teams = Team.belonging_to(current_user.id).where(race_id: @race.id)
-      if current_user.is_any_of?(:admin, :operator)
-        @stats = @race.stats
-      end
-    end
   end
-
-  alias edit show
 
   def new
     @race = Race.new
-  end
-
-  def registrations
-    @race = Race.find params[:race_id]
-    @finalized_teams = Team.all_finalized.where(race_id: @race.id).order('updated_at DESC').includes(:people)
-    @waitlisted_teams = Team.all_unfinalized.where(race_id: @race.id).order('updated_at DESC').includes(:people)
   end
 
   def export

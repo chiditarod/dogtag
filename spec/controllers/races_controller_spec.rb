@@ -48,12 +48,6 @@ describe RacesController do
         get :export, params: { :race_id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
-    describe '#registrations' do
-      it 'redirects to login' do
-        get :registrations, params: { :race_id => 1 }; expect(response).to redirect_to("/register/login")
-      end
-    end
-    describe '#show'
   end
 
   context '[logged in]' do
@@ -61,102 +55,6 @@ describe RacesController do
       activate_authlogic
       user = FactoryBot.create :admin_user
       login_user! user
-    end
-
-    describe '#registrations' do
-
-      shared_examples "empty_finalized_teams" do
-        it "assigns finalized_teams to []" do
-          expect(assigns :finalized_teams).to be_empty
-        end
-      end
-      shared_examples "empty_waitlisted_teams" do
-        it "assigns waitlisted_teams to []" do
-          expect(assigns :waitlisted_teams).to be_empty
-        end
-      end
-
-      context 'with invalid race_id' do
-        before { get :registrations, params: { :race_id => 100 } }
-        it 'sets 404' do
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context "with no teams" do
-        let(:race) { FactoryBot.create :race }
-        before { get :registrations, params: { :race_id => race.id } }
-
-        include_examples 'empty_finalized_teams'
-        include_examples 'empty_waitlisted_teams'
-      end
-
-      context "with a finalized team" do
-        let(:team) { FactoryBot.create :finalized_team }
-        before { get :registrations, params: { :race_id => team.race.id } }
-
-        it 'assigns finalized_teams' do
-          expect(assigns :finalized_teams).to eq([team])
-        end
-        include_examples 'empty_waitlisted_teams'
-      end
-
-      context "with a non-finalized team" do
-        let(:team) { FactoryBot.create :team }
-        before { get :registrations, params: { :race_id => team.race.id } }
-
-        it 'assigns waitlisted_teams' do
-          expect(assigns :waitlisted_teams).to eq([team])
-        end
-        include_examples 'empty_finalized_teams'
-      end
-
-      context "showing the new team flag" do
-        render_views
-
-        let(:race) { FactoryBot.create :race }
-        let!(:new_team) { FactoryBot.create :team, race: race, name: "Fresh Carts" }
-        let!(:veteran_team) { FactoryBot.create :team, race: race, name: "Old Carts" }
-
-        before do
-          FactoryBot.create :person, team: new_team, experience: 0
-          FactoryBot.create :person, team: veteran_team, experience: 2
-        end
-
-        def new_team_cells
-          page = Nokogiri::HTML(response.body)
-          column = page.css("#waitlisted thead th").map { |th| th.text.strip }.index("New team")
-          return nil unless column
-          page.css("#waitlisted tr").select { |row| row.at_css("> td") }.to_h do |row|
-            cells = row.css("> td")
-            [row.at_css("h4").text.strip, cells[column].text.strip]
-          end
-        end
-
-        it "shows staff which teams are new" do
-          get :registrations, params: { race_id: race.id }
-          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "No")
-        end
-
-        it "marks an admin override" do
-          veteran_team.update!(new_team_setting: "yes")
-          get :registrations, params: { race_id: race.id }
-          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "Yes (set by admin)")
-        end
-
-        it "shows refunders the column" do
-          login_user! FactoryBot.create(:refunder_user)
-          get :registrations, params: { race_id: race.id }
-          expect(new_team_cells).to eq("Fresh Carts" => "Yes", "Old Carts" => "No")
-        end
-
-        it "hides the column from racers" do
-          login_user! FactoryBot.create(:user)
-          get :registrations, params: { race_id: race.id }
-          expect(response).to be_successful
-          expect(new_team_cells).to be_nil
-        end
-      end
     end
 
     describe '#export' do
@@ -203,40 +101,18 @@ describe RacesController do
       end
     end
 
-    describe '#show' do
-      context 'with invalid id' do
-        before { get :show, params: { :id => 100 } }
-        it 'sets 404' do
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context 'with valid id' do
-        before do
-          @race = FactoryBot.create :race
-          get :show, params: { :id => @race.id }
-        end
-
-        it 'sets the @race object' do
-          expect(assigns(:race)).to eq(@race)
-        end
-
-        it 'returns 200' do
-          expect(response).to be_successful
-        end
-
-        it "sets @my_race_teams to the user's teams for this race" do
-          user = controller.send(:current_user)
-          team = FactoryBot.create :team, race: @race, user: user
-          FactoryBot.create :team, race: @race
-          get :show, params: { :id => @race.id }
-          expect(assigns(:my_race_teams)).to eq([team])
-        end
-      end
-    end
-
     describe '#edit' do
-      # edit is aliased to show, so no need to spec.
+      it 'returns 404 for an unknown race' do
+        get :edit, params: { :id => 100 }
+        expect(response.status).to eq(404)
+      end
+
+      it 'assigns the race and renders' do
+        race = FactoryBot.create :race
+        get :edit, params: { :id => race.id }
+        expect(response).to be_successful
+        expect(assigns(:race)).to eq(race)
+      end
     end
 
     describe '#update' do
@@ -462,16 +338,6 @@ describe RacesController do
         it 'redirects to the new race edit page' do
           expect(response).to redirect_to edit_race_url(Race.last)
         end
-      end
-    end
-
-    describe '#index' do
-      it 'returns http success, sets @races to all races' do
-        race1 = FactoryBot.create :race
-        race2 = FactoryBot.create :race
-        get :index
-        expect(response).to be_successful
-        expect(assigns(:races)).to match_array([race1, race2])
       end
     end
 

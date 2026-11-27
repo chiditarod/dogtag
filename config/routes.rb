@@ -19,11 +19,15 @@ Rails.application.routes.draw do
   get "teams/:id", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }
   get "teams/:id/*rest", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }, format: false
 
-  resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
-    get :registrations
+  # Race staff pages stay (new, edit, export, requirements) until the staff reskin; the racer
+  # race list, race page and registrations list moved to the SPA. Kept routes come first.
+  resources :races, :only => [:new, :create, :edit, :update, :destroy] do
     get :export
     resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
   end
+  get "races", to: redirect("/register")
+  get "races/:id", to: redirect("/register"), constraints: { id: /\d+/ }
+  get "races/:race_id/registrations", to: redirect("/register/races/%{race_id}/registrations"), constraints: { race_id: /\d+/ }
 
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
 

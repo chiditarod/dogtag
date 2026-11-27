@@ -103,6 +103,49 @@ describe "Legacy URLs that moved to the SPA", type: :request do
     end
   end
 
+  describe "race URLs" do
+    it "/races and /races/12 move to the SPA race list" do
+      expect_moved("/races", "/register")
+      expect_moved("/races/12", "/register")
+    end
+
+    it "/races/12/registrations moves to the SPA registrations page" do
+      expect_moved("/races/12/registrations", "/register/races/12/registrations")
+    end
+
+    it "a junk race id is not redirected" do
+      get "/races/abc"
+      expect(response).to have_http_status(:not_found)
+      get "/races/abc/registrations"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "POST /races/12/registrations is 404" do
+      post "/races/12/registrations"
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "kept race routes are not redirected" do
+    let(:race) { FactoryBot.create(:race) }
+
+    it "sends logged-out visitors to the SPA login" do
+      get "/races/new"
+      expect(response).to redirect_to("/register/login")
+    end
+
+    it "serves the new, edit and export pages to an operator" do
+      api_login(FactoryBot.create(:operator_user))
+      get "/races/new"
+      expect(response).to have_http_status(:ok)
+      get "/races/#{race.id}/edit"
+      expect(response).to have_http_status(:ok)
+      get "/races/#{race.id}/export"
+      expect(response).to have_http_status(:ok)
+      expect(response.content_type).to start_with("text/csv")
+    end
+  end
+
   describe "staff user routes that stay" do
     let(:admin) { FactoryBot.create(:admin_user) }
 
