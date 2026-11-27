@@ -30,12 +30,10 @@
 - Request specs assert status plus the redirect location or the data. Log in with `api_login(user)` from `spec/support/api_helpers.rb`.
 - Commits end with a blank line and the `Co-Authored-By` / `Claude-Session` lines. The PR body ends with the `Generated with Claude Code` line and says whether the e2e specs were run.
 
-## Owner decisions
+## Owner decisions (2026-11-26)
 
-None yet. Open questions (recommended answers in brackets; the plan is written to the recommendation):
-
-1. **The legacy team page's Refund and "Refund and invalidate" buttons go in PR 9, not PR 10. Is that OK?** The spec deletes `teams#show` here, and the PR 8 plan said the button stays until staff cleanup. Refunds have gone through Payments (team filter and Refund mode) since PR 8. Without the team page, nothing sets `session[:prior_url]`, so `ChargesController#refund` can only answer 400. [Yes. Delete `ChargesController` (create and refund), its views, route and spec in Task 5. If the answer is no, PR 9 cannot redirect `/teams/:id` as the spec says, and the spec needs changing first.]
-2. **When should `REGISTRATION_UI` be unset on `dogtag-staging` and `dogtag`?** After this PR nothing reads it. But `heroku rollback` to the PR 8 release does read it, and with `spa` the rolled-back app's emails and homepage still point at the SPA. [Leave it set to `spa` until PR 9 has run cleanly on production for a week (or until PR 10 ships). Then the owner runs `heroku config:unset REGISTRATION_UI -a dogtag-staging`, then `-a dogtag`.]
+1. **The legacy team page's Refund and "Refund and invalidate" buttons, and all of `ChargesController` (create and refund), go in PR 9.** Refunds have gone through Payments since PR 8; without the team page `ChargesController#refund` can only answer 400. Task 5 deletes the controller, its views, route and spec.
+2. **`REGISTRATION_UI` stays set to `spa` on `dogtag-staging` and `dogtag` until PR 9 has run cleanly on production for about a week (or PR 10 ships).** Then the owner runs `heroku config:unset REGISTRATION_UI -a dogtag-staging`, then `-a dogtag`. A `heroku rollback` to the PR 8 release in that window still sends emails and the homepage to the SPA. The PR body says so.
 
 ## Calls made in this plan (not in the spec)
 
