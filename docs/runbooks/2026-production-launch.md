@@ -134,7 +134,7 @@ Watch Rollbar, Stripe and the first registrations that morning.
 
 | Problem | Action |
 |---------|--------|
-| New pages misbehave | `heroku rollback -a dogtag` (the previous release still has the legacy pages and keeps `REGISTRATION_UI=spa`) |
+| New pages misbehave | `heroku rollback -a dogtag` (the previous release still has the legacy pages and reads `REGISTRATION_UI`, so keep it `spa` until the owner unsets it after a clean week) |
 | Bad deploy | `heroku rollback -a dogtag` |
 | Bad data or migration | `heroku maintenance:on`, then restore the step 5 backup with `heroku pg:backups:restore <id> DATABASE_URL -a dogtag` |
 | Worker memory kills (R14/R15) | Check `MALLOC_ARENA_MAX=2` is set. See CLAUDE.md, Known Quirks 8 |
