@@ -39,9 +39,9 @@
 
     - if @race.open_for_registration?
       - if @race.full?
-        = link_to t('.register_waitlist'), new_team_url(:race_id => params[:id]), :class => ['btn', 'btn-warning']
+        = link_to t('.register_waitlist'), "/register/races/#{@race.id}/teams/new", :class => ['btn', 'btn-warning']
       - else
-        = link_to t('.register_now'), new_team_url(:race_id => params[:id]), :class => ['btn', 'btn-success']
+        = link_to t('.register_now'), "/register/races/#{@race.id}/teams/new", :class => ['btn', 'btn-success']
 
   - if can? :update, @race
     .col-sm-12.col-md-6.col-lg-4

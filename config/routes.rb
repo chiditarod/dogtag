@@ -10,11 +10,14 @@ Rails.application.routes.draw do
   # Handle non-GET requests to root (malicious traffic like androxgh0st scanners)
   match "/", to: "errors#not_found", via: [:post, :put, :patch, :delete]
 
-  resources :teams, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
-    resources :people, :only => [:new, :create, :edit, :update, :destroy]
-    resource :captain, :only => [:update]
-    resource :questions, :only => [:show, :create]
-  end
+  # team pages moved to the SPA; old bookmarks and emailed links land there
+  get "teams", to: redirect("/register/teams")
+  get "teams/new", to: redirect { |_params, req|
+    race_id = req.params[:race_id].to_s
+    race_id.match?(/\A\d+\z/) ? "/register/races/#{race_id}/teams/new" : "/register"
+  }
+  get "teams/:id", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }
+  get "teams/:id/*rest", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }, format: false
 
   resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
     get :registrations
@@ -23,14 +26,6 @@ Rails.application.routes.draw do
   end
 
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
-
-  # stripe
-  resources :charges, :only => [:create] do
-    post :refund
-  end
-
-  # mock payments for testing
-  post 'mock_payment', to: 'mock_payments#create', as: :mock_payment
 
   # user accounts: staff user admin stays; racer account pages moved to the SPA
   resources :users, :only => [:index, :destroy]

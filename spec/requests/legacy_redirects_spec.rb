@@ -49,6 +49,60 @@ describe "Legacy URLs that moved to the SPA", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  describe "team URLs" do
+    it "/teams moves to the SPA team list" do
+      expect_moved("/teams", "/register/teams")
+    end
+
+    it "/teams/new moves to the SPA new-team page for a numeric race id" do
+      expect_moved("/teams/new?race_id=12", "/register/races/12/teams/new")
+    end
+
+    it "/teams/new without a usable race id moves to /register" do
+      expect_moved("/teams/new", "/register")
+      expect_moved("/teams/new?race_id=abc", "/register")
+    end
+
+    [
+      "/teams/34", "/teams/34/edit", "/teams/34/people/new", "/teams/34/people/56/edit", "/teams/34/questions"
+    ].each do |path|
+      it "#{path} moves to the SPA team page, logged out or as the owner" do
+        expect_moved(path, "/register/teams/34")
+        api_login(FactoryBot.create(:user))
+        expect_moved(path, "/register/teams/34")
+      end
+    end
+
+    it "a junk team id is not redirected" do
+      get "/teams/abc"
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "GET /teams/search still answers staff JSON" do
+      # The search parameterizes the query ("Two Words" becomes "two-words"), so use a one-word name.
+      team = FactoryBot.create(:team, name: "Zephyrcarts")
+      api_login(FactoryBot.create(:operator_user))
+      get "/teams/search", params: { q: team.name }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq([{ "id" => team.id, "text" => "#{team.name} - #{team.race.name}" }])
+    end
+
+    it "the old team, payment and captain actions are 404" do
+      post "/teams"
+      expect(response).to have_http_status(:not_found)
+      post "/charges"
+      expect(response).to have_http_status(:not_found)
+      post "/charges/ch_1/refund"
+      expect(response).to have_http_status(:not_found)
+      post "/mock_payment"
+      expect(response).to have_http_status(:not_found)
+      delete "/teams/34"
+      expect(response).to have_http_status(:not_found)
+      put "/teams/34/captain"
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
   describe "staff user routes that stay" do
     let(:admin) { FactoryBot.create(:admin_user) }
 

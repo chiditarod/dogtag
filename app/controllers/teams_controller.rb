@@ -15,7 +15,7 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class TeamsController < ApplicationController
   before_action :require_user
-  before_action :set_no_cache, only: %w{show edit search}
+  before_action :set_no_cache, only: :search
 
   load_and_authorize_resource
 
@@ -30,112 +30,5 @@ class TeamsController < ApplicationController
     respond_to do |format|
       format.json { render json: @teams.map { |team| { id: team.id, text: "#{team.name} - #{team.race.name}" } } }
     end
-  end
-
-  def index
-    @myteams = Team.where(:user => current_user).order(created_at: :desc)
-    if params[:race_id].present?
-      begin
-        @race = Race.find params[:race_id]
-        @myteams = @myteams.where(:race_id => @race.id)
-      rescue ActiveRecord::RecordNotFound
-        flash[:error] = "Race not found"
-      end
-    end
-  end
-
-  def new
-    unless params[:race_id]
-      flash[:error] = I18n.t('must_select_race')
-      return redirect_to races_path
-    end
-
-    @race = Race.find(params[:race_id])
-    return redirect_registration_closed(@race) unless @race.accepts_new_teams_from?(current_user)
-
-    session[:signup_race_id] = params[:race_id]
-    @team = Team.new
-    @team.race = @race
-  end
-
-  def create
-    return render :status => :bad_request if params[:team].blank?
-
-    @team = Team.new(team_params)
-    @team.subscribe(TeamAuditor.new)
-
-    @team.user = current_user
-    race_id = params[:race_id] || session[:signup_race_id]
-    @team.race ||= Race.find(race_id)
-    return redirect_registration_closed(@team.race) unless @team.race.accepts_new_teams_from?(current_user)
-
-    if @team.save
-      flash.now[:notice] = I18n.t('create_success')
-      redirect_to team_questions_path(@team)
-    else
-      flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @team.errors.messages
-    end
-  end
-
-  def show
-    @team = Team.find params[:id]
-    @race = @team.race
-
-    if @team.finalized && @team.user == current_user
-      @display_notification = :notify_now_complete
-    end
-
-    # currently required by charges controller to know where to redirect
-    # the user after performing an action
-    session[:prior_url] = request.original_url
-  end
-
-  alias edit show
-
-  def update
-    @team = Team.find(params[:id])
-    @team.subscribe(TeamAuditor.new)
-    @race = @team.race
-
-    if @team.update(team_params)
-      if @team.completed_questions?
-        flash[:notice] = I18n.t('update_success')
-        redirect_to(team_path(@team))
-      else
-        flash[:notice] = I18n.t("teams.update.success_fill_out_questions")
-        redirect_to(team_questions_path(@team))
-      end
-    else
-      flash.now[:error] = [I18n.t('update_failed')]
-      flash.now[:error] << @team.errors.messages
-    end
-  end
-
-  def destroy
-    @team = Team.find params[:id]
-    @team.subscribe(TeamAuditor.new)
-
-    if @team.completed_requirements.any?
-      flash[:error] = I18n.t("teams.destroy.has_payments")
-      return redirect_to teams_path
-    end
-
-    # Staff delete from the race's registrations page, so send them back there.
-    back = current_user.is_any_of?(:admin, :operator) ? race_registrations_path(@team.race) : teams_path
-    try_to_delete(@team, back)
-  end
-
-  private
-
-  def redirect_registration_closed(race)
-    flash[:error] = I18n.t("teams.registration_closed")
-    redirect_to race_path(race)
-  end
-
-  def team_params
-    fields = [:race_id, :name, :description, :experience]
-    fields << :new_team_setting if StaffTeamPermissions.new_team_setter?(current_user)
-    params.expect(team: fields)
   end
 end

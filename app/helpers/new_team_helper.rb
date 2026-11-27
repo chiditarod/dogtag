@@ -5,10 +5,6 @@ module NewTeamHelper
     team.new_team_overridden ? "#{label} (set by admin)" : label
   end
 
-  def new_team_setting_options(team)
-    [["Automatic (now #{yes_no_unknown(team.computed_new_team)})", "auto"], ["Yes", "yes"], ["No", "no"]]
-  end
-
   private
 
   def yes_no_unknown(flag)

@@ -5,7 +5,7 @@
         %i.fa.fa-shopping-cart.fa-4x
 
     - if race.open_for_registration?
-      = link_to new_team_path(:race_id => race.id) do
+      = link_to "/register/races/#{race.id}/teams/new" do
         - if race.full?
           .btn.btn-warning
             = t('.register_waitlist')

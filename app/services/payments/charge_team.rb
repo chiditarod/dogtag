@@ -1,5 +1,5 @@
 # Charges a team's card for a payment requirement and records the completed requirement.
-# Shared by the legacy ChargesController and the JSON API so both enforce the same rules:
+# Shared by the JSON API payment endpoints so every caller enforces the same rules:
 # the amount always comes from the requirement's active tier (never from the client), a
 # requirement must belong to the team's race, a paid requirement is never charged twice, a waitlisted
 # team in a full race cannot pay, and a client that shows a price passes it as expected_amount_cents so

@@ -2,10 +2,10 @@
   .panel-heading
     - if can? :update, team
       .pull-right
-        = link_to(edit_team_url team.id) do
+        = link_to("/register/teams/#{team.id}") do
           %i.fa.fa-edit.fa-2x
     %span.lead
-      = link_to team.name, team_path(id: team.id)
+      = link_to team.name, "/register/teams/#{team.id}"
 
   .panel-body
     .row
@@ -23,26 +23,26 @@
 
       .col-xs-9
         - if team.finalized
-          = link_to t('.registered_for', race: team.race.name), team_path(team)
+          = link_to t('.registered_for', race: team.race.name), "/register/teams/#{team.id}"
         - else
-          = link_to t('.registering_for', race: team.race.name), team_path(team)
+          = link_to t('.registering_for', race: team.race.name), "/register/teams/#{team.id}"
 
         %br
         %small
           - if team.finalized
 
-            = link_to t('fully_registered'), team_path(:id => team.id), :class => 'text-success'
+            = link_to t('fully_registered'), "/register/teams/#{team.id}", :class => 'text-success'
             %p= t('.youre_in')
 
           - else
             - if team.race.over?
-              = link_to t('.team_is_dead'), team_path(:id => team.id), :class => 'text-muted'
+              = link_to t('.team_is_dead'), "/register/teams/#{team.id}", :class => 'text-muted'
               %p=t '.race_over_slacked'
 
             - elsif team.race.registration_over?
-              = link_to t('.team_is_dead'), team_path(:id => team.id), :class => 'text-muted'
+              = link_to t('.team_is_dead'), "/register/teams/#{team.id}", :class => 'text-muted'
               %p=t '.registration_over_slacked'
 
             - else
-              = link_to t('team_needs_attention'), team_path(:id => team.id), :class => 'text-danger'
+              = link_to t('team_needs_attention'), "/register/teams/#{team.id}", :class => 'text-danger'
     %hr
