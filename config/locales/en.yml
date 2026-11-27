@@ -50,18 +50,17 @@ en:
               invalid_handle: should look like @handle (letters, numbers, periods and underscores)
             tiktok:
               invalid_handle: should look like @handle (2-24 letters, numbers, periods and underscores, not ending in a period)
-  dogpen: dogPen
 
   create_failed: Create failed.
   create_success: Successfully created.
-  create_success_user: Your account has been successfully created. Welcome to dogtag.
-  create_success_with_race: Team created. Now fill out your registration details.
   update_failed: Update failed.
   update_success: Successfully updated.
   delete: Delete
   delete_success: Deleted.
   delete_failed: Deletion failed.
+  destroy_failed: Deletion failed.
   not_found: Not found.
+  requirement_not_found: Fee not found.
   create: Create
   save: Save
   instagram: Instagram
@@ -69,9 +68,7 @@ en:
   new: New
   edit: Edit
   register: Register
-  register_for: "Register for %{race_name}"
   global_questions: "Questions? Email <a href='mailto:%{email}'>%{email}</a>"
-  store_instructions: "All products are for <u><strong>Pickup Only</strong></u> on race day. No shipping is available. Buying these products is completely optional and unrelated to completing your team registration."
 
   login: Login
   signup: Signup
@@ -81,7 +78,6 @@ en:
   back: Back
   refund: Refund
   refunded: Refunded
-  refund_and_invalidate: Refund & Remove
   at: at
   or: or
   of: of
@@ -91,11 +87,18 @@ en:
   complete: Complete
   completed: Completed
   incomplete: Incomplete
+  name: Name
+  enabled: Enabled
+  details: Details
+  price: Price
+  begin_at: Begins
+  action_required: Action required
 
   application:
     navbar:
       races: Races
       users: Users
+      emails: Emails
       my_teams: My Teams
       register: Register
       login: Login
@@ -106,57 +109,25 @@ en:
       report_a_bug: Report a Bug
       payments: Payments
       having_problems: Having Problems?
-
-  homepages:
-    index:
-      chiditarod_registration_system: chiditarod registration system
-      get_started: Get Started
-
-  please_create_to_continue: Please create one to continue.
-  must_select_race: You must select a race to register for.
-  must_select_team: You must select a team to register.
-
-  login_success: Login successful.
-  logout_success: Logout successful.
-  login_failed: Login failed.
-
-  password_resets:
-    new:
-      instructions: 'Please enter your email address below. The email will show up within 10 minutes.'
-
-  user_sessions:
-    new:
-      please_login: Please login to continue
-      instructions_html: "In order to do most everything on this website, you need a user account. If you don't have an account, you'll have to %{href}</a>."
-      forgot_password: "Forgot your password?"
-      sign_up: or Create an account
-
-  questions:
-    none_defined: Find and complete the Sad Faces to complete your team registration.
-    updated: Your details have been updated.
-    could_not_save: There was an issue saving your questions.
-    cannot_modify: Cannot modify questions as race registration is closed and no more updates are allowed.
+      admin_functions: Admin Functions
 
   users:
-    review_your_info: |
-      Please take a moment to update your account information. Some of our requirements have
-      changed since you were last online. Just press save to be instructed what to do.
     index:
       users: Users
-    create:
-      create_user: Create your account
-      instructions: Once you create an account, you can create a team and register for a race.
-    new:
-      create_user: Create your account
-      instructions: Once you create an account, you can create a team and register for a race.
-    update:
-      update_user: Update your account
-      update_success: Account information successfully updated.
-    edit:
-      update_user: Update your account
+      search: Search
 
   tiers:
+    new:
+      new_tier: New Tier
+    create:
+      new_tier: New Tier
+    edit:
+      edit_tier: Edit Tier
+    update:
+      edit_tier: Edit Tier
     form:
+      price: Price
+      begin_at: Begins at
       price_instructions: "Enter the number in USD Cents.  e.g. For $50.00, enter 5000"
       begin_at_instructions: "This is when this tier will become active over any prior tiers"
 
@@ -196,176 +167,47 @@ en:
       invalid_buddies: Pick only other teams in this race.
       buddies_need_collaborating: Answer Yes to the same-route question before picking teams.
       person_not_on_team: Pick one of this team's racers.
+      current_password_incorrect: is not correct
+      reset_login_failed: Your password was changed, but we could not log you in. Please log in with your new password.
 
-  captains:
-    update:
-      success: "%{name} is now the team captain."
-      not_on_team: That racer is not on this team.
   people:
-    table:
-      captain: Team captain
-      make_captain: Make captain
-      make_captain_label: "Make %{name} captain"
-    index:
-      title: People
-      no_people_added: omg, you need to add racers!
     destroy:
       team_complete: Cannot remove a racer from a complete team. Please contact support if needed.
-    form:
-      experience: How many years has this person participated at Chiditarod?
-      instagram: Got Instagram? Add your handle
-      tiktok: Got TikTok? Add your handle
-      phone: Mobile Phone
-      we_will_sms: Please be accurate; we will send you important texts on race day
+
   teams:
-    registration_closed: Registration is closed for this race, so new teams can't be created.
-    new:
-      title: Team Creation
-
-      # from reg
-      register_for_race: "Register for %{race_name}"
-      spots_remaining: "There are %{remaining} spots remaining"
-      waitlist_count: "Waitlist count: %{num}"
-      instructions: |
-        Provide your basic team info here. This data is editable up until registration closes.
-    edit:
-      title: "Edit team for %{race_name}"
-
-      waitlist_position: "In position %{num} on the waitlist"
-    index:
-      next_create_a_team: "Create a team for %{name}"
-      your_teams_for_race: "Your dogPen for %{name}"
-      your_teams: Your dogPen
-      title: Manage your teams
-      registering_for_race: "You are registering for %{race_name}"
-      instructions: |
-        Manage your teams here. You can create and edit your team only
-        when the race registration window is open.
-        If you are a larger "team" made up of
-        multiple carts, you'd register one team for each cart.
-        For example, let's say you and 9 friends are racing. You'd register 2 teams.
-      no_teams: No teams match.
-      create: Create team
-      # from reg
-      race_not_found: Race not found.
-      teams_for: "Teams for %{name}"
-      register_for: "Register for %{name}"
-    create:
-      register_for_race: "Register for %{race_name}"
-      spots_remaining: "There are %{remaining} spots remaining"
-    form:
-      name: Name your team
-      name_instructions: "If you plan on having more than 1 team in your ensemble, you must name them the same and use numerals, e.g. Vanguard #1, Vanguard #2, etc"
-      # from reg
-      name: What's your team name?
-      description: Sum up your team in a montage of prose
-      description_instructions: "Do you have a theme chosen for your cart yet? All carts need a theme. Tell us what your team and cart are all about, and don't be afraid to get creative. If you don't know yet, put TBD."
-      twitter: Got twitter? Please include the @ sign
-      racer_type: What type of racer are you?
-      primary_inspiration: What's your primary inspiration?
-      experience: How many years has the team been around?
-      rules_confirmation: Do you agree to follow the race rules?
-      sabotage_confirmation: Do you agree to follow the sabotage rules?
-      cart_deposit_confirmation: Do you agree to the cart deposit terms?
-      food_confirmation: "Do you agree to bring 60+ pounds of food?"
-      buddies: Are you wanting to race alongside any other teams or people?
-      wildcard: Favorite dance move
-      private_comments: Any private comments to Coreganizers?
-      registration_closed: Team registration is closed. No changes can be made.
-    team_item:
-      already_registered_for: "Registered for %{race_name}"
-      youre_in: "You're in, buddy."
-      registered_for: "Registered for %{race}"
-      registering_for: "Registering for %{race}"
-      register_waitlist: Register for Waitlist
-      competing_in: "Competing in %{race}"
-      team_needs_attention: Team needs attention
-      team_is_dead: Team is dead
-      registration_over_slacked: Registration is over and you slacked
-      race_over_slacked: The race is over and you slacked
-    show:
-      edit: edit
-      requirements: Payments
-      status: Team Status
-      race: "Race:"
-      registered_for: Registered for
-      captain: Team captain
-      no_captain: No captain chosen yet
-      choose_captain: Choose one racer as your team captain. Your team cannot be finalized without one.
-      account_holder: Account holder
-      registration_closed: "Registration closed. No further updates are possible."
-      can_change_until: "Finish all registration steps by %{date}"
-      final_edits_until: "Registration closed. Racer details are editable until %{date}"
-
-      description: "Your Mission:"
-      people: Racers
-      no_people_added: omg, you need to add racers!
-      requirement_instructions: "You must complete the following payments to complete registration. The price is based on When You Pay, not when you register."
-      be_patient: Payments are processed securely with Stripe. Please click the Pay button only once and be patient!
-
-      people_instructions: |
-        You must add the proper number of racers to complete your team.  You cannot delete a racer,
-        but you can change everything about them. It is very important to enter this information accurately,
-        since we will be sending pre-race updates to each email address and day-of announcements to racer
-        cell-phones via SMS. If you do not add all the racers, YOU ARE NOT REGISTERED!
-        To add a racer, click the sign next to the Racer symbol.
-
-    notify_now_complete:
-      congratulations: Congratulations!
-      complete_instructions_html: "Your team is now complete! You will receive an email confirmation shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
-    notify_waitlisted:
-      waitlisted: Waitlisted!
-      waitlisted_instructions_html: "Your team has been placed on the waitlist! Note that did does <b>not</b> make you eligible to race, yet. You will receive an email shortly. If you do not receive an email within 2 hours, please contact us at: %{email}"
-    update:
-      edit_team: "Edit team for %{race_name}"
-      success_fill_out_questions: "Update Success. Please complete the required registration questions, below"
     destroy:
-      confirm: "Delete %{name}? Its racers are removed too. This cannot be undone."
       has_payments: This team has completed requirements and cannot be deleted. Please contact support if you need to delete this team.
-    table:
-      exp: exp
-      paid: paid
 
   requirements:
-    payment_requirement:
-      no_pay_waitlist: You are on the waitlist. Payment is not available.
-      no_pay_roster: Your team needs all of its racers before payment unlocks.
-      no_complete_when_closed: Registration closed
     table:
       tiers: tiers
+    new:
+      new_requirement: New Requirement
+    create:
+      new_requirement: New Requirement
+    edit:
+      edit_requirement: Edit Requirement
+    update:
+      edit_requirement: Edit Requirement
+    form:
+      name: Name
+      name_instructions: Racers see this name on the team page.
+      type: Type
+    payment_requirement_table:
+      payment_tiers: Payment Tiers
+      no_tiers_added: No tiers added yet
 
   races:
     update:
       time_zone_changed: "Time zone changed from %{from} to %{to}. The dates on the form were read as %{to} times, so check that each one is still right."
-    registrations:
-      registrations_for: "Registrations for %{name}"
-      finalized_teams: Finalized Teams
-      no_finalized_teams: No finalized teams, yet.
-      waitlisted_teams: Incomplete or Waitlisted Teams
-      no_waitlisted_teams: No incomplete/waitlisted teams, yet.
-      no_teams: No teams match.
-    index:
-      title: Races
-      no_races: No races present in the system.
-      create_race: Create one now!
-    race_metadata:
-      race_is_full: Race is full
-      spots_remaining: spots remaining
-      registration_opens: Registration opens
-      on_waitlist: on the waitlist
-      registration_closes: Registration closes
-      team: team
-    race_item:
-      team: team
-      teams_registered: teams registered
-      register_now: Register!
-      register_waitlist: Waitlist!
-      not_time_yet: Registration not yet open
     form:
       name: This race is called
       race_datetime: Race start time
       registration_open: Registration opens on
       registration_close: Registration closes on
+      final_edits_close: Final edits close on
+      jsonform_data: JSONForm data
+      filter_field: Filter fields
       time_zone: Time zone
       time_zone_help: "Dates and times below are entered and shown to racers in this zone. Pick the zone before entering them."
       max_teams: Maximum teams
@@ -377,17 +219,9 @@ en:
       confirmation_text_help: "Markdown. Shown to captains when their team is fully registered: in a pop-up, in the confirmation email and on the team page."
       experience_labels: Years-racing labels
       experience_labels_help: One label per line. The first line is zero years, the second is one year, and so on. Leave blank for the defaults.
-    show:
-      race_datetime: Race begins on
-      max_teams: Maximum Teams
-      people_per_team: People per Team
-      register_now: Register Now
-      register_waitlist: Register for Waitlist
+    edit:
       race_requirements: Race Requirements
       no_requirements_added: No requirements added yet
-      registration_closed: Registration is closed
-      your_teams: Your Teams
-      not_time_yet: Registration not yet open
     destroy:
       #todo figure out why an expect block needs this
       delete_success: Deleted.
@@ -405,6 +239,10 @@ en:
       tier_change: "The registration fee is changing to %{price} on %{date}."
       closing: "Registration closes on %{date}."
       link: "Finish registering:"
+    email_changed_email:
+      subject: Your dogtag email address was changed
+      changed: "The email address for your dogtag account (%{name}) was changed from %{old_email} to %{new_email}."
+      not_you: "If you did not make this change, reply to this email or write to"
     payment_refunded_email:
       subject: "%{race}: Refund for %{team}"
       heading: "A payment for your team %{team} in %{race} was refunded."

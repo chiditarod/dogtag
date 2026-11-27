@@ -1,11 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useState } from 'react';
+import { ResultCount } from '@/components/list/result-count';
+import { SearchBox } from '@/components/list/search-box';
 import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { t } from '@/locales/en';
 import type { PaymentFilterValues, PaymentsFilterOptions } from '../types';
 import { raceNotFound, raceStatusLabel } from '../utils';
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 const control =
   'min-h-11 w-full rounded-md border border-flag bg-white px-3 text-sm text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-link disabled:opacity-60';
@@ -106,55 +106,9 @@ function FilterControls({ values, options, setFilter, statusLocked, idPrefix }: 
   );
 }
 
-/** A search box that waits for a pause in typing before it changes the URL. */
-function SearchBox({ values, setFilter }: Pick<FilterProps, 'values' | 'setFilter'>) {
-  const [text, setText] = useState(values.q);
-  const sent = useRef(values.q);
-  const id = useId();
-
-  useEffect(() => {
-    // The URL changed from outside (Clear all, a chip): follow it.
-    if (values.q !== sent.current) {
-      sent.current = values.q;
-      setText(values.q);
-    }
-  }, [values.q]);
-
-  useEffect(() => {
-    // Only the trimmed text goes to the URL, so spaces alone send nothing and the box keeps what was typed.
-    const next = text.trim();
-    if (next === sent.current) return;
-    const timer = setTimeout(() => {
-      sent.current = next;
-      setFilter('q', next);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [text, setFilter]);
-
-  return (
-    <div className="min-w-0 flex-1 sm:basis-full lg:min-w-48 lg:basis-0">
-      <label htmlFor={id} className="sr-only">
-        {t('staff.payments.filters.search')}
-      </label>
-      <input
-        id={id}
-        type="search"
-        className={control}
-        placeholder={t('staff.payments.filters.searchPlaceholder')}
-        value={text}
-        onChange={(event) => setText(event.target.value)}
-      />
-    </div>
-  );
-}
-
-/** Announces the number of matching payments once a response settles; empty while one loads. */
-function ResultCount({ count }: { count: number | undefined }) {
-  return (
-    <p role="status" className="sr-only">
-      {count === undefined ? '' : t(`staff.payments.count_${count === 1 ? 'one' : 'other'}`, { n: count })}
-    </p>
-  );
+/** The sentence the live region announces; undefined (so empty) while a response loads. */
+function countMessage(count: number | undefined) {
+  return count === undefined ? undefined : t(`staff.payments.count_${count === 1 ? 'one' : 'other'}`, { n: count });
 }
 
 function showLabel(count: number | undefined) {
@@ -188,10 +142,17 @@ export function PaymentFilters({
   return (
     <div className="space-y-3">
       {/* The open sheet is modal, so the live count moves into it. */}
-      {!sheetOpen && <ResultCount count={totalCount} />}
+      {!sheetOpen && <ResultCount message={countMessage(totalCount)} />}
       {/* Search has its own row until lg, and the inline controls wrap, so nothing overflows just above sm. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <SearchBox key={searchReset} values={values} setFilter={setFilter} />
+        <SearchBox
+          key={searchReset}
+          value={values.q}
+          onSearch={(q) => setFilter('q', q)}
+          label={t('staff.payments.filters.search')}
+          placeholder={t('staff.payments.filters.searchPlaceholder')}
+          className="min-w-0 flex-1 sm:basis-full lg:min-w-48 lg:basis-0"
+        />
         <div className="hidden min-w-0 gap-3 sm:flex sm:flex-wrap sm:items-end">
           <FilterControls values={values} options={options} setFilter={setFilter} statusLocked={statusLocked} idPrefix="inline" />
         </div>
@@ -210,7 +171,7 @@ export function PaymentFilters({
             <FilterControls values={values} options={options} setFilter={setFilter} statusLocked={statusLocked} idPrefix="sheet" />
           </div>
           <div className="flex flex-col gap-2 border-t border-flag px-4 py-3">
-            <ResultCount count={totalCount} />
+            <ResultCount message={countMessage(totalCount)} />
             <Button onClick={() => setSheetOpen(false)}>{showLabel(totalCount)}</Button>
             {canClear && (
               <Button variant="ghost" onClick={onClearAll}>

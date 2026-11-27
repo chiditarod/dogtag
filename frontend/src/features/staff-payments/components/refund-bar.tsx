@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { t } from '@/locales/en';
-import { formatMoney } from '../utils';
+import { formatMoney } from '@/lib/money';
 
 interface RefundBarProps {
   count: number;

@@ -5,7 +5,7 @@ import { APP_HOST } from '../helpers/server-env';
 
 /**
  * SPA end-to-end: request a reset from the SPA, follow the emailed link to the
- * server-rendered reset page, then log in through the SPA with the new password.
+ * SPA reset page, then log in through the SPA with the new password.
  */
 
 interface Credentials {
@@ -33,18 +33,26 @@ test.describe('SPA password reset', () => {
       await expect(page.getByRole('status')).toContainText("we've sent a reset link");
     });
 
-    await test.step('Follow the emailed link and set a new password (legacy page)', async () => {
+    let link: string;
+    await test.step('Follow the emailed link and set a new password in the SPA', async () => {
       const email = await waitForEmail({ to: c.user_email, subjectIncludes: 'Password Reset' });
-      const link = email.links.find((url) => /\/password_resets\/[^/]+\/edit/.test(url));
-      expect(link).toBeTruthy();
-      expect(link).toContain(APP_HOST);
+      const found = email.links.find((url) => /\/register\/reset-password\/[^/]+$/.test(url));
+      expect(found).toBeTruthy();
+      expect(found).toContain(APP_HOST);
+      link = found!;
 
-      await page.goto(link!);
-      await expect(page.getByRole('heading', { name: /update.*password/i })).toBeVisible();
-      await page.locator('input#password, input[name="password"]').first().fill(c.new_password);
-      await page.locator('input#password_confirmation, input[name="password_confirmation"]').fill(c.new_password);
-      await page.getByRole('button', { name: /update|submit|save|change/i }).click();
-      await expect(page.getByText(/password.*updated|password.*changed|success/i)).toBeVisible({ timeout: 10000 });
+      await page.goto(link);
+      await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
+      await page.getByLabel('New password', { exact: true }).fill(c.new_password);
+      await page.getByLabel('Confirm new password').fill(c.new_password);
+      await page.getByRole('button', { name: 'Save new password' }).click();
+      await expect(page.getByRole('heading', { name: 'My teams' })).toBeVisible();
+      await expect(page.getByRole('status')).toContainText("Your password is changed and you're logged in.");
+    });
+
+    await test.step('The same link has expired once used', async () => {
+      await page.goto(link);
+      await expect(page.getByRole('heading', { name: 'This link has expired' })).toBeVisible();
     });
 
     await test.step('Log in through the SPA with the new password', async () => {

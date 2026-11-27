@@ -1,5 +1,5 @@
 # Fully refunds one payment (a completed requirement with a Stripe charge) and records who did it and when.
-# Called by the legacy Refund button and by Workers::RefundBatch, so both are audited, emailed and safe to
+# Called by Workers::RefundBatch (the staff Payments page), so every refund is audited, emailed and safe to
 # repeat. Safety comes from three things:
 #
 # - the same advisory lock as Payments::ChargeTeam, so a refund and a charge, or two refunds, of one

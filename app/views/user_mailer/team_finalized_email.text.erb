@@ -12,7 +12,7 @@ Racers:
 - <%= p.first_name %> <%= p.last_name %>
 <% end %>
 
-You can update your team information at <%= RegistrationUi.team_url(@team) %>
+You can update your team information at <%= SpaUrl.for("/teams/#{@team.id}") %>
 until <%= deadline_readable(@team.race.local(@team.race.registration_close)) %>, when registration closes.
 
 <% if @team.race.confirmation_text.present? %>

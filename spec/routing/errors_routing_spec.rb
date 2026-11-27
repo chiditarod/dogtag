@@ -43,10 +43,4 @@ describe "Error routes", type: :routing do
       expect(post: "/wp-admin").to route_to(controller: "errors", action: "not_found", path: "wp-admin")
     end
   end
-
-  describe "root path with GET" do
-    it "routes GET / to homepages#index" do
-      expect(get: "/").to route_to(controller: "homepages", action: "index")
-    end
-  end
 end

@@ -15,11 +15,14 @@ only when the owner says go. Steps marked **OWNER** need the owner at the time.
 | Backup | `b354`, 2026-04-09, 971 KB, still downloadable. Same data as `../dogtag-private/postgres/postgres_dump-20260409.dump` |
 | Old app | `dogtag-22` is already gone |
 
-Config vars already set: `APP_HOST=dogtag.chiditarod.org`, `REGISTRATION_UI=spa`,
+Config vars already set: `APP_HOST=dogtag.chiditarod.org`,
 `MALLOC_ARENA_MAX=2`, `RAILS_ENV`/`RACK_ENV=production`, `LANG=en_US.UTF-8`,
 `ROLLBAR_ENV=production`, `ROLLBAR_ACCESS_TOKEN`, `CLASSY_CLIENT_ID/SECRET`,
 `CLASSY_ORGS=34780`, `SMTP_*` (MXRoute), `DEFAULT_FROM_EMAIL`, `SIDEKIQ_USER/PASS`,
 `SECRET_KEY_BASE`, `REDIS_PROVIDER=REDIS_URL`.
+`REGISTRATION_UI=spa` is also set. This release does not read it, but a rollback to the PR 8
+release does, so keep it `spa` on `dogtag-staging` and `dogtag`. The owner unsets it (staging,
+then `heroku config:unset REGISTRATION_UI -a dogtag`) after a clean week.
 
 Still missing:
 - `DATABASE_URL` and `REDIS_URL`. Step 2 adds them.
@@ -38,8 +41,8 @@ Redis mini $3, Basic web $7 and Basic worker $7).
 ## Steps
 
 ### 0. Go/no-go result
-Keep `REGISTRATION_UI=spa`, or switch to `legacy` (`heroku config:set REGISTRATION_UI=legacy -a dogtag`).
-You can flip it at any time without a deploy.
+The SPA is the only racer UI; there is no switch to flip back. If the go/no-go fails, do not open
+registration, or roll back with `heroku rollback -a dogtag`.
 
 ### 1. Stripe live keys (OWNER)
 ```bash
@@ -132,7 +135,7 @@ Watch Rollbar, Stripe and the first registrations that morning.
 
 | Problem | Action |
 |---------|--------|
-| New pages misbehave | `heroku config:set REGISTRATION_UI=legacy -a dogtag` |
+| New pages misbehave | `heroku rollback -a dogtag` (the previous release still has the legacy pages and reads `REGISTRATION_UI`, so keep it `spa` until the owner unsets it after a clean week) |
 | Bad deploy | `heroku rollback -a dogtag` |
 | Bad data or migration | `heroku maintenance:on`, then restore the step 5 backup with `heroku pg:backups:restore <id> DATABASE_URL -a dogtag` |
 | Worker memory kills (R14/R15) | Check `MALLOC_ARENA_MAX=2` is set. See CLAUDE.md, Known Quirks 8 |

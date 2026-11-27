@@ -7,11 +7,10 @@ export const TEST_PORT = process.env.TEST_PORT || '3099';
 export const APP_HOST = `localhost:${TEST_PORT}`;
 
 // Mail goes over SMTP to Mailpit (docker compose up -d mailpit), jobs run
-// inline (no Sidekiq process), and the homepage points at the built React SPA.
+// inline (no Sidekiq process), and Rails serves the built React SPA.
 export const railsEnv: Record<string, string> = {
   APP_HOST,
   SIDEKIQ_INLINE: 'true',
-  REGISTRATION_UI: 'spa',
   SMTP_HOST: process.env.SMTP_HOST || 'localhost',
   SMTP_PORT: process.env.SMTP_PORT || '1025',
 };

@@ -27,7 +27,7 @@ docker compose up -d db redis mailpit   # Postgres, Redis, and the Mailpit SMTP 
 ```
 
 - Mailpit receives mail on SMTP `localhost:1025`; browse the inbox at http://localhost:8025. Specs read it over its HTTP API via `tests/helpers/mailpit.ts` (`clearInbox`, `waitForEmail`, `countEmails`).
-- `playwright.config.ts` boots Rails (development environment, port 3099) with `APP_HOST=localhost:3099`, `SIDEKIQ_INLINE=true` (jobs run in-process, no Sidekiq worker needed), `REGISTRATION_UI=spa` and `SMTP_HOST=localhost SMTP_PORT=1025`. `VITE_DEV_SERVER` is intentionally unset so Rails serves the built SPA. An already-running server on the port is reused, so stop any dev server started without these variables.
+- `playwright.config.ts` boots Rails (development environment, port 3099) with `APP_HOST=localhost:3099`, `SIDEKIQ_INLINE=true` (jobs run in-process, no Sidekiq worker needed) and `SMTP_HOST=localhost SMTP_PORT=1025`. `VITE_DEV_SERVER` is intentionally unset so Rails serves the built SPA. An already-running server on the port is reused, so stop any dev server started without these variables.
 - `tests/global-setup.ts` builds the SPA (`npm --prefix frontend ci` if `frontend/node_modules` is missing, then `npm --prefix frontend run build`). Set `SPA_BUILD=skip` to reuse the existing `public/register` build.
 
 ```bash
@@ -41,26 +41,20 @@ Specs (each seeds its own data with a `test_seeds:*` task and unique emails; the
 - **`past-racers.spec.ts`** (`test_seeds:past_racers`): a captain with a 2025 team picks a past racer in the crew picker, confirms the seven details, and the slot is filled.
 - **`buddy-picker.spec.ts`** (`test_seeds:buddy_picker`): the Questions card opens with the same-route Yes/No question unanswered (Save says "Choose Yes or No"); both info tips open by tap and keyboard; Yes reveals the race's other teams in case-insensitive alphabetical order with `Other…` last, No hides them and Yes brings the draft picks back; the captain ticks two teams plus `Other…` with free text, saves, and finds them selected after a reload; unticking `Other…` and saving clears the text; saving No clears every pick (checked through the questions API).
 - **`guided-tour.spec.ts`** (`test_seeds:past_racers`): the team page opens the guided tour by itself, `Next` walks the three stops (that race has no questions and no fee), `Done` ends it for good (it stays closed after a reload), and `Take the tour` replays it. It clears the `dogtag:tour:off` switch that `playwright.config.ts` sets for every other spec.
-- **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the legacy reset page, log in through the SPA.
+- **`password-reset.spec.ts`** (`test_seeds:password_reset`): request a reset in the SPA, follow the emailed link to the SPA reset page, log in with the new password through the SPA.
 - **`race-list-order.spec.ts`** (`test_seeds:race_list_order`): the race list shows open races first, then waitlist, registration-over and not-yet-open races (the seeded race dates run in the opposite order) with the right badges and start links; a logged-in captain also sees their teams (status chip, `Start another team`) on the tiles of the races they joined, and none on the others.
+- **`legacy-redirects.spec.ts`** (`test_seeds:legacy_redirects`): at 320px, `/`, `/races` and `/login` land on the SPA; an old `/teams/<id>` link asks for a login and then opens that team in the SPA (so do the old nested `/teams/<id>/people/new` pages); an old `/password_resets/<token>/edit` link opens the SPA reset page; a logged-in racer's old `/account` and `/races/<id>/registrations` links open their SPA pages. A second group covers the kept legacy staff pages: signed in through the SPA, an admin opens `/users`, whose user and team searches open the SPA staff user and team pages, and whose navbar links point at SPA pages; logging out from the legacy navbar lands on the SPA race list.
 - **`reminder.spec.ts`** (`test_seeds:reminder`): a race closing in 23 hours; `Workers::RegistrationReminders` sends one reminder and is idempotent.
 
 ## Running Tests
 
 ### Local Development
 
-1. **Seed the test database:**
+1. **Seeding:** every spec seeds its own data through `tests/helpers/seed.ts`, so there is nothing to seed first. To seed one by hand (for example to click through a state in the browser), run its task, which prints the credentials as JSON:
 
 ```bash
-bundle exec rails test_seeds:basic
+bundle exec rails test_seeds:past_racers   # a captain with a 2025 team and an empty team in an open race
 ```
-
-This creates:
-- Admin user: `test+admin@example.com` / `password123`
-- Captain user: `test+captain@example.com` / `password123`
-- Fifth user: `test+fifth@example.com` / `password123`
-- An open race
-- A team with 4/5 people
 
 2. **Run tests:**
 
@@ -80,7 +74,7 @@ npm run test:ui
 
 ### Running against staging
 
-The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the admin UI, registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
+The registration flow (`tests/e2e/`) can run against `https://dogtag-staging.herokuapp.com`. It creates its own race (`Race E2E <runId> <UTC start>Z`) through the SPA staff pages (`/register/staff/races/new`, then the fee pages; `forbidLegacyPages` fails the setup and teardown tests if they ever load a page outside `/register`), registers a team with a real Stripe test-card payment, optionally checks the emails over IMAP and the Classy fundraising team, and retires the race afterwards. Put the settings in `.env.e2e` (gitignored; never commit it or put it in CI):
 
 | Key | Purpose |
 |---|---|
@@ -118,12 +112,12 @@ The race is retired, not deleted: its dates move into the past and ` [retired]` 
 
 ### Current Tests
 
-- **`spa/*.spec.ts`**: SPA registration, past racers, password reset and reminder emails (see above).
-- **`user-joins-team.spec.ts`**: Tests the happy path where a 5th user joins a team with 4 members, triggering team finalization.
+- **`spa/*.spec.ts`**: the SPA, the staff pages, the old-URL redirects and the reminder emails (see above).
+- **`e2e/`**: the registration flow (`npm run e2e`, `e2e:stripe`, `e2e:staging`).
 
 ### Writing New Tests
 
-1. Create a new `.spec.ts` file in the `tests/` directory
+1. Create a new `.spec.ts` file in `tests/spa/`, with its own `test_seeds:*` task
 2. Import Playwright test utilities:
    ```typescript
    import { test, expect } from '@playwright/test';
@@ -188,10 +182,7 @@ npx playwright install --with-deps
 # Services: Postgres, Redis, and Mailpit (SMTP on 1025, API on 8025)
 # Build the SPA (or let tests/global-setup.ts do it): npm --prefix frontend ci && npm --prefix frontend run build
 
-# Seed test data
-bundle exec rails test_seeds:basic
-
-# Run tests
+# Run tests (each spec seeds its own data)
 npm test
 
 # Cleanup

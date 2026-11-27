@@ -52,9 +52,86 @@ describe Tier do
       expect(tier2).to be_invalid
     end
 
+    it 'says which price or start is already used on the fee' do
+      same_price = FactoryBot.build :tier, requirement: req, price: tier.price, begin_at: 1.week.ago
+      same_begin = FactoryBot.build :tier, requirement: req, price: 9900, begin_at: tier.begin_at
+
+      expect(same_price).to be_invalid
+      expect(same_price.errors[:price]).to eq(["is already used by another price on this fee"])
+      expect(same_begin).to be_invalid
+      expect(same_begin.errors[:begin_at]).to eq(["is already used by another price on this fee"])
+    end
+
+    it 'requires a start' do
+      no_start = FactoryBot.build :tier, requirement: req, price: 9900, begin_at: nil
+
+      expect(no_start).to be_invalid
+      expect(no_start.errors[:begin_at]).to eq(["can't be blank"])
+    end
+
     it 'passes when two tiers with the same information are assigned to different requirements' do
       req2 = FactoryBot.create :payment_requirement_with_tier
       expect(req2.tiers.first).to be_valid
+    end
+  end
+
+  describe 'destroy' do
+    def pay(requirement, refunded_at: nil)
+      CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: requirement,
+        user: FactoryBot.create(:user), refunded_at: refunded_at)
+    end
+
+    it 'refuses the only price of a fee teams have paid' do
+      pay(req)
+
+      expect(tier.destroy_blocked_reason).to eq("Can't delete the only price of a fee teams have paid.")
+      expect(tier.destroy).to be false
+      expect(tier.errors[:base]).to eq(["Can't delete the only price of a fee teams have paid."])
+      expect(Tier.exists?(tier.id)).to be true
+    end
+
+    it 'refuses it when the only payment was refunded' do
+      pay(req, refunded_at: Time.current)
+
+      expect(tier.destroy).to be false
+      expect(Tier.exists?(tier.id)).to be true
+    end
+
+    it 'destroys one of two prices of a paid fee' do
+      pay(req)
+      FactoryBot.create :tier2, requirement: req
+
+      expect(tier.destroy_blocked_reason).to be_nil
+      expect(tier.destroy).to be_truthy
+      expect(Tier.exists?(tier.id)).to be false
+    end
+
+    it 'ignores a legacy price without a start when counting a paid fee\'s prices' do
+      pay(req)
+      undated = Tier.new(requirement: req, price: 1234, begin_at: nil)
+      undated.save(validate: false)
+
+      expect(tier.destroy_blocked_reason).to eq("Can't delete the only price of a fee teams have paid.")
+      expect(tier.destroy).to be false
+      expect(undated.destroy_blocked_reason).to be_nil
+      expect(undated.destroy).to be_truthy
+    end
+
+    it 'destroys the only price of an unpaid fee' do
+      expect(tier.destroy).to be_truthy
+      expect(Tier.exists?(tier.id)).to be false
+    end
+  end
+
+  describe 'a legacy tier without a start' do
+    it 'never applies and never raises in the fee' do
+      dated = tier
+      undated = Tier.new(requirement: req, price: 1234, begin_at: nil)
+      undated.save(validate: false)
+      fresh = PaymentRequirement.find(req.id)
+
+      expect(fresh.active_tier).to eq(dated)
+      expect(fresh.next_tiers).to eq([])
     end
   end
 end

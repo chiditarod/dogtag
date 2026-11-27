@@ -21,25 +21,25 @@ describe TiersController do
     describe '#new' do
       it 'redirects to login' do
         get :new
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#create' do
       it 'redirects to login' do
         post :create
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
         get :edit, params: { :id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
         patch :update, params: { :id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
   end
@@ -75,6 +75,19 @@ describe TiersController do
         end.to change(Tier, :count).by(-1)
       end
 
+      context 'when it is the only price of a fee teams have paid' do
+        before do
+          CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: @req, user: FactoryBot.create(:user))
+          expect(@req.reload.tiers.count).to eq(1)
+          delete :destroy, params: { :id => @tier.id }
+        end
+
+        it 'keeps the price and sets the failure flash' do
+          expect(Tier.exists?(@tier.id)).to be true
+          expect(flash[:error]).to eq(I18n.t('destroy_failed'))
+        end
+      end
+
       context 'with valid id' do
         before do
           delete :destroy, params: { :id => @tier.id }
@@ -85,6 +98,16 @@ describe TiersController do
         it 'redirects to race#edit' do
           expect(response).to redirect_to(edit_race_requirement_url :race_id => @tier.requirement.race.id, :id => @tier.requirement.id)
         end
+      end
+    end
+
+    describe '#create' do
+      it 'answers 400 with a translated flash when the fee does not exist' do
+        post :create, params: { tier: { price: '100', begin_at: '2027-01-01 00:00:00', requirement_id: -1 } }
+
+        expect(response.status).to eq(400)
+        expect(flash[:error]).to eq('Fee not found.')
+        expect(flash[:error]).not_to include('translation missing')
       end
     end
 

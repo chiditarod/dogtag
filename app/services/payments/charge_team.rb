@@ -1,5 +1,5 @@
 # Charges a team's card for a payment requirement and records the completed requirement.
-# Shared by the legacy ChargesController and the JSON API so both enforce the same rules:
+# Shared by the JSON API payment endpoints so every caller enforces the same rules:
 # the amount always comes from the requirement's active tier (never from the client), a
 # requirement must belong to the team's race, a paid requirement is never charged twice, a waitlisted
 # team in a full race cannot pay, and a client that shows a price passes it as expected_amount_cents so
@@ -9,6 +9,9 @@ module Payments
     Result = Data.define(:ok, :error_code, :message, :completed_requirement)
 
     def self.call(**) = new(**).call
+
+    # Admins and operators may take payment when a racer could not (closed, waitlisted, short roster).
+    def self.staff_payer?(user) = user.is_any_of?(:admin, :operator)
 
     def initialize(user:, team:, requirement:, stripe_token:, stripe_email:, expected_amount_cents: nil)
       @user = user
@@ -66,7 +69,7 @@ module Payments
       team.needs_people? && !staff?
     end
 
-    def staff? = user.is_any_of?(:admin, :operator)
+    def staff? = self.class.staff_payer?(user)
 
     # Checked inside the lock, right before charging, so a tier change cannot slip in between.
     def price_changed?(amount)

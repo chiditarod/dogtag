@@ -1,13 +1,9 @@
 # Rake task to seed test data for integration tests
 # Usage:
+#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:admin                     (create admin user only)
 #   rails test_seeds:operator                  (create operator user only; the e2e staff login)
-#   rails test_seeds:basic                     (create full test environment using factories)
-#   rails test_seeds:payment_tiers             (create payment tiers test data)
-#   rails test_seeds:stripe_payment            (create Stripe payment test data)
-#   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
-#   rails test_seeds:password_reset_token      (generate perishable token for password reset)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
@@ -18,6 +14,12 @@
 #   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:payments_partial_failure (a refunder and three mock Cart Deposit payments, the second fails its first refund)
 #   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
+#   rails test_seeds:staff_races              (an operator, an admin and a refunder; a Busy race with a fee, a finalized team with a payment and an unfinalized team; an Empty race)
+#   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
+#   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
+#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
+#   rails test_seeds:staff_team_panel         (an operator, a refunder and an owner; a closed race (inside final edits) with a 3-of-5 team, a payment and two emails, and an open race with a 2-of-3 team and a $50 fee)
+#   rails test_seeds:legacy_redirects         (an owner with a one-racer team in an open race, a user with a fresh reset token and an admin; old racer URLs and the kept legacy staff pages)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -76,249 +78,6 @@ namespace :test_seeds do
     end
   end
 
-  desc "Create basic test environment using factories: captain, race, team with 4 people"
-  task basic: [:guard, :environment] do
-    require 'factory_bot_rails'
-    require 'json'
-    require 'securerandom'
-
-    puts "🌱 Seeding basic test environment using factories..."
-
-    # Generate unique ID for credentials file (must be passed from Playwright for concurrency)
-    unique_id = ENV['TEST_UNIQUE_ID'] || SecureRandom.uuid
-    credentials_file = Rails.root.join('tmp', "test_credentials_#{unique_id}.json")
-
-    # Create captain user with known password
-    puts "  Creating team captain user..."
-    captain = FactoryBot.create(:user,
-      first_name: "Captain",
-      last_name: "TestUser",
-      email: "captain-#{unique_id}@example.com",
-      password: "password123",
-      password_confirmation: "password123"
-    )
-    puts "    ✓ Captain created: #{captain.email}"
-
-    # Create race open for registration with 5 people per team
-    puts "  Creating open race..."
-    race = FactoryBot.create(:race,
-      name: "Race #{unique_id[0..7]}",
-      people_per_team: 5,
-      max_teams: 100
-    )
-    puts "    ✓ Race created: #{race.name}"
-    puts "      - Open for registration: #{race.registration_open} to #{race.registration_close}"
-    puts "      - People per team: #{race.people_per_team}"
-
-    # Create team with 4 people (needs 5 to finalize)
-    puts "  Creating team with 4 people..."
-    team = FactoryBot.create(:team,
-      name: "Test Team Awesome",
-      description: "A test team ready for one more member!",
-      experience: 1,
-      race: race,
-      user: captain
-    )
-
-    # Add 4 people to the team
-    4.times do |i|
-      person = FactoryBot.create(:person,
-        team: team,
-        # The first racer is the account holder, so the team gets a captain and can finalize.
-        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
-      )
-      puts "    ✓ Added person #{i + 1}: #{person.first_name} #{person.last_name} (#{person.email})"
-    end
-
-    puts "    Team status: #{team.people.count}/#{race.people_per_team} people"
-    puts "    Finalized: #{team.finalized.inspect} (needs #{race.people_per_team - team.people.count} more)"
-
-    # Write credentials to unique temp file for Playwright tests
-    credentials = {
-      captain_email: captain.email,
-      captain_password: "password123",
-      race_id: race.id,
-      race_name: race.name,
-      team_id: team.id,
-      team_name: team.name
-    }
-    File.write(credentials_file, credentials.to_json)
-
-    puts ""
-    puts "✅ Test environment seeded successfully!"
-    puts ""
-    puts "📋 Summary:"
-    puts "  Captain user: #{captain.email} / password123"
-    puts "  Race: #{race.name} (ID: #{race.id})"
-    puts "  Team: #{team.name} (ID: #{team.id})"
-    puts "  Team status: #{team.people.count}/#{race.people_per_team} people (needs 1 more to finalize)"
-    puts "  Credentials file: #{credentials_file}"
-    puts ""
-    puts "🧪 Ready for integration tests!"
-  end
-
-  desc "Create race with 2 payment requirements (1 tier and 3 tiers) using factories"
-  task payment_tiers: [:guard, :environment] do
-    require 'factory_bot_rails'
-    require 'json'
-    require 'securerandom'
-
-    puts "🌱 Seeding payment tiers test using factories..."
-
-    # Generate unique ID for credentials file (must be passed from Playwright for concurrency)
-    unique_id = ENV['TEST_UNIQUE_ID'] || SecureRandom.uuid
-    credentials_file = Rails.root.join('tmp', "test_credentials_#{unique_id}.json")
-
-    # Create captain with known password
-    captain = FactoryBot.create(:user,
-      first_name: "Captain",
-      last_name: "Tester",
-      email: "captain-#{unique_id}@example.com",
-      password: "password123",
-      password_confirmation: "password123"
-    )
-
-    # Create race
-    race = FactoryBot.create(:race,
-      name: "Race #{unique_id[0..7]}",
-      people_per_team: 5,
-      max_teams: 100
-    )
-
-    # Payment requirement #1: Single tier (mock success)
-    pr1 = MockPaymentRequirement.create!(
-      name: "Registration Fee",
-      race: race
-    )
-    Tier.create!(
-      requirement: pr1,
-      price: 5000, # $50.00
-      begin_at: 10.days.ago
-    )
-
-    # Payment requirement #2: 3 tiers (tier 2 is active, mock success)
-    pr2 = MockPaymentRequirement.create!(
-      name: "Team Fee",
-      race: race
-    )
-    Tier.create!(requirement: pr2, price: 4000, begin_at: 10.days.ago) # Early: $40
-    Tier.create!(requirement: pr2, price: 5000, begin_at: 1.day.ago)  # Active: $50
-    Tier.create!(requirement: pr2, price: 6000, begin_at: 10.days.from_now) # Late: $60
-
-    # Create team with 5 people using factory
-    team = FactoryBot.create(:team,
-      name: "Test Team Payment",
-      description: "Test team for payment tiers",
-      experience: 1,
-      race: race,
-      user: captain
-    )
-
-    5.times do |i|
-      FactoryBot.create(:person,
-        team: team,
-        # The first racer is the account holder, so the team gets a captain and can finalize.
-        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
-      )
-    end
-
-    # Write credentials to unique temp file for Playwright tests
-    credentials = {
-      captain_email: captain.email,
-      captain_password: "password123",
-      race_id: race.id,
-      race_name: race.name,
-      team_id: team.id,
-      team_name: team.name
-    }
-    File.write(credentials_file, credentials.to_json)
-
-    puts "✅ Seeded!"
-    puts "  Captain: #{captain.email} / password123"
-    puts "  Race: #{race.name} (ID: #{race.id})"
-    puts "  Team: #{team.name} (ID: #{team.id})"
-    puts "  Payment #1: #{pr1.name} - 1 tier ($50)"
-    puts "  Payment #2: #{pr2.name} - 3 tiers (tier 2 active: $50)"
-    puts "  Credentials file: #{credentials_file}"
-  end
-
-  desc "Create team with 5 people and 1 real Stripe payment requirement"
-  task stripe_payment: [:guard, :environment] do
-    require 'factory_bot_rails'
-    require 'json'
-    require 'securerandom'
-
-    puts "🌱 Seeding Stripe payment test using factories..."
-
-    # Generate unique ID for credentials file (must be passed from Playwright for concurrency)
-    unique_id = ENV['TEST_UNIQUE_ID'] || SecureRandom.uuid
-    credentials_file = Rails.root.join('tmp', "test_credentials_#{unique_id}.json")
-
-    # Create captain with known password
-    captain = FactoryBot.create(:user,
-      first_name: "Captain",
-      last_name: "Stripe",
-      email: "captain-#{unique_id}@example.com",
-      password: "password123",
-      password_confirmation: "password123"
-    )
-
-    # Create race
-    race = FactoryBot.create(:race,
-      name: "Race #{unique_id[0..7]}",
-      people_per_team: 5,
-      max_teams: 100
-    )
-
-    # Create real PaymentRequirement (connects to Stripe)
-    payment_req = PaymentRequirement.create!(
-      name: "Registration Fee",
-      race: race
-    )
-    Tier.create!(
-      requirement: payment_req,
-      price: 5000, # $50.00
-      begin_at: 10.days.ago
-    )
-
-    # Create team with 5 people using factory
-    team = FactoryBot.create(:team,
-      name: "Test Team Stripe",
-      description: "Test team for Stripe payments",
-      experience: 1,
-      race: race,
-      user: captain
-    )
-
-    5.times do |i|
-      FactoryBot.create(:person,
-        team: team,
-        # The first racer is the account holder, so the team gets a captain and can finalize.
-        email: i.zero? ? captain.email : "person#{i + 1}-#{unique_id}@example.com"
-      )
-    end
-
-    # Write credentials to unique temp file for Playwright tests
-    credentials = {
-      captain_email: captain.email,
-      captain_password: "password123",
-      race_id: race.id,
-      race_name: race.name,
-      team_id: team.id,
-      team_name: team.name,
-      payment_amount: 5000
-    }
-    File.write(credentials_file, credentials.to_json)
-
-    puts "✅ Seeded!"
-    puts "  Captain: #{captain.email} / password123"
-    puts "  Race: #{race.name} (ID: #{race.id})"
-    puts "  Team: #{team.name} (ID: #{team.id})"
-    puts "  Team members: 5/5 (full team)"
-    puts "  Payment: #{payment_req.name} - $50.00 (real Stripe)"
-    puts "  Credentials file: #{credentials_file}"
-  end
-
   desc "Create user for password reset test"
   task password_reset: [:guard, :environment] do
     require 'factory_bot_rails'
@@ -351,62 +110,6 @@ namespace :test_seeds do
 
     puts "✅ Seeded!"
     puts "  User: #{user.email} / oldpassword123"
-    puts "  Credentials file: #{credentials_file}"
-  end
-
-  desc "Generate perishable token for password reset test"
-  task password_reset_token: [:guard, :environment] do
-    require 'json'
-
-    unique_id = ENV['TEST_UNIQUE_ID']
-    unless unique_id
-      puts "ERROR: TEST_UNIQUE_ID environment variable required"
-      exit 1
-    end
-
-    credentials_file = Rails.root.join('tmp', "test_credentials_#{unique_id}.json")
-    credentials = JSON.parse(File.read(credentials_file))
-
-    user = User.find_by(email: credentials['user_email'])
-    unless user
-      puts "ERROR: User not found: #{credentials['user_email']}"
-      exit 1
-    end
-
-    # Reset the perishable token to get a fresh one
-    user.reset_perishable_token!
-
-    # Update credentials with token
-    credentials['perishable_token'] = user.perishable_token
-    File.write(credentials_file, credentials.to_json)
-
-    puts "✅ Perishable token generated: #{user.perishable_token}"
-  end
-
-  desc "Create credentials for user registration test (no database seeding needed)"
-  task user_registration: [:guard, :environment] do
-    require 'json'
-    require 'securerandom'
-
-    puts "🌱 Generating user registration test credentials..."
-
-    # Generate unique ID for credentials file (must be passed from Playwright for concurrency)
-    unique_id = ENV['TEST_UNIQUE_ID'] || SecureRandom.uuid
-    credentials_file = Rails.root.join('tmp', "test_credentials_#{unique_id}.json")
-
-    # Generate credentials for a new user (no database record yet)
-    credentials = {
-      first_name: "New",
-      last_name: "Registrant",
-      email: "newuser-#{unique_id}@example.com",
-      phone: "555-123-4567",
-      password: "securepass123"
-    }
-    File.write(credentials_file, credentials.to_json)
-
-    puts "✅ Credentials generated!"
-    puts "  Email: #{credentials[:email]}"
-    puts "  Password: #{credentials[:password]}"
     puts "  Credentials file: #{credentials_file}"
   end
 
@@ -887,6 +590,61 @@ namespace :test_seeds do
     puts "✅ Seeded #{owner.email} with a team of #{racers.size} racers and no captain in #{race.name}"
   end
 
+  desc "An owner with a team of one racer, a user with a fresh reset token and an admin (legacy redirects)"
+  task legacy_redirects: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding legacy redirects test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    race = FactoryBot.create(:race, name: "Race Redirects #{short}", people_per_team: 3, max_teams: 100)
+    owner = FactoryBot.create(:user,
+      first_name: "Owner",
+      last_name: "Redirects",
+      email: "redirects-owner-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    team = FactoryBot.create(:team, name: "Test Team Redirects #{short}", race: race, user: owner)
+    FactoryBot.create(:person, team: team, first_name: "Ada", last_name: "Racer",
+                               email: "redirects-racer-#{unique_id}@example.com")
+
+    resetter = FactoryBot.create(:user,
+      first_name: "Reset",
+      last_name: "Redirects",
+      email: "redirects-reset-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    resetter.reset_perishable_token!
+
+    admin = FactoryBot.create(:user,
+      first_name: "Admin",
+      last_name: "Redirects",
+      email: "redirects-admin-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      roles: [:admin]
+    )
+
+    write_test_credentials(unique_id,
+      captain_email: owner.email,
+      captain_password: "password123",
+      team_id: team.id,
+      team_name: team.name,
+      race_id: race.id,
+      race_name: race.name,
+      reset_token: resetter.perishable_token,
+      admin_email: admin.email,
+      admin_password: "password123",
+      short: short
+    )
+    puts "✅ Seeded #{owner.email} with #{team.name}, a reset token for #{resetter.email} and admin #{admin.email}"
+  end
+
   desc "Race closing in 23 hours with an unfinalized team (due a closing-day reminder)"
   task reminder: [:guard, :environment] do
     require "factory_bot_rails"
@@ -922,6 +680,436 @@ namespace :test_seeds do
       team_name: team.name
     )
     puts "✅ Seeded unfinalized team #{team.name} (ID: #{team.id}) in race closing in 23h"
+  end
+
+  desc "An operator, an admin and a refunder; a Busy race (fee, finalized team with a payment, unfinalized team) and an Empty race (staff races)"
+  task staff_races: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff races test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    staff = lambda do |role|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Races",
+        email: "staff-races-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: [role]
+      )
+    end
+    operator = staff.call(:operator)
+    admin = staff.call(:admin)
+    refunder = staff.call(:refunder)
+
+    # Open now, years out, so both races list as open and the overview has dates to show.
+    busy = FactoryBot.create(:race, name: "Race Staff #{short} Busy", race_datetime: 5.years.from_now,
+      registration_open: 3.weeks.ago, registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week,
+      max_teams: 50, people_per_team: 2)
+    FactoryBot.create(:race, name: "Race Staff #{short} Empty", race_datetime: 5.years.from_now,
+      registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week)
+
+    owner = FactoryBot.create(:user,
+      first_name: "Owner",
+      last_name: "Races",
+      email: "staff-races-owner-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    # Finalize before the fee exists (it would otherwise need paying first), then record the payment.
+    finalized = FactoryBot.create(:finalized_team, name: "Test Team Races Done #{short}", race: busy, user: owner)
+    fee = MockPaymentRequirement.create!(name: "Cart Deposit", race: busy)
+    Tier.create!(requirement: fee, price: 5000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: finalized, requirement: fee, user: owner,
+      charge_id: "mock_ch_#{short}_races", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_races", "amount" => 5000 }
+    )
+    FactoryBot.create(:team, name: "Test Team Races Pending #{short}", race: busy, user: owner)
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      admin_email: admin.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      busy_name: busy.name,
+      busy_id: busy.id,
+      empty_name: "Race Staff #{short} Empty",
+      new_name: "Race Staff #{short} New"
+    )
+    puts "✅ Seeded #{busy.name} (ID: #{busy.id}) and Race Staff #{short} Empty"
+  end
+
+  desc "An operator, an admin and a refunder; a race with a paid Registration Fee (two prices) and an unpaid Cart Deposit (staff fees)"
+  task staff_requirements: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff requirements test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    staff = lambda do |role|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Fees",
+        email: "staff-fees-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: [role]
+      )
+    end
+    operator = staff.call(:operator)
+    admin = staff.call(:admin)
+    refunder = staff.call(:refunder)
+
+    # Open now (America/Chicago, the column default), years out, so the add-fee form's Starts is prefilled with a past time.
+    race = FactoryBot.create(:race, name: "Race Fees #{short}", race_datetime: 5.years.from_now,
+      registration_open: 3.weeks.ago, registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week,
+      max_teams: 50, people_per_team: 2)
+
+    owner = FactoryBot.create(:user,
+      first_name: "Owner",
+      last_name: "Fees",
+      email: "staff-fees-owner-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    # Finalize before the fee exists (it would otherwise need paying first), then record the payment.
+    team = FactoryBot.create(:finalized_team, name: "Test Team Fees #{short}", race: race, user: owner)
+
+    # $100 from a day before registration opened, $120 from two weeks out.
+    registration = MockPaymentRequirement.create!(name: "Registration Fee", race: race)
+    Tier.create!(requirement: registration, price: 10_000, begin_at: race.registration_open - 1.day)
+    Tier.create!(requirement: registration, price: 12_000, begin_at: 2.weeks.from_now)
+    CompletedRequirement.create!(
+      team: team, requirement: registration, user: owner,
+      charge_id: "mock_ch_#{short}_fees", amount_cents: 10_000,
+      metadata: { "charge_id" => "mock_ch_#{short}_fees", "amount" => 10_000 }
+    )
+
+    deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    Tier.create!(requirement: deposit, price: 5000, begin_at: race.registration_open - 1.day)
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      admin_email: admin.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      race_id: race.id,
+      race_name: race.name,
+      registration_id: registration.id,
+      deposit_id: deposit.id,
+      team_name: team.name
+    )
+    puts "✅ Seeded #{race.name} (ID: #{race.id}) with Registration Fee (ID: #{registration.id}) and Cart Deposit (ID: #{deposit.id})"
+  end
+
+  desc "Who's registered: a racer, an operator and a refunder; an open race (2 finalized, 2 unfinalized teams) and a full race (2 on the waitlist)"
+  task who_registered: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding who's registered test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    make_user = lambda do |role, roles = []|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Who",
+        email: "who-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: roles
+      )
+    end
+    racer = make_user.call(:racer)
+    operator = make_user.call(:operator, [:operator])
+    refunder = make_user.call(:refunder, [:refunder])
+    owners = (1..4).map { |n| make_user.call(:"owner#{n}") }
+
+    answers = JSON.parse(File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json")))
+    answers_json = lambda do |racer_type, flame|
+      answers.merge("racer-type" => racer_type, "flame-effects" => flame).to_json
+    end
+    # Not Team#finalize: that enqueues TeamFinalizer (email, Classy) into the shared Redis.
+    finalize = lambda do |team, number|
+      people = FactoryBot.create_list(:person, team.race.people_per_team, team: team)
+      team.update_columns(captain_id: people.first.id, finalized: true, notified_at: Time.zone.now, assigned_team_number: number)
+    end
+
+    open_race = FactoryBot.create(:race_with_jsonform,
+      name: "Race Who Open #{short}",
+      filter_field: "racer-type,flame-effects",
+      max_teams: 10
+    )
+    fee = MockPaymentRequirement.create!(name: "Registration", race: open_race)
+    Tier.create!(requirement: fee, price: 2500, begin_at: 10.days.ago)
+
+    mine = FactoryBot.create(:team, name: "Test Team Who Mine #{short}", race: open_race, user: racer,
+                             jsonform: answers_json.call("Racer", "No"))
+    finalize.call(mine, 7)
+    other = FactoryBot.create(:team, name: "Test Team Who Other #{short}", race: open_race, user: owners[0],
+                              jsonform: answers_json.call("Art Cart", "Yes"))
+    finalize.call(other, 12)
+
+    # Unfinished and unpaid: the racer's own team, which they can delete. It has no racers, so no new-team flag.
+    draft = FactoryBot.create(:team, name: "Test Team Who Draft #{short}", race: open_race, user: racer,
+                              jsonform: answers_json.call("Racer", "No"))
+    # Paid, so nobody can delete it. Its racers have no experience, so staff see the new-team flag.
+    paid = FactoryBot.create(:team, name: "Test Team Who Paid #{short}", race: open_race, user: owners[1],
+                             jsonform: answers_json.call("Art Cart", "Yes"))
+    FactoryBot.create_list(:person, open_race.people_per_team, team: paid, experience: 0)
+    CompletedRequirement.create!(
+      team: paid, requirement: fee, user: owners[1],
+      charge_id: "mock_ch_#{short}_who", amount_cents: 2500,
+      metadata: { "charge_id" => "mock_ch_#{short}_who", "amount" => 2500 }
+    )
+
+    # One spot, taken, so the other two teams are on the waitlist (oldest first).
+    full_race = FactoryBot.create(:race, name: "Race Who Full #{short}", max_teams: 1)
+    finalize.call(FactoryBot.create(:team, name: "Test Team Who Seated #{short}", race: full_race, user: owners[2]), 1)
+    first_wait = FactoryBot.create(:team, name: "Test Team Who Wait First #{short}", race: full_race, user: owners[3])
+    second_wait = FactoryBot.create(:team, name: "Test Team Who Wait Second #{short}", race: full_race, user: racer)
+    first_wait.update_columns(created_at: 2.minutes.ago)
+    second_wait.update_columns(created_at: 1.minute.ago)
+
+    write_test_credentials(unique_id,
+      racer_email: racer.email,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      open_race_id: open_race.id,
+      open_race_name: open_race.name,
+      full_race_id: full_race.id,
+      mine_name: mine.name,
+      other_name: other.name,
+      draft_name: draft.name,
+      paid_name: paid.name,
+      first_wait_name: first_wait.name,
+      second_wait_name: second_wait.name,
+      registered_owner_emails: [racer.email, owners[0].email],
+      registering_owner_emails: [racer.email, owners[1].email]
+    )
+    puts "✅ Seeded #{open_race.name} (ID: #{open_race.id}) and #{full_race.name} (ID: #{full_race.id})"
+  end
+
+  desc "An admin, an operator and a refunder; Ada (owns Doge Sled, one payment, three emails) and Zed (deletable) for staff users and emails"
+  task staff_users_emails: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff users and emails test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    staff = lambda do |role|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Users",
+        email: "staff-users-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: [role]
+      )
+    end
+    admin = staff.call(:admin)
+    operator = staff.call(:operator)
+    refunder = staff.call(:refunder)
+
+    ada = FactoryBot.create(:user,
+      first_name: "Ada#{short}",
+      last_name: "Racer",
+      email: "staff-users-ada-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    # A racer who signed themselves up and has no team or payment, so an admin may delete them.
+    zed = FactoryBot.create(:user,
+      first_name: "Zed#{short}",
+      last_name: "Deletable",
+      email: "staff-users-zed-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    other_owner = FactoryBot.create(:user,
+      first_name: "Other",
+      last_name: "Owner",
+      email: "staff-users-other-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    # Open now, years out, so racers can still be added (a person needs an open race).
+    race = FactoryBot.create(:race, name: "Race StaffUsers #{short}", race_datetime: 5.years.from_now,
+      registration_open: 3.weeks.ago, registration_close: 4.years.from_now, final_edits_close: 4.years.from_now + 1.week,
+      max_teams: 50, people_per_team: 2)
+    team = FactoryBot.create(:team, name: "Doge Sled #{short}", race: race, user: ada)
+    FactoryBot.create(:person, team: team)
+    other_team = FactoryBot.create(:team, name: "Test Team Users Other #{short}", race: race, user: other_owner)
+
+    fee = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    Tier.create!(requirement: fee, price: 5000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: team, requirement: fee, user: ada,
+      charge_id: "mock_ch_#{short}_users", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_users", "amount" => 5000 }
+    )
+
+    mail = lambda do |attrs|
+      SentEmail.create!({ mailer: "UserMailer", recipient: ada.email, user_id: ada.id, team_id: team.id, race_id: race.id }.merge(attrs))
+    end
+    mail.call(action: "team_finalized_email", kind: "team_finalized", subject: "Doge Sled is registered", status: "sent",
+              created_at: 1.hour.ago, status_changed_at: 1.hour.ago)
+    mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "failed",
+              error: "Net::SMTPAuthenticationError: 535 Incorrect authentication data",
+              created_at: 30.minutes.ago, status_changed_at: 30.minutes.ago)
+    mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "queued",
+              created_at: 2.minutes.ago, status_changed_at: 2.minutes.ago)
+    SentEmail.create!(mailer: "UserMailer", action: "registration_reminder_email", kind: "registration_reminder",
+                      recipient: other_owner.email, user_id: other_owner.id, team_id: other_team.id, race_id: race.id,
+                      subject: "Registration closes soon", status: "sent",
+                      created_at: 3.hours.ago, status_changed_at: 3.hours.ago)
+
+    write_test_credentials(unique_id,
+      admin_email: admin.email,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      ada_email: ada.email,
+      zed_email: zed.email,
+      password: "password123",
+      short: short,
+      team_id: team.id,
+      team_name: team.name
+    )
+    puts "✅ Seeded #{team.name} (ID: #{team.id}) for Ada (#{ada.email}) and Zed (#{zed.email})"
+  end
+
+  desc "An operator, a refunder and an owner racer; a closed race (final-edits window) with a 3-of-5 team, and an open race with a 2-of-3 team and a $50 fee (staff team panel)"
+  task staff_team_panel: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding staff team panel test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+    answers = File.read(Rails.root.join("spec", "fixtures", "files", "valid_team_jsonform.json"))
+
+    make_user = lambda do |role, roles = []|
+      FactoryBot.create(:user,
+        first_name: role.to_s.capitalize,
+        last_name: "Panel",
+        email: "staff-panel-#{role}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123",
+        roles: roles
+      )
+    end
+    operator = make_user.call(:operator, [:operator])
+    refunder = make_user.call(:refunder, [:refunder])
+    owner = make_user.call(:owner)
+    buddy_owner = make_user.call(:buddy)
+
+    # Racers can only be added while a race is open, so both races start open; the closed one is moved afterwards.
+    closed_race = FactoryBot.create(:race_with_jsonform, name: "Race StaffTeam #{short} Closed",
+      people_per_team: 5, max_teams: 100)
+    team = FactoryBot.create(:team, name: "Test Team StaffPanel #{short}", race: closed_race, user: owner,
+      jsonform: answers, collaborating: true, other_buddies: "Pals at the docks")
+    racers = [["Ada", "Captain"], ["Bo", "Pilot"], ["Cy", "Rider"]].map.with_index do |(first, last), index|
+      FactoryBot.create(:person, team: team, first_name: first, last_name: last,
+        email: "staff-panel-racer#{index + 1}-#{unique_id}@example.com", phone: "312-555-01#{index}0")
+    end
+    team.update_columns(captain_id: racers.first.id)
+    buddy = FactoryBot.create(:team, name: "Test Team StaffBuddy #{short}", race: closed_race, user: buddy_owner, jsonform: answers)
+    team.buddy_teams << buddy
+
+    cart = MockPaymentRequirement.create!(name: "Cart Deposit", race: closed_race)
+    Tier.create!(requirement: cart, price: 5000, begin_at: 4.weeks.ago)
+    fee = MockPaymentRequirement.create!(name: "Registration", race: closed_race)
+    Tier.create!(requirement: fee, price: 12000, begin_at: 4.weeks.ago)
+    CompletedRequirement.create!(
+      team: team, requirement: cart, user: owner,
+      charge_id: "mock_ch_#{short}_panel", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_panel", "amount" => 5000 }
+    )
+    [["team_finalized_email", "team_finalized", "Test Team StaffPanel is registered"],
+     ["welcome_email", "welcome", "Welcome to CHIditarod"]].each_with_index do |(action, kind, subject), index|
+      SentEmail.create!(mailer: "UserMailer", action: action, kind: kind, recipient: owner.email, user_id: owner.id,
+        team_id: team.id, race_id: closed_race.id, subject: subject, status: "sent",
+        created_at: (index + 1).hours.ago, status_changed_at: (index + 1).hours.ago)
+    end
+    # Closed for racers but inside the final-edits window, so staff and owners can still edit people.
+    closed_race.update_columns(registration_open: 4.weeks.ago, registration_close: 1.day.ago,
+      final_edits_close: 1.week.from_now, race_datetime: 2.weeks.from_now)
+
+    open_race = FactoryBot.create(:race, name: "Race StaffTeam #{short} Open", people_per_team: 3, max_teams: 100)
+    open_fee = MockPaymentRequirement.create!(name: "Registration", race: open_race)
+    Tier.create!(requirement: open_fee, price: 5000, begin_at: 4.weeks.ago)
+    open_team = FactoryBot.create(:team, name: "Test Team StaffPay #{short}", race: open_race, user: owner)
+    open_racers = [["Di", "Short"], ["Ed", "Roster"]].map.with_index do |(first, last), index|
+      FactoryBot.create(:person, team: open_team, first_name: first, last_name: last,
+        email: "staff-panel-open#{index + 1}-#{unique_id}@example.com")
+    end
+    open_team.update_columns(captain_id: open_racers.first.id)
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      owner_email: owner.email,
+      owner_id: owner.id,
+      owner_name: "#{owner.first_name} #{owner.last_name}",
+      password: "password123",
+      short: short,
+      closed_race_id: closed_race.id,
+      closed_race_name: closed_race.name,
+      closed_team_id: team.id,
+      closed_team_name: team.name,
+      buddy_team_name: buddy.name,
+      captain_name: "Ada Captain",
+      captain_email: racers.first.email,
+      open_race_id: open_race.id,
+      open_race_name: open_race.name,
+      open_team_id: open_team.id,
+      open_team_name: open_team.name,
+      theme_answer: "Have to wait and see!"
+    )
+    puts "✅ Seeded #{team.name} (ID: #{team.id}, closed) and #{open_team.name} (ID: #{open_team.id}, open)"
+  end
+
+  desc "Create a racer with a known password for the SPA account page test"
+  task account: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+
+    user = FactoryBot.create(:user,
+      first_name: "Account",
+      last_name: "TestUser",
+      email: "account-#{unique_id}@example.com",
+      password: "oldpassword123",
+      password_confirmation: "oldpassword123")
+
+    credentials = {
+      user_email: user.email,
+      password: "oldpassword123",
+      new_password: "newpassword456",
+      user_id: user.id
+    }
+    File.write(credentials_file, credentials.to_json)
+
+    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Clean up all test data"

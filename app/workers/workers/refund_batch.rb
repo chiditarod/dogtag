@@ -13,8 +13,8 @@ module Workers
 
       batch.items.queued.order(:id).pluck(:id).each do |item_id|
         item = batch.items.find_by(id: item_id)
-        # "Refund and invalidate" may have deleted the payment (and so this item), or a retry may have
-        # marked it stalled, since the list was read.
+        # The payment (and so this item) may have been deleted, or a retry may have marked it stalled,
+        # since the list was read.
         next unless item&.status == "queued"
 
         finish(item, Payments::RefundCharge.call(user: batch.user, completed_requirement: item.completed_requirement))

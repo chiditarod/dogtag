@@ -18,83 +18,14 @@ require 'spec_helper'
 describe UsersController do
 
   context '[logged out]' do
-
     describe '#index' do
       it 'redirects to login' do
-        get :index; expect(response).to redirect_to(new_user_session_path)
-      end
-    end
-    describe '#show' do
-      it 'redirects to login' do
-        get :show; expect(response).to redirect_to(new_user_session_path)
-      end
-    end
-    describe '#edit' do
-      it 'redirects to login' do
-        get :edit, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
-      end
-    end
-    describe '#update' do
-      it 'redirects to login' do
-        patch :update, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        get :index; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
-      end
-    end
-
-    describe '#new' do
-      before do
-        @user_stub = User.new
-        allow(User).to receive(:new).and_return @user_stub
-        get :new
-      end
-
-      it 'returns http success' do
-        expect(response).to be_successful
-      end
-      it 'assigns @user to User.new' do
-        expect(assigns(:user)).to eq(@user_stub)
-      end
-    end
-
-    describe '#create' do
-      let(:valid_user_hash) { FactoryBot.attributes_for :user }
-
-      it 'returns 400 if the user parameter is not passed' do
-        post :create
-        expect(response.status).to eq(400)
-      end
-
-      %i(first_name last_name email phone password password_confirmation).each do |param|
-
-        context "when required param '#{param}' is missing" do
-
-          it 'returns 200 and sets flash[:error]' do
-            bad_payload = valid_user_hash.dup
-            bad_payload.delete param
-            post :create, params: { :user => bad_payload }
-            expect(response.status).to eq(200)
-            expect(flash[:error].detect { |val| val.is_a? Hash }).to include param
-          end
-        end
-      end
-
-      it 'adds a record' do
-        expect do
-          post :create, params: { :user => valid_user_hash }
-        end.to change(User, :count).by(1)
-      end
-
-      context 'when user save is successful' do
-        it 'sends a welcome email, sets a flash notice, and redirects to user#show' do
-          expect(Workers::WelcomeEmail).to receive(:perform_async)
-          post :create, params: { :user => valid_user_hash }
-          expect(flash[:notice]).to eq(I18n.t 'create_success_user')
-          expect(response).to redirect_to assigns(:user)
-        end
+        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
   end
@@ -102,23 +33,10 @@ describe UsersController do
   context '[logged in]' do
     let(:valid_user) { FactoryBot.create :admin_user }
     let(:some_user)  { FactoryBot.create :user }
-    let(:new_user)   { User.new }
 
     before do
       activate_authlogic
       login_user! valid_user
-    end
-
-    describe '#new' do
-      before do
-        allow(User).to receive(:new).and_return(new_user)
-        get :new
-      end
-
-      it 'assigns @user to User.new and returns success' do
-        expect(assigns(:user)).to eq(new_user)
-        expect(response).to be_successful
-      end
     end
 
     describe '#index' do
@@ -128,89 +46,10 @@ describe UsersController do
         expect(assigns(:users)).to_not be_nil
         expect(response).to be_successful
       end
-    end
 
-    describe '#show' do
-
-      context 'with invalid user id' do
-
-        it 'runs the user_update_checker and returns 404' do
-          get :show, params: { :id => -1 }
-          expect(controller.should_run_update_checker).to be true
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context 'with valid user id' do
-
-        it 'sets the @user, runs the user_update_checker, returns 200' do
-          get :show, params: { :id => some_user.id }
-          expect(assigns(:user)).to eq(some_user)
-          expect(controller.should_run_update_checker).to be true
-          expect(response).to be_successful
-        end
-      end
-    end
-
-    describe '#edit' do
-
-      context 'with invalid user id' do
-
-        it 'does not run user_update_checker and returns 404' do
-          get :edit, params: { :id => -1 }
-          expect(controller.should_run_update_checker).to be false
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context 'with valid user id' do
-
-        it 'sets the @user object, returns 200, does not run user_update_checker' do
-          get :edit, params: { :id => some_user.id }
-          expect(assigns(:user)).to eq(some_user)
-          expect(response).to be_successful
-          expect(controller.should_run_update_checker).to be false
-        end
-      end
-    end
-
-    describe '#update' do
-
-      context 'on invalid id' do
-
-        it 'does not run user_update_checker and returns 404' do
-          put :update, params: { :id => -1 }
-          expect(controller.should_run_update_checker).to be false
-          expect(response.status).to eq(404)
-        end
-      end
-
-      context 'with valid patch data' do
-
-        it 'updates the user, does not run user_update_checker, sets flash, and redirects to user#show' do
-          patch :update, params: { :id => some_user.id, :user => {:phone => '000-000-0000'} }
-          expect(some_user.reload.phone).to eq('000-000-0000')
-          expect(controller.should_run_update_checker).to be false
-          expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
-          expect(response).to redirect_to(some_user)
-        end
-      end
-
-      context 'roles' do
-        it 'lets an admin set roles' do
-          patch :update, params: { id: some_user.id, user: { roles: ['operator'] } }
-          expect(some_user.reload.is?(:operator)).to be(true)
-        end
-
-        context 'when a non-admin updates themselves' do
-          let(:valid_user) { FactoryBot.create :user }
-
-          it 'ignores roles' do
-            patch :update, params: { id: valid_user.id, user: { first_name: 'X', roles: ['admin'] } }
-            expect(valid_user.reload.is?(:admin)).to be(false)
-            expect(valid_user.first_name).to eq('X')
-          end
-        end
+      it 'runs the user_update_checker' do
+        get :index
+        expect(controller.should_run_update_checker).to be true
       end
     end
 
@@ -247,7 +86,26 @@ describe UsersController do
 
         expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
 
-        expect(flash[:error]).to include('refund batches')
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
+      it 'refuses to delete a staff user who made a single refund outside any batch' do
+        staff = FactoryBot.create :refunder_user
+        FactoryBot.create :completed_requirement, refunded_by: staff, refunded_at: Time.current
+
+        expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
+      it 'refuses to delete a user who owns a team' do
+        owner = FactoryBot.create(:team).user
+
+        expect { delete :destroy, params: { :id => owner.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Owns 1 team. Delete or reassign them first.')
         expect(response).to redirect_to users_path
       end
 

@@ -4,6 +4,7 @@ import { Field, Input } from '@/components/ui/field';
 import { InfoTip } from '@/components/ui/info-tip';
 import { useUpdateTeam } from '@/features/teams/api/use-update-team';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
@@ -11,7 +12,13 @@ import type { Team } from '@/types/api';
 const controlClass =
   'block w-full rounded-md border border-flag bg-white px-3 py-2 font-sans text-base text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-link aria-[invalid=true]:border-star';
 
-export function EditTeamBasics({ team }: { team: Team }) {
+export function EditTeamBasics({
+  team,
+  permissions = racerPermissions(team),
+}: {
+  team: Team;
+  permissions?: TeamPermissions;
+}) {
   const [open, setOpen] = useState(false);
   const [experience, setExperience] = useState('');
   const [missingExperience, setMissingExperience] = useState(false);
@@ -62,6 +69,8 @@ export function EditTeamBasics({ team }: { team: Team }) {
       },
     );
   }
+
+  if (!permissions.editTeam) return null;
 
   const error = updateTeam.error;
   const fieldErrors = error instanceof ApiError ? error.errors : {};

@@ -9,7 +9,7 @@ class Api::V1::QuestionsController < Api::V1::BaseController
 
   def update
     authorize!(:edit, @team)
-    unless @team.race.open_for_registration?
+    unless StaffTeamPermissions.questions_open?(@team, current_user)
       raise CanCan::AccessDenied.new(I18n.t("api.errors.registration_closed"))
     end
     return render_errors("no_questions") if @team.race.jsonform.blank?

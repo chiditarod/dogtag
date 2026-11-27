@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { e2eRaceName, isSweepable, SWEEP_MIN_AGE_MS } from './admin-forms';
+import { e2eRaceName, isSweepable, requirementTypeLabel, SWEEP_MIN_AGE_MS, wallClockInput } from './admin-forms';
 
 test.describe('isSweepable', () => {
   const now = Date.parse('2026-11-16T12:00:00Z');
@@ -23,5 +23,17 @@ test.describe('isSweepable', () => {
     expect(isSweepable(`${e2eRaceName('other', minutesAgo(600))} [retired]`, 'mine', now)).toBe(false);
     expect(isSweepable('CHIditarod XXII', 'mine', now)).toBe(false);
     expect(isSweepable('Race E2Etest', 'mine', now)).toBe(false);
+  });
+});
+
+test.describe('SPA form helpers', () => {
+  test('wallClockInput is the race-zone wall clock a datetime-local input takes', () => {
+    expect(wallClockInput(new Date('2026-12-07T18:00:30Z'), 'America/Chicago')).toBe('2026-12-07T12:00');
+    // Midnight is 00, not 24.
+    expect(wallClockInput(new Date('2026-12-07T06:00:00Z'), 'America/Chicago')).toBe('2026-12-07T00:00');
+  });
+  test('requirementTypeLabel is the fee form’s Type option', () => {
+    expect(requirementTypeLabel('MockPaymentRequirement')).toBe('Test payment (no card)');
+    expect(requirementTypeLabel('PaymentRequirement')).toBe('Card payment');
   });
 });

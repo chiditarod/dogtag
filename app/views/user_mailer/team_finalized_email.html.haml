@@ -23,7 +23,7 @@
             = p.last_name
     %p
       You can update your team information at
-      - team_link = RegistrationUi.team_url(@team)
+      - team_link = SpaUrl.for("/teams/#{@team.id}")
       %a{:href=>team_link}
         = team_link
       until

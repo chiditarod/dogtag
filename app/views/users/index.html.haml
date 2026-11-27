@@ -12,9 +12,6 @@
 
 %h1
   = t('.users')
-  %small
-    = link_to new_user_path do
-      %i.fa.fa-plus
 
 = paginate(@users)
 
@@ -35,7 +32,7 @@
       - if user.teams.empty?
         %tr
           %td
-            = link_to user.fullname, user
+            = link_to user.fullname, "/register/staff/users/#{user.id}"
             %br
             %small= mail_to user.email
           %td
@@ -44,7 +41,7 @@
           - if current_user.is?(:admin)
             %td= user.roles.to_a.map(&:capitalize).join(', ')
             %td
-              = link_to 'Edit', edit_user_path(user)
+              = link_to 'Edit', "/register/staff/users/#{user.id}"
               = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
           - else
             %td
@@ -53,11 +50,11 @@
         - user.teams.each do |t|
           %tr
             %td
-              = link_to user.fullname, user
+              = link_to user.fullname, "/register/staff/users/#{user.id}"
               %br
               %small= mail_to user.email
-            %td= link_to t.name, team_url(t.id)
-            %td= link_to t.race.name, race_url(t.race.id)
+            %td= link_to t.name, "/register/teams/#{t.id}"
+            %td= link_to t.race.name, "/register/staff/races/#{t.race.id}"
             %td
               %small
                 - if current_user.is_any_of?([:admin, :refunder])
@@ -78,7 +75,7 @@
             - if current_user.is? :admin
               %td= user.roles.to_a.map(&:capitalize).join(', ')
               %td
-                = link_to 'Edit', edit_user_path(user)
+                = link_to 'Edit', "/register/staff/users/#{user.id}"
                 = link_to 'Destroy', user, :confirm => 'Are you sure?', :method => :delete
             - else
               %td

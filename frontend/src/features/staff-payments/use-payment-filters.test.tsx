@@ -17,6 +17,7 @@ describe('usePaymentFilters', () => {
     expect(result.current.values).toEqual({
       raceId: undefined,
       paymentType: undefined,
+      teamId: undefined,
       status: 'all',
       q: '',
       page: 1,
@@ -28,6 +29,7 @@ describe('usePaymentFilters', () => {
     expect(result.current.values).toEqual({
       raceId: 4,
       paymentType: 9,
+      teamId: undefined,
       status: 'paid',
       q: 'ada',
       page: 3,
@@ -59,6 +61,7 @@ describe('usePaymentFilters', () => {
     expect(result.current.values).toEqual({
       raceId: 4,
       paymentType: undefined,
+      teamId: undefined,
       status: 'all',
       q: '',
       page: 1,
@@ -85,10 +88,31 @@ describe('usePaymentFilters', () => {
     expect(result.current.values).toEqual({
       raceId: undefined,
       paymentType: undefined,
+      teamId: undefined,
       status: 'all',
       q: '',
       page: 1,
     });
     expect(setup('/x?page=2.5&race_id=-4').result.current.values).toMatchObject({ page: 1, raceId: undefined });
+  });
+
+  it('reads team_id from the URL and ignores junk', () => {
+    expect(setup('/x?team_id=7').result.current.values.teamId).toBe(7);
+    expect(setup('/x?team_id=x').result.current.values.teamId).toBeUndefined();
+    expect(setup('/x?team_id=0').result.current.values.teamId).toBeUndefined();
+  });
+
+  it('changing race drops team_id and payment_type; other filters keep team_id', () => {
+    const { result } = setup('/x?race_id=4&payment_type=9&team_id=7');
+    act(() => result.current.setFilter('status', 'paid'));
+    expect(result.current.values).toMatchObject({ teamId: 7, paymentType: 9 });
+    act(() => result.current.setFilter('raceId', 5));
+    expect(result.current.values).toMatchObject({ raceId: 5, paymentType: undefined, teamId: undefined });
+  });
+
+  it('clearAll drops team_id and keeps the race', () => {
+    const { result } = setup('/x?race_id=4&team_id=7');
+    act(() => result.current.clearAll());
+    expect(result.current.values).toMatchObject({ raceId: 4, teamId: undefined });
   });
 });

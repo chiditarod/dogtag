@@ -42,6 +42,9 @@ export interface PaymentsFilterOptions {
   race_id: number | 'all' | null;
   races: { id: number; name: string; registration_status: RegistrationStatus }[];
   payment_types: { id: number; name: string }[];
+  /** The team the `team_id` filter names; null when that id is no team (the list is then empty). */
+  team: { id: number; name: string; race_id: number } | null;
+  team_id: number | null;
 }
 
 export interface PaymentsResponse {
@@ -57,6 +60,7 @@ export interface PaymentFilterValues {
   /** Absent means the server's default race; `all` means every race. */
   raceId?: number | 'all';
   paymentType?: number;
+  teamId?: number;
   status: BrowseStatus | 'all';
   q: string;
   page: number;

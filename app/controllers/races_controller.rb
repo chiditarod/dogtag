@@ -18,46 +18,23 @@ require 'csv'
 class RacesController < ApplicationController
   include RaceTimeZone
 
-  before_action :require_user, :except => [:index, :show]
+  before_action :require_user
   around_action :use_race_time_zone, only: [:new, :create, :edit, :update]
   load_and_authorize_resource
 
-  def index
-    @past_races = Race.past.order('created_at DESC').includes(:teams)
-    @current_races = Race.current.order('created_at DESC').includes(:teams)
-  end
-
-  def show
+  def edit
     @race = Race.find params[:id]
-    if current_user
-      @my_race_teams = Team.belonging_to(current_user.id).where(race_id: @race.id)
-      if current_user.is_any_of?(:admin, :operator)
-        @stats = @race.stats
-      end
-    end
   end
-
-  alias edit show
 
   def new
     @race = Race.new
   end
 
-  def registrations
-    @race = Race.find params[:race_id]
-    @finalized_teams = Team.all_finalized.where(race_id: @race.id).order('updated_at DESC').includes(:people)
-    @waitlisted_teams = Team.all_unfinalized.where(race_id: @race.id).order('updated_at DESC').includes(:people)
-  end
-
   def export
     return render :status => :bad_request if params[:race_id].blank?
 
-    race_id = params[:race_id]
-    teams = params[:finalized] ? Team.export(race_id, :finalized => true) : Team.export(race_id)
-    data = CSV.generate do |csv|
-      teams.each { |i| csv << i }
-    end
-    send_data data, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment; filename=race_#{race_id}_export.csv"
+    result = RaceExport.call(params[:race_id], finalized: params[:finalized] ? true : false)
+    send_data result[:data], type: result[:type], disposition: "attachment; filename=#{result[:filename]}"
   end
 
   def create
@@ -67,7 +44,7 @@ class RacesController < ApplicationController
 
     if @race.save
       flash[:notice] = I18n.t('create_success')
-      return redirect_to races_path
+      return redirect_to edit_race_url(@race)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @race.errors.messages
@@ -85,7 +62,7 @@ class RacesController < ApplicationController
 
   def destroy
     @race = Race.find params[:id]
-    try_to_delete(@race, races_path)
+    try_to_delete(@race, "/register/staff/races")
   end
 
   private

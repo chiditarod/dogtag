@@ -14,7 +14,7 @@ describe SentEmailsController do
     it "redirects to login when logged out" do
       get :index
 
-      expect(response).to redirect_to(new_user_session_path)
+      expect(response).to redirect_to("/register/login")
     end
 
     context "as a racer" do

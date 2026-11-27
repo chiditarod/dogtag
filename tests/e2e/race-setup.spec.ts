@@ -1,5 +1,5 @@
 /**
- * Test A: the operator creates this run's race through the admin UI and hands
+ * Test A: the operator creates this run's race through the SPA staff pages and hands
  * its id to the registration project (writeRaceState). race-teardown retires it.
  *
  *   TZ=UTC npx playwright test --project=race-setup
@@ -13,11 +13,12 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { runId, target, writeRaceState } from './run';
 import {
-  addRequirement,
-  addTier,
+  addFee,
+  addPrice,
   createRace,
   currentE2ERaceIds,
   e2eRaceName,
+  forbidLegacyPages,
   loggedInRoles,
   requirementTypeLabel,
   sweepLeftoverRaces,
@@ -57,6 +58,7 @@ async function apiRaces(request: APIRequestContext): Promise<any[]> {
 }
 
 test('sweepLeftoverRaces retires a leftover open E2E race', async ({ page, request }) => {
+  forbidLegacyPages(page);
   test.skip(target.name === 'staging', 'Creates a decoy race; the sweep itself runs in test A on staging');
 
   // Named as if another run created it three hours ago.
@@ -72,11 +74,12 @@ test('sweepLeftoverRaces retires a leftover open E2E race', async ({ page, reque
   expect(races.map((r) => r.name)).not.toContain(decoyName);
 });
 
-test('A: the operator sets up the race through the admin UI', async ({ page, request }) => {
+test('A: the operator sets up the race through the SPA staff pages', async ({ page, request }) => {
+  forbidLegacyPages(page);
   const roles = await loggedInRoles(page);
   console.log(`race-setup: logged in with role(s) ${roles.join(', ')}`);
-  expect(roles).toContain('Operator');
-  expect(roles).not.toContain('Admin');
+  expect(roles).toContain('operator');
+  expect(roles).not.toContain('admin');
 
   // An interrupted earlier run may have left its race open (staging).
   const swept = await sweepLeftoverRaces(page, runId());
@@ -92,11 +95,14 @@ test('A: the operator sets up the race through the admin UI', async ({ page, req
   writeRaceState({ raceId, raceName });
 
   const typeLabel = requirementTypeLabel(target.requirementType);
-  const deposit = await addRequirement(page, raceId, { name: 'Cart Deposit', typeLabel });
-  await addTier(page, deposit.id, { priceCents: 8800, beginAt: input.registrationOpen }, TIME_ZONE);
-  const registration = await addRequirement(page, raceId, { name: 'Race Registration', typeLabel });
-  await addTier(page, registration.id, { priceCents: 13000, beginAt: input.registrationOpen }, TIME_ZONE);
-  await addTier(page, registration.id, { priceCents: 15000, beginAt: new Date(now + 7 * DAY) }, TIME_ZONE);
+  await addFee(page, raceId, { name: 'Cart Deposit', typeLabel, priceDollars: 88, beginAt: input.registrationOpen }, TIME_ZONE);
+  const registration = await addFee(
+    page,
+    raceId,
+    { name: 'Race Registration', typeLabel, priceDollars: 130, beginAt: input.registrationOpen },
+    TIME_ZONE,
+  );
+  await addPrice(page, raceId, registration.id, { priceDollars: 150, beginAt: new Date(now + 7 * DAY) }, TIME_ZONE);
 
   const race = (await apiRaces(request)).find((r) => r.name === raceName);
   expect(race).toMatchObject({ id: raceId, open_for_registration: true, people_per_team: 5, time_zone: TIME_ZONE });
@@ -108,11 +114,12 @@ test('A: the operator sets up the race through the admin UI', async ({ page, req
   expect(race.payment_requirements[1].next_tier?.price_cents).toBe(15000);
   expect(race.jsonform).toBeTruthy();
   expect(race.experience_labels).toEqual(EXPERIENCE_LABELS);
-  // The datetime selects were filled in race-zone wall-clock time, whatever the runner's TZ.
+  // The datetime inputs were filled in race-zone wall-clock time, whatever the runner's TZ.
   expect(Math.abs(Date.parse(race.registration_open) - input.registrationOpen.getTime())).toBeLessThan(60_000);
 
-  // The admin race page lists both requirements.
-  await page.goto(`/races/${raceId}/edit`);
-  await expect(page.getByRole('cell', { name: 'Cart Deposit', exact: true })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Race Registration', exact: true })).toBeVisible();
+  // The staff race page lists both fees.
+  await page.goto(`/register/staff/races/${raceId}`);
+  const fees = page.getByRole('region', { name: 'Fees', exact: true });
+  await expect(fees.getByText('Cart Deposit', { exact: true })).toBeVisible();
+  await expect(fees.getByText('Race Registration', { exact: true })).toBeVisible();
 });

@@ -4,41 +4,47 @@ Rails.application.routes.draw do
   get 'users/search', to: 'users#search', as: 'search_users'
   get 'teams/search', to: 'teams#search', as: 'search_teams'
   
-  # super basic static homepage text hack
-  root :controller => 'homepages', :action => "index", :as => :home
+  # The racer-facing front door is the SPA; keep the route name for home_url callers
+  root to: redirect("/register"), as: :home
 
   # Handle non-GET requests to root (malicious traffic like androxgh0st scanners)
   match "/", to: "errors#not_found", via: [:post, :put, :patch, :delete]
 
-  resources :teams, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
-    resources :people, :only => [:new, :create, :edit, :update, :destroy]
-    resource :captain, :only => [:update]
-    resource :questions, :only => [:show, :create]
-  end
+  # team pages moved to the SPA; old bookmarks and emailed links land there
+  get "teams", to: redirect("/register/teams")
+  get "teams/new", to: redirect { |_params, req|
+    race_id = req.params[:race_id].to_s
+    race_id.match?(/\A\d+\z/) ? "/register/races/#{race_id}/teams/new" : "/register"
+  }
+  get "teams/:id", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }
+  get "teams/:id/*rest", to: redirect("/register/teams/%{id}"), constraints: { id: /\d+/ }, format: false
 
-  resources :races, :only => [:new, :create, :edit, :update, :index, :show, :destroy] do
-    get :registrations
+  # Race staff pages stay (new, edit, export, requirements) until the staff reskin; the racer
+  # race list, race page and registrations list moved to the SPA. Kept routes come first.
+  resources :races, :only => [:new, :create, :edit, :update, :destroy] do
     get :export
     resources :requirements, :only => [:new, :create, :edit, :update, :destroy]
   end
+  get "races", to: redirect("/register")
+  get "races/:id", to: redirect("/register"), constraints: { id: /\d+/ }
+  get "races/:race_id/registrations", to: redirect("/register/races/%{race_id}/registrations"), constraints: { race_id: /\d+/ }
 
   resources :tiers, :only => [:new, :create, :edit, :update, :destroy]
 
-  # stripe
-  resources :charges, :only => [:create] do
-    post :refund
-  end
+  # user accounts: staff user admin stays; racer account pages moved to the SPA
+  resources :users, :only => [:index, :destroy]
+  get "users/new", to: redirect("/register/signup")
+  get "users/:id", to: redirect("/register/account"), constraints: { id: /\d+/ }
+  get "users/:id/edit", to: redirect("/register/account"), constraints: { id: /\d+/ }
+  get "account", to: redirect("/register/account")
+  get "account/edit", to: redirect("/register/account")
+  resource :user_session, :only => [:destroy]
+  get "user_session/new", to: redirect("/register/login")
+  get "login", to: redirect("/register/login")
 
-  # mock payments for testing
-  post 'mock_payment', to: 'mock_payments#create', as: :mock_payment
-
-  # user accounts
-  resources :users, :only => [:new, :create, :edit, :update, :index, :show, :destroy]
-  resource :user_session, :only => [:new, :create, :destroy]
-  resource :account, :controller => :users
-
-  # password reset
-  resources :password_resets, :only => [:new, :create, :edit, :update]
+  # password reset (the SPA handles it; old emailed links still land there)
+  get "password_resets/new", to: redirect("/register/forgot-password")
+  get "password_resets/:token/edit", to: redirect("/register/reset-password/%{token}"), constraints: { token: /[A-Za-z0-9_-]+/ }
 
   # sidekiq
   mount Sidekiq::Web => '/sidekiq'
@@ -107,11 +113,14 @@ Rails.application.routes.draw do
     namespace :v1 do
       get "csrf", to: "csrf#show"
       get "me", to: "sessions#show"
+      patch "me", to: "accounts#update"
       resource :session, only: [:create, :destroy]
       resources :users, only: [:create]
-      resources :password_resets, only: [:create]
+      resources :password_resets, only: [:create, :show, :update]
       resources :feedback, only: [:create]
-      resources :races, only: [:index, :show]
+      resources :races, only: [:index, :show] do
+        resources :registrations, only: [:index]
+      end
       resources :teams, only: [:index, :show, :create, :update, :destroy] do
         resources :people, only: [:create, :update, :destroy]
         resource :captain, only: [:update]
@@ -124,6 +133,18 @@ Rails.application.routes.draw do
       end
       namespace :staff do
         resources :payments, only: [:index]
+        resources :users, only: [:index, :show, :update, :destroy]
+        resources :teams, only: [:show]
+        resources :sent_emails, only: [:index]
+        resources :races, only: [:index, :new, :show, :create, :update, :destroy] do
+          get :export, on: :member, defaults: { format: :csv }
+          resources :requirements, only: [:index, :create]
+        end
+        resources :requirements, only: [:show, :update, :destroy] do
+          resources :tiers, only: [:create]
+        end
+        resources :tiers, only: [:update, :destroy]
+        post :confirmation_preview, to: "confirmation_previews#create"
         resources :refund_batches, only: [:create, :show] do
           # `retry` is a Ruby keyword, so the action is retry_failed.
           post :retry, on: :member, action: :retry_failed

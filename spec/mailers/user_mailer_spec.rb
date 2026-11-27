@@ -66,6 +66,11 @@ describe UserMailer do
       expect(mail.body.encoded).not_to include("dogtag.chiditarod.org")
     end
 
+    it "welcome email links the SPA landing" do
+      mail = UserMailer.welcome_email(FactoryBot.create(:user))
+      expect(mail.body.encoded).to include("https://staging.example.org/register/")
+    end
+
     it "team finalized email links use the configured mailer host" do
       team = FactoryBot.create(:team)
       mail = UserMailer.team_finalized_email(team.user, team)
@@ -126,6 +131,7 @@ describe UserMailer do
     end
 
     it "omits the text block when blank" do
+      allow(UserMailer).to receive(:default_url_options).and_return(host: "staging.example.org", protocol: "https")
       with_text = UserMailer.team_finalized_email(team.user, team).html_part.body.decoded
       race.update!(confirmation_text: nil)
       expect(with_text).to include("Read the")
@@ -134,7 +140,7 @@ describe UserMailer do
       expect(html).not_to include("Read the")
       expect(text).not_to include("Read the")
       expect(text).not_to include("example.com/g")
-      expect(html).to include(RegistrationUi.team_url(team))
+      expect(html).to include("https://staging.example.org/register/teams/#{team.id}")
       expect(html).to include("dogtag@chiditarod.org")
       expect(text).to include("dogtag@chiditarod.org")
     end
@@ -163,6 +169,10 @@ describe UserMailer do
     it 'sets the subject' do
       expect(deliveries.first.subject).to eq('dogTag Password Reset Instructions')
     end
+    it "links the SPA reset page" do
+      expect(deliveries.first.body.encoded).to include("http://80/register/reset-password/#{user.perishable_token}")
+    end
+
     include_examples "common tests"
   end
 
@@ -182,6 +192,7 @@ describe UserMailer do
     end
 
     it "lists what is missing and links to the team page" do
+      allow(UserMailer).to receive(:default_url_options).and_return(host: "staging.example.org", protocol: "https")
       mail = UserMailer.registration_reminder(team, "closing_day", details)
       body = mail.body.encoded
 
@@ -190,7 +201,7 @@ describe UserMailer do
       expect(body).to include("1 of 3")
       expect(body).to include("team questions")
       expect(body).to include("registration fee")
-      expect(body).to include(RegistrationUi.team_url(team))
+      expect(body).to include("https://staging.example.org/register/teams/#{team.id}")
     end
 
     it "asks for a team captain once there are racers but no captain" do
@@ -265,6 +276,24 @@ describe UserMailer do
 
     it "does not expose formatting helpers as mailer actions" do
       expect(UserMailer.action_methods).not_to include("human_readable", "human_readable_short", "price_in_dollars_and_cents")
+    end
+  end
+
+  describe "#email_changed_email" do
+    let(:user) { FactoryBot.create(:user, email: "after@example.com") }
+
+    it "goes to the old address and names both addresses" do
+      mail = UserMailer.email_changed_email(user, "before@example.com")
+      body = mail.body.encoded
+
+      expect(mail.to).to eq(["before@example.com"])
+      expect(mail.subject).to eq("Your dogtag email address was changed")
+      expect(body).to include("before@example.com", "after@example.com", user.fullname, "dogtag@chiditarod.org")
+    end
+
+    it "tracks kind email_changed" do
+      UserMailer.email_changed_email(user, "before@example.com").deliver_now
+      expect(SentEmail.last).to have_attributes(kind: "email_changed", user_id: user.id)
     end
   end
 

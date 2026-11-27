@@ -1,6 +1,6 @@
 import { t } from '@/locales/en';
 import type { PaymentsSummary } from '../types';
-import { formatMoney } from '../utils';
+import { formatMoney } from '@/lib/money';
 
 export function ProgressLine({ summary }: { summary: PaymentsSummary }) {
   return (

@@ -30,6 +30,7 @@ class UserMailer < ActionMailer::Base
 
   def welcome_email(user)
     @user = user
+    @home_url = SpaUrl.for
     track(kind: "welcome", user: user)
     mail(to: @user.email, subject: "Welcome to dogTag")
   end
@@ -56,9 +57,17 @@ class UserMailer < ActionMailer::Base
     mail(to: user.email, subject: t(".subject", race: @race_name, team: team.name))
   end
 
+  # Sent to the address an account used to have, so its owner hears about a change they did not make.
+  def email_changed_email(user, old_email)
+    @user = user
+    @old_email = old_email
+    track(kind: "email_changed", user: user)
+    mail(to: old_email, subject: t(".subject"))
+  end
+
   def password_reset_instructions(user, host)
     track(kind: "password_reset", user: user)
-    @edit_password_reset_url = edit_password_reset_url(user.perishable_token, host: host)
+    @edit_password_reset_url = SpaUrl.for("/reset-password/#{user.perishable_token}", host: host)
     mail(to: user.email, subject: 'dogTag Password Reset Instructions')
   end
 
@@ -75,7 +84,7 @@ class UserMailer < ActionMailer::Base
     @price = "$#{view_context.price_in_dollars_and_cents(details[:new_price_cents])}" if kind == "tier_change"
     @date = reminder_date(team.race, details[:begins_at])
     @missing = missing_items(team)
-    @team_url = RegistrationUi.team_url(team)
+    @team_url = SpaUrl.for("/teams/#{team.id}")
     track(kind: "registration_reminder", team: team, user: team.user, dedupe_key: details.fetch(:dedupe_key))
     mail(to: team.user.email, subject: "#{team.race.name}: #{t(".subject_#{kind}", date: @date)}")
   end

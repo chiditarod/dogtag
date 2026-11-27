@@ -7,20 +7,22 @@
  */
 import { expect, test as setup } from '@playwright/test';
 import { target } from './run';
-import { loggedInRoles, STAFF_STATE } from './admin-forms';
+import { forbidLegacyPages, loggedInRoles, STAFF_STATE } from './admin-forms';
 import { fillSecret } from './fill-secret';
 
 setup('log in as the operator', async ({ page }) => {
-  await page.goto('/user_session/new');
-  await fillSecret(page.getByLabel('Email'), target.staff.email);
-  await fillSecret(page.getByLabel('Password'), target.staff.password);
-  await page.getByRole('button', { name: 'Login' }).click();
-  await expect(page.getByText(/login successful/i)).toBeVisible();
+  forbidLegacyPages(page);
+  await page.goto('/register/login');
+  await fillSecret(page.getByLabel('Email', { exact: true }), target.staff.email);
+  await fillSecret(page.getByLabel('Password', { exact: true }), target.staff.password);
+  await page.getByRole('button', { name: 'Log in', exact: true }).click();
+  // The user menu (with Log out) appears once the session is set.
+  await expect(page.getByRole('button', { name: 'Log out', exact: true })).toBeVisible();
 
   // The suite must never run with admin rights.
   const roles = await loggedInRoles(page);
-  expect(roles, 'staff login roles').toContain('Operator');
-  expect(roles, 'staff login roles').not.toContain('Admin');
+  expect(roles, 'staff login roles').toContain('operator');
+  expect(roles, 'staff login roles').not.toContain('admin');
 
   await page.context().storageState({ path: STAFF_STATE });
 });

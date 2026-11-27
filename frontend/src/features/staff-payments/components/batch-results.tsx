@@ -7,7 +7,7 @@ import { t } from '@/locales/en';
 import { isBatchDone, refundBatchQueryKey, useRefundBatch } from '../api/use-refund-batch';
 import { useRetryRefundBatch } from '../api/use-retry-refund-batch';
 import type { RefundBatch, RefundBatchItem } from '../types';
-import { formatMoney } from '../utils';
+import { formatMoney } from '@/lib/money';
 
 interface BatchResultsProps {
   batchId: number;

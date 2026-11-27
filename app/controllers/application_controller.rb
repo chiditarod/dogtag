@@ -35,7 +35,6 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::BadRequest, :with => :render_400
 
   def should_run_update_checker
-    return false if params['controller'] == 'users' && %w(edit update).include?(params['action'])
     return false if params['controller'] == 'user_sessions' && params['action'] == 'destroy'
     true
   end
@@ -47,6 +46,11 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  # Authlogic would save users.last_request_at on every authenticated request, and its
+  # before_save reset_perishable_token would rotate a pending password reset token.
+  # Nothing reads last_request_at.
+  def last_request_update_allowed? = false
 
   def is_production?
     Rails.env.production?
@@ -109,9 +113,7 @@ class ApplicationController < ActionController::Base
 
   def require_user
     unless current_user
-      store_location
-      flash[:notice] = "You must be logged in to access this page"
-      redirect_to new_user_session_path
+      redirect_to "/register/login"
       return false
     end
 
@@ -124,33 +126,8 @@ class ApplicationController < ActionController::Base
     if should_run_update_checker
       user = User.find(current_user.id)
       if user.invalid?
-        flash[:notice] = t('users.review_your_info')
-        return redirect_to edit_user_url(user)
+        return redirect_to "/register/account"
       end
     end
-  end
-
-  def require_no_user
-    if current_user
-      flash[:notice] = "You must be logged out to access this page"
-      redirect_back_or_default account_url
-      return false
-    end
-  end
-
-  def store_location
-    session[:return_to] = request.original_url
-    #todo: remove this logging once it works
-    logger.info "-----------------"
-    logger.info session[:return_to]
-    logger.info "-----------------"
-  end
-
-  def redirect_back_or_default(default)
-    url = session[:return_to] || default
-    session[:return_to] = nil
-
-    # Rails 7.0: redirect_to blocks external hosts by default for security
-    redirect_to(url)
   end
 end

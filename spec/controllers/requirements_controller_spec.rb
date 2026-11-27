@@ -21,25 +21,25 @@ describe RequirementsController do
     describe '#new' do
       it 'redirects to login' do
         get :new, params: { :race_id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#create' do
       it 'redirects to login' do
         post :create, params: { :race_id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
         get :edit, params: { :race_id => -1, :id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
         patch :update, params: { :race_id => -1, :id => 1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
   end
@@ -69,6 +69,21 @@ describe RequirementsController do
         end.to change(Requirement, :count).by(-1)
       end
 
+      context 'when a team has paid it' do
+        let!(:paid) { FactoryBot.create :payment_requirement_with_tier }
+
+        before do
+          CompletedRequirement.create!(team: FactoryBot.create(:team), requirement: paid, user: FactoryBot.create(:user))
+          delete :destroy, params: { :race_id => paid.race.id, :id => paid.id }
+        end
+
+        it 'keeps the fee and sets the failure flash' do
+          expect(Requirement.exists?(paid.id)).to be true
+          expect(flash[:error]).to eq(I18n.t('destroy_failed'))
+          expect(response).to redirect_to(edit_race_url(paid.race))
+        end
+      end
+
       context 'with valid id' do
         before do
           delete :destroy, params: { :race_id => req.race.id, :id => req.id }
@@ -78,8 +93,8 @@ describe RequirementsController do
           expect(flash[:notice]).to eq(I18n.t 'delete_success')
         end
 
-        it 'redirects to race#show' do
-          expect(response).to redirect_to(race_url(req.race))
+        it 'redirects to race#edit' do
+          expect(response).to redirect_to(edit_race_url(req.race))
         end
       end
     end

@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+export type Variant = 'primary' | 'secondary' | 'ghost';
 
 interface ButtonProps extends ComponentPropsWithRef<'button'> {
   variant?: Variant;
@@ -12,6 +12,11 @@ const variants: Record<Variant, string> = {
   secondary: 'border border-flag bg-white text-navy hover:bg-page',
   ghost: 'text-link hover:underline',
 };
+
+/** The look shared by `Button` and `ButtonLink`. */
+export function buttonClasses(variant: Variant, className = '') {
+  return `inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 font-sans text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-link disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`.trim();
+}
 
 export function Button({
   variant = 'primary',
@@ -26,7 +31,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 font-sans text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-link disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={buttonClasses(variant, className)}
       {...props}
     />
   );

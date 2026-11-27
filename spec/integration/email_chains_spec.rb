@@ -2,11 +2,12 @@ require "spec_helper"
 
 # Layer 1 of email verification: exercise each chain end to end with Sidekiq
 # inline and assert on ActionMailer deliveries and the SentEmail log.
-describe UsersController, type: :controller do
+describe "signup", type: :request do
   it "signup sends welcome" do
     Sidekiq::Testing.inline! do
-      post :create, params: { user: FactoryBot.attributes_for(:user) }
+      post "/api/v1/users", params: { user: FactoryBot.attributes_for(:user) }, as: :json
     end
+    expect(response).to have_http_status(:created)
 
     user = User.last
     expect(ActionMailer::Base.deliveries.size).to eq(1)
@@ -28,7 +29,7 @@ describe "email chains" do
     mail = ActionMailer::Base.deliveries.last
     expect(mail.to).to eq([user.email])
     expect(mail.subject).to eq("dogTag Password Reset Instructions")
-    expect(mail.body.encoded).to include(edit_password_reset_url(user.reload.perishable_token, host: "example.org"))
+    expect(mail.body.encoded).to include(SpaUrl.for("/reset-password/#{user.reload.perishable_token}", host: "example.org"))
     expect(SentEmail.where(kind: "password_reset", user_id: user.id).count).to eq(1)
   end
 

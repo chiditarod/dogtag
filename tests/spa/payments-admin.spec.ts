@@ -246,11 +246,6 @@ test.describe('SPA staff payments (Refund mode, single refund at 320px)', () => 
     await waitForEmail({ to: owner, subjectIncludes: refundSubject });
     expect(await countEmails({ to: owner, subjectIncludes: refundSubject })).toBe(1);
 
-    // Legacy team page, as the refunder: the payment shows as refunded.
-    await page.goto(`/teams/${c.team_ids[2]}`);
-    await page.locator('a[href="#requirements"]').first().click();
-    await expect(page.locator('#requirements .label', { hasText: /refunded/i })).toBeVisible();
-
     await page.context().clearCookies();
     await login(page, owner, c.password);
     await page.goto(`/register/teams/${c.team_ids[2]}`);

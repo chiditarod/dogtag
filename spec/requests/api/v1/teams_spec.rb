@@ -123,6 +123,12 @@ describe "API v1 teams", type: :request do
 
       let!(:team) { FactoryBot.create(:team, :with_people, user: user, race: race) }
 
+      it "keeps the racer payload to exactly these team keys" do
+        get "/api/v1/teams/#{team.id}"
+
+        expect(json["team"].keys).to match_array(%w[id name description experience captain_id deletable race people checklist])
+      end
+
       it "returns the team with race, people and checklist" do
         get "/api/v1/teams/#{team.id}"
 
@@ -185,6 +191,55 @@ describe "API v1 teams", type: :request do
         expect(response).to have_http_status(:forbidden)
         expect(json["error"]).not_to eq(I18n.t("api.errors.registration_closed"))
         expect(team.reload.name).not_to eq("Hax")
+      end
+    end
+
+    describe "PATCH /api/v1/teams/:id new_team_setting" do
+      let!(:closed_race) { FactoryBot.create(:race, :registration_closed) }
+      let!(:other_team) { FactoryBot.create(:team, race: closed_race) }
+
+      def patch_setting(team, value) = patch("/api/v1/teams/#{team.id}", params: { team: { new_team_setting: value } }, as: :json)
+
+      it "lets an operator override the flag on another user's team in a closed race, then go back to auto" do
+        api_login(FactoryBot.create(:operator_user))
+
+        patch_setting(other_team, "yes")
+        expect(response).to have_http_status(:ok)
+        expect(other_team.reload).to have_attributes(new_team: true, new_team_overridden: true)
+
+        patch_setting(other_team, "auto")
+        expect(response).to have_http_status(:ok)
+        other_team.reload
+        expect(other_team.new_team_overridden).to be_nil
+        expect(other_team.new_team).to eq(other_team.computed_new_team)
+      end
+
+      it "lets an admin set no" do
+        api_login(FactoryBot.create(:admin_user))
+
+        patch_setting(other_team, "no")
+
+        expect(response).to have_http_status(:ok)
+        expect(other_team.reload).to have_attributes(new_team: false, new_team_overridden: true)
+      end
+
+      it "ignores the setting from the owner" do
+        owned = FactoryBot.create(:team, user: user, race: race)
+
+        patch_setting(owned, "yes")
+        expect(response).to have_http_status(:bad_request)
+        expect(owned.reload.new_team_overridden).to be_nil
+
+        patch "/api/v1/teams/#{owned.id}", params: { team: { name: "Renamed", new_team_setting: "yes" } }, as: :json
+        expect(response).to have_http_status(:ok)
+        expect(owned.reload).to have_attributes(name: "Renamed", new_team_overridden: nil)
+      end
+
+      it "refuses a refunder" do
+        api_login(FactoryBot.create(:refunder_user))
+
+        expect { patch_setting(other_team, "yes") }.not_to(change { other_team.reload.attributes })
+        expect(response).to have_http_status(:forbidden)
       end
     end
 

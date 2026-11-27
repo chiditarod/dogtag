@@ -52,6 +52,26 @@ async function open(path = '/staff/payments') {
 describe('PaymentsPage', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('sends team_id from the URL', async () => {
+    serve();
+    await open('/staff/payments?team_id=7');
+    expect(requests[0].searchParams.get('team_id')).toBe('7');
+  });
+
+  it('shows a Team chip, and removing it drops team_id from the next request', async () => {
+    const team = { id: 7, name: "Ada's Second Try", race_id: 4 };
+    serve({ ...page, filters: { ...page.filters, team, team_id: 7 } });
+    await open('/staff/payments?team_id=7');
+    await userEvent.click(await screen.findByRole('button', { name: "Remove filter Team: Ada's Second Try" }));
+    await waitFor(() => expect(requests.some((url) => !url.searchParams.has('team_id'))).toBe(true));
+  });
+
+  it('says so when the team in the URL is not found', async () => {
+    serve({ ...page, filters: { ...page.filters, team: null, team_id: 7 } });
+    await open('/staff/payments?team_id=7');
+    expect(await screen.findByRole('button', { name: 'Remove filter Team not found' })).toBeInTheDocument();
+  });
+
   it('shows the progress line from summary', async () => {
     serve();
     await open();
@@ -383,6 +403,30 @@ describe('PaymentsPage Refund mode', () => {
     await userEvent.click(boxes()[0]);
     expect(screen.getByText('1 of 5 selected · $50')).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText(t('staff.payments.filters.race')), '3');
+    await waitFor(() => expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument());
+  });
+
+  it("removing the Team chip clears picks when the response's race changes (no race_id in the URL)", async () => {
+    const team = { id: 7, name: "Ada's Second Try", race_id: 4 };
+    requests.length = 0;
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+      http.get('/api/v1/staff/payments', ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url);
+        const withTeam = url.searchParams.has('team_id');
+        return HttpResponse.json({
+          ...refundPage,
+          filters: { ...refundPage.filters, race_id: withTeam ? 4 : 3, team: withTeam ? team : null, team_id: withTeam ? 7 : null },
+        });
+      }),
+    );
+    renderApp('/staff/payments?team_id=7');
+    await screen.findByText('Team 1');
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByText('1 of 5 selected · $50')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: "Remove filter Team: Ada's Second Try" }));
     await waitFor(() => expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument());
   });
 
