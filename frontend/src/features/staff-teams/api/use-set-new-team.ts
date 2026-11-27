@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { teamQueryKey } from '@/features/teams/api/use-team';
 import { apiFetch } from '@/lib/api-client';
 import type { Team } from '@/types/api';
-import type { NewTeamSetting } from '../types';
+import type { NewTeamSetting, StaffTeam } from '../types';
 import { staffTeamQueryKey } from './use-staff-team';
 
 /** Admins and operators set the "new team" flag (`auto`, `yes` or `no`) through the team update. */
@@ -16,10 +16,15 @@ export function useSetNewTeam(teamId: number) {
       }),
     onSuccess: async ({ team }) => {
       queryClient.setQueryData(teamQueryKey(teamId), team);
-      // The permissions hook also refetches when the team query is rewritten. Waiting here keeps the
-      // mutation pending until the staff team shows the new setting, so a select reading it
-      // does not flash the old value.
-      await queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
+      // The permissions hook also invalidates the staff team when the team query is rewritten, which
+      // would cancel an awaited invalidate. A fetchQuery with its own fetcher is not cancelled by that,
+      // so the mutation stays pending until the staff team shows the new setting.
+      await queryClient.fetchQuery({
+        queryKey: staffTeamQueryKey(teamId),
+        queryFn: async () =>
+          (await apiFetch<{ staff_team: StaffTeam }>(`/staff/teams/${teamId}`)).staff_team,
+        staleTime: 0,
+      });
     },
   });
 }

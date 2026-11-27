@@ -406,6 +406,30 @@ describe('PaymentsPage Refund mode', () => {
     await waitFor(() => expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument());
   });
 
+  it("removing the Team chip clears picks when the response's race changes (no race_id in the URL)", async () => {
+    const team = { id: 7, name: "Ada's Second Try", race_id: 4 };
+    requests.length = 0;
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+      http.get('/api/v1/staff/payments', ({ request }) => {
+        const url = new URL(request.url);
+        requests.push(url);
+        const withTeam = url.searchParams.has('team_id');
+        return HttpResponse.json({
+          ...refundPage,
+          filters: { ...refundPage.filters, race_id: withTeam ? 4 : 3, team: withTeam ? team : null, team_id: withTeam ? 7 : null },
+        });
+      }),
+    );
+    renderApp('/staff/payments?team_id=7');
+    await screen.findByText('Team 1');
+    await userEvent.click(screen.getByRole('button', { name: t('staff.payments.refundMode.enter') }));
+    await userEvent.click(boxes()[0]);
+    expect(screen.getByText('1 of 5 selected · $50')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: "Remove filter Team: Ada's Second Try" }));
+    await waitFor(() => expect(screen.getByText('0 of 5 selected · $0')).toBeInTheDocument());
+  });
+
   it('entering refund mode locks status to Paid and Cancel returns to Browse', async () => {
     const { router } = await openRefundMode();
     await waitFor(() => expect(requests.at(-1)!.searchParams.get('status')).toBe('paid'));

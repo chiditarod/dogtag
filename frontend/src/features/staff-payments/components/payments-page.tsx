@@ -33,8 +33,10 @@ export function PaymentsPage() {
   const { batchId, setBatchId } = useActiveBatch();
   const { clear: clearSelection } = selection;
 
-  // A selection belongs to one race.
-  useEffect(() => clearSelection(), [values.raceId, clearSelection]);
+  // A selection belongs to one race: the one in the URL, or (with no race_id, e.g. a team link or the
+  // default) the race the server resolved, which can change when team_id is dropped.
+  const effectiveRaceId = data?.filters.race_id ?? null;
+  useEffect(() => clearSelection(), [values.raceId, effectiveRaceId, clearSelection]);
   // Refund mode only ever works on paid rows (a shared link or Back may have changed the status).
   useEffect(() => {
     if (refundMode && values.status !== 'paid') setFilter('status', 'paid');

@@ -35,7 +35,8 @@ export function useStaffTeam(
     const previous = lastUpdatedAt.current;
     lastUpdatedAt.current = teamUpdatedAt;
     if (!enabled || previous === 0 || previous === teamUpdatedAt) return;
-    void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) });
+    // cancelRefetch false: a fetch already running (e.g. the new-team mutation's own) is joined, not cancelled.
+    void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) }, { cancelRefetch: false });
   }, [teamUpdatedAt, enabled, teamId, queryClient]);
 
   return query;
