@@ -1,5 +1,6 @@
 # Rake task to seed test data for integration tests
 # Usage:
+#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:admin                     (create admin user only)
 #   rails test_seeds:operator                  (create operator user only; the e2e staff login)
 #   rails test_seeds:basic                     (create full test environment using factories)
@@ -1330,6 +1331,33 @@ namespace :test_seeds do
       theme_answer: "Have to wait and see!"
     )
     puts "✅ Seeded #{team.name} (ID: #{team.id}, closed) and #{open_team.name} (ID: #{open_team.id}, open)"
+  end
+
+  desc "Create a racer with a known password for the SPA account page test"
+  task account: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+
+    user = FactoryBot.create(:user,
+      first_name: "Account",
+      last_name: "TestUser",
+      email: "account-#{unique_id}@example.com",
+      password: "oldpassword123",
+      password_confirmation: "oldpassword123")
+
+    credentials = {
+      user_email: user.email,
+      password: "oldpassword123",
+      new_password: "newpassword456",
+      user_id: user.id
+    }
+    File.write(credentials_file, credentials.to_json)
+
+    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Clean up all test data"
