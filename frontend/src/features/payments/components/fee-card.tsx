@@ -42,25 +42,30 @@ export function FeeCard({ team }: { team: Team }) {
   // paid summary) takes focus when it appears.
   const focusPaid = useRef<number | null>(null);
 
-  if (checklist.finalized || (fee.done && fee.paid_cents > 0)) {
-    // A refund does not change the total: the payment still counts as paid. It only gets a line of its own.
-    const refunded = fee.items.filter((line) => line.refunded);
+  // The server leaves refunded payments out of paid_cents; the requirement stays done and each refund
+  // gets a line of its own. A fee whose payments were all refunded shows only those lines.
+  const refunded = fee.items.filter((line) => line.refunded);
+  if (checklist.finalized || (fee.done && (fee.paid_cents > 0 || refunded.length > 0))) {
+    // Only an all-refunded fee drops the total line; its refunded lines say it all.
+    const showTotal = fee.paid_cents > 0 || refunded.length === 0;
     return (
       <div className="space-y-1">
-        <p
-          tabIndex={-1}
-          ref={(element) => {
-            if (element && focusPaid.current !== null) {
-              focusPaid.current = null;
-              element.focus();
-            }
-          }}
-          className="text-base font-semibold text-navy focus:outline-none"
-        >
-          {fee.paid_cents > 0
-            ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
-            : t('fee.paidNoAmount')}
-        </p>
+        {showTotal && (
+          <p
+            tabIndex={-1}
+            ref={(element) => {
+              if (element && focusPaid.current !== null) {
+                focusPaid.current = null;
+                element.focus();
+              }
+            }}
+            className="text-base font-semibold text-navy focus:outline-none"
+          >
+            {fee.paid_cents > 0
+              ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
+              : t('fee.paidNoAmount')}
+          </p>
+        )}
         {refunded.map((line) => (
           <p key={line.requirement_id} className="text-sm text-navy/80">
             {t('fee.refundedLine', { name: line.name })}

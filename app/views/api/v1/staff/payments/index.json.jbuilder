@@ -17,6 +17,10 @@ json.payments @search.payments do |cr|
                    elsif cr.refunded_at && cr.stripe_refund_id.present?
                      { name: "Done at Stripe" }
                    end)
+  json.reopened_at cr.reopened_at
+  json.reopened_by(({ name: [cr.reopened_by.first_name, cr.reopened_by.last_name].compact_blank.join(" ") } if cr.reopened_by))
 end
+# Operators and admins may reopen a refunded payment; refunders may only refund.
+json.can_reopen can?(:reopen, :charges)
 json.meta @search.meta
 json.filters @search.filters

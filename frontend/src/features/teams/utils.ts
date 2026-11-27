@@ -6,11 +6,14 @@ import type { Checklist, Team } from '@/types/api';
  * Before any pricing tier is active the backend reports `fee.done` with no
  * amount due and a `next_tier`; that is "opens later", not "paid". Once
  * something has been paid, a requirement opening later does not undo "paid".
+ * A fee whose payments were all refunded also reports no paid total, but it was
+ * paid: the requirement stays complete.
  */
 export function isFeeOpensLater(fee: Checklist['fee']): boolean {
   return (
     fee.done &&
     fee.paid_cents === 0 &&
+    !fee.items.some((item) => item.refunded) &&
     fee.amount_due_cents === null &&
     fee.next_tier !== null
   );

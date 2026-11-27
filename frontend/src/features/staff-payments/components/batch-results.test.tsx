@@ -173,4 +173,69 @@ describe('BatchResults', () => {
     const listCalls = () => invalidate.mock.calls.filter(([filters]) => JSON.stringify(filters).includes('payments')).length;
     await waitFor(() => expect(listCalls()).toBe(2));
   });
+
+  it('shows Refunded · Reopened for a reopened item and flags reopen_failed as needing attention', async () => {
+    server.use(
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({
+            reopen: true,
+            finished_at: '2026-11-24T18:00:05Z',
+            items: [
+              batchItem({ id: 1, team_name: 'Team 1', status: 'refunded', reopened: true }),
+              batchItem({
+                id: 2,
+                team_name: 'Team 2',
+                status: 'reopen_failed',
+                error_code: 'unexpected',
+                message: 'The payment could not be reopened. Try again.',
+              }),
+              batchItem({ id: 3, team_name: 'Team 3', status: 'refunded' }),
+            ],
+          }),
+        }),
+      ),
+    );
+    setup();
+    expect(await screen.findByText('Refunded · Reopened')).toBeInTheDocument();
+    expect(screen.getByText('Refunded, but not reopened: The payment could not be reopened. Try again.')).toBeInTheDocument();
+    expect(screen.getByText('Refunded', { exact: true })).toBeInTheDocument();
+    expect(screen.getByText('2 refunded, 1 need attention.')).toBeInTheDocument();
+    expect(document.querySelector('li[data-status="reopen_failed"]')).not.toBeNull();
+  });
+
+  it('Retry counts and re-queues reopen_failed items', async () => {
+    let retried = false;
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.get('/api/v1/staff/refund_batches/9', () =>
+        HttpResponse.json({
+          batch: refundBatch({
+            reopen: true,
+            finished_at: '2026-11-24T18:00:05Z',
+            items: [
+              batchItem({ id: 1, team_name: 'Team 1', status: 'reopen_failed', message: null }),
+              batchItem({ id: 2, team_name: 'Team 2', status: 'refunded', reopened: true }),
+            ],
+          }),
+        }),
+      ),
+      http.post('/api/v1/staff/refund_batches/9/retry', () => {
+        retried = true;
+        return HttpResponse.json(
+          { batch: finishedBatch(10, [['refunded']], { retry_of_id: 9, reopen: true }) },
+          { status: 201 },
+        );
+      }),
+      http.get('/api/v1/staff/refund_batches/10', () =>
+        HttpResponse.json({ batch: finishedBatch(10, [['refunded']], { retry_of_id: 9, reopen: true }) }),
+      ),
+    );
+    setup();
+    expect(await screen.findByText('Refunded, but not reopened')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry 1 failed' }));
+    await waitFor(() => expect(retried).toBe(true));
+    await waitFor(() => expect(screen.queryByText('Refunded, but not reopened')).not.toBeInTheDocument());
+    expect(screen.getByText('Refunded · Reopened')).toBeInTheDocument();
+  });
 });

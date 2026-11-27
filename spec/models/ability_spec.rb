@@ -24,4 +24,13 @@ describe Ability do
       expect(ability.can?(:destroy, PaymentRequirement)).to be(false)
     end
   end
+
+  describe "reopening a refunded payment" do
+    it "is allowed for operators and admins, not for refunders or racers" do
+      expect(Ability.new(FactoryBot.create(:operator_user)).can?(:reopen, :charges)).to be(true)
+      expect(Ability.new(FactoryBot.create(:admin_user)).can?(:reopen, :charges)).to be(true)
+      expect(Ability.new(FactoryBot.create(:refunder_user)).can?(:reopen, :charges)).to be(false)
+      expect(Ability.new(FactoryBot.create(:user)).can?(:reopen, :charges)).to be(false)
+    end
+  end
 end

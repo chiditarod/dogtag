@@ -172,6 +172,8 @@ test.describe('SPA staff payments (Refund mode, batch of 5)', () => {
     await typed.fill('REFUND 4');
     await expect(confirm).toBeDisabled();
     await typed.fill('REFUND 5');
+    // A refunder may only refund, so there is no refund-only/reopen choice to make.
+    await expect(dialog.getByRole('radio')).toHaveCount(0);
     await confirm.click();
 
     const results = page.getByRole('dialog', { name: 'Refunds finished' });

@@ -70,7 +70,7 @@ describe('useRefundBatch', () => {
 });
 
 describe('useCreateRefundBatch', () => {
-  it('create sends the exact body', async () => {
+  it('create sends the exact body, including reopen', async () => {
     let body: unknown;
     server.use(
       http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
@@ -82,12 +82,13 @@ describe('useCreateRefundBatch', () => {
     const { result } = renderHook(() => useCreateRefundBatch(), { wrapper: wrapper() });
     let batch;
     await act(async () => {
-      batch = await result.current.mutateAsync({ ids: [3, 4], confirmation: 'REFUND 2', expectedTotalCents: 10000 });
+      batch = await result.current.mutateAsync({ ids: [3, 4], confirmation: 'REFUND 2', expectedTotalCents: 10000, reopen: true });
     });
     expect(body).toEqual({
       completed_requirement_ids: [3, 4],
       confirmation: 'REFUND 2',
       expected_total_cents: 10000,
+      reopen: true,
     });
     expect(batch).toMatchObject({ id: 9 });
   });
@@ -104,7 +105,7 @@ describe('useCreateRefundBatch', () => {
     );
     const { result } = renderHook(() => useCreateRefundBatch(), { wrapper: wrapper() });
     await act(async () => {
-      await result.current.mutateAsync({ ids: [3], confirmation: 'REFUND 1', expectedTotalCents: 1 }).catch(() => {});
+      await result.current.mutateAsync({ ids: [3], confirmation: 'REFUND 1', expectedTotalCents: 1, reopen: false }).catch(() => {});
     });
     await waitFor(() => expect(result.current.error).toBeInstanceOf(ApiError));
     expect((result.current.error as ApiError).code).toBe('selection_changed');

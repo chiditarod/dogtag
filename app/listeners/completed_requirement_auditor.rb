@@ -23,6 +23,12 @@ class CompletedRequirementAuditor
     refresh(cr.team)
   end
 
+  # A reopened payment no longer completes its requirement, so a finalized team may stop meeting the
+  # finalization requirements. Re-finalizing after it pays again keeps the team number and Classy team.
+  def reopen_completed_requirement_successful(cr)
+    refresh(cr.team)
+  end
+
   private
 
   def refresh(team)

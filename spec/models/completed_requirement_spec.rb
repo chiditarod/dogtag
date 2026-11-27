@@ -177,4 +177,40 @@ describe CompletedRequirement do
       end
     end
   end
+
+  describe "reopened payments" do
+    let(:refunded) { FactoryBot.create(:completed_requirement, charge_id: "ch_1", amount_cents: 5000, refunded_at: 1.day.ago) }
+
+    it "#reopened? is true once reopened_at is set" do
+      expect(refunded).not_to be_reopened
+      refunded.update_columns(reopened_at: Time.current)
+      expect(refunded).to be_reopened
+    end
+
+    it ".active leaves out reopened rows" do
+      open_row = FactoryBot.create(:completed_requirement)
+      refunded.update_columns(reopened_at: Time.current)
+
+      expect(CompletedRequirement.active).to contain_exactly(open_row)
+    end
+
+    it "a reopened row does not stop the team from completing the requirement again" do
+      refunded.update_columns(reopened_at: Time.current)
+
+      again = FactoryBot.build(:cr, team: refunded.team, requirement: refunded.requirement, user: refunded.user)
+
+      expect(again).to be_valid
+      expect { again.save! }.not_to raise_error
+    end
+
+    it "still allows only one open row per team and requirement, in the database too" do
+      refunded.update_columns(reopened_at: Time.current)
+      FactoryBot.create(:cr, team: refunded.team, requirement: refunded.requirement, user: refunded.user)
+
+      duplicate = FactoryBot.build(:cr, team: refunded.team, requirement: refunded.requirement, user: refunded.user)
+
+      expect(duplicate).to be_invalid
+      expect { duplicate.save!(validate: false) }.to raise_error(ActiveRecord::RecordNotUnique)
+    end
+  end
 end

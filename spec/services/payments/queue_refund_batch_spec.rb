@@ -10,10 +10,10 @@ describe Payments::QueueRefundBatch do
     FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: charge_id, amount_cents: amount, **attrs)
   end
 
-  def queue(ids, confirmation: "REFUND #{ids.size}", total: nil, user: refunder)
+  def queue(ids, confirmation: "REFUND #{ids.size}", total: nil, user: refunder, **options)
     crs = CompletedRequirement.where(id: ids)
     total ||= crs.sum(:amount_cents)
-    described_class.call(user: user, completed_requirement_ids: ids, confirmation: confirmation, expected_total_cents: total)
+    described_class.call(user: user, completed_requirement_ids: ids, confirmation: confirmation, expected_total_cents: total, **options)
   end
 
   def no_batch_created
@@ -208,6 +208,16 @@ describe Payments::QueueRefundBatch do
     end
   end
 
+  describe "reopen" do
+    it "records on the batch that every payment is reopened after its refund" do
+      expect(queue([paid.id], reopen: true).batch.reopen).to be(true)
+    end
+
+    it "defaults to refunding only" do
+      expect(queue([paid.id]).batch.reopen).to be_blank
+    end
+  end
+
   describe ".retry" do
     let(:batch) { FactoryBot.create(:refund_batch, user: refunder) }
 
@@ -263,6 +273,31 @@ describe Payments::QueueRefundBatch do
       item(paid, "failed")
 
       no_batch_created { expect(described_class.retry(user: refunder, batch: batch).code).to eq(:batch_too_large) }
+    end
+    context "when the batch reopens" do
+      let(:batch) { FactoryBot.create(:refund_batch, user: refunder, reopen: true) }
+
+      it "queues a refunded payment whose reopen failed again, keeping reopen on" do
+        failed_reopen = item(paid(refunded_at: 1.hour.ago), "reopen_failed")
+
+        result = described_class.retry(user: refunder, batch: batch)
+
+        expect(result.ok).to be(true)
+        expect(result.batch.reopen).to be(true)
+        expect(result.batch.items.map(&:completed_requirement_id)).to eq([failed_reopen.completed_requirement_id])
+      end
+
+      it "leaves out a payment that was reopened since" do
+        item(paid(refunded_at: 1.hour.ago, reopened_at: 30.minutes.ago), "reopen_failed")
+
+        expect(described_class.retry(user: refunder, batch: batch).code).to eq(:nothing_to_retry)
+      end
+    end
+
+    it "does not re-queue a refunded payment when the batch does not reopen" do
+      item(paid(refunded_at: 1.hour.ago), "failed")
+
+      expect(described_class.retry(user: refunder, batch: batch).code).to eq(:nothing_to_retry)
     end
   end
 end

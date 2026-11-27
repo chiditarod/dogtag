@@ -1,5 +1,6 @@
 class RefundBatchItem < ApplicationRecord
-  STATUSES = %w[queued refunded already_refunded failed stalled].freeze
+  # reopen_failed: refunded, but the batch also had to reopen it and that failed (see Workers::RefundBatch).
+  STATUSES = %w[queued refunded already_refunded failed stalled reopen_failed].freeze
 
   belongs_to :refund_batch
   belongs_to :completed_requirement

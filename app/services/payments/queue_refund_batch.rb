@@ -11,7 +11,8 @@ module Payments
       "not_refundable" => "not refundable"
     }.freeze
 
-    def self.call(user:, completed_requirement_ids:, confirmation:, expected_total_cents:)
+    # `reopen` also reopens each payment once it is refunded (Payments::ReopenPayment), so the team can pay again.
+    def self.call(user:, completed_requirement_ids:, confirmation:, expected_total_cents:, reopen: false)
       ids = normalize(completed_requirement_ids)
       return failure(:bad_request) if ids.nil? || ids.empty? || ids.uniq.size != ids.size
       return failure(:batch_too_large) if ids.size > RefundBatch.max_size
@@ -25,19 +26,21 @@ module Payments
       return failure(:not_refundable, errors) if errors.any?
       return failure(:selection_changed) if expected_total != payments.values.sum { |cr| cr.amount_cents.to_i }
 
-      queue(user, ids)
+      queue(user, ids, reopen: reopen)
     end
 
     # Re-queues the failed and stalled items of a batch the staff member already confirmed, as a new batch.
-    # Items whose payment has since been refunded (or is in another batch) are left out.
+    # Items whose payment has since been refunded (or is in another batch) are left out, except when the
+    # batch also reopens: a refunded payment that failed to reopen is queued again, and the worker finds it
+    # already refunded and reopens it.
     def self.retry(user:, batch:)
       batch.mark_stalled!
-      candidate_ids = batch.items.where(status: %w[failed stalled]).pluck(:completed_requirement_id)
-      ids = payments_by_id(candidate_ids).select { |_, cr| cr.payment_status == "paid" }.keys.sort
+      candidate_ids = batch.items.where(status: %w[failed stalled reopen_failed]).pluck(:completed_requirement_id)
+      ids = payments_by_id(candidate_ids).select { |_, cr| retryable?(cr, batch) }.keys.sort
       return failure(:nothing_to_retry) if ids.empty?
       return failure(:batch_too_large) if ids.size > RefundBatch.max_size
 
-      queue(user, ids, retry_of: batch)
+      queue(user, ids, retry_of: batch, reopen: batch.reopen)
     end
 
     # A whole number of cents from an Integer, or a numeric String or Float with no fraction (10000.0 is
@@ -76,12 +79,17 @@ module Payments
     end
     private_class_method :refusals
 
-    def self.queue(user, ids, retry_of: nil)
+    def self.retryable?(cr, batch)
+      cr.payment_status == "paid" || (batch.reopen && cr.payment_status == "refunded" && !cr.reopened?)
+    end
+    private_class_method :retryable?
+
+    def self.queue(user, ids, retry_of: nil, reopen: false)
       batch = RefundBatch.transaction do
         # A stale queued item (its job was lost) lists as paid, but would trip the unique index on queued
         # items, so mark it stalled first, as a retry of its own batch would.
         RefundBatchItem.stale.where(completed_requirement_id: ids).mark_stalled!
-        RefundBatch.create!(user: user, retry_of: retry_of).tap do |created|
+        RefundBatch.create!(user: user, retry_of: retry_of, reopen: reopen.presence).tap do |created|
           ids.each { |id| RefundBatchItem.create!(refund_batch: created, completed_requirement_id: id, status: "queued") }
         end
       end

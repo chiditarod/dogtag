@@ -42,7 +42,8 @@ function feeOf(items: FeeItem[], overrides: Partial<Checklist['fee']> = {}): Che
     amount_due_cents: unpaid.length
       ? unpaid.reduce((sum, line) => sum + line.amount_due_cents!, 0)
       : null,
-    paid_cents: items.reduce((sum, line) => sum + line.paid_cents, 0),
+    // Like the server: a refunded line keeps its own paid_cents but is left out of the total.
+    paid_cents: items.reduce((sum, line) => sum + (line.refunded ? 0 : line.paid_cents), 0),
     next_tier: null,
     requirement_id: unpaid[0]?.requirement_id ?? null,
     items,
@@ -428,7 +429,7 @@ describe('FeeCard', () => {
     expect(fee.getAllByText(t('fee.refunded'))).toHaveLength(1);
   });
 
-  it('finalized summary notes the refund and keeps the paid total', async () => {
+  it('finalized summary notes the refund and leaves it out of the paid total', async () => {
     serve({
       checklist: {
         finalized: true,
@@ -440,9 +441,26 @@ describe('FeeCard', () => {
     });
     renderApp('/teams/9');
     const fee = await card();
-    expect(await fee.findByText('Paid $388 total')).toBeInTheDocument();
+    expect(await fee.findByText('Paid $300 total')).toBeInTheDocument();
     expect(fee.getByText('Deposit: refunded')).toBeInTheDocument();
     expect(fee.queryByText('Registration fee: refunded')).not.toBeInTheDocument();
+  });
+
+  it('shows only the refunded line when every payment was refunded', async () => {
+    serve({
+      checklist: {
+        fee: feeOf([
+          item({ requirement_id: 3, name: 'Registration fee', done: true, amount_due_cents: null, paid_cents: 30000, refunded: true }),
+        ]),
+      },
+    });
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText('Registration fee: refunded')).toBeInTheDocument();
+    expect(fee.queryByText(t('fee.paidNoAmount'))).not.toBeInTheDocument();
+    expect(fee.queryByText(t('fee.noneDue'))).not.toBeInTheDocument();
+    expect(fee.queryByText(/Paid \$/)).not.toBeInTheDocument();
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('says when the fee opens later, with no button', async () => {

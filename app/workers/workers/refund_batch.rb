@@ -13,11 +13,10 @@ module Workers
 
       batch.items.queued.order(:id).pluck(:id).each do |item_id|
         item = batch.items.find_by(id: item_id)
-        # "Refund and invalidate" may have deleted the payment (and so this item), or a retry may have
-        # marked it stalled, since the list was read.
+        # A retry may have marked the item stalled since the list was read.
         next unless item&.status == "queued"
 
-        finish(item, Payments::RefundCharge.call(user: batch.user, completed_requirement: item.completed_requirement))
+        finish(item, batch, Payments::RefundCharge.call(user: batch.user, completed_requirement: item.completed_requirement))
       end
 
       batch.update!(finished_at: Time.current) unless batch.finished?
@@ -26,18 +25,23 @@ module Workers
 
     private
 
-    def finish(item, result)
+    def finish(item, batch, result)
       status = if result.ok
         result.code == :already_refunded ? "already_refunded" : "refunded"
       else
         "failed"
       end
-      item.update!(
-        status: status,
-        error_code: (result.code.to_s unless result.ok),
-        message: result.message,
-        finished_at: Time.current
-      )
+      error_code = (result.code.to_s unless result.ok)
+      message = result.message
+      if result.ok && batch.reopen
+        reopened = Payments::ReopenPayment.call(user: batch.user, completed_requirement: item.completed_requirement)
+        message = "#{message.chomp(".")}. #{reopened.message}"
+        unless reopened.ok
+          status = "reopen_failed"
+          error_code = reopened.code.to_s
+        end
+      end
+      item.update!(status: status, error_code: error_code, message: message, finished_at: Time.current)
     end
   end
 end

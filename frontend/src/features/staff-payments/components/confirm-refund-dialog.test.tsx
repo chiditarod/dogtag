@@ -16,7 +16,11 @@ const rows = (n: number) =>
 
 function setup(
   snapshot: StaffPayment[] = rows(5),
-  { current, latestRows }: { current?: Map<number, StaffPayment>; latestRows?: StaffPayment[] } = {},
+  {
+    current,
+    latestRows,
+    canReopen = true,
+  }: { current?: Map<number, StaffPayment>; latestRows?: StaffPayment[]; canReopen?: boolean } = {},
 ) {
   const onConfirmed = vi.fn();
   const onClose = vi.fn();
@@ -26,6 +30,7 @@ function setup(
         snapshot={snapshot}
         current={current ?? new Map(snapshot.map((row) => [row.id, row]))}
         latestRows={latestRows ?? snapshot}
+        canReopen={canReopen}
         onConfirmed={onConfirmed}
         onClose={onClose}
       />
@@ -37,6 +42,8 @@ function setup(
 const confirmButton = (n = 5) =>
   screen.getByRole('button', { name: n === 1 ? 'Refund 1 payment' : `Refund ${n} payments` });
 const typeInto = (text: string) => userEvent.type(screen.getByLabelText(/^Type REFUND/), text);
+const choose = (which: 'only' | 'reopen') =>
+  userEvent.click(screen.getByRole('radio', { name: new RegExp(which === 'only' ? '^Refund only' : '^Refund and reopen payment') }));
 
 describe('ConfirmRefundDialog', () => {
   it('lists every payment and the total', () => {
@@ -67,6 +74,9 @@ describe('ConfirmRefundDialog', () => {
     expect(confirmButton()).toBeDisabled();
     await userEvent.clear(screen.getByLabelText(/^Type REFUND/));
     await typeInto(' refund 5 ');
+    // The typed phrase alone is not enough: staff must also choose what happens to the teams.
+    expect(confirmButton()).toBeDisabled();
+    await choose('only');
     expect(confirmButton()).toBeEnabled();
   });
 
@@ -81,10 +91,65 @@ describe('ConfirmRefundDialog', () => {
     );
     const { onConfirmed } = setup();
     await typeInto('REFUND 5');
+    await choose('only');
     await userEvent.click(confirmButton());
     await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
-    expect(body).toEqual({ completed_requirement_ids: [1, 2, 3, 4, 5], confirmation: 'REFUND 5', expected_total_cents: 25000 });
+    expect(body).toEqual({
+      completed_requirement_ids: [1, 2, 3, 4, 5],
+      confirmation: 'REFUND 5',
+      expected_total_cents: 25000,
+      reopen: false,
+    });
     expect(onConfirmed.mock.calls[0][0]).toMatchObject({ id: 12 });
+  });
+
+  it('starts with neither choice selected and warns about finalized teams only when Reopen is chosen', async () => {
+    setup();
+    const only = screen.getByRole('radio', { name: /^Refund only/ });
+    const reopen = screen.getByRole('radio', { name: /^Refund and reopen payment/ });
+    expect(only).not.toBeChecked();
+    expect(reopen).not.toBeChecked();
+    expect(screen.getByText(t('staff.refund.choice.required'))).toBeInTheDocument();
+    expect(screen.queryByText(t('staff.refund.choice.warning'))).not.toBeInTheDocument();
+    await choose('reopen');
+    expect(screen.getByText(t('staff.refund.choice.warning'))).toBeInTheDocument();
+    await choose('only');
+    expect(screen.queryByText(t('staff.refund.choice.warning'))).not.toBeInTheDocument();
+  });
+
+  it('Refund and reopen sends reopen true and says so on the button', async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.post('/api/v1/staff/refund_batches', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ batch: refundBatch({ id: 12, reopen: true }) }, { status: 201 });
+      }),
+    );
+    const { onConfirmed } = setup(rows(2));
+    await typeInto('REFUND 2');
+    await choose('reopen');
+    await userEvent.click(screen.getByRole('button', { name: 'Refund and reopen 2 payments' }));
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
+    expect(body).toMatchObject({ confirmation: 'REFUND 2', expected_total_cents: 10000, reopen: true });
+  });
+
+  it('a refunder gets no choice: the phrase alone enables Refund, which sends reopen false', async () => {
+    let body: Record<string, unknown> = {};
+    server.use(
+      http.get('/api/v1/csrf', () => HttpResponse.json({ token: 'x' })),
+      http.post('/api/v1/staff/refund_batches', async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ batch: refundBatch({ id: 12 }) }, { status: 201 });
+      }),
+    );
+    const { onConfirmed } = setup(rows(2), { canReopen: false });
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(screen.queryByText(t('staff.refund.choice.required'))).not.toBeInTheDocument();
+    await typeInto('REFUND 2');
+    await userEvent.click(confirmButton(2));
+    await waitFor(() => expect(onConfirmed).toHaveBeenCalled());
+    expect(body).toMatchObject({ confirmation: 'REFUND 2', reopen: false });
   });
 
   it('refuses when a refetch shows a selected row refunded', async () => {
@@ -119,6 +184,7 @@ describe('ConfirmRefundDialog', () => {
     );
     const { onConfirmed } = setup(rows(2));
     await typeInto('REFUND 2');
+    await choose('only');
     await userEvent.click(confirmButton(2));
     expect(await screen.findByText(t('staff.refund.error.selection_changed'))).toBeInTheDocument();
     expect(onConfirmed).not.toHaveBeenCalled();
@@ -133,6 +199,7 @@ describe('ConfirmRefundDialog', () => {
     );
     setup(rows(2));
     await typeInto('REFUND 2');
+    await choose('only');
     await userEvent.click(confirmButton(2));
     expect(await screen.findByText(/Team 2 \(already refunded\)/)).toBeInTheDocument();
   });
@@ -152,6 +219,7 @@ describe('ConfirmRefundDialog', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
 
     await typeInto('REFUND 1');
+    await choose('only');
     await userEvent.click(confirmButton(1));
     await waitFor(() => expect(screen.getByRole('button', { name: t('staff.refund.cancel') })).toBeDisabled());
     await userEvent.keyboard('{Escape}');

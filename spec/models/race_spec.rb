@@ -537,6 +537,21 @@ describe Race do
         expect(cr.team.race.stats).to eq({"money_raised" => 7000})
       end
     end
+
+    context "when some payments were refunded" do
+      let(:race) { FactoryBot.create :race }
+      let(:team) { FactoryBot.create :team, race: race }
+      let(:other_team) { FactoryBot.create :team, race: race }
+
+      it "counts only payments that were not refunded" do
+        FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { "amount" => "5000" }
+        FactoryBot.create :completed_requirement, :with_metadata, team: other_team, hash: { "amount" => "7000" }
+        FactoryBot.create :completed_requirement, :with_metadata, team: other_team, hash: { "amount" => "2500" }, refunded_at: Time.current
+        FactoryBot.create :completed_requirement, :with_metadata, hash: { "amount" => "9900" }
+
+        expect(race.stats).to eq({ "money_raised" => 12000 })
+      end
+    end
   end
 
   describe '#waitlist_count' do

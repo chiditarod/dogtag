@@ -17,6 +17,7 @@
 #   rails test_seeds:staff_shell              (a racer and a refunder with a long first name, for the staff shell)
 #   rails test_seeds:payments_admin            (a refunder and a race with 7 mock Cart Deposit payments, one refunded, plus 1 Registration payment)
 #   rails test_seeds:payments_partial_failure (a refunder and three mock Cart Deposit payments, the second fails its first refund)
+#   rails test_seeds:reopen_payment           (an operator, a refunder and four finalized teams with mock Cart Deposit payments, one already refunded)
 #   rails test_seeds:team_captain             (captain's team with two racers and no team captain chosen)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -789,6 +790,71 @@ namespace :test_seeds do
       team_ids: (1..3).map { |n| Team.find_by!(name: "Test Team Failures #{n} #{short}").id }
     )
     puts "✅ Seeded #{race.name} (ID: #{race.id}) with 3 Cart Deposit payments (the second fails once)"
+  end
+
+  desc "An operator, a refunder and four finalized teams with a paid mock Cart Deposit each; the third is already refunded (reopen payment)"
+  task reopen_payment: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    puts "🌱 Seeding reopen payment test..."
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    short = unique_id[0..7]
+
+    operator = FactoryBot.create(:user,
+      first_name: "Opal",
+      last_name: "Operator",
+      email: "reopen-operator-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      roles: [:operator]
+    )
+    refunder = FactoryBot.create(:user,
+      first_name: "Rae",
+      last_name: "Refunder",
+      email: "reopen-refunder-#{unique_id}@example.com",
+      password: "password123",
+      password_confirmation: "password123",
+      roles: [:refunder]
+    )
+
+    race = FactoryBot.create(:race, name: "Race Reopen #{short}", race_datetime: 5.years.from_now,
+                                    people_per_team: 2, max_teams: 100)
+    deposit = MockPaymentRequirement.create!(name: "Cart Deposit", race: race)
+    Tier.create!(requirement: deposit, price: 5000, begin_at: 10.days.ago)
+
+    owners = (1..4).map do |n|
+      owner = FactoryBot.create(:user,
+        first_name: "Owner#{n}",
+        last_name: "Reopen",
+        email: "reopen-owner-#{n}-#{unique_id}@example.com",
+        password: "password123",
+        password_confirmation: "password123"
+      )
+      team = FactoryBot.create(:team, :with_enough_people, name: "Test Team Reopen #{n} #{short}", race: race, user: owner)
+      # Through Requirement#complete, like a real payment, so a full team is finalized by it.
+      charge_id = "mock_ch_#{short}_#{n}"
+      deposit.complete(team.id, owner, { "charge_id" => charge_id, "amount" => 5000 }) || raise("payment #{n} not saved")
+      owner
+    end
+
+    refunded_team = Team.find_by!(name: "Test Team Reopen 3 #{short}")
+    refunded_team.completed_requirements.find_by!(requirement: deposit).update!(
+      refunded_at: 2.days.ago, refunded_by: refunder, stripe_refund_id: "re_mock_#{short}"
+    )
+
+    write_test_credentials(unique_id,
+      operator_email: operator.email,
+      refunder_email: refunder.email,
+      password: "password123",
+      race_id: race.id,
+      race_name: race.name,
+      short: short,
+      owner_emails: owners.map(&:email),
+      team_ids: (1..4).map { |n| Team.find_by!(name: "Test Team Reopen #{n} #{short}").id }
+    )
+    puts "✅ Seeded #{race.name} (ID: #{race.id}) with 4 Cart Deposit payments, operator #{operator.email} and refunder #{refunder.email}"
   end
 
   desc "Four races in each registration state (race dates run opposite to the list order) and a captain with a team in the open and the closed race"

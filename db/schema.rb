@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2026_11_24_062955) do
+ActiveRecord::Schema[7.0].define(version: 2026_11_26_024744) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -34,10 +34,14 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_24_062955) do
     t.datetime "refunded_at"
     t.text "stripe_refund_id"
     t.bigint "refunded_by_id"
+    t.datetime "reopened_at"
+    t.bigint "reopened_by_id"
     t.index ["charge_id"], name: "index_completed_requirements_on_charge_id"
     t.index ["refunded_by_id"], name: "index_completed_requirements_on_refunded_by_id"
+    t.index ["reopened_by_id"], name: "index_completed_requirements_on_reopened_by_id"
     t.index ["requirement_id"], name: "index_completed_requirements_on_requirement_id"
-    t.index ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id", unique: true
+    t.index ["team_id", "requirement_id"], name: "index_completed_requirements_on_team_id_and_requirement_id"
+    t.index ["team_id", "requirement_id"], name: "index_completed_requirements_one_open_per_team_requirement", unique: true, where: "(reopened_at IS NULL)"
     t.index ["team_id"], name: "index_completed_requirements_on_team_id"
     t.index ["user_id"], name: "index_completed_requirements_on_user_id"
   end
@@ -95,6 +99,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_24_062955) do
     t.datetime "finished_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "reopen"
     t.index ["retry_of_id"], name: "index_refund_batches_on_retry_of_id"
     t.index ["user_id"], name: "index_refund_batches_on_user_id"
   end
@@ -204,6 +209,7 @@ ActiveRecord::Schema[7.0].define(version: 2026_11_24_062955) do
   end
 
   add_foreign_key "completed_requirements", "users", column: "refunded_by_id", on_delete: :nullify
+  add_foreign_key "completed_requirements", "users", column: "reopened_by_id", on_delete: :nullify
   add_foreign_key "refund_batch_items", "completed_requirements", on_delete: :cascade
   add_foreign_key "refund_batch_items", "refund_batches", on_delete: :cascade
   add_foreign_key "refund_batches", "refund_batches", column: "retry_of_id", on_delete: :nullify

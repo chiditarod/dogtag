@@ -39,7 +39,9 @@ class Team < ApplicationRecord
   has_many :people, dependent: :destroy
 
   # A team must track which race requirements have been fulfilled.
-  has_many :completed_requirements
+  # Only payments that still count; a reopened payment stays in all_completed_requirements as history.
+  has_many :completed_requirements, -> { active }
+  has_many :all_completed_requirements, class_name: "CompletedRequirement", dependent: nil
   has_many :requirements, :through => :completed_requirements
 
   # Teams this team asked to start near, and the picks other teams made of this one.
@@ -58,10 +60,10 @@ class Team < ApplicationRecord
     name.to_s.sub(/\A[[:space:]]*(?<the>the)[[:space:]]+(?<rest>[^[:space:]].*?)[[:space:]]*\z/i) { "#{$~[:rest]}, #{$~[:the]}" }
   end
 
-  # A team that never finished registering: nothing paid and not finalized. Only these can be deleted
-  # by their captain or by operators.
+  # A team that never finished registering: nothing paid (not even a refunded or reopened payment, which
+  # stays as history) and not finalized. Only these can be deleted by their captain or by operators.
   def deletable?
-    !finalized && completed_requirements.none?
+    !finalized && all_completed_requirements.none?
   end
 
   def unfinalized
@@ -153,12 +155,9 @@ class Team < ApplicationRecord
     ! needs_people?
   end
 
-  # todo: make more generic,
-  # this relies on the presence of metadata['amount'] in the completed requirement
+  # Net of refunds: a refunded payment counts as 0 (CompletedRequirement#net_paid_cents).
   def money_paid_in_cents
-    completed_requirements.reduce(0) do |memo, cr|
-      memo + cr.metadata.fetch('amount').to_i
-    end
+    completed_requirements.sum(&:net_paid_cents)
   end
 
   def completed_questions?

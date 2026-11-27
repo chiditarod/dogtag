@@ -486,6 +486,13 @@ describe Team do
       FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { 'amount' => '2500' }
       expect(team.money_paid_in_cents).to eq(7500)
     end
+
+    it "leaves out refunded payments" do
+      FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { "amount" => "5000" }
+      FactoryBot.create :completed_requirement, :with_metadata, team: team, hash: { "amount" => "2500" }, refunded_at: Time.current
+
+      expect(team.money_paid_in_cents).to eq(5000)
+    end
   end
 
   describe '#library_name' do
@@ -934,6 +941,21 @@ describe Team do
     it "ignores a race's requirement when requirement.enabled? == false" do
       FactoryBot.create :payment_requirement, :race => @race
       expect(@reg.completed_all_requirements?).to eq(true)
+    end
+  end
+
+  describe "#deletable?" do
+    let(:team) { FactoryBot.create(:team) }
+
+    it "is true for an unfinalized team with no payments" do
+      expect(team).to be_deletable
+    end
+
+    it "is false once anything was paid, even if the payment was refunded and reopened" do
+      FactoryBot.create(:completed_requirement, team: team, charge_id: "ch_1", amount_cents: 5000, refunded_at: 2.days.ago, reopened_at: 1.day.ago)
+
+      expect(team.reload.completed_requirements).to be_empty
+      expect(team).not_to be_deletable
     end
   end
 end

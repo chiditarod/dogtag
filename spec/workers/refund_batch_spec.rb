@@ -103,14 +103,14 @@ describe Workers::RefundBatch do
     expect(stalled.completed_requirement.reload).not_to be_refunded
   end
 
-  it "skips an item whose payment was deleted mid-batch (Refund and invalidate) and finishes the rest" do
+  it "skips an item whose payment was deleted mid-batch and finishes the rest" do
     first = queue_item(paid)
     deleted = queue_item(paid)
     last = queue_item(paid)
     deleted_cr = deleted.completed_requirement
     allow(Payments::RefundCharge).to receive(:call).and_wrap_original do |original, **args|
       result = original.call(**args)
-      # An admin's "Refund and invalidate" deletes the payment (and its batch items) while the job runs.
+      # The payment (and so its batch items) is deleted while the job runs.
       deleted_cr.destroy if args[:completed_requirement].id == first.completed_requirement_id
       result
     end
@@ -204,5 +204,69 @@ describe Workers::RefundBatch do
     expect(crs.map { |cr| cr.reload.refunded? }).to eq([true, true])
     expect(ActionMailer::Base.deliveries.size).to eq(2)
     expect(SentEmail.where(kind: "refund").count).to eq(2)
+  end
+
+  context "when the batch also reopens" do
+    before { batch.update!(reopen: true) }
+
+    it "reopens each payment right after refunding it, and says so" do
+      items = Array.new(2) { queue_item(paid) }
+
+      run_worker
+
+      expect(items.map { |item| item.reload.status }).to eq(%w[refunded refunded])
+      expect(items.first.message).to end_with("The payment was reopened. The team can pay again.")
+      items.each do |item|
+        cr = item.completed_requirement.reload
+        expect(cr).to be_refunded
+        expect(cr).to be_reopened
+        expect(cr.reopened_by).to eq(refunder)
+      end
+    end
+
+    it "reopens a charge that was already refunded" do
+      cr = paid
+      Stripe::Refund.create(charge: cr.charge_id)
+      item = queue_item(cr)
+
+      run_worker
+
+      expect(item.reload.status).to eq("already_refunded")
+      expect(cr.reload).to be_reopened
+    end
+
+    it "marks the item reopen_failed when the refund worked but the reopen did not" do
+      cr = paid
+      item = queue_item(cr)
+      failure = Payments::ReopenPayment::Result.new(ok: false, code: :in_progress, message: "Another request is working on this payment. Try again in a moment.")
+      allow(Payments::ReopenPayment).to receive(:call).and_return(failure)
+
+      run_worker
+
+      expect(item.reload.status).to eq("reopen_failed")
+      expect(item.error_code).to eq("in_progress")
+      expect(item.message).to include("The refund has processed successfully").and include("Try again in a moment")
+      expect(cr.reload).to be_refunded
+      expect(cr).not_to be_reopened
+    end
+
+    it "does not reopen a payment whose refund failed" do
+      cr = paid(charge_id: "ch_seed_1")
+      item = queue_item(cr)
+
+      run_worker
+
+      expect(item.reload.status).to eq("failed")
+      expect(cr.reload).not_to be_reopened
+    end
+  end
+
+  it "leaves payments refunded only when the batch does not reopen" do
+    item = queue_item(paid)
+
+    run_worker
+
+    expect(item.completed_requirement.reload).to be_refunded
+    expect(item.completed_requirement).not_to be_reopened
   end
 end

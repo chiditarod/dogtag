@@ -15,6 +15,7 @@ import { PaymentsTable } from './payments-table';
 import { ProgressLine } from './progress-line';
 import { BatchResults } from './batch-results';
 import { ConfirmRefundDialog } from './confirm-refund-dialog';
+import { ReopenPaymentDialog } from './reopen-payment-dialog';
 import { RefundBar } from './refund-bar';
 
 type Mode = 'browse' | 'refund';
@@ -30,6 +31,7 @@ export function PaymentsPage() {
   const capNoteId = useId();
   // The rows shown in the confirmation dialog: a snapshot taken when it opened.
   const [reviewing, setReviewing] = useState<StaffPayment[] | null>(null);
+  const [reopening, setReopening] = useState<StaffPayment | null>(null);
   const { batchId, setBatchId } = useActiveBatch();
   const { clear: clearSelection } = selection;
 
@@ -157,6 +159,7 @@ export function PaymentsPage() {
           ) : (
             <PaymentsTable
               payments={data.payments}
+              onReopen={data.can_reopen && !refundMode ? setReopening : undefined}
               refund={
                 refundMode
                   ? {
@@ -189,11 +192,13 @@ export function PaymentsPage() {
         />
       )}
       {batchId !== null && <BatchResults batchId={batchId} onBatchChange={setBatchId} onFinished={finished} />}
+      {reopening && <ReopenPaymentDialog payment={reopening} onClose={() => setReopening(null)} />}
       {reviewing && (
         <ConfirmRefundDialog
           snapshot={reviewing}
           current={selection.selected}
           latestRows={data?.payments ?? []}
+          canReopen={data?.can_reopen ?? false}
           onConfirmed={confirmed}
           onClose={() => setReviewing(null)}
         />

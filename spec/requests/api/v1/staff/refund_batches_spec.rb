@@ -43,6 +43,22 @@ describe "API v1 staff refund batches", type: :request do
     before { api_login(refunder) }
 
     describe "POST /staff/refund_batches" do
+      it "403 for reopen: refunders may refund but not reopen" do
+        cr = paid
+
+        no_batch_created do
+          post "/api/v1/staff/refund_batches", params: { completed_requirement_ids: [cr.id], confirmation: "REFUND 1", expected_total_cents: 5000, reopen: true }, as: :json
+        end
+        expect(response).to have_http_status(:forbidden)
+      end
+
+      it "refunds only when reopen is absent" do
+        create_batch([paid.id])
+
+        expect(RefundBatch.last.reopen).to be_blank
+        expect(json["batch"]).to include("reopen" => false)
+      end
+
       it "201 queues the batch and enqueues the job" do
         crs = [paid, paid]
 
@@ -202,6 +218,16 @@ describe "API v1 staff refund batches", type: :request do
       end
     end
 
+    it "403 retrying a reopen batch, which would reopen too" do
+      batch = FactoryBot.create(:refund_batch, user: FactoryBot.create(:operator_user), reopen: true)
+      FactoryBot.create(:refund_batch_item, refund_batch: batch, status: "failed", completed_requirement: paid)
+
+      no_batch_created do
+        post "/api/v1/staff/refund_batches/#{batch.id}/retry", as: :json
+      end
+      expect(response).to have_http_status(:forbidden)
+    end
+
     describe "GET /staff/refund_batches/:id" do
       it "shows any staff member's batch with its items" do
         other = FactoryBot.create(:operator_user)
@@ -244,6 +270,33 @@ describe "API v1 staff refund batches", type: :request do
         get "/api/v1/staff/refund_batches/0"
         expect(response).to have_http_status(:not_found)
       end
+    end
+  end
+
+  context "as an operator" do
+    let(:operator) { FactoryBot.create(:operator_user) }
+
+    before { api_login(operator) }
+
+    it "records reopen on the batch and reports it, with each item's reopened flag" do
+      cr = paid
+
+      post "/api/v1/staff/refund_batches", params: { completed_requirement_ids: [cr.id], confirmation: "REFUND 1", expected_total_cents: 5000, reopen: true }, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(RefundBatch.last.reopen).to be(true)
+      expect(json["batch"]).to include("reopen" => true)
+      expect(json["batch"]["items"].first).to include("reopened" => false)
+    end
+
+    it "retries a reopen batch as a reopen batch" do
+      batch = FactoryBot.create(:refund_batch, user: operator, reopen: true)
+      FactoryBot.create(:refund_batch_item, refund_batch: batch, status: "failed", completed_requirement: paid)
+
+      post "/api/v1/staff/refund_batches/#{batch.id}/retry", as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(RefundBatch.last).to have_attributes(retry_of_id: batch.id, reopen: true)
     end
   end
 end

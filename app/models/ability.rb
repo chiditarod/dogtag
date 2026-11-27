@@ -73,7 +73,7 @@ class Ability
       # requirements#new builds a base Requirement (type picked on the form);
       # create still requires a PaymentRequirement subclass.
       can :new, Requirement
-      can [:refund], :charges
+      can [:refund, :reopen], :charges
       can :index, SentEmail
     end
 

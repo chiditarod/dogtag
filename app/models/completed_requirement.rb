@@ -23,10 +23,16 @@ class CompletedRequirement < ApplicationRecord
   belongs_to :requirement
   belongs_to :user
   belongs_to :refunded_by, class_name: "User", optional: true
+  belongs_to :reopened_by, class_name: "User", optional: true
 
   validates :team, :requirement, :user, presence: true
-  validates :team, uniqueness: { :scope => [:requirement], :allow_nil => true, :message => 'has already completed this requirement.' }
-  validates :requirement, uniqueness: { :scope => [:team], :allow_nil => true, :message => 'has already been completed for that team' }
+  # A reopened row is history (see #reopened?), so only open rows compete for the one-per-team-and-requirement rule.
+  validates :team, uniqueness: { :scope => [:requirement], :allow_nil => true, :conditions => -> { active }, :message => 'has already completed this requirement.' }, unless: :reopened?
+  validates :requirement, uniqueness: { :scope => [:team], :allow_nil => true, :conditions => -> { active }, :message => 'has already been completed for that team' }, unless: :reopened?
+
+  # The rows that count: a payment that was reopened no longer completes its requirement, but its row stays
+  # as the audit trail. Team#completed_requirements and Requirement#completed? use this.
+  scope :active, -> { where(reopened_at: nil) }
 
   # todo: use postgres native json field type, here.
   serialize :metadata, coder: JSON
@@ -47,6 +53,10 @@ class CompletedRequirement < ApplicationRecord
 
     legacy_metadata["refunded"].present?
   end
+
+  # A refunded payment that staff reopened: the requirement is open again so the team can pay again, and this
+  # row is kept as history (who refunded it, who reopened it, and when).
+  def reopened? = reopened_at.present?
 
   def charge_id
     has_attribute?(:charge_id) ? super : legacy_metadata["charge_id"]
@@ -86,6 +96,11 @@ class CompletedRequirement < ApplicationRecord
   end
 
   def refundable? = payment_status == "paid"
+
+  # The amount this payment still counts for in totals: its metadata amount, or 0 once refunded.
+  def net_paid_cents
+    refunded? ? 0 : metadata.fetch("amount").to_i
+  end
 
   private
 

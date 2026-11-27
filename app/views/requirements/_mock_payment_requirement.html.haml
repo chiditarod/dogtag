@@ -3,6 +3,8 @@
   - if cr.refunded?
     %span.label.label-primary
       = t('refunded')
+    - if can? :reopen, :charges
+      = button_to t("reopen_payment"), reopen_completed_requirement_path(cr), :method=>:post, :data => { :confirm => "Reopen this payment so the team can pay again?" }, :class=> %w(btn btn-default)
   - else
     %i.fa.fa-check-circle-o.fa-5x.pull-left
     .lead

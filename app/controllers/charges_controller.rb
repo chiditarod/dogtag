@@ -69,6 +69,14 @@ class ChargesController < ApplicationController
     redirect_to session.delete(:prior_url)
   end
 
+  # Reopens a refunded payment so the team can pay again. Operators and admins only (see Ability).
+  def reopen
+    authorize! :reopen, :charges
+    result = Payments::ReopenPayment.call(user: current_user, completed_requirement: CompletedRequirement.find(params[:id]))
+    flash[result.ok ? :notice : :error] = result.message
+    redirect_to session.delete(:prior_url)
+  end
+
   private
 
   def log_and_redirect(ex)
@@ -77,17 +85,15 @@ class ChargesController < ApplicationController
     redirect_to url
   end
 
-  # The notice for a successful refund. An admin may also delete the completed requirement ("refund and
-  # invalidate"). Deleting the row deletes its refunded_by/refunded_at too, so one log line keeps the audit.
+  # The notice for a successful refund. An operator or admin may also reopen the payment ("refund and
+  # reopen"), so the team can pay again. The row is kept, so the refund and the reopen stay on record.
   def refund_notice(result, cr)
     msg = result.message.chomp(".")
-    return msg unless ActiveModel::Type::Boolean.new.cast(params[:delete_completed_requirement])
-    return "#{msg}, but the completed requirement was not deleted because you do not have the appropriate permissions" unless current_user.is?(:admin)
+    return msg unless ActiveModel::Type::Boolean.new.cast(params[:reopen])
+    return "#{msg}, but the payment was not reopened because you do not have the appropriate permissions" unless can?(:reopen, :charges)
 
-    Rails.logger.info "Completed requirement deleted after refund: charge #{cr.charge_id}, team #{cr.team_id}, requirement #{cr.requirement_id}, admin user #{current_user.id}, at #{Time.current.iso8601}"
-    cr.subscribe(CompletedRequirementAuditor.new)
-    cr.destroy
-    "#{msg}, and the completed requirement was deleted"
+    reopened = Payments::ReopenPayment.call(user: current_user, completed_requirement: cr)
+    reopened.ok ? "#{msg}, and the payment was reopened" : "#{msg}, but the payment was not reopened: #{reopened.message}"
   end
 
   # require that session[:prior_url] exists. this allows this controller's methods

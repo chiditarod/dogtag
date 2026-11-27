@@ -3,17 +3,24 @@ class Api::V1::Staff::RefundBatchesController < Api::V1::Staff::BaseController
 
   def create
     ids = params.expect(completed_requirement_ids: [])
+    reopen = ActiveModel::Type::Boolean.new.cast(params[:reopen]) || false
+    # Refunders may refund but not reopen (operators and admins only).
+    authorize!(:reopen, :charges) if reopen
     result = Payments::QueueRefundBatch.call(
       user: current_user,
       completed_requirement_ids: ids,
       confirmation: params[:confirmation].to_s,
-      expected_total_cents: params[:expected_total_cents]
+      expected_total_cents: params[:expected_total_cents],
+      reopen: reopen
     )
     render_batch(result, ids.size)
   end
 
   def retry_failed
-    render_batch(Payments::QueueRefundBatch.retry(user: current_user, batch: RefundBatch.find(params[:id])))
+    batch = RefundBatch.find(params[:id])
+    # Retrying a reopen batch reopens too, so it needs the same permission as starting one.
+    authorize!(:reopen, :charges) if batch.reopen
+    render_batch(Payments::QueueRefundBatch.retry(user: current_user, batch: batch))
   end
 
   # Staff can read any batch. A GET never writes: items still queued long after the batch was created are
