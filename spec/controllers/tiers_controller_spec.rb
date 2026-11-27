@@ -21,25 +21,25 @@ describe TiersController do
     describe '#new' do
       it 'redirects to login' do
         get :new
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#create' do
       it 'redirects to login' do
         post :create
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
         get :edit, params: { :id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
         patch :update, params: { :id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
   end

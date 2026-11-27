@@ -33,4 +33,33 @@ describe ApplicationController do
       expect(response).to render_template("error/400")
     end
   end
+
+  describe "require_user" do
+    controller do
+      before_action :require_user
+
+      def index
+        head :ok
+      end
+    end
+
+    it "sends a logged-out request to the SPA login" do
+      activate_authlogic
+      get :index
+
+      expect(response).to redirect_to("/register/login")
+      expect(flash[:notice]).to eq("You must be logged in to access this page")
+    end
+
+    it "sends a user whose record is invalid to the SPA account page" do
+      activate_authlogic
+      user = FactoryBot.create(:user)
+      user.update_column(:phone, nil)
+      login_user!(user)
+      get :index
+
+      expect(response).to redirect_to("/register/account")
+      expect(flash[:notice]).to eq(I18n.t("users.review_your_info"))
+    end
+  end
 end

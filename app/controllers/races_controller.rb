@@ -63,7 +63,7 @@ class RacesController < ApplicationController
 
     if @race.save
       flash[:notice] = I18n.t('create_success')
-      return redirect_to races_path
+      return redirect_to edit_race_url(@race)
     else
       flash.now[:error] = [t('create_failed')]
       flash.now[:error] << @race.errors.messages
@@ -81,7 +81,7 @@ class RacesController < ApplicationController
 
   def destroy
     @race = Race.find params[:id]
-    try_to_delete(@race, races_path)
+    try_to_delete(@race, "/register/staff/races")
   end
 
   private

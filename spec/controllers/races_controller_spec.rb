@@ -20,37 +20,37 @@ describe RacesController do
   context '[logged out]' do
     describe '#new' do
       it 'redirects to login' do
-        get :new; expect(response).to redirect_to(new_user_session_path)
+        get :new; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#create' do
       it 'redirects to login' do
-        post :create; expect(response).to redirect_to(new_user_session_path)
+        post :create; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        get :edit, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        patch :update, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#export' do
       it 'redirects to login' do
-        get :export, params: { :race_id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        get :export, params: { :race_id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#registrations' do
       it 'redirects to login' do
-        get :registrations, params: { :race_id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        get :registrations, params: { :race_id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#show'
@@ -459,8 +459,8 @@ describe RacesController do
           expect(flash[:notice]).to eq(I18n.t 'create_success')
         end
 
-        it 'redirects to races index' do
-          expect(response).to redirect_to races_path
+        it 'redirects to the new race edit page' do
+          expect(response).to redirect_to edit_race_url(Race.last)
         end
       end
     end
@@ -513,8 +513,8 @@ describe RacesController do
           it 'sets the flash notice' do
             expect(flash[:notice]).to eq(I18n.t 'delete_success')
           end
-          it 'redirects to the user index' do
-            expect(response).to redirect_to races_path
+          it 'redirects to the SPA race list' do
+            expect(response).to redirect_to "/register/staff/races"
           end
         end
       end

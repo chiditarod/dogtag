@@ -21,31 +21,31 @@ describe PeopleController do
     describe '#new' do
       it 'redirects to login' do
         get :new, params: { :team_id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#create' do
       it 'redirects to login' do
         post :create, params: { :team_id => -1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
         get :edit, params: { :team_id => -1, :id => 1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
         patch :update, params: { :team_id => -1, :id => 1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
         delete :destroy, params: { :team_id => -1, :id => 1 }
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
   end

@@ -91,6 +91,12 @@ en:
   complete: Complete
   completed: Completed
   incomplete: Incomplete
+  name: Name
+  enabled: Enabled
+  details: Details
+  price: Price
+  begin_at: Begins
+  action_required: Action required
 
   application:
     navbar:
@@ -107,6 +113,7 @@ en:
       report_a_bug: Report a Bug
       payments: Payments
       having_problems: Having Problems?
+      admin_functions: Admin Functions
 
   please_create_to_continue: Please create one to continue.
   must_select_race: You must select a race to register for.
@@ -139,6 +146,7 @@ en:
       changed since you were last online. Just press save to be instructed what to do.
     index:
       users: Users
+      search: Search
     create:
       create_user: Create your account
       instructions: Once you create an account, you can create a team and register for a race.
@@ -155,7 +163,13 @@ en:
       current_password: Current password (required to save)
 
   tiers:
+    new:
+      new_tier: New Tier
+    edit:
+      edit_tier: Edit Tier
     form:
+      price: Price
+      begin_at: Begins at
       price_instructions: "Enter the number in USD Cents.  e.g. For $50.00, enter 5000"
       begin_at_instructions: "This is when this tier will become active over any prior tiers"
 
@@ -334,6 +348,17 @@ en:
       no_complete_when_closed: Registration closed
     table:
       tiers: tiers
+    new:
+      new_requirement: New Requirement
+    edit:
+      edit_requirement: Edit Requirement
+    form:
+      name: Name
+      name_instructions: Racers see this name on the team page.
+      type: Type
+    payment_requirement_table:
+      payment_tiers: Payment Tiers
+      no_tiers_added: No tiers added yet
 
   races:
     update:
@@ -367,6 +392,9 @@ en:
       race_datetime: Race start time
       registration_open: Registration opens on
       registration_close: Registration closes on
+      final_edits_close: Final edits close on
+      jsonform_data: JSONForm data
+      filter_field: Filter fields
       time_zone: Time zone
       time_zone_help: "Dates and times below are entered and shown to racers in this zone. Pick the zone before entering them."
       max_teams: Maximum teams
@@ -378,6 +406,9 @@ en:
       confirmation_text_help: "Markdown. Shown to captains when their team is fully registered: in a pop-up, in the confirmation email and on the team page."
       experience_labels: Years-racing labels
       experience_labels_help: One label per line. The first line is zero years, the second is one year, and so on. Leave blank for the defaults.
+    edit:
+      race_requirements: Race Requirements
+      no_requirements_added: No requirements added yet
     show:
       race_datetime: Race begins on
       max_teams: Maximum Teams

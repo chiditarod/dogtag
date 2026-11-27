@@ -35,7 +35,6 @@ class ApplicationController < ActionController::Base
   rescue_from ActionController::BadRequest, :with => :render_400
 
   def should_run_update_checker
-    return false if params['controller'] == 'users' && %w(edit update).include?(params['action'])
     return false if params['controller'] == 'user_sessions' && params['action'] == 'destroy'
     true
   end
@@ -114,9 +113,8 @@ class ApplicationController < ActionController::Base
 
   def require_user
     unless current_user
-      store_location
       flash[:notice] = "You must be logged in to access this page"
-      redirect_to new_user_session_path
+      redirect_to "/register/login"
       return false
     end
 
@@ -130,7 +128,7 @@ class ApplicationController < ActionController::Base
       user = User.find(current_user.id)
       if user.invalid?
         flash[:notice] = t('users.review_your_info')
-        return redirect_to edit_user_url(user)
+        return redirect_to "/register/account"
       end
     end
   end

@@ -21,27 +21,27 @@ describe UsersController do
 
     describe '#index' do
       it 'redirects to login' do
-        get :index; expect(response).to redirect_to(new_user_session_path)
+        get :index; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#show' do
       it 'redirects to login' do
-        get :show; expect(response).to redirect_to(new_user_session_path)
+        get :show; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#edit' do
       it 'redirects to login' do
-        get :edit, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        get :edit, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#update' do
       it 'redirects to login' do
-        patch :update, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        patch :update, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
     describe '#destroy' do
       it 'redirects to login' do
-        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to(new_user_session_path)
+        delete :destroy, params: { :id => 1 }; expect(response).to redirect_to("/register/login")
       end
     end
 
@@ -156,20 +156,18 @@ describe UsersController do
 
       context 'with invalid user id' do
 
-        it 'does not run user_update_checker and returns 404' do
+        it 'returns 404' do
           get :edit, params: { :id => -1 }
-          expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
       end
 
       context 'with valid user id' do
 
-        it 'sets the @user object, returns 200, does not run user_update_checker' do
+        it 'sets the @user object, returns 200' do
           get :edit, params: { :id => some_user.id }
           expect(assigns(:user)).to eq(some_user)
           expect(response).to be_successful
-          expect(controller.should_run_update_checker).to be false
         end
       end
     end
@@ -178,19 +176,17 @@ describe UsersController do
 
       context 'on invalid id' do
 
-        it 'does not run user_update_checker and returns 404' do
+        it 'returns 404' do
           put :update, params: { :id => -1 }
-          expect(controller.should_run_update_checker).to be false
           expect(response.status).to eq(404)
         end
       end
 
       context 'with valid patch data' do
 
-        it 'updates the user, does not run user_update_checker, sets flash, and redirects to user#show' do
+        it 'updates the user, sets flash, and redirects to user#show' do
           patch :update, params: { :id => some_user.id, :user => {:phone => '000-000-0000'} }
           expect(some_user.reload.phone).to eq('000-000-0000')
-          expect(controller.should_run_update_checker).to be false
           expect(flash[:notice]).to eq(I18n.t 'users.update.update_success')
           expect(response).to redirect_to(some_user)
         end

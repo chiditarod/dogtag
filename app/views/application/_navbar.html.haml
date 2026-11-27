@@ -8,19 +8,19 @@
       %span.icon-bar
       %span.icon-bar
       %span.icon-bar
-    = link_to(I18n.t('website_title'), home_url, :class => 'navbar-brand')
+    = link_to(I18n.t('website_title'), "/register", :class => 'navbar-brand')
 
   .navbar-collapse.collapse#navbarColor01
     %ul.nav.navbar-nav
       %li
-        = link_to races_path do
+        = link_to "/register" do
           %i.fa.fa-shopping-cart.fa-2x
           = t('.races')
 
       - if current_user
         - if current_user.team_ids.present?
           %li
-            = link_to teams_path do
+            = link_to "/register/teams" do
               %i.fa.fa-users.fa-2x
               =t '.my_teams'
 
@@ -53,7 +53,7 @@
                 = current_user.first_name
                 = current_user.last_name
               %li
-                = link_to edit_user_path(current_user) do
+                = link_to "/register/account" do
                   %i.fa.fa-edit.fa-fw
                   =t '.edit_profile'
               %li
@@ -68,16 +68,16 @@
             %b.caret
             %ul.dropdown-menu
               %li
-                = link_to new_user_session_path do
+                = link_to "/register/login" do
                   %i.fa.fa-sign-in.fa-fw.fa-2x
                   =t '.login'
               %li
-                = link_to new_password_reset_url do
+                = link_to "/register/forgot-password" do
                   %i.fa.fa-paper-plane-o.fa-fw.fa-2x
                   =t '.forgot_password'
 
         %li
-          = link_to new_user_path do
+          = link_to "/register/signup" do
             %i.fa.fa-check-square-o.fa-2x
             =t '.register'
 

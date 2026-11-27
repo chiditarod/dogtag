@@ -21,7 +21,7 @@ describe QuestionsController do
     shared_examples 'redirects to login' do
       it 'redirects to login' do
         endpoint.call
-        expect(response).to redirect_to(new_user_session_path)
+        expect(response).to redirect_to("/register/login")
       end
     end
 

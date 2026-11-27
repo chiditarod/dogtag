@@ -36,7 +36,7 @@ describe('staff race overview', () => {
     expect(screen.getByText('Race day Sat, Mar 13, 2027 · America/Chicago')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: t('staff.race.registered') })).toHaveAttribute(
       'href',
-      '/races/4/registrations',
+      '/register/races/4/registrations',
     );
     expect(screen.getByRole('link', { name: t('staff.race.startTeam') })).toHaveAttribute(
       'href',

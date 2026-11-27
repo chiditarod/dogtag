@@ -16,7 +16,7 @@ $(".users.index").ready ->
   $('.select2-name').on 'select2:select', (e) ->
     userId = e.params.data.id
     $('#selected-user-id').val(userId)
-    $('#search-form').attr('action', "/users/#{userId}")
+    $('#search-form').attr('action', "/register/staff/users/#{userId}")
     $('#search-form').submit()
 
   $('.select2-team').select2
@@ -35,7 +35,7 @@ $(".users.index").ready ->
   $('.select2-team').on 'select2:select', (e) ->
     teamId = e.params.data.id
     $('#selected-team-id').val(teamId)
-    $('#search-form').attr('action', "/teams/#{teamId}")
+    $('#search-form').attr('action', "/register/teams/#{teamId}")
     $('#search-form').submit()
 
   # ------------------------------------------------------------------------

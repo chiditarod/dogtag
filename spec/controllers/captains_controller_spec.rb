@@ -7,7 +7,7 @@ describe CaptainsController do
   context "[logged out]" do
     it "redirects to login" do
       put :update, params: { team_id: team.id, person_id: person.id }
-      expect(response).to redirect_to(new_user_session_path)
+      expect(response).to redirect_to("/register/login")
     end
   end
 

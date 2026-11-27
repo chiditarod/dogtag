@@ -282,7 +282,7 @@ export function RaceOverview({ raceId }: { raceId: string | undefined }) {
           {t('staff.race.raceDay', { date: formatDate(race.race_datetime, race.time_zone), zone: race.time_zone })}
         </p>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href={`/races/${race.id}/registrations`} variant="secondary">
+          <ButtonLink to={`/races/${race.id}/registrations`} variant="secondary">
             {t('staff.race.registered')}
           </ButtonLink>
           <ButtonLink to={`/races/${race.id}/teams/new`} variant="secondary">

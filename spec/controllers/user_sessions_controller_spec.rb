@@ -25,7 +25,7 @@ describe UserSessionsController do
       end
 
       it 'redirects to login' do
-        expect(response).to redirect_to(new_user_session_url)
+        expect(response).to redirect_to("/register/login")
       end
 
       it 'should not run the user_update_checker' do
@@ -120,9 +120,10 @@ describe UserSessionsController do
         delete :destroy
       end
 
-      it 'sets flash notice and redirects to home' do
+      it 'sets flash notice, ends the session and redirects to the SPA' do
         expect(flash[:notice]).to eq(I18n.t 'logout_success')
-        expect(response).to redirect_to(home_url)
+        expect(response).to redirect_to("/register")
+        expect(UserSession.find).to be_nil
       end
     end
   end

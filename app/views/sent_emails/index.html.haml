@@ -31,7 +31,7 @@
         %td= email.subject
         %td
           - if email.team_id
-            = link_to email.team_id, team_path(email.team_id)
+            = link_to email.team_id, "/register/teams/#{email.team_id}"
         %td= email.status
         %td= email.status_changed_at&.strftime("%b %e, %Y %l:%M %p")
         %td

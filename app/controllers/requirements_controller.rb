@@ -21,7 +21,7 @@ class RequirementsController < ApplicationController
 
   def destroy
     @requirement = Requirement.find params[:id]
-    try_to_delete(@requirement, race_url(id: @requirement.race.id))
+    try_to_delete(@requirement, edit_race_url(@requirement.race))
   end
 
   def update
