@@ -46,8 +46,8 @@ describe UserSessionsController do
         delete :destroy
       end
 
-      it 'sets flash notice, ends the session and redirects to the SPA' do
-        expect(flash[:notice]).to eq(I18n.t 'logout_success')
+      it 'ends the session and redirects to the SPA without a flash' do
+        expect(flash[:notice]).to be_nil
         expect(response).to redirect_to("/register")
         expect(UserSession.find).to be_nil
       end

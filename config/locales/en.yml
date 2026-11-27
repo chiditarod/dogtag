@@ -111,12 +111,7 @@ en:
       having_problems: Having Problems?
       admin_functions: Admin Functions
 
-  logout_success: Logout successful.
-
   users:
-    review_your_info: |
-      Please take a moment to update your account information. Some of our requirements have
-      changed since you were last online. Just press save to be instructed what to do.
     index:
       users: Users
       search: Search

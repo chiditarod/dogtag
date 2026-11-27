@@ -1,7 +1,7 @@
 import { t } from '@/locales/en';
 import type { StaffTeam } from './types';
 
-/** Yes, No or "No racers yet", the wording of the legacy `NewTeamHelper`. */
+/** Yes, No or "No racers yet", the wording staff see for the new-team flag. */
 export function yesNoUnknown(flag: boolean | null): string {
   if (flag === null) return t('staff.team.newTeamUnknown');
   return t(flag ? 'staff.team.newTeamYes' : 'staff.team.newTeamNo');

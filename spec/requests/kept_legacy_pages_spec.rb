@@ -4,8 +4,8 @@ require "spec_helper"
 # nothing here may link to a URL that redirects (or later 404s). Later tasks delete racer routes
 # and rerun this spec.
 describe "Kept legacy pages", type: :request do
-  RACER_URL = %r{\A/(teams|account|login|user_session/new|password_resets|races/?\z|races/\d+/?\z|races/\d+/registrations|users/new|users/\d+/edit)}
-  USER_SHOW_URL = %r{\A/users/\d+/?\z}
+  let(:racer_url) { %r{\A/(teams|account|login|user_session/new|password_resets|races/?\z|races/\d+/?\z|races/\d+/registrations|users/new|users/\d+/edit)} }
+  let(:user_show_url) { %r{\A/users/\d+/?\z} }
 
   # Racer URLs a page links to with GET: plain links and GET forms, not DELETE/PATCH buttons.
   def racer_hrefs(body)
@@ -14,7 +14,7 @@ describe "Kept legacy pages", type: :request do
     forms = doc.css("form[action]").select { |f| f["method"].to_s.casecmp?("get") }.pluck("action")
     (links + forms).select do |url|
       path = URI(url).path.to_s
-      path.match?(RACER_URL) || path.match?(USER_SHOW_URL)
+      path.match?(racer_url) || path.match?(user_show_url)
     rescue URI::InvalidURIError
       false
     end
@@ -130,5 +130,28 @@ describe "Kept legacy pages", type: :request do
     hrefs = Nokogiri::HTML(response.body).css("#users a[href]").pluck("href")
     expect(hrefs).to include(%r{\A/register/staff/users/\d+\z}, %r{\A/register/teams/\d+\z}, %r{\A/register/staff/races/\d+\z})
     expect(hrefs).not_to include("/users/new")
+  end
+
+  # The SPA never reads flash, so a notice set before a redirect into it would surface on the
+  # next legacy page the person opens.
+  it "shows no stale notice after logging out and back in" do
+    api_login(FactoryBot.create(:admin_user))
+    delete "/user_session"
+    expect(response).to redirect_to("/register")
+
+    api_login(FactoryBot.create(:admin_user))
+    get "/users"
+    expect(response).to have_http_status(:ok)
+    expect(Nokogiri::HTML(response.body).css(".alert")).to be_empty
+  end
+
+  it "shows no stale notice after a logged-out visit is sent to the SPA login" do
+    get "/users"
+    expect(response).to redirect_to("/register/login")
+
+    api_login(FactoryBot.create(:admin_user))
+    get "/users"
+    expect(response).to have_http_status(:ok)
+    expect(Nokogiri::HTML(response.body).css(".alert")).to be_empty
   end
 end

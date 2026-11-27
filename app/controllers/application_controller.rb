@@ -113,7 +113,6 @@ class ApplicationController < ActionController::Base
 
   def require_user
     unless current_user
-      flash[:notice] = "You must be logged in to access this page"
       redirect_to "/register/login"
       return false
     end
@@ -127,7 +126,6 @@ class ApplicationController < ActionController::Base
     if should_run_update_checker
       user = User.find(current_user.id)
       if user.invalid?
-        flash[:notice] = t('users.review_your_info')
         return redirect_to "/register/account"
       end
     end

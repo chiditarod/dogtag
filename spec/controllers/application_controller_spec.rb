@@ -48,7 +48,7 @@ describe ApplicationController do
       get :index
 
       expect(response).to redirect_to("/register/login")
-      expect(flash[:notice]).to eq("You must be logged in to access this page")
+      expect(flash[:notice]).to be_nil
     end
 
     it "sends a user whose record is invalid to the SPA account page" do
@@ -59,7 +59,7 @@ describe ApplicationController do
       get :index
 
       expect(response).to redirect_to("/register/account")
-      expect(flash[:notice]).to eq(I18n.t("users.review_your_info"))
+      expect(flash[:notice]).to be_nil
     end
   end
 end

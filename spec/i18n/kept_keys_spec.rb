@@ -17,7 +17,7 @@ describe "Kept locale keys" do
       teams.destroy.has_payments people.destroy.team_complete
       api.errors.registration_closed api.errors.invalid_buddies api.errors.buddies_need_collaborating
       api.errors.person_not_on_team api.errors.current_password_incorrect api.errors.reset_login_failed
-      at logout_success users.review_your_info global_questions
+      at global_questions
       user_mailer.registration_reminder.heading user_mailer.email_changed_email.subject
       user_mailer.payment_refunded_email.subject
     ])

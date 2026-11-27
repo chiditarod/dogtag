@@ -20,8 +20,9 @@ Config vars already set: `APP_HOST=dogtag.chiditarod.org`,
 `ROLLBAR_ENV=production`, `ROLLBAR_ACCESS_TOKEN`, `CLASSY_CLIENT_ID/SECRET`,
 `CLASSY_ORGS=34780`, `SMTP_*` (MXRoute), `DEFAULT_FROM_EMAIL`, `SIDEKIQ_USER/PASS`,
 `SECRET_KEY_BASE`, `REDIS_PROVIDER=REDIS_URL`.
-`REGISTRATION_UI=spa` is also set but not needed: nothing has read it since reskin PR 9. The owner
-unsets it (`heroku config:unset REGISTRATION_UI -a dogtag`) once that PR is stable.
+`REGISTRATION_UI=spa` is also set. This release does not read it, but a rollback to the PR 8
+release does, so keep it `spa` on `dogtag-staging` and `dogtag`. The owner unsets it (staging,
+then `heroku config:unset REGISTRATION_UI -a dogtag`) after a clean week.
 
 Still missing:
 - `DATABASE_URL` and `REDIS_URL`. Step 2 adds them.

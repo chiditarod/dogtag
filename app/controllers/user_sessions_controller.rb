@@ -18,7 +18,6 @@ class UserSessionsController < ApplicationController
 
   def destroy
     UserSession.find.destroy
-    flash[:notice] = t('logout_success')
     redirect_to("/register")
   end
 end
