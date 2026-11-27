@@ -32,13 +32,20 @@ Rails.application.routes.draw do
   # mock payments for testing
   post 'mock_payment', to: 'mock_payments#create', as: :mock_payment
 
-  # user accounts
-  resources :users, :only => [:new, :create, :edit, :update, :index, :show, :destroy]
-  resource :user_session, :only => [:new, :create, :destroy]
-  resource :account, :controller => :users
+  # user accounts: staff user admin stays; racer account pages moved to the SPA
+  resources :users, :only => [:index, :destroy]
+  get "users/new", to: redirect("/register/signup")
+  get "users/:id", to: redirect("/register/account"), constraints: { id: /\d+/ }
+  get "users/:id/edit", to: redirect("/register/account"), constraints: { id: /\d+/ }
+  get "account", to: redirect("/register/account")
+  get "account/edit", to: redirect("/register/account")
+  resource :user_session, :only => [:destroy]
+  get "user_session/new", to: redirect("/register/login")
+  get "login", to: redirect("/register/login")
 
-  # password reset
-  resources :password_resets, :only => [:new, :create, :edit, :update]
+  # password reset (the SPA handles it; old emailed links still land there)
+  get "password_resets/new", to: redirect("/register/forgot-password")
+  get "password_resets/:token/edit", to: redirect("/register/reset-password/%{token}"), constraints: { token: /[A-Za-z0-9_-]+/ }
 
   # sidekiq
   mount Sidekiq::Web => '/sidekiq'

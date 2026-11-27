@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class UsersController < ApplicationController
-  before_action :require_user, except: [:new, :create]
+  before_action :require_user
   before_action :set_no_cache, only: %w{search}
   load_and_authorize_resource
 
@@ -35,44 +35,6 @@ class UsersController < ApplicationController
     @users = User.page(index_params[:page])
   end
 
-  def show
-    @user = User.find(params[:id] || current_user.id)
-  end
-
-  def edit
-    @user = User.find(params[:id] || current_user.id)
-  end
-
-  def new
-    @user = User.new
-  end
-
-  def create
-    return render :status => :bad_request if params[:user].blank?
-
-    @user = User.new user_params
-
-    if @user.save
-      # todo: move this to an after_create method in the model
-      Workers::WelcomeEmail.perform_async({'user_id' => @user.id})
-      flash[:notice] = I18n.t('create_success_user')
-      redirect_back_or_default user_url(@user.id)
-    else
-      flash.now[:error] = [t('create_failed')]
-      flash.now[:error] << @user.errors.messages
-    end
-  end
-
-  def update
-    @user = User.find(params[:id])
-    if @user.id == current_user.id && !current_user.valid_password?(params[:current_password].to_s)
-      flash.now[:error] = I18n.t("users.update.current_password_wrong")
-      return render :edit, status: :unprocessable_entity
-    end
-
-    try_to_update(@user, user_params, user_url(@user), 'users.update.update_success')
-  end
-
   def destroy
     @user = User.find params[:id]
     if (reason = @user.deletion_blocker(by: current_user))
@@ -87,13 +49,6 @@ class UsersController < ApplicationController
   end
 
   private
-
-  def user_params
-    fields = [:first_name, :last_name, :email, :phone, :password, :password_confirmation]
-    # only admins may assign roles; everyone else (including self-updates) cannot escalate
-    fields << { roles: [] } if current_user&.is?(:admin)
-    params.expect(user: fields)
-  end
 
   def index_params
     params.permit(:page)

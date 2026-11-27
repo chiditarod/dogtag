@@ -148,7 +148,7 @@
       %h3
         %i.fa.fa-user
         = t('.account_holder')
-      = link_to user_url(@team.user.id) do
+      = link_to "/register/staff/users/#{@team.user.id}" do
         = @team.user.first_name
         = @team.user.last_name
       %br

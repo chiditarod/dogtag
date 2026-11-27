@@ -20,4 +20,67 @@ describe "Legacy URLs that moved to the SPA", type: :request do
     post "/"
     expect(response).to have_http_status(:not_found)
   end
+
+  {
+    "/account" => "/register/account",
+    "/account/edit" => "/register/account",
+    "/users/7" => "/register/account",
+    "/users/7/edit" => "/register/account",
+    "/users/new" => "/register/signup",
+    "/login" => "/register/login",
+    "/user_session/new" => "/register/login",
+    "/password_resets/new" => "/register/forgot-password"
+  }.each do |path, target|
+    it "#{path} moves to #{target}" do
+      expect_moved(path, target)
+    end
+  end
+
+  it "a password reset link moves to the SPA reset page with its token" do
+    user = FactoryBot.create(:user)
+    user.reset_perishable_token!
+    expect_moved("/password_resets/#{user.perishable_token}/edit", "/register/reset-password/#{user.perishable_token}")
+  end
+
+  it "a junk user id or token is not redirected" do
+    get "/users/abc"
+    expect(response).to have_http_status(:not_found)
+    get "/password_resets/a.b%20c/edit"
+    expect(response).to have_http_status(:not_found)
+  end
+
+  describe "staff user routes that stay" do
+    let(:admin) { FactoryBot.create(:admin_user) }
+
+    before { api_login(admin) }
+
+    it "GET /users still lists users" do
+      get "/users"
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "GET /users/search still answers JSON" do
+      get "/users/search", params: { q: "x" }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to be_an(Array)
+    end
+
+    it "DELETE /users/:id still deletes a user with no teams" do
+      user = FactoryBot.create(:user)
+      delete "/users/#{user.id}"
+      expect(response).to redirect_to(users_path)
+      expect(User.exists?(user.id)).to be false
+    end
+  end
+
+  describe "the old forms are gone" do
+    it "POST /users, POST /user_session and PATCH /users/:id are 404" do
+      post "/users"
+      expect(response).to have_http_status(:not_found)
+      post "/user_session"
+      expect(response).to have_http_status(:not_found)
+      patch "/users/7"
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end

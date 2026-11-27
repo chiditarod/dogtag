@@ -2,11 +2,12 @@ require "spec_helper"
 
 # Layer 1 of email verification: exercise each chain end to end with Sidekiq
 # inline and assert on ActionMailer deliveries and the SentEmail log.
-describe UsersController, type: :controller do
+describe "signup", type: :request do
   it "signup sends welcome" do
     Sidekiq::Testing.inline! do
-      post :create, params: { user: FactoryBot.attributes_for(:user) }
+      post "/api/v1/users", params: { user: FactoryBot.attributes_for(:user) }, as: :json
     end
+    expect(response).to have_http_status(:created)
 
     user = User.last
     expect(ActionMailer::Base.deliveries.size).to eq(1)

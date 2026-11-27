@@ -132,28 +132,4 @@ class ApplicationController < ActionController::Base
       end
     end
   end
-
-  def require_no_user
-    if current_user
-      flash[:notice] = "You must be logged out to access this page"
-      redirect_back_or_default account_url
-      return false
-    end
-  end
-
-  def store_location
-    session[:return_to] = request.original_url
-    #todo: remove this logging once it works
-    logger.info "-----------------"
-    logger.info session[:return_to]
-    logger.info "-----------------"
-  end
-
-  def redirect_back_or_default(default)
-    url = session[:return_to] || default
-    session[:return_to] = nil
-
-    # Rails 7.0: redirect_to blocks external hosts by default for security
-    redirect_to(url)
-  end
 end

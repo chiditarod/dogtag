@@ -95,12 +95,12 @@ describe "API v1 password resets", type: :request do
     end
 
     it "keeps the token valid after an authenticated legacy page request" do
-      post "/user_session", params: { user_session: { email: user.email, password: "12345678" } }
-      expect(response).to have_http_status(:found)
-      user.reset_perishable_token!
-      token = user.perishable_token
+      admin = FactoryBot.create(:admin_user)
+      api_login(admin)
+      admin.reset_perishable_token!
+      token = admin.perishable_token
 
-      get "/teams"
+      get "/users"
       expect(response).to have_http_status(:ok)
       get "/api/v1/password_resets/#{token}"
       expect(response).to have_http_status(:ok)
