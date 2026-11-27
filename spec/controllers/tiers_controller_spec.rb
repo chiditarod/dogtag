@@ -101,6 +101,16 @@ describe TiersController do
       end
     end
 
+    describe '#create' do
+      it 'answers 400 with a translated flash when the fee does not exist' do
+        post :create, params: { tier: { price: '100', begin_at: '2027-01-01 00:00:00', requirement_id: -1 } }
+
+        expect(response.status).to eq(400)
+        expect(flash[:error]).to eq('Fee not found.')
+        expect(flash[:error]).not_to include('translation missing')
+      end
+    end
+
     describe '#update' do
       context 'on invalid id' do
         before { put :update, params: { :id => 99 } }

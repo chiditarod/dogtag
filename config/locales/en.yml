@@ -60,6 +60,7 @@ en:
   delete_failed: Deletion failed.
   destroy_failed: Deletion failed.
   not_found: Not found.
+  requirement_not_found: Fee not found.
   create: Create
   save: Save
   instagram: Instagram

@@ -37,7 +37,6 @@ SMTP_PORT
 SMTP_USERNAME
 SMTP_PASSWORD
 APP_HOST                       # host (and :port, if any) used in email links; production defaults to dogtag.chiditarod.org, so staging must set it
-REGISTRATION_UI=spa            # optional: use the React SPA under /register (only takes effect once the SPA is built, or VITE_DEV_SERVER is set)
 SIDEKIQ_INLINE=true            # dev/e2e only: run jobs in-process without a Sidekiq worker (ignored in production)
 VITE_DEV_SERVER=http://localhost:5173  # dev only: redirect /register/* to the Vite dev server
 REFUND_BATCH_LIMIT=5           # optional: most payments one staff refund batch may hold (a positive integer; default 5, anything else falls back to 5)
@@ -206,7 +205,7 @@ Then:
     bin/check e2e                             # quiet run for CI-style output
 
 Playwright boots Rails with `SIDEKIQ_INLINE=true` (jobs run in-process, no
-Sidekiq worker; ignored in production) and `REGISTRATION_UI=spa`. Failures
+Sidekiq worker; ignored in production). Failures
 leave an HTML report (`npx playwright show-report`) and traces in
 `test-results/`. See `tests/README.md` for details.
 
@@ -221,7 +220,7 @@ npm --prefix frontend run build     # builds into public/register (gitignored)
 npm --prefix frontend run dev       # Vite dev server on :5173 (proxies /api to Rails on :3000)
 ```
 
-- Set `REGISTRATION_UI=spa` to make the homepage "Get started" link and emails point at `/register` (default is the legacy UI). It only takes effect when the SPA is built (or `VITE_DEV_SERVER` is set), so a missing build falls back to the legacy UI instead of linking to a 503. Setting it back to `legacy` is the fallback if the SPA has a problem.
+- `/` redirects (301) to `/register`, and every old racer URL (`/login`, `/teams/...`, `/races`, `/account`, `/password_resets/...`) redirects to its SPA page, so old bookmarks and emails keep working. Mail links are built with `SpaUrl.for` (host from `APP_HOST`). Only the staff pages remain in HAML (races new/edit/export, requirements, tiers, the users index, sent emails and the error pages) until reskin PR 10.
 - Set `VITE_DEV_SERVER=http://localhost:5173` so Rails redirects `/register/*` to the Vite dev server; without it Rails serves `public/register/index.html` (503 if not built).
 - Heroku builds the SPA via the `heroku-postbuild` script; `rails_12factor` serves `public/register/assets/*`. Missing assets return 404 (only extension-less paths get the SPA shell).
 
