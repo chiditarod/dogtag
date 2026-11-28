@@ -167,7 +167,9 @@ test.describe('SPA staff team view', () => {
       ).toBeVisible();
       await expect(page.getByRole('button', { name: 'Pay $120 as staff' })).toBeVisible();
       await page.getByRole('link', { name: 'Refund on Payments' }).click();
-      await expect(page).toHaveURL(new RegExp(`/register/staff/payments\\?team_id=${c.closed_team_id}`));
+      await expect(page).toHaveURL(
+        new RegExp(`/register/staff/payments\\?race_id=${c.closed_race_id}&team_id=${c.closed_team_id}&payment_type=\\d+$`),
+      );
       await expect(page.getByRole('button', { name: `Remove filter Team: ${c.closed_team_name}` })).toBeVisible();
       await expect(paymentRows(page)).toHaveCount(1);
     });
@@ -206,15 +208,22 @@ test.describe('SPA staff team view', () => {
     // A refunder cannot pay, so a closed team that is not paid up shows no payment lines: the card link is the way in.
     await expect(page.getByText('Registration is closed.', { exact: true })).toBeVisible();
     await card.getByRole('link', { name: 'Payments' }).click();
-    await expect(page).toHaveURL(new RegExp(`/register/staff/payments\\?team_id=${c.closed_team_id}`));
+    await expect(page).toHaveURL(
+      new RegExp(`/register/staff/payments\\?race_id=${c.closed_race_id}&team_id=${c.closed_team_id}$`),
+    );
     const chip = page.getByRole('button', { name: `Remove filter Team: ${c.closed_team_name}` });
     await expect(chip).toBeVisible();
     await expect(paymentRows(page)).toHaveCount(1);
     await expect(paymentRows(page).first()).toContainText(c.closed_team_name);
 
+    // Dropping the team stays on the team's race and lists every team in it.
     await chip.click();
     await expect(chip).toHaveCount(0);
-    await expect(paymentRows(page).filter({ hasText: c.closed_team_name })).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`/register/staff/payments\\?race_id=${c.closed_race_id}$`));
+    await expect(page.getByLabel('Race')).toHaveValue(String(c.closed_race_id));
+    await expect(paymentRows(page)).toHaveCount(2);
+    await expect(paymentRows(page).filter({ hasText: c.closed_team_name })).toHaveCount(1);
+    await expect(paymentRows(page).filter({ hasText: c.buddy_team_name })).toHaveCount(1);
   });
 
   test.describe('at 320px', () => {

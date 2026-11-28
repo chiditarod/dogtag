@@ -41,13 +41,18 @@ function gapText(gap: StaffPayGap): string {
   }
 }
 
-/** The staff link from a paid line to that payment on the Payments page, with the date it was paid. */
+/**
+ * The staff link from a paid line to that payment on the Payments page, with the date it was paid.
+ * It names the race too, so removing the Team chip there stays on this race.
+ */
 function RefundLink({
+  raceId,
   teamId,
   requirementId,
   payments,
   timeZone,
 }: {
+  raceId: number;
   teamId: number;
   requirementId: number;
   payments: StaffTeamPayment[];
@@ -61,7 +66,7 @@ function RefundLink({
   return (
     <span className="text-sm text-navy/80">
       <Link
-        to={`/staff/payments?team_id=${teamId}&payment_type=${requirementId}`}
+        to={`/staff/payments?race_id=${raceId}&team_id=${teamId}&payment_type=${requirementId}`}
         className="text-link underline"
       >
         {t('staff.fee.refundLink')}
@@ -136,6 +141,7 @@ export function FeeCard({
                   </Badge>
                 )}{' '}
                 <RefundLink
+                  raceId={race.id}
                   teamId={team.id}
                   requirementId={line.requirement_id}
                   payments={staffPayments}
@@ -322,6 +328,7 @@ export function FeeCard({
             refundLink={
               staffLinks ? (
                 <RefundLink
+                  raceId={race.id}
                   teamId={team.id}
                   requirementId={item.requirement_id}
                   payments={staffPayments}

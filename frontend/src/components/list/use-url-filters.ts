@@ -29,13 +29,16 @@ export function useUrlFilters() {
     );
   }, []);
 
-  /** Deletes every key except those listed. */
-  const clearParams = useCallback((keep: string[] = []) => {
+  /** Deletes every key except those listed, then applies `set` (one navigation). */
+  const clearParams = useCallback((keep: string[] = [], set: UrlChanges = {}) => {
     setParamsRef.current(
       (previous) => {
         const next = new URLSearchParams();
         for (const key of keep) {
           const value = previous.get(key);
+          if (value) next.set(key, value);
+        }
+        for (const [key, value] of Object.entries(set)) {
           if (value) next.set(key, value);
         }
         return next;

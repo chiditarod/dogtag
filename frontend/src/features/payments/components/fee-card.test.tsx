@@ -821,7 +821,7 @@ describe('FeeCard as staff', () => {
     renderApp('/teams/9');
     const fee = await card();
     const link = await fee.findByRole('link', { name: t('staff.fee.refundLink') });
-    expect(link.getAttribute('href')).toMatch(/\/staff\/payments\?team_id=9&payment_type=34$/);
+    expect(link.getAttribute('href')).toMatch(/\/staff\/payments\?race_id=1&team_id=9&payment_type=34$/);
     expect(link.closest('li')).toHaveTextContent('· Tue, Jan 5, 2027');
     expect(fee.queryByRole('button')).not.toBeInTheDocument();
   });
@@ -860,8 +860,8 @@ describe('FeeCard as staff', () => {
     expect(await fee.findByText('Paid $388 total')).toBeInTheDocument();
     const links = await fee.findAllByRole('link', { name: t('staff.fee.refundLink') });
     expect(links.map((link) => link.getAttribute('href')?.replace(/^.*\/staff/, '/staff'))).toEqual([
-      '/staff/payments?team_id=9&payment_type=3',
-      '/staff/payments?team_id=9&payment_type=4',
+      '/staff/payments?race_id=1&team_id=9&payment_type=3',
+      '/staff/payments?race_id=1&team_id=9&payment_type=4',
     ]);
     expect(fee.getByText(t('fee.refunded'))).toBeInTheDocument();
   });

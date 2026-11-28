@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useUrlFilters, type UrlChanges } from '@/components/list/use-url-filters';
 import type { BrowseStatus, PaymentFilterValues } from './types';
 
@@ -54,11 +54,37 @@ export function usePaymentFilters() {
     [setParams],
   );
 
-  /** Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). */
-  const clearAll = useCallback(
-    (keepStatus = false) => clearParams(keepStatus ? ['race_id', 'status'] : ['race_id']),
-    [clearParams],
+  // Read when a callback runs, so the callbacks keep one identity.
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+
+  /**
+   * With no race_id in the URL, a team filter lists the team's race. Dropping the team names that race
+   * (`teamRaceId`, the response's `filters.team.race_id`), so the list stays on it, every team, instead of
+   * jumping to the default race with a payment_type from the team's race left over.
+   */
+  const pinTeamRace = useCallback((teamRaceId: number | undefined): UrlChanges => {
+    const current = paramsRef.current;
+    return !current.get('race_id') && current.get('team_id') && teamRaceId !== undefined
+      ? { race_id: String(teamRaceId) }
+      : {};
+  }, []);
+
+  /** Removes the Team chip; see pinTeamRace. */
+  const removeTeam = useCallback(
+    (teamRaceId: number | undefined) => setParams({ team_id: undefined, ...pinTeamRace(teamRaceId) }),
+    [setParams, pinTeamRace],
   );
 
-  return { values, setFilter, clearAll };
+  /**
+   * Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). A team's
+   * race with no race_id in the URL is kept too (see pinTeamRace).
+   */
+  const clearAll = useCallback(
+    (keepStatus = false, teamRaceId?: number) =>
+      clearParams(keepStatus ? ['race_id', 'status'] : ['race_id'], pinTeamRace(teamRaceId)),
+    [clearParams, pinTeamRace],
+  );
+
+  return { values, setFilter, removeTeam, clearAll };
 }

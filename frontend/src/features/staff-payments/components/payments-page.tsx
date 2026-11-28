@@ -20,8 +20,11 @@ import { RefundBar } from './refund-bar';
 type Mode = 'browse' | 'refund';
 
 export function PaymentsPage() {
-  const { values, setFilter, clearAll } = usePaymentFilters();
+  const { values, setFilter, removeTeam, clearAll } = usePaymentFilters();
   const { data, isPending, isError, isPlaceholderData, refetch } = usePayments(values);
+  // The race of the team in the URL, once the server has named it (not a previous team's placeholder rows).
+  const teamRaceId =
+    data?.filters.team && data.filters.team.id === values.teamId ? data.filters.team.race_id : undefined;
   // Refund mode is local state, not in the URL, so a reload returns to Browse.
   const [mode, setMode] = useState<Mode>('browse');
   const refundMode = mode === 'refund';
@@ -33,10 +36,10 @@ export function PaymentsPage() {
   const { batchId, setBatchId } = useActiveBatch();
   const { clear: clearSelection } = selection;
 
-  // A selection belongs to one race: the one in the URL, or (with no race_id, e.g. a team link or the
-  // default) the race the server resolved, which can change when team_id is dropped.
-  const effectiveRaceId = data?.filters.race_id ?? null;
-  useEffect(() => clearSelection(), [values.raceId, effectiveRaceId, clearSelection]);
+  // A selection belongs to one race: the one in the URL, or (with no race_id, e.g. the default) the race the
+  // server resolved. Removing a Team chip writes the team's race into the URL, which is the same race.
+  const effectiveRaceId = values.raceId ?? data?.filters.race_id ?? null;
+  useEffect(() => clearSelection(), [effectiveRaceId, clearSelection]);
   // Refund mode only ever works on paid rows (a shared link or Back may have changed the status).
   useEffect(() => {
     if (refundMode && values.status !== 'paid') setFilter('status', 'paid');
@@ -45,9 +48,9 @@ export function PaymentsPage() {
   // Bumped by Clear all so the search box starts over, dropping text still waiting on its debounce.
   const [searchReset, setSearchReset] = useState(0);
   const clearEverything = useCallback(() => {
-    clearAll(refundMode);
+    clearAll(refundMode, teamRaceId);
     setSearchReset((n) => n + 1);
-  }, [clearAll, refundMode]);
+  }, [clearAll, refundMode, teamRaceId]);
 
   // A stale link or a shrunken result can ask for a page past the end: go to the last page instead.
   const lastPage = data?.meta.total_pages ?? 0;
@@ -130,7 +133,11 @@ export function PaymentsPage() {
       <FilterChips
         values={values}
         options={data?.filters}
-        onRemove={(key) => setFilter(key, key === 'status' ? 'all' : key === 'q' ? '' : undefined)}
+        onRemove={(key) =>
+          key === 'teamId'
+            ? removeTeam(teamRaceId)
+            : setFilter(key, key === 'status' ? 'all' : key === 'q' ? '' : undefined)
+        }
         onClearAll={clearEverything}
         hideStatus={refundMode}
       />

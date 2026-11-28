@@ -95,7 +95,7 @@ function Details({ team, staffTeam }: { team: Team; staffTeam: StaffTeam }) {
         </li>
         {can.view_payments && (
           <li className={linkItem}>
-            <Link to={`/staff/payments?team_id=${team.id}`} className={linkClass}>
+            <Link to={`/staff/payments?race_id=${team.race.id}&team_id=${team.id}`} className={linkClass}>
               {t('staff.team.payments')}
             </Link>
           </li>

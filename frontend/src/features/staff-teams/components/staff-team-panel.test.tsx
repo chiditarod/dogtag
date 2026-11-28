@@ -115,7 +115,7 @@ describe('StaffTeamPanel', () => {
     );
     expect(card.getByRole('link', { name: t('staff.team.payments') })).toHaveAttribute(
       'href',
-      '/register/staff/payments?team_id=9',
+      '/register/staff/payments?race_id=1&team_id=9',
     );
     expect(card.getByRole('link', { name: t('staff.team.registered') })).toHaveAttribute(
       'href',

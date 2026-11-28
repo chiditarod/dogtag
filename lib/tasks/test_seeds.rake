@@ -23,7 +23,7 @@
 #   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
 #   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
 #   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
-#   rails test_seeds:staff_team_panel         (an operator, a refunder and an owner; a closed race (inside final edits) with a 3-of-5 team, a payment and two emails, and an open race with a 2-of-3 team and a $50 fee)
+#   rails test_seeds:staff_team_panel         (an operator, a refunder and an owner; a closed race (inside final edits) with a 3-of-5 team, a payment and two emails, a buddy team with its own payment, and an open race with a 2-of-3 team and a $50 fee)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -1288,6 +1288,12 @@ namespace :test_seeds do
       team: team, requirement: cart, user: owner,
       charge_id: "mock_ch_#{short}_panel", amount_cents: 5000,
       metadata: { "charge_id" => "mock_ch_#{short}_panel", "amount" => 5000 }
+    )
+    # Another team's payment in the same race, so dropping the Team chip on Payments shows the whole race.
+    CompletedRequirement.create!(
+      team: buddy, requirement: cart, user: buddy_owner,
+      charge_id: "mock_ch_#{short}_buddy", amount_cents: 5000,
+      metadata: { "charge_id" => "mock_ch_#{short}_buddy", "amount" => 5000 }
     )
     [["team_finalized_email", "team_finalized", "Test Team StaffPanel is registered"],
      ["welcome_email", "welcome", "Welcome to CHIditarod"]].each_with_index do |(action, kind, subject), index|
