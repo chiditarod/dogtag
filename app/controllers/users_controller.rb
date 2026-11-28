@@ -65,13 +65,24 @@ class UsersController < ApplicationController
 
   def update
     @user = User.find(params[:id])
+    if @user.id == current_user.id && !current_user.valid_password?(params[:current_password].to_s)
+      flash.now[:error] = I18n.t("users.update.current_password_wrong")
+      return render :edit, status: :unprocessable_entity
+    end
+
     try_to_update(@user, user_params, user_url(@user), 'users.update.update_success')
   end
 
   def destroy
     @user = User.find params[:id]
+    if (reason = @user.deletion_blocker(by: current_user))
+      flash[:error] = reason
+      return redirect_to(users_path)
+    end
+
     try_to_delete(@user, users_path)
-    # a user the database refuses to delete (e.g. one who made refund batches) says why
+    # backstop: the guard above catches the known cases, so this only speaks for a delete the database
+    # still refuses (a foreign key the guard does not know about)
     flash[:error] = @user.errors.full_messages.to_sentence if flash[:error] && @user.errors.any?
   end
 

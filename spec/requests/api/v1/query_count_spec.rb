@@ -62,6 +62,83 @@ describe "API v1 index query counts", type: :request do
     expect(json["payments"].size).to eq(5)
   end
 
+  it "GET /api/v1/staff/races does not add queries per race" do
+    api_login(FactoryBot.create(:operator_user))
+    add_race = lambda do
+      race = FactoryBot.create(:race)
+      requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+      FactoryBot.create(:tier3, requirement: requirement)
+      FactoryBot.create(:finalized_team, race: race)
+    end
+    add_race.call
+    one = query_count { get "/api/v1/staff/races" }
+    2.times { add_race.call }
+
+    expect(query_count { get "/api/v1/staff/races" }).to eq(one)
+    expect(json["races"].size).to eq(3)
+  end
+
+  it "GET /api/v1/staff/users does not add queries per user or team" do
+    api_login(FactoryBot.create(:operator_user))
+    owner = FactoryBot.create(:user)
+    2.times { FactoryBot.create(:team, user: owner, race: FactoryBot.create(:race)) }
+    one = query_count { get "/api/v1/staff/users" }
+    3.times do
+      other = FactoryBot.create(:user)
+      2.times { FactoryBot.create(:team, user: other, race: FactoryBot.create(:race)) }
+    end
+
+    expect(query_count { get "/api/v1/staff/users" }).to eq(one)
+    expect(json["users"].sum { |user| user["teams"].size }).to eq(8)
+  end
+
+  it "GET /api/v1/staff/sent_emails does not add queries per row" do
+    api_login(FactoryBot.create(:operator_user))
+    FactoryBot.create(:sent_email, team: FactoryBot.create(:team))
+    one = query_count { get "/api/v1/staff/sent_emails" }
+    4.times { FactoryBot.create(:sent_email, team: FactoryBot.create(:team)) }
+
+    expect(query_count { get "/api/v1/staff/sent_emails" }).to eq(one)
+    expect(json["sent_emails"].size).to eq(5)
+  end
+
+  it "GET /api/v1/staff/races/:id/requirements does not add queries per fee" do
+    api_login(FactoryBot.create(:operator_user))
+    race = FactoryBot.create(:race)
+    add_fee = lambda do
+      requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+      FactoryBot.create(:tier3, requirement: requirement)
+      team = FactoryBot.create(:team, race: race)
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: team, charge_id: "ch_#{requirement.id}", amount_cents: 5000)
+    end
+    add_fee.call
+    one = query_count { get "/api/v1/staff/races/#{race.id}/requirements" }
+    2.times { add_fee.call }
+
+    expect(query_count { get "/api/v1/staff/races/#{race.id}/requirements" }).to eq(one)
+    expect(json["requirements"].size).to eq(3)
+  end
+
+  it "GET /api/v1/races/:id/registrations does not add queries per team" do
+    api_login(FactoryBot.create(:admin_user))
+    race = FactoryBot.create(:race_with_jsonform_and_filter_field, max_teams: 50)
+    requirement = FactoryBot.create(:payment_requirement_with_tier, race: race)
+    add_team = lambda do |finalized|
+      team = FactoryBot.create(:team, :with_people, race: race)
+      requirement.complete(team.id, team.user, "amount" => 5000, "charge_id" => "ch_#{team.id}")
+      team.update_column(:finalized, true) if finalized
+    end
+    add_team.call(true)
+    add_team.call(false)
+    one = query_count { get "/api/v1/races/#{race.id}/registrations" }
+    2.times { add_team.call(true) }
+    2.times { add_team.call(false) }
+
+    expect(query_count { get "/api/v1/races/#{race.id}/registrations" }).to eq(one)
+    expect(json["finalized"].size).to eq(3)
+    expect(json["registering"].size).to eq(3)
+  end
+
   it "GET /api/v1/teams/:id/buddy_options does not add queries per team" do
     api_login(user)
     race = FactoryBot.create(:race)

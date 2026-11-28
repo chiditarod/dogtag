@@ -30,6 +30,12 @@
         = label_tag :name, t('.password_confirmation')
       .col-sm-8
         = f.password_field :password_confirmation, :class => 'form-control'
+    - if @user == current_user
+      .form-group
+        .col-sm-4.control-label
+          = label_tag :current_password, t('.current_password')
+        .col-sm-8
+          = password_field_tag :current_password, nil, :class => 'form-control', :autocomplete => 'current-password'
 
     - if current_user && current_user.gets_admin_menu?
       .form-group

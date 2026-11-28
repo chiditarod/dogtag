@@ -15,6 +15,10 @@
 # along with dogtag.  If not, see <http://www.gnu.org/licenses/>.
 class User < ApplicationRecord
   before_validation :downcase_email
+  # Tells the old address, so a hijacked account cannot quietly move its email elsewhere.
+  after_update_commit :send_email_changed_notice, if: :saved_change_to_email?
+
+  RESET_FIELDS = %i[password password_confirmation].freeze
 
   validates :first_name, :last_name, :phone, :email, presence: true
   validates :email, format: { :with => /\A([^@\s]+)@((?:[-a-z0-9]+\.)+[a-z]{2,})\z/i }
@@ -71,12 +75,46 @@ class User < ApplicationRecord
     "#{first_name} #{last_name}"
   end
 
+  # Why this user cannot be deleted by `by`, or nil when they can. Teams and payments belong to the
+  # race record, and refunds (batches or single refunds) are the audit trail: `refunded_by_id` nullifies on
+  # delete, which would rewrite their refunds as "Done at Stripe". Staff must not erase the people behind them.
+  def deletion_blocker(by:)
+    return "You can't delete your own account." if by.id == id
+
+    if (count = teams.count).positive?
+      "Owns #{count} #{"team".pluralize(count)}. Delete or reassign them first."
+    elsif (count = completed_requirements.count).positive?
+      "Has #{count} #{"payment".pluralize(count)}."
+    elsif refund_batches.exists? || CompletedRequirement.exists?(refunded_by_id: id)
+      "Made refunds, which are kept as a record."
+    end
+  end
+
   def reset_password!(host)
     reset_perishable_token!
     Workers::PasswordResetEmail.perform_async({'user_id' => self.id, 'host' => host})
   end
 
+  # Sets a new password from a reset link. Only the password is validated, so an older record that fails
+  # a newer rule (e.g. a missing phone) can still reset. A valid token proves control of the inbox, so it
+  # also lifts a brute-force lockout. Session maintenance is skipped: the caller logs the user in once.
+  def reset_password_from_link(password, password_confirmation)
+    self.password = password
+    self.password_confirmation = password_confirmation
+    self.failed_login_count = 0
+    valid?
+    password_errors = errors.select { |error| RESET_FIELDS.include?(error.attribute) }
+    errors.clear
+    password_errors.each { |error| errors.import(error) }
+    errors.empty? && save_without_session_maintenance(validate: false)
+  end
+
   private
+
+  def send_email_changed_notice
+    old_email = saved_change_to_email.first
+    Workers::EmailChangedEmail.perform_async({ "user_id" => id, "old_email" => old_email }) if old_email.present?
+  end
 
   def downcase_email
     self.email = email.downcase if email.present?

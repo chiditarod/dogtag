@@ -61,18 +61,18 @@ class RaceValidator < ActiveModel::Validator
 
   def validate_dates(record)
     unless record.final_edits_close < record.race_datetime
-      record.errors.add(:final_edits_close, 'must come before race_datetime')
+      record.errors.add(:final_edits_close, 'must be before Race day')
     end
     unless record.registration_close < record.final_edits_close
-      record.errors.add(:registration_close, 'must come before final_edits_close')
+      record.errors.add(:registration_close, 'must be before Final edits close')
     end
     unless record.registration_open < record.registration_close
-      record.errors.add(:registration_open, 'must come before registration_close')
+      record.errors.add(:registration_open, 'must be before Registration closes')
     end
   end
 
   def datetimes_parse?(record)
-    dates = [:race_datetime, :registration_open, :registration_close]
+    dates = [:race_datetime, :registration_open, :registration_close, :final_edits_close]
     dates.each do |d|
       begin
         DateTime.parse(record.__send__(d).to_s)

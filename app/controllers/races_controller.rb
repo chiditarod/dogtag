@@ -52,12 +52,8 @@ class RacesController < ApplicationController
   def export
     return render :status => :bad_request if params[:race_id].blank?
 
-    race_id = params[:race_id]
-    teams = params[:finalized] ? Team.export(race_id, :finalized => true) : Team.export(race_id)
-    data = CSV.generate do |csv|
-      teams.each { |i| csv << i }
-    end
-    send_data data, :type => 'text/csv; charset=utf-8; header=present', :disposition => "attachment; filename=race_#{race_id}_export.csv"
+    result = RaceExport.call(params[:race_id], finalized: params[:finalized] ? true : false)
+    send_data result[:data], type: result[:type], disposition: "attachment; filename=#{result[:filename]}"
   end
 
   def create

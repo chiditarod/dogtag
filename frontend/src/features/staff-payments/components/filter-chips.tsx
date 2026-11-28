@@ -1,3 +1,4 @@
+import { FilterChips as SharedFilterChips } from '@/components/list/filter-chips';
 import { t } from '@/locales/en';
 import type { PaymentFilterValues, PaymentsFilterOptions } from '../types';
 
@@ -12,7 +13,7 @@ interface FilterChipsProps {
   hideStatus?: boolean;
 }
 
-/** Removable chips for each active filter besides the race, plus Clear all. */
+/** Builds a chip for each active filter besides the race. */
 export function FilterChips({ values, options, onRemove, onClearAll, hideStatus }: FilterChipsProps) {
   const chips: { key: ChipKey; label: string }[] = [];
   if (values.paymentType !== undefined) {
@@ -27,28 +28,15 @@ export function FilterChips({ values, options, onRemove, onClearAll, hideStatus 
     chips.push({ key: 'status', label: t('staff.payments.filters.statusRefunded') });
   }
   if (values.q) chips.push({ key: 'q', label: t('staff.payments.filters.searchChip', { q: values.q }) });
-  if (chips.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <ul aria-label={t('staff.payments.filters.active')} className="flex min-w-0 flex-wrap gap-2">
-        {chips.map((chip) => (
-          <li key={chip.key} className="min-w-0">
-            <button
-              type="button"
-              aria-label={t('staff.payments.filters.remove', { label: chip.label })}
-              onClick={() => onRemove(chip.key)}
-              className="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full bg-flag/50 px-3 text-sm font-semibold text-navy hover:bg-flag"
-            >
-              <span className="min-w-0 [overflow-wrap:anywhere]">{chip.label}</span>
-              <span aria-hidden="true">×</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button type="button" onClick={onClearAll} className="text-sm font-semibold text-link hover:underline">
-        {t('staff.payments.filters.clearAll')}
-      </button>
-    </div>
+    <SharedFilterChips
+      chips={chips}
+      onRemove={(key) => onRemove(key as ChipKey)}
+      onClearAll={onClearAll}
+      label={t('staff.payments.filters.active')}
+      removeLabel={(label) => t('staff.payments.filters.remove', { label })}
+      clearAllLabel={t('staff.payments.filters.clearAll')}
+    />
   );
 }

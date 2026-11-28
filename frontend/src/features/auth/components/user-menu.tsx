@@ -32,6 +32,9 @@ export function UserMenu({ staffLink = true }: UserMenuProps) {
       <Link to="/teams" className="font-semibold text-link hover:underline">
         {t('layout.myTeams')}
       </Link>
+      <Link to="/account" className="font-semibold text-link hover:underline">
+        {t('layout.account')}
+      </Link>
       {staffLink && isStaff(user) && (
         <Link to="/staff/payments" className="font-semibold text-link hover:underline">
           {t('layout.staff')}

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { SiteHeader } from '@/components/layouts/site-header';
 import { useUnauthorizedRedirect } from '@/features/auth/api/use-unauthorized-redirect';
 import { useMe } from '@/features/auth/api/use-me';
+import { staffNavItems } from '@/features/staff/nav';
 import { isStaff } from '@/features/staff/utils';
 import { t } from '@/locales/en';
 
@@ -20,9 +21,11 @@ export function StaffLayout() {
             aria-label={t('staff.nav')}
             className="mx-auto flex max-w-6xl flex-wrap gap-x-2 gap-y-1 px-4 pb-2 text-sm"
           >
-            <NavLink to="/staff/payments" className={navLink}>
-              {t('staff.nav.payments')}
-            </NavLink>
+            {staffNavItems(me?.roles ?? []).map((item) => (
+              <NavLink key={item.to} to={item.to} className={navLink}>
+                {t(item.labelKey)}
+              </NavLink>
+            ))}
             <a href="/users" className={navLink}>
               {t('staff.nav.legacy')}
             </a>

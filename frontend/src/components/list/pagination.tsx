@@ -1,25 +1,23 @@
 import { Button } from '@/components/ui/button';
-import { t } from '@/locales/en';
 
 interface PaginationProps {
   page: number;
   totalPages: number;
   onPage: (page: number) => void;
+  labels: { nav: string; prev: string; next: string; page: (page: number, total: number) => string };
 }
 
-export function Pagination({ page, totalPages, onPage }: PaginationProps) {
+export function Pagination({ page, totalPages, onPage, labels }: PaginationProps) {
   if (totalPages <= 1) return null;
   return (
-    <nav aria-label={t('staff.payments.pagination')} className="flex items-center justify-between gap-2">
+    <nav aria-label={labels.nav} className="flex items-center justify-between gap-2">
       <Button variant="secondary" disabled={page <= 1} onClick={() => onPage(page - 1)}>
         <span aria-hidden="true">‹ </span>
-        {t('staff.payments.prev')}
+        {labels.prev}
       </Button>
-      <span className="text-sm font-semibold text-navy">
-        {t('staff.payments.page', { page, total: totalPages })}
-      </span>
+      <span className="text-sm font-semibold text-navy">{labels.page(page, totalPages)}</span>
       <Button variant="secondary" disabled={page >= totalPages} onClick={() => onPage(page + 1)}>
-        {t('staff.payments.next')}
+        {labels.next}
         <span aria-hidden="true"> ›</span>
       </Button>
     </nav>

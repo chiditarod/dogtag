@@ -107,11 +107,14 @@ Rails.application.routes.draw do
     namespace :v1 do
       get "csrf", to: "csrf#show"
       get "me", to: "sessions#show"
+      patch "me", to: "accounts#update"
       resource :session, only: [:create, :destroy]
       resources :users, only: [:create]
-      resources :password_resets, only: [:create]
+      resources :password_resets, only: [:create, :show, :update]
       resources :feedback, only: [:create]
-      resources :races, only: [:index, :show]
+      resources :races, only: [:index, :show] do
+        resources :registrations, only: [:index]
+      end
       resources :teams, only: [:index, :show, :create, :update, :destroy] do
         resources :people, only: [:create, :update, :destroy]
         resource :captain, only: [:update]
@@ -124,6 +127,17 @@ Rails.application.routes.draw do
       end
       namespace :staff do
         resources :payments, only: [:index]
+        resources :users, only: [:index, :show, :update, :destroy]
+        resources :sent_emails, only: [:index]
+        resources :races, only: [:index, :new, :show, :create, :update, :destroy] do
+          get :export, on: :member, defaults: { format: :csv }
+          resources :requirements, only: [:index, :create]
+        end
+        resources :requirements, only: [:show, :update, :destroy] do
+          resources :tiers, only: [:create]
+        end
+        resources :tiers, only: [:update, :destroy]
+        post :confirmation_preview, to: "confirmation_previews#create"
         resources :refund_batches, only: [:create, :show] do
           # `retry` is a Ruby keyword, so the action is retry_failed.
           post :retry, on: :member, action: :retry_failed

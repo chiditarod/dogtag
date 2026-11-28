@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -56,10 +56,45 @@ describe('staff routes', () => {
     expect(screen.queryByRole('heading', { name: t('notFound.heading') })).not.toBeInTheDocument();
   });
 
-  it('/staff redirects to /staff/payments', async () => {
-    asUser(['admin']);
+  it('refunder typing /staff/races sees not allowed, with the staff nav still there', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('staff.races.heading') })).not.toBeInTheDocument();
+  });
+
+  it('refunder typing a race edit path sees not allowed', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races/new');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+  });
+
+  it('refunder typing a fee path sees not allowed', async () => {
+    asUser(['refunder']);
+    renderApp('/staff/races/7/requirements/3');
+    expect(await screen.findByRole('heading', { name: t('staff.notAllowed.heading') })).toBeInTheDocument();
+  });
+
+  it('operator sees the races page', async () => {
+    asUser(['operator']);
+    server.use(http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })));
+    renderApp('/staff/races');
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: t('staff.notAllowed.heading') })).not.toBeInTheDocument();
+  });
+
+  it('/staff redirects a refunder to /staff/payments', async () => {
+    asUser(['refunder']);
     const { router } = renderApp('/staff');
     expect(await screen.findByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/register/staff/payments');
+  });
+
+  it('/staff redirects an admin to the first nav item, /staff/races', async () => {
+    asUser(['admin']);
+    server.use(http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })));
+    const { router } = renderApp('/staff');
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/register/staff/races'));
   });
 });

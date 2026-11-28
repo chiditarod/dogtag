@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_TIME_ZONE, formatDate, formatDeadline } from '@/lib/dates';
+import { DEFAULT_TIME_ZONE, formatDate, formatDeadline, formatShortDay, formatMonthYear, formatSince } from '@/lib/dates';
 
 describe('formatDate', () => {
   it('formats in the passed zone', () => {
@@ -41,5 +41,41 @@ describe('formatDeadline', () => {
     // Midnight in Los Angeles is 2am in Chicago.
     expect(formatDeadline('2027-02-15T08:00:00Z', 'America/Los_Angeles')).toBe('Sun, Feb 14, 2027');
     expect(formatDeadline('2027-02-15T08:00:00Z', 'America/Chicago')).toBe('Mon, Feb 15, 2027');
+  });
+});
+
+describe('formatShortDay', () => {
+  it('formats month and day in the passed zone', () => {
+    expect(formatShortDay('2026-12-09T03:00:00Z', 'America/Chicago')).toBe('Dec 8');
+    expect(formatShortDay('2026-12-09T03:00:00Z', 'America/Los_Angeles')).toBe('Dec 8');
+    expect(formatShortDay('2026-12-09T03:00:00Z', undefined)).toBe('Dec 8');
+  });
+});
+
+describe('formatSince', () => {
+  const now = new Date('2026-12-10T12:00:00Z');
+
+  it('says just now under a minute', () => {
+    expect(formatSince('2026-12-10T11:59:30Z', 'America/Chicago', now)).toBe('just now');
+  });
+
+  it('uses minutes and hours under a day', () => {
+    expect(formatSince('2026-12-10T11:30:00Z', 'America/Chicago', now)).toBe('30 minutes ago');
+    expect(formatSince('2026-12-10T09:00:00Z', 'America/Chicago', now)).toBe('3 hours ago');
+  });
+
+  it('shows the short day from a day on', () => {
+    expect(formatSince('2026-12-08T12:00:00Z', 'America/Chicago', now)).toBe('Dec 8');
+  });
+});
+
+describe('formatMonthYear', () => {
+  it('shows the short month and the year in the passed zone', () => {
+    expect(formatMonthYear('2019-03-15T12:00:00Z', 'America/Chicago')).toBe('Mar 2019');
+  });
+
+  it('uses the zone at a month boundary and falls back to the default zone', () => {
+    expect(formatMonthYear('2019-04-01T03:00:00Z', 'America/Chicago')).toBe('Mar 2019');
+    expect(formatMonthYear('2019-04-01T03:00:00Z', undefined)).toBe('Mar 2019');
   });
 });
