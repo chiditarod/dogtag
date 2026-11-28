@@ -223,6 +223,15 @@ describe('editing a price', () => {
     );
   });
 
+  it('closes without a request when Save is pressed with nothing changed', async () => {
+    const { sent } = await open(fee());
+    await userEvent.click(screen.getByRole('button', { name: 'Edit $120 price' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Save price' }));
+    await waitFor(() => expect(screen.queryByLabelText('Price')).not.toBeInTheDocument());
+    expect(sent).toEqual([]);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('sends only the start when only the start changed', async () => {
     const { sent } = await open(fee());
     await userEvent.click(screen.getByRole('button', { name: 'Edit $140 price' }));

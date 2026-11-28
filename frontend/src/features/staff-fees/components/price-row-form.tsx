@@ -103,6 +103,11 @@ export function PriceRowForm({ initial, others, race, onSave, onCancel, onDirtyC
 
   async function submit(event: FormEvent) {
     event.preventDefault();
+    // An edit with nothing changed has nothing to send (the server refuses an empty tier), so it just closes.
+    if (initial && !dirty) {
+      onCancel();
+      return;
+    }
     setTouched({ price: true, begin_at: true });
     if (Object.keys(checks.errors).length > 0 || cents === null) return;
     // An edit sends only what changed; an add sends both.
