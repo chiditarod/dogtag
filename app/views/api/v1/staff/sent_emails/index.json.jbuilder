@@ -10,6 +10,7 @@ json.meta do
 end
 json.filters do
   json.team @filter_team_id && { id: @filter_team_id, name: @filter_team&.name }
+  json.user @filter_user_id && { id: @filter_user_id, email: @filter_user&.email }
   json.kinds SentEmail::KINDS
   json.statuses SentEmail::FILTER_STATUSES
 end

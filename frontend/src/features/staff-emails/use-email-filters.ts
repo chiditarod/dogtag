@@ -5,6 +5,7 @@ import type { EmailFilterValues, EmailStatusFilter } from './api/types';
 /** Any other status in the URL (the unused delivery statuses, junk) reads as `any`, and is never sent. */
 const STATUSES: EmailStatusFilter[] = ['sent', 'queued', 'failed'];
 
+/** Junk ids read as absent (no chip, not sent), as on the payments page; the server lists nothing for a junk id it is sent. */
 function positiveInt(value: string | null): number | undefined {
   const n = Number(value);
   return value && Number.isInteger(n) && n > 0 ? n : undefined;
@@ -14,6 +15,7 @@ type Key = keyof EmailFilterValues;
 
 const NAMES: Record<Key, string> = {
   teamId: 'team_id',
+  userId: 'user_id',
   status: 'status',
   kind: 'kind',
   recipient: 'recipient',
@@ -28,6 +30,7 @@ export function useEmailFilters() {
     const status = params.get('status');
     return {
       teamId: positiveInt(params.get('team_id')),
+      userId: positiveInt(params.get('user_id')),
       status: STATUSES.includes(status as EmailStatusFilter) ? (status as EmailStatusFilter) : 'any',
       kind: params.get('kind') || undefined,
       recipient: params.get('recipient') ?? '',

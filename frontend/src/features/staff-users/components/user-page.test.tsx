@@ -89,21 +89,25 @@ describe('staff user page', () => {
     expect(screen.getByText('No teams.')).toBeInTheDocument();
   });
 
-  it('links to payments by email, and to emails only for admins and operators', async () => {
-    const { unmount } = await open(staffUser());
-    expect(screen.getByRole('link', { name: 'Payments by this user' })).toHaveAttribute(
+  it('links to payments matching the email, and to the account\'s emails by id for the Emails page roles', async () => {
+    const { unmount } = await open(staffUser({ id: 12 }));
+    expect(screen.getByRole('link', { name: 'Payments matching this email' })).toHaveAttribute(
       'href',
       '/register/staff/payments?race_id=all&q=ada%40example.com',
     );
-    expect(screen.getByRole('link', { name: 'Emails to this user' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Emails for this user' })).toHaveAttribute(
       'href',
-      '/register/staff/emails?recipient=ada%40example.com',
+      '/register/staff/emails?user_id=12',
     );
     unmount();
 
+    const operator = await open(staffUser({ can_edit: false, can_destroy: false }), ['operator']);
+    expect(screen.getByRole('link', { name: 'Emails for this user' })).toBeInTheDocument();
+    operator.unmount();
+
     await open(staffUser({ can_edit: false, can_destroy: false }), ['refunder']);
-    expect(screen.getByRole('link', { name: 'Payments by this user' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Emails to this user' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Payments matching this email' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Emails for this user' })).not.toBeInTheDocument();
   });
 
   it('hides the per-team Emails link from a refunder, who cannot open the emails page', async () => {
@@ -150,6 +154,56 @@ describe('staff user page details', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
     expect(await screen.findByText('has already been taken')).toBeInTheDocument();
     expect(email).toHaveAccessibleDescription('has already been taken');
+  });
+
+  /** Counts `GET /me` from now on, answering with the viewer at `id`. */
+  function countMe(id: number) {
+    const calls = { n: 0 };
+    server.use(
+      http.get('/api/v1/me', () => {
+        calls.n += 1;
+        return HttpResponse.json({ user: { ...me, id, roles: ['admin'] } });
+      }),
+    );
+    return calls;
+  }
+
+  it('refetches the header user (me) after an admin saves their own details', async () => {
+    const { requests } = await open(staffUser({ id: me.id, is_self: true }));
+    const meCalls = countMe(me.id);
+    await userEvent.clear(phone());
+    await userEvent.type(phone(), '773-555-0100');
+    await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
+    expect(await screen.findByText('Saved.')).toBeInTheDocument();
+    expect(requests).toHaveLength(1);
+    await waitFor(() => expect(meCalls.n).toBeGreaterThan(0));
+  });
+
+  it('leaves me alone after saving someone else', async () => {
+    await open(staffUser({ id: 12 }));
+    const meCalls = countMe(me.id);
+    await userEvent.clear(phone());
+    await userEvent.type(phone(), '773-555-0100');
+    await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
+    expect(await screen.findByText('Saved.')).toBeInTheDocument();
+    expect(meCalls.n).toBe(0);
+  });
+
+  it('shows a user with null names by email, with blank name fields and no "null"', async () => {
+    const nameless = staffUser({ id: 12, first_name: null, last_name: null });
+    serve(nameless);
+    const { unmount } = renderApp('/staff/users/12');
+    expect(await screen.findByRole('heading', { name: 'ada@example.com', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'First name' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'Last name' })).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Save details' })).toBeDisabled();
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+    unmount();
+
+    serve({ ...nameless, can_edit: false, can_destroy: false, first_name: 'Ada', last_name: null });
+    renderApp('/staff/users/12');
+    expect(await screen.findByRole('heading', { name: 'Ada', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
   });
 });
 

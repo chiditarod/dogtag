@@ -77,7 +77,7 @@ interface EmailFiltersProps extends SelectProps {
 export function EmailFilters({ values, kinds, setFilter, countMessage, canClear, onClearAll }: EmailFiltersProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const titleId = useId();
-  // The team filter is a chip only, so the sheet button counts just what the sheet holds.
+  // The team and user filters are chips only, so the sheet button counts just what the sheet holds.
   const active = (values.status !== 'any' ? 1 : 0) + (values.kind ? 1 : 0);
 
   return (

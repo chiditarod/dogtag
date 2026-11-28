@@ -15,6 +15,7 @@ describe('useEmailFilters', () => {
   it('defaults to no filters on page 1', () => {
     expect(setup().result.current.values).toEqual({
       teamId: undefined,
+      userId: undefined,
       status: 'any',
       kind: undefined,
       recipient: '',
@@ -23,8 +24,8 @@ describe('useEmailFilters', () => {
   });
 
   it('reads every key from the URL', () => {
-    const { values } = setup('/x?team_id=7&status=failed&kind=welcome&recipient=ada&page=3').result.current;
-    expect(values).toEqual({ teamId: 7, status: 'failed', kind: 'welcome', recipient: 'ada', page: 3 });
+    const { values } = setup('/x?team_id=7&user_id=12&status=failed&kind=welcome&recipient=ada&page=3').result.current;
+    expect(values).toEqual({ teamId: 7, userId: 12, status: 'failed', kind: 'welcome', recipient: 'ada', page: 3 });
   });
 
   it('reads a status the page does not offer as any', () => {
@@ -32,8 +33,13 @@ describe('useEmailFilters', () => {
     expect(setup('/x?status=').result.current.values.status).toBe('any');
   });
 
-  it('ignores a junk team id or page', () => {
-    expect(setup('/x?team_id=abc&page=-2').result.current.values).toMatchObject({ teamId: undefined, page: 1 });
+  it('ignores a junk team id, user id or page', () => {
+    expect(setup('/x?team_id=abc&user_id=-1&page=-2').result.current.values).toMatchObject({
+      teamId: undefined,
+      userId: undefined,
+      page: 1,
+    });
+    expect(setup('/x?user_id=1.5').result.current.values.userId).toBeUndefined();
   });
 
   it('a change drops the page; page keeps the filters; any and undefined remove their keys', () => {
@@ -48,8 +54,8 @@ describe('useEmailFilters', () => {
   });
 
   it('clearAll drops everything', () => {
-    const { result } = setup('/x?team_id=7&status=failed&recipient=ada&page=2');
+    const { result } = setup('/x?team_id=7&user_id=12&status=failed&recipient=ada&page=2');
     act(() => result.current.clearAll());
-    expect(result.current.values).toMatchObject({ teamId: undefined, status: 'any', recipient: '', page: 1 });
+    expect(result.current.values).toMatchObject({ teamId: undefined, userId: undefined, status: 'any', recipient: '', page: 1 });
   });
 });

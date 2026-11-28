@@ -19,7 +19,7 @@ function status(team: StaffUserTeam) {
 
 const link = 'text-link underline';
 
-/** `canSeeEmails`: only admins and operators may open the emails page, so refunders get no per-team link. */
+/** `canSeeEmails`: whether the viewer may open the Emails page (`rolesFor('/staff/emails')`); refunders get no per-team link. */
 export function UserTeamsCard({ teams, canSeeEmails }: { teams: StaffUserTeam[]; canSeeEmails: boolean }) {
   const titleId = useId();
   return (

@@ -35,7 +35,7 @@ export function emailsResponse(
   return {
     sent_emails: rows,
     meta: { page: 1, per_page: 25, total_count: rows.length, total_pages: rows.length > 0 ? 1 : 0 },
-    filters: { team: null, kinds: SERVER_KINDS, statuses: ['sent', 'queued', 'failed'] },
+    filters: { team: null, user: null, kinds: SERVER_KINDS, statuses: ['sent', 'queued', 'failed'] },
     ...overrides,
   };
 }

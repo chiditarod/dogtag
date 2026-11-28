@@ -8,7 +8,8 @@ import { seed, type Seed } from '../helpers/seed';
  *   refunder_email  a refunder: Users and Payments only, details read-only
  *   operator_email  an operator: also Emails, still read-only on users
  *   admin_email     an admin: edits details and roles, deletes users
- *   ada_email       Ada, a racer who owns the team Doge Sled and has one payment and three emails (not logged in as)
+ *   ada_email       Ada, a racer who owns the team Doge Sled and has one payment, three team emails and an
+ *                   email-changed notice to her old address (not logged in as); a lookalike `no<ada_email>` got one email
  *   zed_email       Zed, a racer with no team or payment; promoted, logged in as, then deleted
  */
 
@@ -83,8 +84,8 @@ test.describe('SPA staff users and emails', () => {
     await expect(page.getByRole('button', { name: 'Save details' })).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Roles' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Delete user' })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Emails to this user' })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Payments by this user' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Emails for this user' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Payments matching this email' })).toBeVisible();
 
     await page.goto('/register/staff/emails');
     await expect(page.getByRole('heading', { name: 'Not allowed' })).toBeVisible();
@@ -98,9 +99,14 @@ test.describe('SPA staff users and emails', () => {
     await openUser(page, c.ada_email, adaName());
     await expect(page.getByRole('region', { name: 'Roles' })).toHaveCount(0);
 
-    await page.getByRole('link', { name: 'Emails to this user' }).click();
+    // The account's own emails: the old-address notice is in, the lookalike address is not.
+    await page.getByRole('link', { name: 'Emails for this user' }).click();
     await expect(page.getByRole('heading', { name: 'Emails sent' })).toBeVisible();
-    await expect(emailRows(page)).toHaveCount(3);
+    await expect(page).toHaveURL(/\/register\/staff\/emails\?user_id=\d+$/);
+    await expect(page.getByRole('button', { name: `Remove filter User: ${c.ada_email}` })).toBeVisible();
+    await expect(emailRows(page)).toHaveCount(4);
+    await expect(emailRows(page).filter({ hasText: 'staff-users-ada-old-' })).toHaveCount(1);
+    await expect(emailRows(page).filter({ hasText: `no${c.ada_email}` })).toHaveCount(0);
 
     await page.goBack();
     await page.getByRole('link', { name: `Emails for ${c.team_name}` }).click();

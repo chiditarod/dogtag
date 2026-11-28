@@ -1,6 +1,5 @@
 # Rake task to seed test data for integration tests
 # Usage:
-#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:admin                     (create admin user only)
 #   rails test_seeds:operator                  (create operator user only; the e2e staff login)
 #   rails test_seeds:basic                     (create full test environment using factories)
@@ -9,6 +8,7 @@
 #   rails test_seeds:user_registration         (generate credentials for registration test)
 #   rails test_seeds:password_reset            (create user for password reset test)
 #   rails test_seeds:password_reset_token      (generate perishable token for password reset)
+#   rails test_seeds:account                   (racer with a known password, for the SPA account page)
 #   rails test_seeds:past_racers               (captain with a 2025 team and an empty current team)
 #   rails test_seeds:racer_details             (captain with a racer on the roster and one past racer at 7 years)
 #   rails test_seeds:reminder                  (race closing in 23h with an unfinalized team)
@@ -22,7 +22,7 @@
 #   rails test_seeds:staff_races              (an operator, an admin and a refunder; a Busy race with a fee, a finalized team with a payment and an unfinalized team; an Empty race)
 #   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
 #   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
-#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
+#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three team emails, plus a notice to her old address; a lookalike address's email; Zed, a deletable racer; one other team's reminder)
 #   rails test_seeds:staff_team_panel         (an operator, a refunder and an owner; a closed race (inside final edits) with a 3-of-5 team, a payment and two emails, a buddy team with its own payment, and an open race with a 2-of-3 team and a $50 fee)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
@@ -358,6 +358,33 @@ namespace :test_seeds do
     puts "✅ Seeded!"
     puts "  User: #{user.email} / oldpassword123"
     puts "  Credentials file: #{credentials_file}"
+  end
+
+  desc "Create a racer with a known password for the SPA account page test"
+  task account: [:guard, :environment] do
+    require "factory_bot_rails"
+    require "json"
+    require "securerandom"
+
+    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
+    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
+
+    user = FactoryBot.create(:user,
+      first_name: "Account",
+      last_name: "TestUser",
+      email: "account-#{unique_id}@example.com",
+      password: "oldpassword123",
+      password_confirmation: "oldpassword123")
+
+    credentials = {
+      user_email: user.email,
+      password: "oldpassword123",
+      new_password: "newpassword456",
+      user_id: user.id
+    }
+    File.write(credentials_file, credentials.to_json)
+
+    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Generate perishable token for password reset test"
@@ -1222,6 +1249,15 @@ namespace :test_seeds do
               created_at: 30.minutes.ago, status_changed_at: 30.minutes.ago)
     mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "queued",
               created_at: 2.minutes.ago, status_changed_at: 2.minutes.ago)
+    # Sent to the address Ada had before she changed it, so only the account (user_id) ties it to her.
+    SentEmail.create!(mailer: "UserMailer", action: "email_changed_email", kind: "email_changed",
+                      recipient: "staff-users-ada-old-#{unique_id}@example.com", user_id: ada.id,
+                      subject: "Your dogTag email changed", status: "sent",
+                      created_at: 1.day.ago, status_changed_at: 1.day.ago)
+    # Someone else's address that contains Ada's, which a recipient substring search would wrongly include.
+    SentEmail.create!(mailer: "UserMailer", action: "welcome_email", kind: "welcome",
+                      recipient: "no#{ada.email}", subject: "Welcome to CHIditarod", status: "sent",
+                      created_at: 2.days.ago, status_changed_at: 2.days.ago)
     SentEmail.create!(mailer: "UserMailer", action: "registration_reminder_email", kind: "registration_reminder",
                       recipient: other_owner.email, user_id: other_owner.id, team_id: other_team.id, race_id: race.id,
                       subject: "Registration closes soon", status: "sent",
@@ -1337,33 +1373,6 @@ namespace :test_seeds do
       theme_answer: "Have to wait and see!"
     )
     puts "✅ Seeded #{team.name} (ID: #{team.id}, closed) and #{open_team.name} (ID: #{open_team.id}, open)"
-  end
-
-  desc "Create a racer with a known password for the SPA account page test"
-  task account: [:guard, :environment] do
-    require "factory_bot_rails"
-    require "json"
-    require "securerandom"
-
-    unique_id = ENV["TEST_UNIQUE_ID"] || SecureRandom.uuid
-    credentials_file = Rails.root.join("tmp", "test_credentials_#{unique_id}.json")
-
-    user = FactoryBot.create(:user,
-      first_name: "Account",
-      last_name: "TestUser",
-      email: "account-#{unique_id}@example.com",
-      password: "oldpassword123",
-      password_confirmation: "oldpassword123")
-
-    credentials = {
-      user_email: user.email,
-      password: "oldpassword123",
-      new_password: "newpassword456",
-      user_id: user.id
-    }
-    File.write(credentials_file, credentials.to_json)
-
-    puts "Seeded account user #{user.email} / oldpassword123"
   end
 
   desc "Clean up all test data"

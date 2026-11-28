@@ -4,9 +4,9 @@ import { t } from '@/locales/en';
 import type { StaffUserRow } from '../api/types';
 import { RoleTags } from './role-tags';
 
-/** The full name, or the email for an account with no name, so the link is never empty. */
+/** The full name, or the email for an account with no name, so the link is never empty. A null part is left out. */
 export function userName(user: Pick<StaffUserRow, 'first_name' | 'last_name' | 'email'>): string {
-  return `${user.first_name} ${user.last_name}`.trim() || user.email;
+  return [user.first_name, user.last_name].map((part) => part?.trim() ?? '').filter(Boolean).join(' ') || user.email;
 }
 
 const COLUMNS = ['name', 'email', 'phone', 'teams', 'roles'] as const;

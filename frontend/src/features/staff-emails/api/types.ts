@@ -27,6 +27,8 @@ export interface SentEmailsMeta {
 export interface SentEmailsFilters {
   /** The team filter echoed back; `name` is null when that team no longer exists. */
   team: { id: number; name: string | null } | null;
+  /** The user filter echoed back; `email` is null when that user no longer exists. */
+  user: { id: number; email: string | null } | null;
   kinds: string[];
   statuses: string[];
 }
@@ -41,6 +43,8 @@ export type EmailStatusFilter = 'any' | 'sent' | 'queued' | 'failed';
 
 export interface EmailFilterValues {
   teamId?: number;
+  /** The account's own emails (`sent_emails.user_id`), whatever address they went to. */
+  userId?: number;
   status: EmailStatusFilter;
   kind?: string;
   recipient: string;

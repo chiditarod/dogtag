@@ -111,11 +111,16 @@ describe('UsersPage', () => {
       users: [
         staffUserRow({ id: 5, first_name: '', last_name: '', email: 'ghost@example.com', phone: '   ' }),
         staffUserRow({ id: 6, first_name: 'Sam', last_name: 'Staffer', email: 'sam@example.com', phone: null }),
+        staffUserRow({ id: 7, first_name: null, last_name: null, email: 'old@example.com' }),
+        staffUserRow({ id: 8, first_name: null, last_name: 'Solo', email: 'solo@example.com' }),
       ],
-      meta: { page: 1, per_page: 35, total_count: 2, total_pages: 1 },
+      meta: { page: 1, per_page: 35, total_count: 4, total_pages: 1 },
     });
     renderApp('/staff/users');
     expect(await screen.findByRole('link', { name: 'ghost@example.com' })).toHaveAttribute('href', '/register/staff/users/5');
+    expect(screen.getByRole('link', { name: 'old@example.com' })).toHaveAttribute('href', '/register/staff/users/7');
+    expect(screen.getByRole('link', { name: 'Solo' })).toHaveAttribute('href', '/register/staff/users/8');
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
     const rows = screen.getAllByRole('row').filter((row) => within(row).queryAllByRole('cell').length > 0);
     expect(within(rows[0]).getByText('—')).toBeInTheDocument();
     expect(within(rows[1]).getByText('—')).toBeInTheDocument();
