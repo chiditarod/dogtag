@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
 import { useMe } from '@/features/auth/api/use-me';
@@ -17,12 +17,96 @@ import {
   TeamPageErrorProvider,
 } from '@/features/teams/components/team-page-error';
 import { YoureInCard } from '@/features/teams/components/youre-in-card';
+import { useTeamPermissions } from '@/features/teams/use-team-permissions';
+import { StaffTeamPanel } from '@/features/staff-teams/components/staff-team-panel';
+import { isStaff } from '@/features/staff/utils';
+import type { Team } from '@/types/api';
 import { GuidedTour } from '@/features/tour/components/guided-tour';
 import { markSeen, shouldAutoStart } from '@/features/tour/storage';
 import { noFeeDue, teamTourStops } from '@/features/tour/stops';
 import { cardSteps, feePill } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
+
+interface TeamPageBodyProps {
+  team: Team;
+  replayRef: RefObject<HTMLButtonElement | null>;
+  onTakeTour: () => void;
+}
+
+/** The header and cards. Permissions are computed here once, so one staff request serves the page. */
+function TeamPageBody({ team, replayRef, onTakeTour }: TeamPageBodyProps) {
+  const { permissions, staffTeam, staffQuery, staffState } = useTeamPermissions(team);
+  const { checklist } = team;
+  // Card statuses come from the checklist, not stepStates: a finalized team's
+  // flag is forced full, but a regressed step's card should still read "to do".
+  const [racersDone, questionsDone, feeDone] = cardSteps(checklist);
+  const status = (done: boolean) => (done ? 'done' : 'todo');
+  return (
+    <div className="space-y-4">
+      <TeamErrorBanner />
+      <div className="space-y-6 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0">
+        {/* Not sticky while the edit form is open: a sticky rail taller than
+            the viewport could never show its Save button. Nor while the Staff
+            card is in the rail (any state but 'none'), which makes it taller than
+            the viewport too. */}
+        <div
+          className={
+            staffState === 'none'
+              ? 'lg:sticky lg:top-6 lg:has-[form]:static'
+              : 'lg:has-[form]:static'
+          }
+        >
+          <TeamHeader
+            team={team}
+            replayRef={replayRef}
+            onTakeTour={onTakeTour}
+            permissions={permissions}
+            staffState={staffState}
+          />
+          {staffState !== 'none' && (
+            <StaffTeamPanel team={team} staffTeam={staffTeam} query={staffQuery} />
+          )}
+        </div>
+        <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
+          <ChecklistCard
+            anchor="step-racers"
+            tourId="racers"
+            title={t('team.racers')}
+            status={status(racersDone)}
+            pill={t('team.racersPill', {
+              filled: checklist.racers.filled,
+              total: checklist.racers.total,
+            })}
+          >
+            <RosterCardSlot team={team} permissions={permissions} />
+          </ChecklistCard>
+          {checklist.questions.required && (
+            <ChecklistCard
+              anchor="step-questions"
+              tourId="questions"
+              title={t('team.questions')}
+              status={status(questionsDone)}
+              pill={questionsDone ? t('team.pillDone') : t('team.pillTodo')}
+            >
+              <QuestionsCardSlot team={team} permissions={permissions} />
+            </ChecklistCard>
+          )}
+          <ChecklistCard
+            anchor="step-fee"
+            tourId="fee"
+            title={t('team.fee')}
+            status={status(feeDone)}
+            pill={feePill(checklist.fee, team.race.time_zone)}
+          >
+            <FeeCardSlot team={team} permissions={permissions} staffTeam={staffTeam} />
+          </ChecklistCard>
+          <YoureInCard checklist={checklist} />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function TeamChecklist({ teamId }: { teamId: string }) {
   const { data: team, isPending, error, refetch } = useTeam(teamId, {
@@ -50,9 +134,11 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
   useEffect(() => {
     if (!team || !me || autoStartChecked.current) return;
     autoStartChecked.current = true;
+    // Staff open pages to look, not to be walked through; Take the tour still works.
     if (
       team.race.open_for_registration &&
       !team.checklist.finalized &&
+      !isStaff(me) &&
       shouldAutoStart(me.id)
     ) {
       setTourOpen(true);
@@ -105,61 +191,13 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
 
   const { checklist } = team;
   const showDialog = checklist.show_confirmation && !dismissed;
-  // Card statuses come from the checklist, not stepStates: a finalized team's
-  // flag is forced full, but a regressed step's card should still read "to do".
-  const [racersDone, questionsDone, feeDone] = cardSteps(checklist);
-  const status = (done: boolean) => (done ? 'done' : 'todo');
   return (
     <TeamPageErrorProvider teamId={teamId}>
-      <div className="space-y-4">
-        <TeamErrorBanner />
-        <div className="space-y-6 lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:items-start lg:gap-10 lg:space-y-0">
-          {/* Not sticky while the edit form is open: a sticky rail taller than
-              the viewport could never show its Save button. */}
-          <div className="lg:sticky lg:top-6 lg:has-[form]:static">
-            <TeamHeader
-              team={team}
-              replayRef={replayRef}
-              onTakeTour={() => setTourOpen(true)}
-            />
-          </div>
-          <div className="divide-y divide-flag rounded-lg border border-flag bg-white">
-            <ChecklistCard
-              anchor="step-racers"
-              tourId="racers"
-              title={t('team.racers')}
-              status={status(racersDone)}
-              pill={t('team.racersPill', {
-                filled: checklist.racers.filled,
-                total: checklist.racers.total,
-              })}
-            >
-              <RosterCardSlot team={team} />
-            </ChecklistCard>
-            {checklist.questions.required && (
-              <ChecklistCard
-                anchor="step-questions"
-                tourId="questions"
-                title={t('team.questions')}
-                status={status(questionsDone)}
-                pill={questionsDone ? t('team.pillDone') : t('team.pillTodo')}
-              >
-                <QuestionsCardSlot team={team} />
-              </ChecklistCard>
-            )}
-            <ChecklistCard
-              anchor="step-fee"
-              tourId="fee"
-              title={t('team.fee')}
-              status={status(feeDone)}
-              pill={feePill(checklist.fee, team.race.time_zone)}
-            >
-              <FeeCardSlot team={team} />
-            </ChecklistCard>
-            <YoureInCard checklist={checklist} />
-          </div>
-        </div>
-      </div>
+      <TeamPageBody
+        team={team}
+        replayRef={replayRef}
+        onTakeTour={() => setTourOpen(true)}
+      />
       {showDialog && (
         <CompletionDialog
           team={team}

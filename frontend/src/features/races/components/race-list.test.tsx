@@ -51,6 +51,20 @@ describe('RaceList', () => {
     ).toBeInTheDocument();
   });
 
+  it("links each tile to its Who's registered page", async () => {
+    mockRaces(
+      buildRace({ id: 3 }),
+      buildRace({ id: 4, name: 'Other', open_for_registration: false, registration_status: 'closed' }),
+    );
+    renderApp('/');
+    await screen.findByText('CHIditarod 2027');
+    const links = screen.getAllByRole('link', { name: t('races.whoRegistered') });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/register/races/3/registrations',
+      '/register/races/4/registrations',
+    ]);
+  });
+
   it('shows a closed race with the closed badge and no start button', async () => {
     vi.useFakeTimers({ toFake: ['Date'], now: new Date('2027-03-01T12:00:00Z') });
     mockRaces(buildRace({ open_for_registration: false, registration_status: 'closed' }));

@@ -411,9 +411,16 @@ describe Team do
         expect(team.reload).to have_attributes(new_team: true, new_team_overridden: nil, new_team_setting: "auto")
       end
 
-      it "ignores an unknown value" do
-        team.reload.update!(new_team_setting: "maybe")
-        expect(team.reload).to have_attributes(new_team: true, new_team_setting: "auto")
+      it "is not valid with an unknown value, and leaves the flag alone" do
+        team.reload.update!(new_team_setting: "no")
+        expect(team.update(new_team_setting: "maybe")).to be(false)
+        expect(team.errors[:new_team_setting]).to be_present
+        expect(team.reload).to have_attributes(new_team: false, new_team_setting: "no")
+        expect(team).to be_valid
+
+        team.new_team_setting = "maybe"
+        team.new_team_setting = "yes"
+        expect(team).to be_valid
       end
     end
   end

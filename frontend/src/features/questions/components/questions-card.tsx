@@ -27,6 +27,7 @@ import {
   validateAnswers,
 } from '@/features/questions/validate';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
@@ -56,9 +57,15 @@ function savedSelection(data: {
   };
 }
 
-export function QuestionsCard({ team }: { team: Team }) {
+export function QuestionsCard({
+  team,
+  permissions = racerPermissions(team),
+}: {
+  team: Team;
+  permissions?: TeamPermissions;
+}) {
   const { checklist, race } = team;
-  const open = race.open_for_registration;
+  const canEdit = permissions.editQuestions;
   const query = useQuestions(team.id);
   const save = useSaveAnswers(team.id);
   const queryClient = useQueryClient();
@@ -81,7 +88,7 @@ export function QuestionsCard({ team }: { team: Team }) {
   const editButton = useRef<HTMLButtonElement>(null);
   const focusEditButton = useRef(false);
 
-  const showForm = open && (editing || !checklist.questions.done);
+  const showForm = canEdit && (editing || !checklist.questions.done);
   const jsonform = query.data?.jsonform;
   const buddyOptions = useBuddyOptions(team.id, showForm && !!jsonform);
 
@@ -287,12 +294,14 @@ export function QuestionsCard({ team }: { team: Team }) {
           <p className="text-base text-navy">
             {t('questions.answered', { count: answered, total: keys.length })}
           </p>
-          {open ? (
+          {canEdit ? (
             <Button ref={editButton} variant="secondary" onClick={startEditing}>
               {t('questions.edit')}
             </Button>
           ) : (
-            <p className="text-sm text-navy/80">{t('questions.closed')}</p>
+            !race.open_for_registration && (
+              <p className="text-sm text-navy/80">{t('questions.closed')}</p>
+            )
           )}
         </div>
       )}

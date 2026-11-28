@@ -124,6 +124,37 @@ describe "API v1 questions", type: :request do
       expect(closed_team.reload.jsonform).to be_nil
     end
 
+    context "after registration has closed" do
+      let!(:closed_race) { FactoryBot.create(:race_with_jsonform, :registration_closed) }
+      let!(:closed_team) { FactoryBot.create(:team, user: user, race: closed_race) }
+      let(:closed_path) { "/api/v1/teams/#{closed_team.id}/questions" }
+
+      %i[operator_user admin_user].each do |factory|
+        context "as an #{factory.to_s.delete_suffix('_user')}" do
+          let(:login_user) { FactoryBot.create(factory) }
+
+          it "saves the answers" do
+            put closed_path, params: { answers: valid_answers }, as: :json
+
+            expect(response).to have_http_status(:ok)
+            expect(JSON.parse(closed_team.reload.jsonform)).to eq(valid_answers)
+            expect(json["checklist"]["questions"]["done"]).to be(true)
+          end
+        end
+      end
+
+      context "as a refunder" do
+        let(:login_user) { FactoryBot.create(:refunder_user) }
+
+        it "returns 403 and saves nothing" do
+          put closed_path, params: { answers: valid_answers }, as: :json
+
+          expect(response).to have_http_status(:forbidden)
+          expect(closed_team.reload.jsonform).to be_nil
+        end
+      end
+    end
+
     context "as a refunder" do
       let(:login_user) { FactoryBot.create(:refunder_user) }
 

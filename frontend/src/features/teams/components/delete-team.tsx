@@ -3,23 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DialogSheet } from '@/components/ui/dialog-sheet';
 import { useDeleteTeam } from '@/features/teams/api/use-delete-team';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
 
-/** Lets a captain throw away a team they started but have not finished or paid for. */
-export function DeleteTeam({ team }: { team: Team }) {
-  const [open, setOpen] = useState(false);
-  const titleId = useId();
-  const navigate = useNavigate();
-  const deleteTeam = useDeleteTeam(team.id);
+interface DeleteTeamDialogProps {
+  teamId: number;
+  teamName: string;
+  /** Called after the server deleted the team. */
+  onDeleted: () => void;
+  onClose: () => void;
+}
 
-  if (!team.deletable || !team.race.open_for_registration) return null;
+/** The confirm sheet: deletes the team, and explains a refusal. Close does nothing while a delete is in flight. */
+export function DeleteTeamDialog({ teamId, teamName, onDeleted, onClose }: DeleteTeamDialogProps) {
+  const titleId = useId();
+  const deleteTeam = useDeleteTeam(teamId);
 
   function confirm() {
-    deleteTeam.mutate(undefined, {
-      onSuccess: () => navigate('/teams', { replace: true }),
-    });
+    deleteTeam.mutate(undefined, { onSuccess: onDeleted });
   }
 
   const message =
@@ -30,6 +33,49 @@ export function DeleteTeam({ team }: { team: Team }) {
         : null;
 
   return (
+    <DialogSheet
+      labelledBy={titleId}
+      onClose={() => {
+        if (!deleteTeam.isPending) onClose();
+      }}
+    >
+      <div className="space-y-4 p-5">
+        <h2 id={titleId} className="font-display text-xl font-bold">
+          {t('team.deleteTitle', { name: teamName })}
+        </h2>
+        <p>{t('team.deleteBody')}</p>
+        {message && (
+          <p role="alert" className="text-sm text-starText">
+            {message}
+          </p>
+        )}
+        <div className="flex flex-wrap justify-end gap-2">
+          <Button variant="secondary" disabled={deleteTeam.isPending} onClick={onClose}>
+            {t('common.cancel')}
+          </Button>
+          <Button loading={deleteTeam.isPending} onClick={confirm}>
+            {t('team.deleteConfirm')}
+          </Button>
+        </div>
+      </div>
+    </DialogSheet>
+  );
+}
+
+/** Lets a captain throw away a team they started but have not finished or paid for. */
+export function DeleteTeam({
+  team,
+  permissions = racerPermissions(team),
+}: {
+  team: Team;
+  permissions?: TeamPermissions;
+}) {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  if (!permissions.deleteTeam) return null;
+
+  return (
     <>
       <div>
         <Button variant="ghost" className="-mx-4 text-starText" onClick={() => setOpen(true)}>
@@ -37,32 +83,12 @@ export function DeleteTeam({ team }: { team: Team }) {
         </Button>
       </div>
       {open && (
-        <DialogSheet
-          labelledBy={titleId}
-          onClose={() => {
-            if (!deleteTeam.isPending) setOpen(false);
-          }}
-        >
-          <div className="space-y-4 p-5">
-            <h2 id={titleId} className="font-display text-xl font-bold">
-              {t('team.deleteTitle', { name: team.name })}
-            </h2>
-            <p>{t('team.deleteBody')}</p>
-            {message && (
-              <p role="alert" className="text-sm text-starText">
-                {message}
-              </p>
-            )}
-            <div className="flex flex-wrap justify-end gap-2">
-              <Button variant="secondary" disabled={deleteTeam.isPending} onClick={() => setOpen(false)}>
-                {t('common.cancel')}
-              </Button>
-              <Button loading={deleteTeam.isPending} onClick={confirm}>
-                {t('team.deleteConfirm')}
-              </Button>
-            </div>
-          </div>
-        </DialogSheet>
+        <DeleteTeamDialog
+          teamId={team.id}
+          teamName={team.name}
+          onDeleted={() => navigate('/teams', { replace: true })}
+          onClose={() => setOpen(false)}
+        />
       )}
     </>
   );

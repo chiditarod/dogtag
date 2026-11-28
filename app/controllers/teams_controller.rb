@@ -135,7 +135,7 @@ class TeamsController < ApplicationController
 
   def team_params
     fields = [:race_id, :name, :description, :experience]
-    fields << :new_team_setting if current_user.is_any_of?(:admin, :operator)
+    fields << :new_team_setting if StaffTeamPermissions.new_team_setter?(current_user)
     params.expect(team: fields)
   end
 end

@@ -206,9 +206,24 @@ describe UsersController do
           let(:valid_user) { FactoryBot.create :user }
 
           it 'ignores roles' do
-            patch :update, params: { id: valid_user.id, user: { first_name: 'X', roles: ['admin'] } }
+            patch :update, params: { id: valid_user.id, current_password: '12345678', user: { first_name: 'X', roles: ['admin'] } }
             expect(valid_user.reload.is?(:admin)).to be(false)
             expect(valid_user.first_name).to eq('X')
+          end
+
+          it 'refuses a self-edit without the current password' do
+            original = valid_user.first_name
+            patch :update, params: { id: valid_user.id, user: { first_name: 'X' } }
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(flash[:error]).to eq(I18n.t('users.update.current_password_wrong'))
+            expect(valid_user.reload.first_name).to eq(original)
+          end
+
+          it 'refuses a self-edit with a wrong current password' do
+            original = valid_user.first_name
+            patch :update, params: { id: valid_user.id, current_password: 'nope-nope', user: { first_name: 'X' } }
+            expect(response).to have_http_status(:unprocessable_entity)
+            expect(valid_user.reload.first_name).to eq(original)
           end
         end
       end
@@ -247,7 +262,26 @@ describe UsersController do
 
         expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
 
-        expect(flash[:error]).to include('refund batches')
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
+      it 'refuses to delete a staff user who made a single refund outside any batch' do
+        staff = FactoryBot.create :refunder_user
+        FactoryBot.create :completed_requirement, refunded_by: staff, refunded_at: Time.current
+
+        expect { delete :destroy, params: { :id => staff.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Made refunds, which are kept as a record.')
+        expect(response).to redirect_to users_path
+      end
+
+      it 'refuses to delete a user who owns a team' do
+        owner = FactoryBot.create(:team).user
+
+        expect { delete :destroy, params: { :id => owner.id } }.not_to change(User, :count)
+
+        expect(flash[:error]).to eq('Owns 1 team. Delete or reassign them first.')
         expect(response).to redirect_to users_path
       end
 

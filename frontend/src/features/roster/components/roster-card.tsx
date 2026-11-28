@@ -30,6 +30,7 @@ import {
   type PersonDraft,
 } from '@/features/roster/utils';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { ApiError } from '@/lib/api-client';
 import { t } from '@/locales/en';
 import type { Person, Team } from '@/types/api';
@@ -55,11 +56,16 @@ function Chevron({ open }: { open: boolean }) {
   );
 }
 
-export function RosterCard({ team }: { team: Team }) {
+export function RosterCard({
+  team,
+  permissions = racerPermissions(team),
+}: {
+  team: Team;
+  permissions?: TeamPermissions;
+}) {
   const { race, people, checklist } = team;
   const me = useMe().data;
   const { reportError, clearError } = useTeamPageError();
-  const open = race.open_for_registration;
   const openSpots = Math.max(race.people_per_team - people.length, 0);
   const hasEmptySlot = openSpots > 0;
 
@@ -86,12 +92,12 @@ export function RosterCard({ team }: { team: Team }) {
   // so one whose email was changed in review is not offered again.
   const [pickedFrom, setPickedFrom] = useState<ReadonlyMap<string, number>>(new Map());
 
-  const pastRacers = usePastRacers(team.id, open && hasEmptySlot);
+  const pastRacers = usePastRacers(team.id, permissions.pastRacers && hasEmptySlot);
   const emailsOnTeam = new Set(people.map((person) => person.email.toLowerCase()));
   for (const [email, personId] of pickedFrom) {
     if (people.some((person) => person.id === personId)) emailsOnTeam.add(email);
   }
-  const available = (pastRacers.data ?? []).filter(
+  const available = (permissions.pastRacers ? (pastRacers.data ?? []) : []).filter(
     (racer) => !emailsOnTeam.has(racer.email.toLowerCase()),
   );
 
@@ -124,7 +130,7 @@ export function RosterCard({ team }: { team: Team }) {
   const addingNew = active !== null && active.personId === undefined;
   // The account holder is not always a racer: offer to add them until their
   // email is on the roster, whoever the captain is.
-  const canAddMe = Boolean(me) && !emailsOnTeam.has(me?.email.toLowerCase() ?? '');
+  const canAddMe = permissions.addYourself && Boolean(me) && !emailsOnTeam.has(me?.email.toLowerCase() ?? '');
 
   function openForm(next: ActiveForm) {
     add.reset();
@@ -215,10 +221,6 @@ export function RosterCard({ team }: { team: Team }) {
   }
 
   const { fieldErrors, formErrors } = splitPersonErrors(save.error);
-  // The server refuses to remove a racer from a team that is complete apart from its captain.
-  const completeButCaptain =
-    checklist.racers.filled >= checklist.racers.total && checklist.questions.done && checklist.fee.done;
-  const canRemove = open && !checklist.finalized && !completeButCaptain;
 
   const formFor = (title: string, initial: PersonDraft) => (
     <PersonForm
@@ -254,10 +256,10 @@ export function RosterCard({ team }: { team: Team }) {
               : yearsCount(person.experience)
           }
           captain={person.id === captainId}
-          onMakeCaptain={open ? () => makeCaptain(person) : undefined}
+          onMakeCaptain={permissions.setCaptain ? () => makeCaptain(person) : undefined}
           settingCaptain={setCaptain.isPending}
-          canEdit
-          canRemove={canRemove}
+          canEdit={permissions.editRacers}
+          canRemove={permissions.removeRacers}
           confirmingRemove={removing === person.id}
           removing={remove.isPending}
           removeError={removing === person.id ? removeMessage() : null}
@@ -318,7 +320,7 @@ export function RosterCard({ team }: { team: Team }) {
     );
   }
 
-  const showActions = open && hasEmptySlot && !addingNew;
+  const showActions = permissions.addRacers && hasEmptySlot && !addingNew;
   const canHide = !hasEmptySlot && !active && !picker;
 
   return (
@@ -343,7 +345,7 @@ export function RosterCard({ team }: { team: Team }) {
         className="focus:outline-none"
       >
         {rows}
-        {hasEmptySlot && <OpenSpotsItem count={openSpots} open={open} />}
+        {hasEmptySlot && <OpenSpotsItem count={openSpots} open={permissions.addRacers} />}
       </ol>
       {canHide && (
         <Button

@@ -1,11 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef, useState, type RefObject } from 'react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useMe } from '@/features/auth/api/use-me';
 import { usePay, type PayVariables } from '@/features/payments/api/use-pay';
+import { staffPayGaps, type StaffPayGap } from '@/features/payments/staff-pay';
+import type { StaffTeam, StaffTeamPayment } from '@/features/staff-teams/types';
 import { fetchTeam, teamQueryKey } from '@/features/teams/api/use-team';
 import { useTeamPageError } from '@/features/teams/components/team-page-error';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { formatCents, isFeeOpensLater } from '@/features/teams/utils';
 import { ApiError } from '@/lib/api-client';
 import { formatDate } from '@/lib/dates';
@@ -23,8 +27,69 @@ interface RowMessage {
   text: string;
 }
 
-export function FeeCard({ team }: { team: Team }) {
+/** The warning line for one reason a racer could not pay but staff can. */
+function gapText(gap: StaffPayGap): string {
+  switch (gap.kind) {
+    case 'roster':
+      return t('staff.fee.gapRoster', { filled: gap.filled, total: gap.total });
+    case 'notYetOpen':
+      return t('staff.fee.gapNotYetOpen');
+    case 'closed':
+      return t('staff.fee.gapClosed');
+    case 'waitlist':
+      return t('staff.fee.gapWaitlist');
+  }
+}
+
+/**
+ * The staff link from a paid line to that payment on the Payments page, with the date it was paid.
+ * It names the race too, so removing the Team chip there stays on this race.
+ */
+function RefundLink({
+  raceId,
+  teamId,
+  requirementId,
+  payments,
+  timeZone,
+}: {
+  raceId: number;
+  teamId: number;
+  requirementId: number;
+  payments: StaffTeamPayment[];
+  timeZone: string;
+}) {
+  const paidAt = payments
+    .filter((payment) => payment.requirement_id === requirementId)
+    .map((payment) => payment.paid_at)
+    .sort()
+    .at(-1);
+  return (
+    <span className="text-sm text-navy/80">
+      <Link
+        to={`/staff/payments?race_id=${raceId}&team_id=${teamId}&payment_type=${requirementId}`}
+        className="text-link underline"
+      >
+        {t('staff.fee.refundLink')}
+      </Link>
+      {paidAt && ` · ${formatDate(paidAt, timeZone)}`}
+    </span>
+  );
+}
+
+export function FeeCard({
+  team,
+  permissions = racerPermissions(team),
+  staffTeam,
+}: {
+  team: Team;
+  /** Computed once by `TeamChecklist`; defaults to a racer's rules. */
+  permissions?: TeamPermissions;
+  /** The staff view of the team; present only once a staff viewer's request has answered. */
+  staffTeam?: StaffTeam;
+}) {
   const { checklist, race } = team;
+  const { staffPay, staffLinks } = permissions;
+  const staffPayments = staffTeam?.payments ?? [];
   const { fee } = checklist;
   const queryClient = useQueryClient();
   const me = useMe();
@@ -45,6 +110,8 @@ export function FeeCard({ team }: { team: Team }) {
   if (checklist.finalized || (fee.done && fee.paid_cents > 0)) {
     // A refund does not change the total: the payment still counts as paid. It only gets a line of its own.
     const refunded = fee.items.filter((line) => line.refunded);
+    // Staff get each paid line with its own link; racers keep the single total line.
+    const paidLines = staffLinks ? fee.items.filter((line) => line.done) : [];
     return (
       <div className="space-y-1">
         <p
@@ -61,15 +128,36 @@ export function FeeCard({ team }: { team: Team }) {
             ? t('fee.paidTotal', { amount: formatCents(fee.paid_cents) })
             : t('fee.paidNoAmount')}
         </p>
-        {refunded.map((line) => (
-          <p key={line.requirement_id} className="text-sm text-navy/80">
-            {t('fee.refundedLine', { name: line.name })}
-          </p>
-        ))}
+        {staffLinks
+          ? paidLines.map((line) => (
+              <p key={line.requirement_id} className="text-sm text-navy/80">
+                {line.name}:{' '}
+                {line.paid_cents > 0
+                  ? t('fee.paid', { amount: formatCents(line.paid_cents) })
+                  : t('team.pillPaid')}
+                {line.refunded && (
+                  <Badge tone="neutral" className="ml-2 align-middle">
+                    {t('fee.refunded')}
+                  </Badge>
+                )}{' '}
+                <RefundLink
+                  raceId={race.id}
+                  teamId={team.id}
+                  requirementId={line.requirement_id}
+                  payments={staffPayments}
+                  timeZone={race.time_zone}
+                />
+              </p>
+            ))
+          : refunded.map((line) => (
+              <p key={line.requirement_id} className="text-sm text-navy/80">
+                {t('fee.refundedLine', { name: line.name })}
+              </p>
+            ))}
       </div>
     );
   }
-  if (!race.open_for_registration) {
+  if (!staffPay && !race.open_for_registration) {
     return <p className="text-base text-navy">{t('fee.closed')}</p>;
   }
   if (isFeeOpensLater(fee)) {
@@ -81,7 +169,7 @@ export function FeeCard({ team }: { team: Team }) {
       </p>
     );
   }
-  if (race.full) {
+  if (!staffPay && race.full) {
     return <p className="text-base text-navy">{t('fee.waitlist')}</p>;
   }
   if (fee.done || fee.items.length === 0) {
@@ -96,7 +184,10 @@ export function FeeCard({ team }: { team: Team }) {
   // buttons wait for a full roster.
   // Payment waits for a full roster only; choosing a captain is not required to pay.
   const rosterDone = checklist.racers.filled >= checklist.racers.total;
-  const waitingOnRoster = !rosterDone && fee.items.some((item) => !item.done && item.amount_due_cents !== null);
+  const payable = fee.items.some((item) => !item.done && item.amount_due_cents !== null);
+  const waitingOnRoster = !rosterDone && payable;
+  // Staff can pay past each of these; each one they are paying past gets a warning line.
+  const gaps = staffPay && payable ? staffPayGaps(team) : [];
 
   const isMock = (item: FeeItem) =>
     race.payment_requirements.find(
@@ -191,7 +282,9 @@ export function FeeCard({ team }: { team: Team }) {
         result = await openStripeCheckout({
           key: race.stripe_publishable_key,
           amountCents: current,
-          email: me.data?.email ?? '',
+          // Staff paying for someone else's team must not prefill their own email.
+          email:
+            staffTeam && staffTeam.account_holder?.id !== me.data?.id ? '' : (me.data?.email ?? ''),
           description: item.name,
           name: race.name,
         });
@@ -218,13 +311,31 @@ export function FeeCard({ team }: { team: Team }) {
 
   return (
     <div className="space-y-3">
+      {gaps.map((gap) => (
+        <p key={gap.kind} className="text-sm text-starText">
+          <span aria-hidden="true">⚠ </span>
+          {gapText(gap)}
+        </p>
+      ))}
       <ul className="divide-y divide-flag">
         {fee.items.map((item) => (
           <FeeRow
             key={item.requirement_id}
             item={item}
             mock={isMock(item)}
-            canPay={rosterDone}
+            canPay={staffPay || (rosterDone && permissions.pay)}
+            asStaff={gaps.length > 0}
+            refundLink={
+              staffLinks ? (
+                <RefundLink
+                  raceId={race.id}
+                  teamId={team.id}
+                  requirementId={item.requirement_id}
+                  payments={staffPayments}
+                  timeZone={race.time_zone}
+                />
+              ) : null
+            }
             disabled={processing}
             processing={processing && activeId === item.requirement_id}
             message={
@@ -236,7 +347,7 @@ export function FeeCard({ team }: { team: Team }) {
           />
         ))}
       </ul>
-      {waitingOnRoster && <p className="text-base text-navy">{t('fee.rosterFirst')}</p>}
+      {waitingOnRoster && !staffPay && <p className="text-base text-navy">{t('fee.rosterFirst')}</p>}
     </div>
   );
 }
@@ -245,6 +356,8 @@ function FeeRow({
   item,
   mock,
   canPay,
+  asStaff,
+  refundLink,
   disabled,
   processing,
   message,
@@ -256,6 +369,10 @@ function FeeRow({
   mock: boolean;
   /** False while the roster is incomplete: the price shows, the button does not. */
   canPay: boolean;
+  /** Staff paying past a gap: the button is outlined and says so. */
+  asStaff: boolean;
+  /** The staff link to this row's payment, shown on a paid row. */
+  refundLink: ReactNode;
   disabled: boolean;
   processing: boolean;
   message: string | null;
@@ -266,25 +383,28 @@ function FeeRow({
   let body;
   if (item.done) {
     body = (
-      <p
-        tabIndex={-1}
-        ref={(element) => {
-          if (element && focusPaid.current === item.requirement_id) {
-            focusPaid.current = null;
-            element.focus();
-          }
-        }}
-        className="text-base font-semibold text-navy focus:outline-none"
-      >
-        {item.paid_cents > 0
-          ? t('fee.paid', { amount: formatCents(item.paid_cents) })
-          : t('team.pillPaid')}
-        {item.refunded && (
-          <Badge tone="neutral" className="ml-2 align-middle">
-            {t('fee.refunded')}
-          </Badge>
-        )}
-      </p>
+      <>
+        <p
+          tabIndex={-1}
+          ref={(element) => {
+            if (element && focusPaid.current === item.requirement_id) {
+              focusPaid.current = null;
+              element.focus();
+            }
+          }}
+          className="text-base font-semibold text-navy focus:outline-none"
+        >
+          {item.paid_cents > 0
+            ? t('fee.paid', { amount: formatCents(item.paid_cents) })
+            : t('team.pillPaid')}
+          {item.refunded && (
+            <Badge tone="neutral" className="ml-2 align-middle">
+              {t('fee.refunded')}
+            </Badge>
+          )}
+        </p>
+        {refundLink}
+      </>
     );
   } else if (item.amount_due_cents === null) {
     body = (
@@ -311,15 +431,18 @@ function FeeRow({
         )}
         {canPay && (
           <Button
+            variant={asStaff ? 'secondary' : 'primary'}
             disabled={disabled}
             aria-busy={processing || undefined}
             onClick={onPay}
           >
             {processing
               ? t('fee.processing')
-              : mock
-                ? t('fee.mockPay')
-                : t('fee.pay', { amount })}
+              : asStaff
+                ? t('staff.fee.payAsStaff', { amount })
+                : mock
+                  ? t('fee.mockPay')
+                  : t('fee.pay', { amount })}
           </Button>
         )}
       </>

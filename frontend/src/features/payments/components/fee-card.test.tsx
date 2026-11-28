@@ -1,7 +1,9 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { buildStaffTeam } from '@/features/staff-teams/test-fixtures';
+import type { StaffTeamCan, StaffTeamPayment } from '@/features/staff-teams/types';
 import { clearCsrfToken } from '@/lib/api-client';
 import { openStripeCheckout } from '@/lib/stripe-checkout';
 import { t } from '@/locales/en';
@@ -650,4 +652,243 @@ describe('FeeCard', () => {
       expect(box.queryByRole('button')).not.toBeInTheDocument();
     });
   });
+});
+
+describe('FeeCard as staff', () => {
+  const incomplete = { filled: 3, total: 5, captain: false, done: false };
+  const mockRequirement: PaymentRequirement = { ...requirement, type: 'MockPaymentRequirement' };
+
+  /** The signed-in user is staff; `staff` is what GET /staff/teams/9 answers. */
+  function asStaff(
+    staff: Partial<StaffTeamCan> | 'pending' | 'error',
+    { id = 1, ownerId = 7, payments = [] }: { id?: number; ownerId?: number; payments?: StaffTeamPayment[] } = {},
+  ) {
+    const can = typeof staff === 'string' ? {} : staff;
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, id, roles: ['operator'] } })),
+      http.get('/api/v1/staff/teams/9', async () => {
+        if (staff === 'pending') await delay('infinite');
+        if (staff === 'error') return HttpResponse.json({ error: 'boom', errors: {} }, { status: 500 });
+        return HttpResponse.json({
+          staff_team: buildStaffTeam(can, {
+            payments,
+            account_holder: { id: ownerId, first_name: 'O', last_name: 'P', email: 'o@example.com', phone: null },
+          }),
+        });
+      }),
+    );
+  }
+
+  describe('racer view is unchanged', () => {
+    it('hides Pay on an incomplete roster, a closed race and a full race, with no Payments link', async () => {
+      serve({ checklist: { racers: incomplete } });
+      renderApp('/teams/9');
+      const fee = await card();
+      expect(await fee.findByText(t('fee.rosterFirst'))).toBeInTheDocument();
+      expect(fee.queryByRole('button')).not.toBeInTheDocument();
+      expect(screen.queryByText(t('staff.fee.refundLink'))).not.toBeInTheDocument();
+    });
+
+    it('shows the closed and waitlist messages', async () => {
+      serve({ race: { open_for_registration: false } });
+      const first = renderApp('/teams/9');
+      expect(await (await card()).findByText(t('fee.closed'))).toBeInTheDocument();
+      first.unmount();
+      serve({ race: { full: true } });
+      renderApp('/teams/9');
+      expect(await (await card()).findByText(t('fee.waitlist'))).toBeInTheDocument();
+    });
+  });
+
+  it('warns about each gap and offers one outlined Pay as staff that posts the racer body', async () => {
+    serve({
+      race: { open_for_registration: false, registration_status: 'closed', payment_requirements: [mockRequirement] },
+      checklist: { racers: incomplete, fee: feeOf([item({ amount_due_cents: 12000 })]) },
+    });
+    asStaff({ take_payment: true });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    const fee = await card();
+    const pay = await fee.findByRole('button', { name: 'Pay $120 as staff' });
+    expect(fee.getByText(t('staff.fee.gapRoster', { filled: 3, total: 5 }))).toBeInTheDocument();
+    expect(fee.getByText(t('staff.fee.gapClosed'))).toBeInTheDocument();
+    expect(fee.queryByText(t('staff.fee.gapWaitlist'))).not.toBeInTheDocument();
+    expect(fee.queryByText(t('fee.rosterFirst'))).not.toBeInTheDocument();
+    expect(fee.queryByText(t('fee.closed'))).not.toBeInTheDocument();
+    expect(fee.getAllByRole('button')).toHaveLength(1);
+    expect(pay.className).toContain('bg-white'); // secondary variant
+
+    await click.click(pay);
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(posts[0]).toEqual({ path: 'mock_payments', body: { requirement_id: 3 } });
+  });
+
+  it('says registration has not opened yet, not that it is closed, before it opens', async () => {
+    serve({ race: { open_for_registration: false, registration_status: 'not_yet_open' } });
+    asStaff({ take_payment: true });
+    renderApp('/teams/9');
+    const fee = await card();
+    await fee.findByRole('button', { name: 'Pay $300 as staff' });
+    expect(fee.getByText(t('staff.fee.gapNotYetOpen'))).toBeInTheDocument();
+    expect(fee.queryByText(t('staff.fee.gapClosed'))).not.toBeInTheDocument();
+  });
+
+  it('rechecks the price and opens Checkout with no email prefill for a team it does not own', async () => {
+    serve({ checklist: { racers: incomplete }, refetchedFee: feeOf([item({ amount_due_cents: 35000 })]) });
+    asStaff({ take_payment: true });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    const fee = await card();
+    await click.click(await fee.findByRole('button', { name: 'Pay $300 as staff' }));
+
+    expect(await fee.findByText('Registration fee is now $350. Please review and pay again.')).toBeInTheDocument();
+    expect(checkout).not.toHaveBeenCalled();
+    expect(posts).toHaveLength(0);
+  });
+
+  it('posts requirement_id, stripe_token and expected_amount_cents like a racer', async () => {
+    serve({ checklist: { racers: incomplete } });
+    asStaff({ take_payment: true });
+    checkout.mockResolvedValue({ token: 'tok_1', email: 'pay@example.com' });
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await (await card()).findByRole('button', { name: 'Pay $300 as staff' }));
+
+    await waitFor(() => expect(posts).toHaveLength(1));
+    expect(checkout).toHaveBeenCalledWith(expect.objectContaining({ email: '', amountCents: 30000 }));
+    expect(posts[0]).toEqual({
+      path: 'payments',
+      body: {
+        requirement_id: 3,
+        stripe_token: 'tok_1',
+        stripe_email: 'pay@example.com',
+        expected_amount_cents: 30000,
+      },
+    });
+  });
+
+  it("prefills the staff member's own email on their own team", async () => {
+    serve({});
+    asStaff({ take_payment: true }, { id: 7, ownerId: 7 });
+    checkout.mockResolvedValue(null);
+    const click = userEvent.setup();
+    renderApp('/teams/9');
+    await click.click(await (await card()).findByRole('button', { name: 'Pay $300' }));
+    await waitFor(() => expect(checkout).toHaveBeenCalled());
+    expect(checkout).toHaveBeenCalledWith(expect.objectContaining({ email: 'ada@example.com' }));
+  });
+
+  it('keeps Pay for a waitlisted team in a full race, with the over-the-limit warning above it', async () => {
+    serve({ race: { full: true } });
+    asStaff({ take_payment: true });
+    renderApp('/teams/9');
+    const fee = await card();
+    const pay = await fee.findByRole('button', { name: 'Pay $300 as staff' });
+    const warning = fee.getByText(t('staff.fee.gapWaitlist'));
+    expect(warning.compareDocumentPosition(pay) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(fee.queryByText(t('fee.waitlist'))).not.toBeInTheDocument();
+  });
+
+  it('shows the ordinary Pay when there is no gap', async () => {
+    serve({});
+    asStaff({ take_payment: true });
+    renderApp('/teams/9');
+    const fee = await card();
+    const pay = await fee.findByRole('button', { name: 'Pay $300' });
+    expect(pay.className).not.toContain('bg-white');
+    expect(fee.queryByText(/staff can take payment anyway/)).not.toBeInTheDocument();
+    expect(fee.queryByText(/over its team limit/)).not.toBeInTheDocument();
+  });
+
+  it('gives a refunder (take_payment off) no Pay on an incomplete roster, but the Payments link on a paid row', async () => {
+    serve({
+      checklist: {
+        racers: incomplete,
+        fee: feeOf([
+          item({ requirement_id: 34, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800 }),
+          item({ requirement_id: 4, name: 'Registration fee' }),
+        ]),
+      },
+    });
+    asStaff(
+      {},
+      {
+        payments: [
+          { id: 1, requirement_id: 34, name: 'Deposit', amount_cents: 8800, paid_at: '2027-01-05T18:00:00.000Z', status: 'paid' },
+        ],
+      },
+    );
+    renderApp('/teams/9');
+    const fee = await card();
+    const link = await fee.findByRole('link', { name: t('staff.fee.refundLink') });
+    expect(link.getAttribute('href')).toMatch(/\/staff\/payments\?race_id=1&team_id=9&payment_type=34$/);
+    expect(link.closest('li')).toHaveTextContent('· Tue, Jan 5, 2027');
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it("shows a refunder no Pay on someone else's full-roster team, so Checkout never opens", async () => {
+    serve({});
+    asStaff({});
+    renderApp('/teams/9');
+    const fee = await card();
+    await fee.findByText('$300', { selector: 'p' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fee.queryByRole('button')).not.toBeInTheDocument();
+    expect(checkout).not.toHaveBeenCalled();
+  });
+
+  it('shows a refunder the ordinary Pay on their own team', async () => {
+    serve({});
+    asStaff({}, { id: 7, ownerId: 7 });
+    renderApp('/teams/9');
+    expect(await (await card()).findByRole('button', { name: 'Pay $300' })).toBeEnabled();
+  });
+
+  it('links each paid line of the finalized summary to Payments', async () => {
+    serve({
+      checklist: {
+        finalized: true,
+        fee: feeOf([
+          item({ requirement_id: 3, name: 'Deposit', done: true, amount_due_cents: null, paid_cents: 8800, refunded: true }),
+          item({ requirement_id: 4, name: 'Registration fee', done: true, amount_due_cents: null, paid_cents: 30000 }),
+        ]),
+      },
+    });
+    asStaff({});
+    renderApp('/teams/9');
+    const fee = await card();
+    expect(await fee.findByText('Paid $388 total')).toBeInTheDocument();
+    const links = await fee.findAllByRole('link', { name: t('staff.fee.refundLink') });
+    expect(links.map((link) => link.getAttribute('href')?.replace(/^.*\/staff/, '/staff'))).toEqual([
+      '/staff/payments?race_id=1&team_id=9&payment_type=3',
+      '/staff/payments?race_id=1&team_id=9&payment_type=4',
+    ]);
+    expect(fee.getByText(t('fee.refunded'))).toBeInTheDocument();
+  });
+
+  it.each(['pending', 'error'] as const)(
+    'shows no Pay of any kind while the staff request is %s',
+    async (state) => {
+      serve({ checklist: { racers: incomplete } });
+      asStaff(state);
+      renderApp('/teams/9');
+      const fee = await card();
+      await fee.findByText('$300', { selector: 'p' });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(fee.queryByRole('button')).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(['pending', 'error'] as const)(
+    'hides the racer Pay on a full roster while the staff request is %s',
+    async (state) => {
+      serve({});
+      asStaff(state, { id: 7, ownerId: 7 });
+      renderApp('/teams/9');
+      const fee = await card();
+      await fee.findByText('$300', { selector: 'p' });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(fee.queryByRole('button')).not.toBeInTheDocument();
+    },
+  );
 });

@@ -10,6 +10,7 @@ export function paymentsPath(values: PaymentFilterValues): string {
   const params = new URLSearchParams();
   if (values.raceId !== undefined) params.set('race_id', String(values.raceId));
   if (values.paymentType !== undefined) params.set('payment_type', String(values.paymentType));
+  if (values.teamId !== undefined) params.set('team_id', String(values.teamId));
   if (values.status !== 'all') params.set('status', values.status);
   if (values.q) params.set('q', values.q);
   params.set('page', String(values.page));

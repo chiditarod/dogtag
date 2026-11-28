@@ -5,9 +5,11 @@ import { DeleteTeam } from '@/features/teams/components/delete-team';
 import { FundraisingStatus } from '@/features/teams/components/fundraising-status';
 import { EditTeamBasics } from '@/features/teams/components/edit-team-basics';
 import { FlagProgress } from '@/features/teams/components/flag-progress';
+import { racerPermissions, type TeamPermissions } from '@/features/teams/permissions';
 import { formatDate, formatDeadline } from '@/lib/dates';
 import { t } from '@/locales/en';
 import type { Team } from '@/types/api';
+import type { StaffState } from '@/features/teams/use-team-permissions';
 import { isFeeOpensLater, stepStates } from '@/features/teams/utils';
 
 function remainingText(team: Team): string {
@@ -60,9 +62,18 @@ interface TeamHeaderProps {
   onTakeTour: () => void;
   /** Lets the page return focus here when the tour ends. */
   replayRef?: Ref<HTMLButtonElement>;
+  /** Defaults to a racer's rules. */
+  permissions?: TeamPermissions;
+  staffState?: StaffState;
 }
 
-export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
+export function TeamHeader({
+  team,
+  onTakeTour,
+  replayRef,
+  permissions = racerPermissions(team),
+  staffState = 'none',
+}: TeamHeaderProps) {
   const { race } = team;
   const items = leftItems(team);
   return (
@@ -81,6 +92,14 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
         <p className="text-sm text-navy/70">
           {`${t('team.closes')} ${formatDeadline(race.registration_close, race.time_zone)}`}
         </p>
+        {staffState === 'error' && (
+          <p role="status" className="mt-1 text-sm font-semibold text-starText">
+            {t('staff.team.readOnlyNote')}
+          </p>
+        )}
+        {permissions.closedForRacersNote && (
+          <p className="mt-1 text-sm text-navy/80">{t('staff.team.closedNote')}</p>
+        )}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-x-3">
         <p
@@ -92,7 +111,7 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
         </p>
         {/* When the edit form opens it takes a full row of its own. */}
         <div className="has-[form]:basis-full">
-          <EditTeamBasics team={team} />
+          <EditTeamBasics team={team} permissions={permissions} />
         </div>
       </div>
       {team.checklist.finalized && (
@@ -129,7 +148,7 @@ export function TeamHeader({ team, onTakeTour, replayRef }: TeamHeaderProps) {
           {t('tour.replay')}
         </Button>
       </div>
-      <DeleteTeam team={team} />
+      <DeleteTeam team={team} permissions={permissions} />
     </section>
   );
 }

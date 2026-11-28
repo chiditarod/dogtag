@@ -364,6 +364,14 @@ describe TeamsController do
             patch :update, params: { id: team.id, team: { new_team_setting: "no" } }
             expect(team.reload).to have_attributes(new_team: false, new_team_overridden: true)
           end
+
+          it "refuses an unknown value and saves nothing" do
+            expect do
+              patch :update, params: { id: team.id, team: { description: "Changed", new_team_setting: "maybe" } }
+            end.not_to(change { team.reload.attributes })
+            expect(response).to have_http_status(:ok)
+            expect(flash[:error]).to include(I18n.t("update_failed"))
+          end
         end
 
         context "on the edit page" do

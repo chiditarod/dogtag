@@ -96,6 +96,81 @@ describe Payments::PaymentSearch do
     end
   end
 
+  describe "team" do
+    # The default race is `race` (the later one), so the team's own race is never the default.
+    let!(:team_race) { FactoryBot.create(:race, name: "Race Team", race_datetime: 4.weeks.from_now) }
+    let!(:team_deposit) { FactoryBot.create(:payment_requirement, name: "Team Deposit", race: team_race) }
+    let!(:team_fee) { FactoryBot.create(:payment_requirement, name: "Team Fee", race: team_race) }
+    let!(:mine_team) { FactoryBot.create(:team, race: team_race, name: "Mine Team") }
+    let!(:other_team) { FactoryBot.create(:team, race: team_race, name: "Other Team") }
+
+    def pay_for(team, requirement, **attrs)
+      FactoryBot.create(:completed_requirement, requirement: requirement, team: team, user: team.user,
+        charge_id: "ch_#{SecureRandom.hex(4)}", amount_cents: 5000, **attrs)
+    end
+
+    let!(:mine_deposit) { pay_for(mine_team, team_deposit) }
+    let!(:mine_fee) { pay_for(mine_team, team_fee, refunded_at: 1.day.ago) }
+    let!(:others) { pay_for(other_team, team_deposit) }
+    let!(:elsewhere) { pay(deposit) }
+
+    it "lists only that team's payments in the team's race when no race is given" do
+      result = search(team_id: mine_team.id)
+
+      expect(result.payments.map(&:id)).to match_array([mine_deposit.id, mine_fee.id])
+      expect(result.filters).to include(
+        race_id: team_race.id, team_id: mine_team.id,
+        team: { id: mine_team.id, name: "Mine Team", race_id: team_race.id }
+      )
+      expect(result.filters[:payment_types].map { |type| type[:id] }).to eq([team_deposit.id, team_fee.id])
+      expect(result.meta).to include(total_count: 2)
+      expect(result.meta[:summary]).to eq(count: 2, refunded_count: 1, total_cents: 10_000, refunded_cents: 5000)
+    end
+
+    it "accepts the id as a string and still honors the other filters" do
+      expect(ids(team_id: mine_team.id.to_s, payment_type: team_deposit.id)).to eq([mine_deposit.id])
+      expect(ids(team_id: mine_team.id, status: "refunded")).to eq([mine_fee.id])
+      expect(search(team_id: mine_team.id, payment_type: team_deposit.id).meta[:summary]).to include(count: 1)
+    end
+
+    it "lists the team's payments for the team's own race and for every race" do
+      expect(ids(team_id: mine_team.id, race_id: team_race.id)).to match_array([mine_deposit.id, mine_fee.id])
+      expect(ids(team_id: mine_team.id, race_id: "all")).to match_array([mine_deposit.id, mine_fee.id])
+    end
+
+    it "lists nothing when the race is not the team's race" do
+      result = search(team_id: mine_team.id, race_id: race.id)
+
+      expect(result.payments).to be_empty
+      expect(result.meta[:summary]).to include(count: 0, total_cents: 0)
+      expect(result.filters[:team]).to include(id: mine_team.id)
+    end
+
+    it "lists nothing for an unknown team id, and says which id it was" do
+      result = search(team_id: "999999")
+
+      expect(result.payments).to be_empty
+      expect(result.meta).to include(total_count: 0)
+      expect(result.meta[:summary]).to include(count: 0, refunded_count: 0, total_cents: 0)
+      expect(result.filters).to include(team: nil, team_id: 999_999)
+    end
+
+    it "lists nothing for a junk or out-of-range team id, even with a race" do
+      %w[abc 1.5 -1 99999999999999999999].each do |junk|
+        expect(ids(team_id: junk)).to be_empty
+        expect(ids(team_id: junk, race_id: "all")).to be_empty
+        expect(ids(team_id: junk, race_id: team_race.id)).to be_empty
+      end
+      expect(search(team_id: "abc").filters).to include(team: nil, team_id: nil)
+    end
+
+    it "does nothing when no team is asked for" do
+      expect(search.filters).to include(team: nil, team_id: nil)
+      expect(ids(team_id: " ")).to eq([elsewhere.id])
+      expect(ids(race_id: "all").size).to eq(4)
+    end
+  end
+
   describe "status" do
     it "filters by each status, and all is the default" do
       paid = pay(deposit)

@@ -36,6 +36,13 @@ describe Race do
       end
     end
 
+    it "rejects an unparseable final_edits_close" do
+      race = FactoryBot.build(:race)
+      race.final_edits_close = "not a date"
+      expect(race).to be_invalid
+      expect(race.errors[:final_edits_close]).to be_present
+    end
+
     context 'registration_open is after registration_close' do
       let(:race) do
         FactoryBot.build :race, race_datetime: today + 4.weeks,
@@ -44,7 +51,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:registration_open]).to include 'must come before registration_close'
+        expect(race.errors.messages[:registration_open]).to include 'must be before Registration closes'
       end
     end
 
@@ -56,7 +63,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:final_edits_close]).to include 'must come before race_datetime'
+        expect(race.errors.messages[:final_edits_close]).to include 'must be before Race day'
       end
     end
 
@@ -68,7 +75,7 @@ describe Race do
 
       it 'fails validation' do
         expect(race).to be_invalid
-        expect(race.errors.messages[:registration_close]).to include 'must come before final_edits_close'
+        expect(race.errors.messages[:registration_close]).to include 'must be before Final edits close'
       end
     end
 
@@ -84,6 +91,30 @@ describe Race do
     it "is not valid with a tz id the admin select does not offer" do
       expect(FactoryBot.build(:race, time_zone: "Etc/GMT+6")).not_to be_valid
       expect(FactoryBot.build(:race, time_zone: "US/Central")).not_to be_valid
+    end
+
+    describe "jsonform with no questions" do
+      it "stores blank text and JSON without questions as nil" do
+        ["", "  ", "{}", "[]", "null", '{"schema":{}}', '{"schema":{"properties":{}},"form":[]}',
+         '{"schema":{"properties":[]}}'].each do |text|
+          race = FactoryBot.build(:race, jsonform: text)
+          expect(race).to be_valid, "#{text.inspect}: #{race.errors.full_messages}"
+          expect(race.jsonform).to be_nil, text.inspect
+        end
+      end
+
+      it "keeps JSON that defines questions" do
+        text = JSON.generate("schema" => { "properties" => { "q" => { "type" => "string" } } }, "form" => ["q"])
+        race = FactoryBot.create(:race, jsonform: text)
+        expect(race.reload.jsonform).to eq(text)
+      end
+
+      it "leaves JSON that doesn't parse for the validator" do
+        race = FactoryBot.build(:race, jsonform: "{nope")
+        expect(race).not_to be_valid
+        expect(race.jsonform).to eq("{nope")
+        expect(race.errors[:jsonform]).to be_present
+      end
     end
 
     describe "jsonform showWhen" do
@@ -200,6 +231,14 @@ describe Race do
 
       it 'returns an enumerable of the keys stored in the jsonform schema' do
         expect(race.question_fields).to eq(keys)
+      end
+    end
+
+    context 'when the json has no schema' do
+      let(:race) { FactoryBot.build :race_with_jsonform, json_data: '{}' }
+
+      it 'returns empty array' do
+        expect(race.question_fields).to eq([])
       end
     end
 
@@ -662,6 +701,101 @@ describe Race do
 
     it "ends with the id" do
       expect(open_race.registration_sort_key.last).to eq(1)
+    end
+  end
+
+  describe "#setup_problems" do
+    let(:race) { FactoryBot.create(:race) }
+
+    it "says there is no fee when the race has no payment requirement" do
+      expect(race.setup_problems).to eq(["No fee set up"])
+    end
+
+    it "counts a mock payment requirement as a fee" do
+      FactoryBot.create(:payment_requirement, race: race, type: "MockPaymentRequirement", name: "Mock")
+
+      expect(Race.find(race.id).setup_problems).to include("Mock has no price")
+      expect(Race.find(race.id).setup_problems).not_to include("No fee set up")
+    end
+
+    it "flags a payment requirement with no tiers" do
+      FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+
+      expect(Race.find(race.id).setup_problems).to eq(["Registration has no price"])
+    end
+
+    it "flags a first tier that starts after registration opens" do
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id, begin_at: race.registration_open + 1.day)
+
+      expect(Race.find(race.id).setup_problems).to eq(["Registration has no price when registration opens"])
+    end
+
+    it "flags a JSONForm that does not parse" do
+      race.update_columns(jsonform: "{")
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id, begin_at: race.registration_open - 1.day)
+
+      expect(Race.find(race.id).setup_problems).to eq(["Questions (JSONForm) don't parse"])
+    end
+
+    it "flags a fee whose only tier has no start instead of raising" do
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id).update_columns(begin_at: nil)
+
+      expect(Race.find(race.id).setup_problems).to eq(["Registration has no price when registration opens"])
+    end
+
+    it "is empty for a ready race, with or without questions" do
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id, begin_at: race.registration_open - 1.day)
+
+      expect(Race.find(race.id).setup_problems).to eq([])
+
+      race.update_columns(jsonform: "{}")
+      expect(Race.find(race.id).setup_problems).to eq([])
+    end
+
+    it "does not query when requirements and tiers are preloaded" do
+      req = FactoryBot.create(:payment_requirement, race: race, name: "Registration")
+      FactoryBot.create(:tier, requirement_id: req.id, begin_at: race.registration_open + 1.day)
+      races = Race.includes(:requirements).where(id: race.id).to_a
+      Race.preload_registration_data(races)
+
+      queries = []
+      callback = ->(*, payload) { queries << payload[:sql] unless payload[:name] == "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") do
+        expect(races.first.setup_problems).to eq(["Registration has no price when registration opens"])
+      end
+      expect(queries).to be_empty
+    end
+  end
+
+  describe "#money_totals" do
+    let(:race) { FactoryBot.create(:race) }
+
+    it "is all zero with no payments" do
+      expect(race.money_totals).to eq(gross_cents: 0, refunded_cents: 0, net_cents: 0)
+    end
+
+    it "sums paid and refunded payments for the race only" do
+      req = FactoryBot.create(:payment_requirement, race: race)
+      FactoryBot.create(:completed_requirement, amount_cents: 9999)
+      FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: 5000)
+      refunded = FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: 3000)
+      refunded.update_columns(refunded_at: Time.current)
+      FactoryBot.create(:completed_requirement, requirement: req, team: FactoryBot.create(:team, race: race), amount_cents: nil)
+
+      expect(race.money_totals).to eq(gross_cents: 8000, refunded_cents: 3000, net_cents: 5000)
+    end
+
+    it "runs one query" do
+      race
+      count = 0
+      callback = ->(*, payload) { count += 1 unless payload[:name] == "SCHEMA" }
+      ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { race.money_totals }
+
+      expect(count).to eq(1)
     end
   end
 end

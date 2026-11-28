@@ -1,6 +1,6 @@
 import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { t } from '@/locales/en';
 import { user } from '@/test/fixtures';
 import { renderApp } from '@/test/render-app';
@@ -28,5 +28,55 @@ describe('StaffLayout', () => {
     expect(within(userMenu).getByRole('link', { name: t('layout.myTeams') })).toBeInTheDocument();
     expect(within(userMenu).queryByRole('link', { name: t('layout.staff') })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: t('layout.staff') })).not.toBeInTheDocument();
+  });
+
+  it('shows Races, Users, Emails and Payments to an operator', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['operator'] } })),
+    );
+    renderApp('/staff/payments');
+    await screen.findByRole('heading', { name: t('staff.payments.heading') });
+    const nav = screen.getByRole('navigation', { name: t('staff.nav') });
+    const links = within(nav).getAllByRole('link');
+    expect(links.map((a) => a.textContent)).toEqual([
+      t('staff.nav.races'),
+      t('staff.nav.users'),
+      t('staff.nav.emails'),
+      t('staff.nav.payments'),
+      t('staff.nav.legacy'),
+    ]);
+    expect(within(nav).getByRole('link', { name: t('staff.nav.races') })).toHaveAttribute(
+      'href',
+      '/register/staff/races',
+    );
+  });
+
+  it('hides Races from a refunder', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+    );
+    renderApp('/staff/payments');
+    await screen.findByRole('heading', { name: t('staff.payments.heading') });
+    const nav = screen.getByRole('navigation', { name: t('staff.nav') });
+    expect(within(nav).queryByRole('link', { name: t('staff.nav.races') })).not.toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: t('staff.nav.payments') })).toBeInTheDocument();
+  });
+
+  it('sends a refunder from /staff to Payments', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['refunder'] } })),
+    );
+    renderApp('/staff');
+    expect(await screen.findByRole('heading', { name: t('staff.payments.heading') })).toBeInTheDocument();
+  });
+
+  it('sends an operator from /staff to the first nav item (Races)', async () => {
+    server.use(
+      http.get('/api/v1/me', () => HttpResponse.json({ user: { ...user, roles: ['operator'] } })),
+      http.get('/api/v1/staff/races', () => HttpResponse.json({ races: [] })),
+    );
+    const { router } = renderApp('/staff');
+    expect(await screen.findByRole('heading', { name: t('staff.races.heading') })).toBeInTheDocument();
+    await vi.waitFor(() => expect(router.state.location.pathname).toBe('/register/staff/races'));
   });
 });

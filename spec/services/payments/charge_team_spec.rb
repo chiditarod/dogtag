@@ -17,6 +17,15 @@ describe Payments::ChargeTeam do
     )
   end
 
+  describe ".staff_payer?" do
+    it "is true for operators and admins, false for refunders and racers" do
+      expect(described_class.staff_payer?(FactoryBot.create(:operator_user))).to be(true)
+      expect(described_class.staff_payer?(FactoryBot.create(:admin_user))).to be(true)
+      expect(described_class.staff_payer?(FactoryBot.create(:refunder_user))).to be(false)
+      expect(described_class.staff_payer?(user)).to be(false)
+    end
+  end
+
   it "charges the active tier amount and records a completed requirement" do
     expect(Stripe::Charge).to receive(:create)
       .with(hash_including(amount: 5000, currency: "usd", metadata: hash_including("team_id" => team.id, "requirement_id" => requirement.id)))

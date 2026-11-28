@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useUrlFilters, type UrlChanges } from '@/components/list/use-url-filters';
 import type { BrowseStatus, PaymentFilterValues } from './types';
 
 /** Any other status in the URL (refunding, not_refundable, junk) falls back to all, so no chip mislabels it. */
@@ -12,13 +12,18 @@ function positiveInt(value: string | null): number | undefined {
 
 type Key = keyof PaymentFilterValues;
 
+const NAMES: Record<Key, string> = {
+  raceId: 'race_id',
+  paymentType: 'payment_type',
+  teamId: 'team_id',
+  status: 'status',
+  q: 'q',
+  page: 'page',
+};
+
 /** The page's filters live in the URL query, so a reload or a shared link keeps them. */
 export function usePaymentFilters() {
-  const [params, setSearchParams] = useSearchParams();
-  // useSearchParams hands back a new setter whenever the URL changes. Read it through a ref so setFilter and
-  // clearAll keep one identity, and a filter click does not restart the search box's debounce.
-  const setParamsRef = useRef(setSearchParams);
-  setParamsRef.current = setSearchParams;
+  const { params, setParams, clearParams } = useUrlFilters();
 
   const values = useMemo<PaymentFilterValues>(() => {
     const race = params.get('race_id');
@@ -26,6 +31,7 @@ export function usePaymentFilters() {
     return {
       raceId: race === 'all' ? 'all' : positiveInt(race),
       paymentType: positiveInt(params.get('payment_type')),
+      teamId: positiveInt(params.get('team_id')),
       status: STATUSES.includes(status as BrowseStatus) ? (status as BrowseStatus) : 'all',
       q: params.get('q') ?? '',
       page: positiveInt(params.get('page')) ?? 1,
@@ -34,43 +40,51 @@ export function usePaymentFilters() {
 
   const setFilter = useCallback(
     <K extends Key>(key: K, value: PaymentFilterValues[K]) => {
-      setParamsRef.current(
-        (previous) => {
-          const next = new URLSearchParams(previous);
-          const names: Record<Key, string> = {
-            raceId: 'race_id',
-            paymentType: 'payment_type',
-            status: 'status',
-            q: 'q',
-            page: 'page',
-          };
-          const empty = value === undefined || value === '' || (key === 'status' && value === 'all');
-          if (empty || (key === 'page' && value === 1)) next.delete(names[key]);
-          else next.set(names[key], String(value));
-          if (key !== 'page') next.delete('page');
-          if (key === 'raceId') next.delete('payment_type');
-          return next;
-        },
-        { replace: true },
-      );
+      const empty = value === undefined || value === '' || (key === 'status' && value === 'all');
+      const changes: UrlChanges = {
+        [NAMES[key]]: empty || (key === 'page' && value === 1) ? undefined : String(value),
+      };
+      // Another race has other payment types and other teams.
+      if (key === 'raceId') {
+        changes.payment_type = undefined;
+        changes.team_id = undefined;
+      }
+      setParams(changes);
     },
-    [],
+    [setParams],
   );
 
-  /** Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). */
-  const clearAll = useCallback((keepStatus = false) => {
-    setParamsRef.current(
-      (previous) => {
-        const next = new URLSearchParams();
-        const race = previous.get('race_id');
-        if (race) next.set('race_id', race);
-        const status = previous.get('status');
-        if (keepStatus && status) next.set('status', status);
-        return next;
-      },
-      { replace: true },
-    );
+  // Read when a callback runs, so the callbacks keep one identity.
+  const paramsRef = useRef(params);
+  paramsRef.current = params;
+
+  /**
+   * With no race_id in the URL, a team filter lists the team's race. Dropping the team names that race
+   * (`teamRaceId`, the response's `filters.team.race_id`), so the list stays on it, every team, instead of
+   * jumping to the default race with a payment_type from the team's race left over.
+   */
+  const pinTeamRace = useCallback((teamRaceId: number | undefined): UrlChanges => {
+    const current = paramsRef.current;
+    return !current.get('race_id') && current.get('team_id') && teamRaceId !== undefined
+      ? { race_id: String(teamRaceId) }
+      : {};
   }, []);
 
-  return { values, setFilter, clearAll };
+  /** Removes the Team chip; see pinTeamRace. */
+  const removeTeam = useCallback(
+    (teamRaceId: number | undefined) => setParams({ team_id: undefined, ...pinTeamRace(teamRaceId) }),
+    [setParams, pinTeamRace],
+  );
+
+  /**
+   * Drops every filter except the race (and the status, when `keepStatus`: Refund mode locks it). A team's
+   * race with no race_id in the URL is kept too (see pinTeamRace).
+   */
+  const clearAll = useCallback(
+    (keepStatus = false, teamRaceId?: number) =>
+      clearParams(keepStatus ? ['race_id', 'status'] : ['race_id'], pinTeamRace(teamRaceId)),
+    [clearParams, pinTeamRace],
+  );
+
+  return { values, setFilter, removeTeam, clearAll };
 }

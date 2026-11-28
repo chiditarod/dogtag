@@ -1,9 +1,12 @@
 # The staff payments list: every completed payment, filtered and paged on the server. The page, the
 # filters and the progress summary all come from this one object, so they always agree.
 #
-# - race_id: absent means the most recent race that has already run (refunds follow a race), else the
-#   newest open race, else the newest race; "all" means every race.
+# - race_id: absent means the newest open race, else the most recent race that has already run, else the
+#   newest race; "all" means every race.
 # - payment_type: a requirement id (within the chosen race).
+# - team_id: one team's payments. Without a race_id the list is the team's race (not the default race); an
+#   unknown or unparseable id, or a race other than the team's, lists nothing, so it never widens the list.
+#   race_id=all with a team_id still lists only that team's payments.
 # - status: paid, refunding, refunded, not_refundable or all (absent is all); see CompletedRequirement.payment_status_sql.
 # - q: case-insensitive text matched against the team name, the account holder, the payer and the racers
 #   (name or email).
@@ -14,9 +17,11 @@ module Payments
     MAX_PAGE = 10_000
     STATUSES = %w[paid refunding refunded not_refundable].freeze
 
-    def initialize(race_id: nil, payment_type: nil, status: nil, q: nil, page: nil)
+    def initialize(race_id: nil, payment_type: nil, status: nil, q: nil, page: nil, team_id: nil)
       @race_param = race_id.to_s.strip.presence
       @payment_type = Integer(payment_type.to_s, 10, exception: false)
+      @team_param = team_id.to_s.strip.presence
+      @team_id = Integer(@team_param.to_s, 10, exception: false)
       @status = status.to_s.strip.presence_in(STATUSES)
       @q = q.to_s.strip.presence
       @page = (Integer(page.to_s, 10, exception: false) || 1).clamp(1, MAX_PAGE)
@@ -46,13 +51,15 @@ module Payments
       {
         race_id: all_races? ? "all" : race&.id,
         races: races,
-        payment_types: payment_types
+        payment_types: payment_types,
+        team_id: team_id,
+        team: team && { id: team.id, name: team.name, race_id: team.race_id }
       }
     end
 
     private
 
-    attr_reader :page, :q, :status, :payment_type
+    attr_reader :page, :q, :status, :payment_type, :team_id
 
     def all_races? = @race_param == "all"
 
@@ -60,7 +67,23 @@ module Payments
     def race
       return nil if all_races?
 
-      @race ||= @race_param ? Race.find_by(id: Integer(@race_param, 10, exception: false)) : default_race
+      @race ||= if @race_param
+        Race.find_by(id: Integer(@race_param, 10, exception: false))
+      else
+        team&.race || default_race
+      end
+    end
+
+    # nil when no team was asked for, or the id is junk or unknown (see unknown_team?).
+    def team
+      return @team if defined?(@team)
+
+      @team = team_id && Team.find_by(id: team_id)
+    end
+
+    # A team that was asked for but cannot be found lists nothing rather than every team.
+    def unknown_team?
+      @team_param.present? && team.nil?
     end
 
     def default_race
@@ -85,7 +108,8 @@ module Payments
     # many of the filtered payments are refunded whatever the status tab says.
     def filtered(with_status:)
       scope = base
-      scope = scope.none if unknown_race?
+      scope = scope.none if unknown_race? || unknown_team?
+      scope = scope.where(team_id: team.id) if team
       scope = scope.where(requirements: { race_id: race.id }) if race
       scope = scope.where(requirements: { id: payment_type }) if payment_type
       scope = scope.with_payment_status(status) if with_status && status
