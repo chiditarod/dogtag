@@ -89,21 +89,25 @@ describe('staff user page', () => {
     expect(screen.getByText('No teams.')).toBeInTheDocument();
   });
 
-  it('links to payments by email, and to emails only for admins and operators', async () => {
-    const { unmount } = await open(staffUser());
-    expect(screen.getByRole('link', { name: 'Payments by this user' })).toHaveAttribute(
+  it('links to payments matching the email, and to the account\'s emails by id for the Emails page roles', async () => {
+    const { unmount } = await open(staffUser({ id: 12 }));
+    expect(screen.getByRole('link', { name: 'Payments matching this email' })).toHaveAttribute(
       'href',
       '/register/staff/payments?race_id=all&q=ada%40example.com',
     );
-    expect(screen.getByRole('link', { name: 'Emails to this user' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Emails for this user' })).toHaveAttribute(
       'href',
-      '/register/staff/emails?recipient=ada%40example.com',
+      '/register/staff/emails?user_id=12',
     );
     unmount();
 
+    const operator = await open(staffUser({ can_edit: false, can_destroy: false }), ['operator']);
+    expect(screen.getByRole('link', { name: 'Emails for this user' })).toBeInTheDocument();
+    operator.unmount();
+
     await open(staffUser({ can_edit: false, can_destroy: false }), ['refunder']);
-    expect(screen.getByRole('link', { name: 'Payments by this user' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Emails to this user' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Payments matching this email' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Emails for this user' })).not.toBeInTheDocument();
   });
 
   it('hides the per-team Emails link from a refunder, who cannot open the emails page', async () => {

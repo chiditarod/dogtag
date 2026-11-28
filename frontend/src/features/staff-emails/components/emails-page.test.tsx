@@ -47,6 +47,7 @@ describe('EmailsPage', () => {
       emailsResponse([sentEmail()], {
         filters: {
           team: url.searchParams.has('team_id') ? { id: 7, name: 'Doge Sled' } : null,
+          user: null,
           kinds: ['welcome'],
           statuses: ['sent', 'queued', 'failed'],
         },
@@ -63,11 +64,50 @@ describe('EmailsPage', () => {
   it('falls back to the team number when the team no longer exists', async () => {
     serve(
       emailsResponse([], {
-        filters: { team: { id: 9, name: null }, kinds: [], statuses: ['sent', 'queued', 'failed'] },
+        filters: { team: { id: 9, name: null }, user: null, kinds: [], statuses: ['sent', 'queued', 'failed'] },
       }),
     );
     renderApp('/staff/emails?team_id=9');
     expect(await screen.findByRole('button', { name: 'Remove filter Team: #9' })).toBeInTheDocument();
+  });
+
+  it('shows the user chip from the URL, and removing it drops user_id from the next request', async () => {
+    serve((url) =>
+      emailsResponse([sentEmail()], {
+        filters: {
+          team: null,
+          user: url.searchParams.has('user_id') ? { id: 12, email: 'ada@example.com' } : null,
+          kinds: ['welcome'],
+          statuses: ['sent', 'queued', 'failed'],
+        },
+      }),
+    );
+    renderApp('/staff/emails?user_id=12');
+    const chip = await screen.findByRole('button', { name: 'Remove filter User: ada@example.com' });
+    expect(requests[0].searchParams.get('user_id')).toBe('12');
+    expect(requests[0].searchParams.has('recipient')).toBe(false);
+    await userEvent.click(chip);
+    await waitFor(() => expect(requests.some((url) => !url.searchParams.has('user_id'))).toBe(true));
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Remove filter User/ })).toBeNull());
+  });
+
+  it('falls back to the user number when the user no longer exists', async () => {
+    serve(
+      emailsResponse([], {
+        filters: { team: null, user: { id: 12, email: null }, kinds: [], statuses: ['sent', 'queued', 'failed'] },
+      }),
+    );
+    renderApp('/staff/emails?user_id=12');
+    expect(await screen.findByRole('button', { name: 'Remove filter User: #12' })).toBeInTheDocument();
+  });
+
+  it('treats a junk user_id or team_id in the URL as absent: no chip and not sent', async () => {
+    serve(emailsResponse([sentEmail()]));
+    renderApp('/staff/emails?user_id=abc&team_id=0');
+    await screen.findByText("You're in! Doge Sled is registered");
+    expect(requests[0].searchParams.has('user_id')).toBe(false);
+    expect(requests[0].searchParams.has('team_id')).toBe(false);
+    expect(screen.queryByRole('button', { name: /Remove filter (User|Team)/ })).toBeNull();
   });
 
   it('offers exactly Any, Sent, Queued and Failed, and Failed sends status=failed', async () => {

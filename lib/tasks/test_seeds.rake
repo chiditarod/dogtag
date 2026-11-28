@@ -22,7 +22,7 @@
 #   rails test_seeds:staff_races              (an operator, an admin and a refunder; a Busy race with a fee, a finalized team with a payment and an unfinalized team; an Empty race)
 #   rails test_seeds:staff_requirements       (an operator, an admin and a refunder; an open race with a Registration Fee (two prices, one finalized paying team) and an unpaid Cart Deposit)
 #   rails test_seeds:who_registered            (racer, operator and refunder; an open race with 2 finalized and 2 unfinalized teams, and a full race with a waitlist)
-#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three emails; Zed, a deletable racer; one other team's reminder)
+#   rails test_seeds:staff_users_emails       (an admin, an operator and a refunder; Ada, who owns Doge Sled with a payment and three team emails, plus a notice to her old address; a lookalike address's email; Zed, a deletable racer; one other team's reminder)
 #   rails test_seeds:cleanup                   (clean up all test data)
 #
 # All tasks abort in production unless ALLOW_TEST_SEEDS_IN_PRODUCTION=true.
@@ -1248,6 +1248,15 @@ namespace :test_seeds do
               created_at: 30.minutes.ago, status_changed_at: 30.minutes.ago)
     mail.call(action: "welcome_email", kind: "welcome", subject: "Welcome to CHIditarod", status: "queued",
               created_at: 2.minutes.ago, status_changed_at: 2.minutes.ago)
+    # Sent to the address Ada had before she changed it, so only the account (user_id) ties it to her.
+    SentEmail.create!(mailer: "UserMailer", action: "email_changed_email", kind: "email_changed",
+                      recipient: "staff-users-ada-old-#{unique_id}@example.com", user_id: ada.id,
+                      subject: "Your dogTag email changed", status: "sent",
+                      created_at: 1.day.ago, status_changed_at: 1.day.ago)
+    # Someone else's address that contains Ada's, which a recipient substring search would wrongly include.
+    SentEmail.create!(mailer: "UserMailer", action: "welcome_email", kind: "welcome",
+                      recipient: "no#{ada.email}", subject: "Welcome to CHIditarod", status: "sent",
+                      created_at: 2.days.ago, status_changed_at: 2.days.ago)
     SentEmail.create!(mailer: "UserMailer", action: "registration_reminder_email", kind: "registration_reminder",
                       recipient: other_owner.email, user_id: other_owner.id, team_id: other_team.id, race_id: race.id,
                       subject: "Registration closes soon", status: "sent",

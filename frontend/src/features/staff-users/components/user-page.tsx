@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMe } from '@/features/auth/api/use-me';
+import { rolesFor } from '@/features/staff/nav';
 import { DiscardDialog } from '@/components/ui/discard-dialog';
 import { NotFound } from '@/components/ui/not-found';
 import { QueryError, QueryLoading } from '@/components/ui/query-state';
@@ -32,7 +33,9 @@ export function UserPage({ userId }: { userId: number }) {
   }
   const user = data;
   const email = encodeURIComponent(user.email);
-  const canSeeEmails = viewer?.roles?.some((role) => role === 'admin' || role === 'operator') ?? false;
+  // The same role list that guards the Emails page and its nav item.
+  const emailRoles = rolesFor('/staff/emails');
+  const canSeeEmails = viewer?.roles?.some((role) => emailRoles.includes(role)) ?? false;
 
   return (
     <div className="space-y-4">
@@ -70,7 +73,7 @@ export function UserPage({ userId }: { userId: number }) {
         {canSeeEmails && (
           <>
             <span aria-hidden="true"> · </span>
-            <Link to={`/staff/emails?recipient=${email}`} className={link}>
+            <Link to={`/staff/emails?user_id=${user.id}`} className={link}>
               {t('staff.users.emailsLink')}
             </Link>
           </>

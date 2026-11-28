@@ -9,7 +9,7 @@ import { useEmailFilters } from '../use-email-filters';
 import { EmailFilters } from './email-filters';
 import { EmailsTable } from './emails-table';
 
-type ChipKey = 'teamId' | 'status' | 'kind';
+type ChipKey = 'teamId' | 'userId' | 'status' | 'kind';
 
 export function EmailsPage() {
   const { values, setFilter, clearAll } = useEmailFilters();
@@ -36,6 +36,10 @@ export function EmailsPage() {
   if (values.teamId !== undefined) {
     const name = data?.filters.team?.name ?? `#${values.teamId}`;
     chips.push({ key: 'teamId', label: t('staff.emails.filters.teamChip', { name }) });
+  }
+  if (values.userId !== undefined) {
+    const email = data?.filters.user?.email ?? `#${values.userId}`;
+    chips.push({ key: 'userId', label: t('staff.emails.filters.userChip', { email }) });
   }
   if (values.status !== 'any') {
     chips.push({
