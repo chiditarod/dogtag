@@ -34,6 +34,7 @@ class Team < ApplicationRecord
   # The racer organizers contact directly. Not the same as `user`, the account that created the team.
   belongs_to :captain, class_name: "Person", optional: true
   validate :captain_must_be_on_team, if: :will_save_change_to_captain_id?
+  validate :new_team_setting_must_be_known
 
   # A team has a certain number of people, per the settings for the race.
   has_many :people, dependent: :destroy
@@ -125,7 +126,9 @@ class Team < ApplicationRecord
     new_team ? "yes" : "no"
   end
 
+  # Anything but auto, yes or no leaves the flag alone and fails validation, so a bad value is reported, not dropped.
   def new_team_setting=(value)
+    @unknown_new_team_setting = false
     case value.to_s
     when "yes", "no"
       self.new_team_overridden = true
@@ -133,7 +136,15 @@ class Team < ApplicationRecord
     when "auto"
       self.new_team_overridden = nil
       self.new_team = computed_new_team
+    else
+      @unknown_new_team_setting = true
     end
+  end
+
+  # A rejected new_team_setting belongs to the unsaved change that a reload discards.
+  def reload(*)
+    @unknown_new_team_setting = false
+    super
   end
 
   def percent_complete
@@ -225,6 +236,10 @@ class Team < ApplicationRecord
 
   def captain_must_be_on_team
     errors.add(:captain, :not_on_team) if captain_id.present? && captain&.team_id != id
+  end
+
+  def new_team_setting_must_be_known
+    errors.add(:new_team_setting, :inclusion) if @unknown_new_team_setting
   end
 
   def normalize_other_buddies

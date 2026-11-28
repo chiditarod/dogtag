@@ -223,6 +223,15 @@ describe "API v1 teams", type: :request do
         expect(other_team.reload).to have_attributes(new_team: false, new_team_overridden: true)
       end
 
+      it "refuses an unknown value from staff with a 422 naming the field" do
+        api_login(FactoryBot.create(:operator_user))
+
+        expect { patch_setting(other_team, "maybe") }.not_to(change { other_team.reload.attributes })
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(json["error"]).to eq("invalid")
+        expect(json["errors"]["new_team_setting"]).to be_present
+      end
+
       it "ignores the setting from the owner" do
         owned = FactoryBot.create(:team, user: user, race: race)
 
@@ -233,6 +242,10 @@ describe "API v1 teams", type: :request do
         patch "/api/v1/teams/#{owned.id}", params: { team: { name: "Renamed", new_team_setting: "yes" } }, as: :json
         expect(response).to have_http_status(:ok)
         expect(owned.reload).to have_attributes(name: "Renamed", new_team_overridden: nil)
+
+        patch "/api/v1/teams/#{owned.id}", params: { team: { name: "Renamed again", new_team_setting: "maybe" } }, as: :json
+        expect(response).to have_http_status(:ok)
+        expect(owned.reload).to have_attributes(name: "Renamed again", new_team_overridden: nil)
       end
 
       it "refuses a refunder" do
