@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { meQueryKey, type User } from '@/features/auth/api/use-me';
 import { apiFetch } from '@/lib/api-client';
 import type { StaffUser, StaffUserBase, StaffUserPayload, StaffUsersResponse, UserFilterValues } from './types';
 
@@ -32,7 +33,14 @@ export function useUpdateStaffUser(id: number) {
   return useMutation({
     mutationFn: async (user: StaffUserPayload) =>
       (await apiFetch<{ user: StaffUserBase }>(`/staff/users/${id}`, { method: 'PATCH', json: { user } })).user,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: staffUsersKey }),
+    onSuccess: () => {
+      // Editing yourself changes what the header shows (name, roles), so refresh `me` too.
+      const editedSelf = queryClient.getQueryData<User>(meQueryKey)?.id === id;
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: staffUsersKey }),
+        editedSelf ? queryClient.invalidateQueries({ queryKey: meQueryKey }) : undefined,
+      ]);
+    },
   });
 }
 

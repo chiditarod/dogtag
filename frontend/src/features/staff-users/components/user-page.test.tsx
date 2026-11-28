@@ -155,6 +155,56 @@ describe('staff user page details', () => {
     expect(await screen.findByText('has already been taken')).toBeInTheDocument();
     expect(email).toHaveAccessibleDescription('has already been taken');
   });
+
+  /** Counts `GET /me` from now on, answering with the viewer at `id`. */
+  function countMe(id: number) {
+    const calls = { n: 0 };
+    server.use(
+      http.get('/api/v1/me', () => {
+        calls.n += 1;
+        return HttpResponse.json({ user: { ...me, id, roles: ['admin'] } });
+      }),
+    );
+    return calls;
+  }
+
+  it('refetches the header user (me) after an admin saves their own details', async () => {
+    const { requests } = await open(staffUser({ id: me.id, is_self: true }));
+    const meCalls = countMe(me.id);
+    await userEvent.clear(phone());
+    await userEvent.type(phone(), '773-555-0100');
+    await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
+    expect(await screen.findByText('Saved.')).toBeInTheDocument();
+    expect(requests).toHaveLength(1);
+    await waitFor(() => expect(meCalls.n).toBeGreaterThan(0));
+  });
+
+  it('leaves me alone after saving someone else', async () => {
+    await open(staffUser({ id: 12 }));
+    const meCalls = countMe(me.id);
+    await userEvent.clear(phone());
+    await userEvent.type(phone(), '773-555-0100');
+    await userEvent.click(screen.getByRole('button', { name: 'Save details' }));
+    expect(await screen.findByText('Saved.')).toBeInTheDocument();
+    expect(meCalls.n).toBe(0);
+  });
+
+  it('shows a user with null names by email, with blank name fields and no "null"', async () => {
+    const nameless = staffUser({ id: 12, first_name: null, last_name: null });
+    serve(nameless);
+    const { unmount } = renderApp('/staff/users/12');
+    expect(await screen.findByRole('heading', { name: 'ada@example.com', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'First name' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'Last name' })).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Save details' })).toBeDisabled();
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+    unmount();
+
+    serve({ ...nameless, can_edit: false, can_destroy: false, first_name: 'Ada', last_name: null });
+    renderApp('/staff/users/12');
+    expect(await screen.findByRole('heading', { name: 'Ada', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+  });
 });
 
 describe('staff user page delete', () => {

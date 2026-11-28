@@ -18,10 +18,10 @@ const LABELS = {
   phone: 'staff.users.field.phone',
 } as const;
 
-/** Trimmed, so a stored value with stray spaces does not look edited on load (drafts are compared trimmed). */
+/** Trimmed, so a stored value with stray spaces does not look edited on load (drafts are compared trimmed). Null reads as blank. */
 const valuesOf = (user: Pick<StaffUser, FieldName>): Values => ({
-  first_name: user.first_name.trim(),
-  last_name: user.last_name.trim(),
+  first_name: (user.first_name ?? '').trim(),
+  last_name: (user.last_name ?? '').trim(),
   email: user.email.trim(),
   phone: (user.phone ?? '').trim(),
 });

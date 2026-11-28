@@ -15,8 +15,9 @@ export interface StaffUserRowTeam {
 /** The fields every staff user payload carries. */
 export interface StaffUserBase {
   id: number;
-  first_name: string;
-  last_name: string;
+  /** Nullable columns: an old account can have no name. */
+  first_name: string | null;
+  last_name: string | null;
   email: string;
   phone: string | null;
   roles: string[];
