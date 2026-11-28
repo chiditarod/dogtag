@@ -770,6 +770,8 @@ export const en = {
   'staff.fee.payAsStaff': 'Pay {amount} as staff',
   'staff.fee.gapRoster':
     "The roster isn't full ({filled} of {total}). Racers can't pay yet; staff can take payment anyway.",
+  'staff.fee.gapNotYetOpen':
+    "Registration hasn't opened yet, so racers can't pay; staff can take payment anyway.",
   'staff.fee.gapClosed': "Registration is closed, so racers can't pay; staff can take payment anyway.",
   'staff.fee.gapWaitlist':
     'The race is full and this team is on the waitlist. Paying as staff puts the race over its team limit.',

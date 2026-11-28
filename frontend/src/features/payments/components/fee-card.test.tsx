@@ -702,7 +702,7 @@ describe('FeeCard as staff', () => {
 
   it('warns about each gap and offers one outlined Pay as staff that posts the racer body', async () => {
     serve({
-      race: { open_for_registration: false, payment_requirements: [mockRequirement] },
+      race: { open_for_registration: false, registration_status: 'closed', payment_requirements: [mockRequirement] },
       checklist: { racers: incomplete, fee: feeOf([item({ amount_due_cents: 12000 })]) },
     });
     asStaff({ take_payment: true });
@@ -721,6 +721,16 @@ describe('FeeCard as staff', () => {
     await click.click(pay);
     await waitFor(() => expect(posts).toHaveLength(1));
     expect(posts[0]).toEqual({ path: 'mock_payments', body: { requirement_id: 3 } });
+  });
+
+  it('says registration has not opened yet, not that it is closed, before it opens', async () => {
+    serve({ race: { open_for_registration: false, registration_status: 'not_yet_open' } });
+    asStaff({ take_payment: true });
+    renderApp('/teams/9');
+    const fee = await card();
+    await fee.findByRole('button', { name: 'Pay $300 as staff' });
+    expect(fee.getByText(t('staff.fee.gapNotYetOpen'))).toBeInTheDocument();
+    expect(fee.queryByText(t('staff.fee.gapClosed'))).not.toBeInTheDocument();
   });
 
   it('rechecks the price and opens Checkout with no email prefill for a team it does not own', async () => {

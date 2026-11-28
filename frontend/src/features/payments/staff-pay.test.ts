@@ -20,15 +20,25 @@ describe('staffPayGaps', () => {
   });
 
   it('names a closed race and a full race', () => {
-    expect(staffPayGaps(team({ filled: 5, total: 5 }, { open_for_registration: false }))).toEqual([
-      { kind: 'closed' },
-    ]);
+    expect(
+      staffPayGaps(team({ filled: 5, total: 5 }, { open_for_registration: false, registration_status: 'closed' })),
+    ).toEqual([{ kind: 'closed' }]);
     expect(staffPayGaps(team({ filled: 5, total: 5 }, { full: true }))).toEqual([{ kind: 'waitlist' }]);
+  });
+
+  it('names a race that has not opened yet as not yet open, not closed', () => {
+    expect(
+      staffPayGaps(
+        team({ filled: 5, total: 5 }, { open_for_registration: false, registration_status: 'not_yet_open' }),
+      ),
+    ).toEqual([{ kind: 'notYetOpen' }]);
   });
 
   it('lists every gap, roster first', () => {
     expect(
-      staffPayGaps(team({ filled: 1, total: 5 }, { open_for_registration: false, full: true })),
+      staffPayGaps(
+        team({ filled: 1, total: 5 }, { open_for_registration: false, registration_status: 'closed', full: true }),
+      ),
     ).toEqual([{ kind: 'roster', filled: 1, total: 5 }, { kind: 'closed' }, { kind: 'waitlist' }]);
   });
 });

@@ -32,6 +32,8 @@ function gapText(gap: StaffPayGap): string {
   switch (gap.kind) {
     case 'roster':
       return t('staff.fee.gapRoster', { filled: gap.filled, total: gap.total });
+    case 'notYetOpen':
+      return t('staff.fee.gapNotYetOpen');
     case 'closed':
       return t('staff.fee.gapClosed');
     case 'waitlist':
