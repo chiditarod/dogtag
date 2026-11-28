@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { apiFetch } from '@/lib/api-client';
+import type { Team } from '@/types/api';
 import type { StaffTeam } from '../types';
 
 export const staffTeamQueryKey = (teamId: string | number | undefined) =>
@@ -9,14 +10,17 @@ export const staffTeamQueryKey = (teamId: string | number | undefined) =>
 interface UseStaffTeamOptions {
   /** Only staff ask; a racer never calls the staff endpoint. */
   enabled: boolean;
-  /** The racer team query's `dataUpdatedAt`: a change after the first load means the page data moved. */
-  teamUpdatedAt: number;
+  /**
+   * The racer team query's data. React Query's structural sharing keeps the same object when a refetch
+   * returns the same team (e.g. the fundraising-URL poll), so a new object means the team changed.
+   */
+  team: Team;
 }
 
 /** `GET /api/v1/staff/teams/:id`: who is who, the payments and what this viewer may do. */
 export function useStaffTeam(
   teamId: string | number | undefined,
-  { enabled, teamUpdatedAt }: UseStaffTeamOptions,
+  { enabled, team }: UseStaffTeamOptions,
 ) {
   const queryClient = useQueryClient();
   const query = useQuery({
@@ -28,16 +32,16 @@ export function useStaffTeam(
     retry: false,
   });
 
-  // The permissions (`can`) and payments depend on the team, so refetch whenever the racer team
-  // query updates. Its first load (0 -> a timestamp) is not an update.
-  const lastUpdatedAt = useRef(teamUpdatedAt);
+  // The permissions (`can`) and payments depend on the team, so refetch whenever the racer team data
+  // changes. A refetch that returns the same team keeps the same object and asks for nothing.
+  const lastTeam = useRef(team);
   useEffect(() => {
-    const previous = lastUpdatedAt.current;
-    lastUpdatedAt.current = teamUpdatedAt;
-    if (!enabled || previous === 0 || previous === teamUpdatedAt) return;
+    const previous = lastTeam.current;
+    lastTeam.current = team;
+    if (!enabled || previous === team) return;
     // cancelRefetch false: a fetch already running (e.g. the new-team mutation's own) is joined, not cancelled.
     void queryClient.invalidateQueries({ queryKey: staffTeamQueryKey(teamId) }, { cancelRefetch: false });
-  }, [teamUpdatedAt, enabled, teamId, queryClient]);
+  }, [team, enabled, teamId, queryClient]);
 
   return query;
 }

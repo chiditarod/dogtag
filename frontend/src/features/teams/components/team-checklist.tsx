@@ -30,14 +30,13 @@ import { t } from '@/locales/en';
 
 interface TeamPageBodyProps {
   team: Team;
-  teamUpdatedAt: number;
   replayRef: RefObject<HTMLButtonElement | null>;
   onTakeTour: () => void;
 }
 
 /** The header and cards. Permissions are computed here once, so one staff request serves the page. */
-function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBodyProps) {
-  const { permissions, staffTeam, staffQuery, staffState } = useTeamPermissions(team, { teamUpdatedAt });
+function TeamPageBody({ team, replayRef, onTakeTour }: TeamPageBodyProps) {
+  const { permissions, staffTeam, staffQuery, staffState } = useTeamPermissions(team);
   const { checklist } = team;
   // Card statuses come from the checklist, not stepStates: a finalized team's
   // flag is forced full, but a regressed step's card should still read "to do".
@@ -110,7 +109,7 @@ function TeamPageBody({ team, teamUpdatedAt, replayRef, onTakeTour }: TeamPageBo
 }
 
 export function TeamChecklist({ teamId }: { teamId: string }) {
-  const { data: team, isPending, error, refetch, dataUpdatedAt } = useTeam(teamId, {
+  const { data: team, isPending, error, refetch } = useTeam(teamId, {
     pollForFundraisingUrl: true,
   });
 
@@ -196,7 +195,6 @@ export function TeamChecklist({ teamId }: { teamId: string }) {
     <TeamPageErrorProvider teamId={teamId}>
       <TeamPageBody
         team={team}
-        teamUpdatedAt={dataUpdatedAt}
         replayRef={replayRef}
         onTakeTour={() => setTourOpen(true)}
       />

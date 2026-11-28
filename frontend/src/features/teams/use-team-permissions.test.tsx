@@ -35,7 +35,7 @@ describe('useTeamPermissions', () => {
         return HttpResponse.json(staffTeamBody());
       }),
     );
-    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
     await waitFor(() => expect(client.getQueryData(meQueryKey)).toBeDefined());
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(result.current.staffState).toBe('none');
@@ -53,7 +53,7 @@ describe('useTeamPermissions', () => {
         return HttpResponse.json({ staff_team: staffTeam });
       }),
     );
-    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('loading'));
     expect(result.current.permissions).toEqual(READ_ONLY_PERMISSIONS);
     expect(result.current.permissions.pay).toBe(false);
@@ -74,7 +74,7 @@ describe('useTeamPermissions', () => {
         HttpResponse.json({ error: 'boom', errors: {} }, { status: 500 }),
       ),
     );
-    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('error'));
     expect(result.current.permissions).toEqual(READ_ONLY_PERMISSIONS);
     expect(result.current.permissions.pay).toBe(false);
@@ -89,7 +89,7 @@ describe('useTeamPermissions', () => {
         HttpResponse.json(staffTeamBody({ update_team: true, add_racers: true })),
       ),
     );
-    const { result } = renderHook(() => useTeamPermissions(team, { teamUpdatedAt: 1 }), { wrapper });
+    const { result } = renderHook(() => useTeamPermissions(team), { wrapper });
     await waitFor(() => expect(result.current.staffState).toBe('ready'));
     expect(result.current.permissions.pastRacers).toBe(true);
     expect(result.current.permissions.addYourself).toBe(true);
@@ -108,7 +108,7 @@ describe('useTeamPermissions', () => {
     const { result } = renderHook(
       () => {
         const teamQuery = useTeam(team.id);
-        return useTeamPermissions(team, { teamUpdatedAt: teamQuery.dataUpdatedAt });
+        return useTeamPermissions(teamQuery.data ?? team);
       },
       { wrapper },
     );
@@ -134,7 +134,7 @@ describe('useTeamPermissions', () => {
       () => {
         const teamQuery = useTeam(team.id);
         return {
-          permissions: useTeamPermissions(team, { teamUpdatedAt: teamQuery.dataUpdatedAt }),
+          permissions: useTeamPermissions(teamQuery.data ?? team),
           teamQuery,
         };
       },

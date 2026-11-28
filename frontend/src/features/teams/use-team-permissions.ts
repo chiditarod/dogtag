@@ -19,14 +19,11 @@ export type StaffState = 'none' | 'loading' | 'ready' | 'error';
  * (and no Pay of any kind) until `GET /staff/teams/:id` answers, and stays read-only if it
  * fails, even on their own team: the server's `can` flags are the only source of staff rules.
  *
- * `teamUpdatedAt` is the `dataUpdatedAt` of the page's own `useTeam` query. It is passed in, not read
- * here, because a second observer on the shared team query with another `queryFn` would replace
- * the query's fetcher and break its later refetches.
+ * `team` is the data of the page's own `useTeam` query; the staff details refresh when that object
+ * changes. It is passed in, not read here, because a second observer on the shared team query with
+ * another `queryFn` would replace the query's fetcher and break its later refetches.
  */
-export function useTeamPermissions(
-  team: Team,
-  { teamUpdatedAt }: { teamUpdatedAt: number },
-): {
+export function useTeamPermissions(team: Team): {
   permissions: TeamPermissions;
   staffTeam: StaffTeam | undefined;
   staffQuery: ReturnType<typeof useStaffTeam>;
@@ -34,10 +31,7 @@ export function useTeamPermissions(
 } {
   const me = useMe().data;
   const staff = isStaff(me);
-  const staffQuery = useStaffTeam(team.id, {
-    enabled: staff,
-    teamUpdatedAt,
-  });
+  const staffQuery = useStaffTeam(team.id, { enabled: staff, team });
 
   if (!staff || !me) {
     return {

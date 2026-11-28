@@ -3,13 +3,15 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import type { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
-import { teamQueryKey } from '@/features/teams/api/use-team';
+import { teamQueryKey, useTeam } from '@/features/teams/api/use-team';
 import { queryConfig } from '@/lib/react-query';
 import { buildTeam } from '@/test/fixtures';
 import { server } from '@/test/server';
 import { buildStaffTeam, staffTeamBody } from '../test-fixtures';
 import { staffTeamQueryKey, useStaffTeam } from './use-staff-team';
 import { useSetNewTeam } from './use-set-new-team';
+
+const racerTeam = buildTeam({ id: 9 });
 
 function makeClient() {
   const client = new QueryClient({ defaultOptions: queryConfig });
@@ -32,7 +34,7 @@ describe('useStaffTeam', () => {
     server.use(
       http.get('/api/v1/staff/teams/:id', () => HttpResponse.json(staffTeamBody({ update_team: true }))),
     );
-    const { result } = renderHook(() => useStaffTeam(9, { enabled: true, teamUpdatedAt: 1 }), {
+    const { result } = renderHook(() => useStaffTeam(9, { enabled: true, team: racerTeam }), {
       wrapper,
     });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -48,7 +50,7 @@ describe('useStaffTeam', () => {
         return HttpResponse.json(staffTeamBody());
       }),
     );
-    renderHook(() => useStaffTeam(9, { enabled: false, teamUpdatedAt: 1 }), { wrapper });
+    renderHook(() => useStaffTeam(9, { enabled: false, team: racerTeam }), { wrapper });
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(requests).toBe(0);
   });
@@ -62,36 +64,91 @@ describe('useStaffTeam', () => {
         return HttpResponse.json({ error: 'no', errors: {} }, { status: 403 });
       }),
     );
-    const { result } = renderHook(() => useStaffTeam(9, { enabled: true, teamUpdatedAt: 1 }), {
+    const { result } = renderHook(() => useStaffTeam(9, { enabled: true, team: racerTeam }), {
       wrapper,
     });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(requests).toBe(1);
   });
 
-  it('refetches when the racer team query updates after the first load', async () => {
-    const { wrapper } = makeClient();
-    let requests = 0;
+  it('refetches when the racer team data changes, not when a refetch returns the same team', async () => {
+    const { client, wrapper } = makeClient();
+    let staffRequests = 0;
+    let teamRequests = 0;
+    let served = racerTeam;
     server.use(
       http.get('/api/v1/staff/teams/:id', () => {
-        requests += 1;
+        staffRequests += 1;
         return HttpResponse.json(staffTeamBody());
       }),
+      http.get('/api/v1/teams/:id', () => {
+        teamRequests += 1;
+        // A fresh copy each time, as the network would send it.
+        return HttpResponse.json({ team: structuredClone(served) });
+      }),
     );
-    const { result, rerender } = renderHook(
-      ({ updatedAt }) => useStaffTeam(9, { enabled: true, teamUpdatedAt: updatedAt }),
-      { wrapper, initialProps: { updatedAt: 0 } },
+    const { result } = renderHook(
+      () => {
+        const teamQuery = useTeam(9);
+        return {
+          teamQuery,
+          staff: useStaffTeam(9, { enabled: true, team: teamQuery.data ?? racerTeam }),
+        };
+      },
+      { wrapper },
+    );
+    await waitFor(() => expect(result.current.staff.isSuccess).toBe(true));
+    await waitFor(() => expect(result.current.teamQuery.isSuccess).toBe(true));
+    const settled = staffRequests;
+
+    // A poll that brings back the same team (e.g. still waiting on the fundraising URL) asks for nothing.
+    await act(async () => {
+      await client.refetchQueries({ queryKey: teamQueryKey(9) });
+    });
+    expect(teamRequests).toBe(2);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(staffRequests).toBe(settled);
+
+    // A changed team refreshes the staff details once.
+    served = { ...racerTeam, name: 'Renamed' };
+    await act(async () => {
+      await client.refetchQueries({ queryKey: teamQueryKey(9) });
+    });
+    await waitFor(() => expect(staffRequests).toBe(settled + 1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(staffRequests).toBe(settled + 1);
+  });
+
+  it('refetches when a mutation writes a different team into the cache', async () => {
+    const { client, wrapper } = makeClient();
+    let staffRequests = 0;
+    server.use(
+      http.get('/api/v1/staff/teams/:id', () => {
+        staffRequests += 1;
+        return HttpResponse.json(staffTeamBody());
+      }),
+      http.get('/api/v1/teams/:id', () => HttpResponse.json({ team: racerTeam })),
+    );
+    const { result } = renderHook(
+      () => {
+        const teamQuery = useTeam(9);
+        return useStaffTeam(9, { enabled: true, team: teamQuery.data ?? racerTeam });
+      },
+      { wrapper },
     );
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    // The racer team's first load (0 -> timestamp) is not a change worth a refetch.
-    rerender({ updatedAt: 1000 });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    const settled = staffRequests;
+    // The same content written again keeps the cached object: no refetch.
+    act(() => {
+      client.setQueryData(teamQueryKey(9), structuredClone(racerTeam));
+    });
     await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(requests).toBe(1);
-    rerender({ updatedAt: 2000 });
-    await waitFor(() => expect(requests).toBe(2));
-    rerender({ updatedAt: 2000 });
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(requests).toBe(2);
+    expect(staffRequests).toBe(settled);
+    act(() => {
+      client.setQueryData(teamQueryKey(9), { ...racerTeam, name: 'Renamed' });
+    });
+    await waitFor(() => expect(staffRequests).toBe(settled + 1));
   });
 });
 
@@ -112,7 +169,7 @@ describe('useSetNewTeam', () => {
         return HttpResponse.json(staffTeamBody());
       }),
     );
-    const staff = renderHook(() => useStaffTeam(9, { enabled: true, teamUpdatedAt: 1 }), {
+    const staff = renderHook(() => useStaffTeam(9, { enabled: true, team: racerTeam }), {
       wrapper,
     });
     await waitFor(() => expect(staff.result.current.isSuccess).toBe(true));
