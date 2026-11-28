@@ -10,14 +10,14 @@ describe "API v1 staff sent emails", type: :request do
 
   describe "authorization" do
     it "is 401 when logged out" do
-      get "/api/v1/staff/sent_emails"
+      get "/api/v1/staff/sent_emails", params: { user_id: operator.id }
       expect(response).to have_http_status(:unauthorized)
     end
 
     it "is 403 for a racer and a refunder" do
       [FactoryBot.create(:user), FactoryBot.create(:refunder_user)].each do |user|
         api_login(user)
-        get "/api/v1/staff/sent_emails"
+        get "/api/v1/staff/sent_emails", params: { user_id: user.id }
         expect(response).to have_http_status(:forbidden)
         expect(json["sent_emails"]).to be_nil
       end
@@ -42,7 +42,7 @@ describe "API v1 staff sent emails", type: :request do
       )
       expect(json["sent_emails"].first).to include("error" => "boom", "team" => nil)
       expect(json["meta"]).to eq("page" => 1, "per_page" => 25, "total_count" => 2, "total_pages" => 1)
-      expect(json["filters"]).to eq("team" => nil, "kinds" => SentEmail::KINDS, "statuses" => SentEmail::FILTER_STATUSES)
+      expect(json["filters"]).to eq("team" => nil, "user" => nil, "kinds" => SentEmail::KINDS, "statuses" => SentEmail::FILTER_STATUSES)
     end
 
     it "filters by status, including statuses the menu no longer offers" do
@@ -94,13 +94,63 @@ describe "API v1 staff sent emails", type: :request do
       expect(ids).to be_empty
     end
 
-    it "ignores a team_id that is not a positive integer" do
+    it "lists nothing for a team_id that is present but not a positive integer, as payments do" do
       FactoryBot.create(:sent_email, team: team)
-      ["abc", "0", "-3", "1x"].each do |bad|
+      ["abc", "0", "-3", "1x", "1.5"].each do |bad|
         get "/api/v1/staff/sent_emails", params: { team_id: bad }
-        expect(ids.size).to eq(1)
-        expect(json["filters"]["team"]).to be_nil
+        expect(response).to have_http_status(:ok)
+        expect(ids).to be_empty
+        expect(json["filters"]["team"]&.fetch("name")).to be_nil
       end
+
+      get "/api/v1/staff/sent_emails", params: { team_id: "" }
+      expect(ids.size).to eq(1)
+      expect(json["filters"]["team"]).to be_nil
+    end
+
+    it "filters by user_id, following the account rather than the address, and reports the user" do
+      ada = FactoryBot.create(:user, email: "ada@example.com")
+      before_change = FactoryBot.create(:sent_email, user: ada, recipient: "ada.old@example.com", kind: "welcome")
+      notice = FactoryBot.create(:sent_email, user: ada, recipient: "ada.old@example.com", kind: "email_changed")
+      reminder = FactoryBot.create(:sent_email, user: ada, recipient: "ada@example.com", kind: "registration_reminder", team: team)
+      FactoryBot.create(:sent_email, user: FactoryBot.create(:user, email: "nada@example.com"), recipient: "nada@example.com")
+      FactoryBot.create(:sent_email, user_id: nil, recipient: "ada@example.com")
+
+      get "/api/v1/staff/sent_emails", params: { user_id: ada.id }
+      expect(response).to have_http_status(:ok)
+      expect(ids).to contain_exactly(before_change.id, notice.id, reminder.id)
+      expect(json["filters"]["user"]).to eq("id" => ada.id, "email" => "ada@example.com")
+      expect(json["filters"]["team"]).to be_nil
+
+      get "/api/v1/staff/sent_emails", params: { user_id: ada.id, team_id: team.id }
+      expect(ids).to eq([reminder.id])
+    end
+
+    it "lists nothing for an unknown user_id and reports it with no email" do
+      FactoryBot.create(:sent_email)
+      get "/api/v1/staff/sent_emails", params: { user_id: 999_999 }
+      expect(ids).to be_empty
+      expect(json["filters"]["user"]).to eq("id" => 999_999, "email" => nil)
+
+      get "/api/v1/staff/sent_emails", params: { user_id: "99999999999999999999" }
+      expect(response).to have_http_status(:ok)
+      expect(ids).to be_empty
+    end
+
+    it "lists nothing for a user_id that is present but not a positive integer" do
+      FactoryBot.create(:sent_email)
+      ["abc", "0", "-3", "1x"].each do |bad|
+        get "/api/v1/staff/sent_emails", params: { user_id: bad }
+        expect(response).to have_http_status(:ok)
+        expect(ids).to be_empty
+      end
+
+      get "/api/v1/staff/sent_emails", params: { user_id: [1] }
+      expect(ids).to be_empty
+
+      get "/api/v1/staff/sent_emails", params: { user_id: "" }
+      expect(ids.size).to eq(1)
+      expect(json["filters"]["user"]).to be_nil
     end
 
     it "pages by 25 and clamps a bad page" do
@@ -111,7 +161,7 @@ describe "API v1 staff sent emails", type: :request do
 
       get "/api/v1/staff/sent_emails", params: { page: "99999999999999999999" }
       expect(response).to have_http_status(:ok)
-      expect(json["meta"]["page"]).to eq(Users::StaffSearch::MAX_PAGE)
+      expect(json["meta"]["page"]).to eq(Api::V1::Staff::SentEmailsController::MAX_PAGE)
       expect(ids).to be_empty
     end
 
